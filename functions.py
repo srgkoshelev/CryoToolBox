@@ -4,41 +4,52 @@ from pyrefprop import refprop as rp
 from natu.units import *
 from natu.units import kPa, uPa, kJ
 
+#Calling any of these functions changes fluid setup for refprop
 
+
+def rp_init (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+	"""Shortcut initialization of refprop
+	Returns (x, M, D_fluid)
+	"""
+	fluid = Fluid_data['fluid']
+	T_fluid = Fluid_data['T']
+	P_fluid = Fluid_data['P']
+	prop = rp.setup('def', fluid)
+	x = prop.get('x', [1]) 
+	M = rp.wmol(x)['wmix']*g/mol
+	fluid_prop = rp.flsh ("TP", T_fluid/K, P_fluid/kPa, x)
+	D_fluid = fluid_prop['Dvap']*mol/L #currently supporting only vapor phase
+	return (x, M, D_fluid)
 
 
 def Pr (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
-	#Function for calculating Prandtl number for given fluid
-	#Properties of fluid are obtained from Refprop package
-	#Units are handled by natu package
+	"""Calculate Prandtl number for given fluid
+	Properties of fluid are obtained from Refprop package
+	Units are handled by natu package
+	"""
 	fluid = Fluid_data['fluid']
-	Temperature = Fluid_data['T']
-	Pressure = Fluid_data['P']
-	prop = rp.setup('def', fluid)
-	M = rp.wmol(prop['x'])['wmix']*g/mol
-	fluid_prop = rp.flsh ("TP", Temperature/K, Pressure/kPa, prop['x'])
-	Density = fluid_prop['Dvap']*mol/L #currently supporting only vapor phase
-	fluid_trans_prop = rp.trnprp(Temperature/K, Density/(mol/L), prop['x'])
+	T_fluid = Fluid_data['T']
+	P_fluid = Fluid_data['P']
+	(x, M, D_fluid) = rp_init(Fluid_data)
+	fluid_trans_prop = rp.trnprp(T_fluid/K, D_fluid/(mol/L), x)
 	mu = fluid_trans_prop['eta']*uPa*s #dynamic viscosity
 	k = fluid_trans_prop['tcx']*W/(m*K) #thermal conductivity
-	nu = mu/(Density*M) #kinematic viscosity
-	Pr = mu*fluid_prop['cp']*(J/(mol*K))/(k*M)
+	nu = mu/(D_fluid*M) #kinematic viscosity
+	Pr = mu*rp.flsh ("TP", T_fluid/K, P_fluid/kPa, x)['cp']*(J/(mol*K))/(k*M)
 	return Pr
 
 def Gr (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data = {'Dim':1.315*inch, 'T':100*K}):
-	#Function for calculating Grashof number for given fluid and surface
-	#Properties of fluid are obtained from Refprop package
-	#Units are handled by natu package
+	"""Calculate Grashof number for given fluid and surface
+	Properties of fluid are obtained from Refprop package
+	Units are handled by natu package
+	"""
 	fluid = Fluid_data['fluid']
 	T_fluid = Fluid_data['T']
 	P_fluid = Fluid_data['P']
 	T_surf = Surface_data['T']
 	Dim = Surface_data['Dim']
-	prop = rp.setup('def', fluid)
-	M = rp.wmol(prop['x'])['wmix']*g/mol
-	fluid_prop = rp.flsh ("TP", T_fluid/K, P_fluid/kPa, prop['x'])
-	D_fluid = fluid_prop['Dvap']*mol/L #currently supporting only vapor phase
-	fluid_trans_prop = rp.trnprp(T_fluid/K, D_fluid/(mol/L), prop['x'])
+	(x, M, D_fluid) = rp_init(Fluid_data)
+	fluid_trans_prop = rp.trnprp(T_fluid/K, D_fluid/(mol/L), x)
 	mu_fluid = fluid_trans_prop['eta']*uPa*s #dynamic viscosity
 	nu_fluid = mu_fluid/(D_fluid*M) #kinematic viscosity
 	nu_fluid.display_unit = 'm2/s'
@@ -47,20 +58,27 @@ def Gr (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data =
 	return Gr
 
 def Ra (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data = {'Dim':1.315*inch, 'T':100*K}):
-	#Function for calculating Rayleigh number for given fluid and surface
-	#Properties of fluid are obtained from Refprop package
-	#Units are handled by natu package
+	"""Calculate Rayleigh number for given fluid and surface
+	Properties of fluid are obtained from Refprop package
+	Units are handled by natu package
+	"""
 	return 	Gr(Fluid_data, Surface_data)*Pr(Fluid_data) 
 
 def heat_trans_coef (k_fluid = 0.02647*W/(m*K), Nu = 4, Dim = 1.315*inch, Case = {'convection':'free', 'body':'cyl_hor'}):
-	#Calculating heat transfer coefficient for Nu routine
-	#Cases like external flow and pipe inside a pipe have different equations for Nu number - to be implemented
+	"""Calculate heat transfer coefficient for Nu routine
+	Cases like external flow and pipe inside a pipe have different equations for Nu number - to be implemented
+	"""
 	h = k_fluid*Nu/Dim #convective heat transfer coefficient
 	return h
 
 
 
 def Nu (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data = {'Dim':10*ft, 'T':100*K, 'Dim_sec':1.315*inch}, Case = {'convection':'free', 'body':'cyl_hor'}):
+	"""Calculate Nusselt number for given Fluid/Surface and specific case.
+	Only natural convection currently supported.
+	Properties of fluid are obtained from Refprop package
+	Units are handled by natu package
+	"""
 	Prandtl = Pr(Fluid_data)
 	Convection = not (Case['convection'] == 'free' or Case['convection'] == 'natural')
 	if not Convection:
@@ -95,10 +113,8 @@ def Nu (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data =
 	T_fluid = Fluid_data['T']
 	P_fluid = Fluid_data['P']
 	Dim = Surface_data['Dim']
-	prop = rp.setup('def', fluid)
-	fluid_prop = rp.flsh ("TP", T_fluid/K, P_fluid/kPa, prop['x'])
-	D_fluid = fluid_prop['Dvap']*mol/L #currently supporting only vapor phase
-	fluid_trans_prop = rp.trnprp(T_fluid/K, D_fluid/(mol/L), prop['x'])
+	(x, M, D_fluid) = rp_init(Fluid_data)
+	fluid_trans_prop = rp.trnprp(T_fluid/K, D_fluid/(mol/L), x)
 	k_fluid = fluid_trans_prop['tcx']*W/(m*K) #thermal conductivity
 	h = heat_trans_coef (k_fluid, Nu, Dim, Case)	
 	h.display_unit = 'W/(m2*K)'
@@ -111,11 +127,15 @@ def Nu (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data =
 
 
 def rad_hl (eps_cold = 0.55, eps_hot = 0.55, T_hot = 300*K, T_cold = 77*K, F1_2 = 1, eps_baffle = 0.02, N_baffles = 5):
-	#F1_2 shows what part of cold surface is being affected by radiation; see Kaganer, p. 42
-	Eps_mut = eps_cold*eps_hot/(eps_cold + eps_hot - eps_cold*eps_hot) #Mutual (term?) epsilon, assuming surfaces are equal; otherwise use: Eps_mut = 1/(1/eps_cold + F_cold/F_hot*(1/eps_hot-1))
+	"""Calculate radiative heat load including reduction due to baffles
+	Based on Kaganer "Thermal insulation in cryogenic engineering", p. 42.
+	F1_2 = F_cold/F_hot
+	"""
+	
+	Eps_mut = 1/(1/eps_cold + F1_2*(1/eps_hot-1)) #Mutual emissivity
 	q0 = Eps_mut*sigma*(T_hot**4 - T_cold**4)*F1_2
 	q0.display_unit = 'W/m2'
 	Eps_baffle_mut = eps_baffle/(2-eps_baffle)
 	eta = (1+N_baffles*Eps_mut/Eps_baffle_mut)**(-1)
 	q_baffle = eta*q0
-	return {'q0':q0, 'q_baffle':q_baffle}
+	return {'q0':q0, 'q_baffle':q_baffle, 'eta':eta}
