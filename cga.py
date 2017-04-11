@@ -137,3 +137,28 @@ def Q_air (Pipe, External, P_fr): #Required relief capacity due to air condensat
 	Pipe.update({'q_cond':q_cond, })
 
 	return Q_a
+
+
+def to_scfma (M_dot, Fluid_data):
+	(x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
+	T_fluid = Fluid_data['T']
+	Z_fluid = rp.therm2(T_fluid/K, D_fluid/(mol/L), x_fluid)['Z'] #Compressibility factor
+	Air = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}
+	(x_air, M_air, D_air) = rp_init(Air)
+	T_air = Air['T']
+	Z_air = rp.therm2(T_air/K, D_air/(mol/L), x_air)['Z'] #Compressibility factor
+	Q_air =  M_dot/(D_air*M_air)*(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
+	Q_air.display_unit = 'ft3/min'
+	return Q_air
+
+def from_scfma (Q_air, Fluid_data):
+	(x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
+	T_fluid = Fluid_data['T']
+	Z_fluid = rp.therm2(T_fluid/K, D_fluid/(mol/L), x_fluid)['Z'] #Compressibility factor
+	Air = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}
+	(x_air, M_air, D_air) = rp_init(Air)
+	T_air = Air['T']
+	Z_air = rp.therm2(T_air/K, D_air/(mol/L), x_air)['Z'] #Compressibility factor
+	M_dot =  Q_air*(D_air*M_air)/(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
+	M_dot.display_unit = 'kg/s'
+	return M_dot

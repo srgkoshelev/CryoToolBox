@@ -1,7 +1,7 @@
 #python3
 from natu.units import *
 from natu.units import kPa, uPa, kJ
-from math import pi, log10, sin
+from math import pi, log10, sin, log
 from pyrefprop import refprop as rp
 if __name__ != "__main__":
 	from .functions import rp_init
@@ -175,7 +175,7 @@ def VJOD(Pipe):
 
 
 #Hydraulic functions
-def Re (M_dot = 1e-3*kg/s, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Dim = 1.097*inch):
+def Re (M_dot = 0.01*kg/s, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Dim = 1.097*inch):
 	#Calculate reynolds number for internal flow inside the pipe size of Dim. The mass flow and Fluid_data are required.
 	fluid = Fluid_data['fluid']
 	T_fluid = Fluid_data['T']
@@ -196,7 +196,7 @@ def Re (M_dot = 1e-3*kg/s, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*de
 
 #Pressure drops for different configurations of piping
 
-def f_friction(M_dot = 1e-3*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+def f_friction(M_dot = 0.01*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
 	Reynolds = Re(M_dot, Fluid_data, ID(Pipe))
 	if corrugated(Pipe):
 		mult = 4 #Using 4x multiplicator compared to straight pipe
@@ -207,12 +207,12 @@ def f_friction(M_dot = 1e-3*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid
 	elif Reynolds > 4000:
 		return 1/(1.8*log10(Reynolds)-1.64)**2*mult
 	else:
-		print ("Warning: Re = {:g}, transition flow. Maximum value between pure laminar or pure turbulent flow will be used".format(Reynolds))
+		# print ("Warning: Re = {:g}, transition flow. Maximum value between pure laminar or pure turbulent flow will be used".format(Reynolds))
 		return max (64/Reynolds*mult, 1/(1.8*log10(Reynolds)-1.64)**2*mult)
 	
 
 
-def dp_pipe (M_dot = 1e-3*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+def dp_pipe (M_dot = 0.01*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
 	fluid = Fluid_data['fluid']
 	T_fluid = Fluid_data['T']
 	P_fluid = Fluid_data['P']
@@ -241,19 +241,21 @@ def dp_pipe (M_dot = 1e-3*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_d
 		P_fluid_out = P_fluid - delta_P
 		fluid_prop = rp.flsh ("TP", T_fluid/K, P_fluid_out/kPa, x)
 		D_fluid = fluid_prop['Dvap']*mol/L #currently supporting only vapor phase
-		rho_fluid = D_fluid*M_mol
+		rho_fluid = D_fluid*M
 		w_flow = M_dot/(rho_fluid*A)
 		f = f_friction(M_dot, Pipe, Fluid_data)
 		delta_P = rho_fluid*f*L_pipe*w_flow**2/(2*ID_pipe)
+		delta_P.display_unit = 'psi'
 		return delta_P
 	else:
 		raise BaseException ('Pressure drop is {:.0%} which is greater than 40% recommended by Crane TP-410. Consider separating pipeline into sections.'.format(delta_P/P_fluid))
+
 
 def corrugated (Pipe = {'Corrugated':True}):
 	#Determines whether piping is corrugated
 	return Pipe.get('Corrugated', False)
 
-def dp_elbow (M_dot = 1e-3*kg/s, Elbow = {'R/D':1, 'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+def dp_elbow (M_dot = 0.01*kg/s, Elbow = {'R/D':1, 'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
 		
 	delta = Elbow.get('Angle', 90*deg)
 	if delta <= 70*deg:
@@ -306,26 +308,83 @@ def dp_elbow (M_dot = 1e-3*kg/s, Elbow = {'R/D':1, 'D_nom':1, 'SCH':10, 'L':10*f
 
 #Simple colver for calculating flow
 def derivative(f, x, h):
-      return (f(x+h) - f(x-h)) / (2*h)  # might want to return a small non-zero if ==0
+		return (f(x+h) - f(x-h)) / (2*h)  # might want to return a small non-zero if ==0
 
 
 def solve(f, x0, h):
-    lastX = x0
-    nextX = lastX + 10* h  # different than lastX so loop starts OK
-    while (abs(lastX - nextX) > h): 
-        newY = f(nextX)                     
-        # print ("f(", nextX, ") = ", newY)     # print out progress... again just debug
-        lastX = nextX
-        nextX = lastX - newY / derivative(f, lastX, h)  # update estimate using N-R
-    return nextX
+	lastX = x0
+	nextX = lastX + 10* h  # different than lastX so loop starts OK
+	while (abs(lastX - nextX) > h): 
+		newY = f(nextX)                     
+		# print ("f(", nextX, ") = ", newY)     # print out progress... again just debug
+		lastX = nextX
+		nextX = lastX - newY / derivative(f, lastX, h)  # update estimate using N-R
+	return nextX
+
+def flow_solve (f, x0, step = 1e-3*kg/s):
+	X = x0
+	while f(X) < -0.5*psi:
+		X += step
+		print (X, f(X))
+	return X
 
 
 
-def calculate_flow(delta_P = 1*psi, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
-	pass
+
+def calculate_flow(Piping, P_in=1e-3*psig, P_out=0*psig, M_dot_0 = 1e-3*kg/s, M_step = 0.001*kg/s):
+	def to_solve (M_dot):
+		return dP_piping(M_dot, Piping)-(P_in-P_out)
+
+	try:
+		return solve(to_solve, M_dot_0, M_step)
+	except:
+		return flow_solve(to_solve, M_dot_0, M_step)
 
 
 
+
+def dP_piping(M_dot, Piping):
+	'''Calculate pressure drop for whole piping; fluid properties should be already initialized for this to work.
+	Enthalpy is assumed constant. Each two straight pipes are connected by an elbow.
+	'''
+	(x, M, D_fluid) = rp_init(Piping[0]['fluid'])
+	P_in = Piping[0]['fluid']['P']
+	for sec_num, Pipe in enumerate (Piping):
+		P = Pipe['fluid']['P']
+		if 'h' not in Pipe['fluid']:
+			#Calculating enthalpy for the first pipe
+			T = Pipe['fluid']['T']
+			h = rp.flsh('TP',T/K, P/kPa, x)['h']*(J/mol)
+			Pipe['fluid'].update({'h':h})
+		else:
+			#Calculating new conditions for every pipe after the first
+			h = Pipe['fluid']['h']
+			T = rp.flsh('PH', P/kPa, h/(J/mol), x)['t']*K
+			Pipe['fluid'].update({'T':T})
+			
+		delta_P = dp_pipe(M_dot, Pipe, Pipe['fluid'])
+		if sec_num < len (Piping) - 1:
+			if Pipe['Corrugated'] == False and Piping[sec_num+1]['Corrugated'] == False:
+				delta_P += dp_elbow(M_dot, Pipe, Pipe['fluid'])
+			if delta_P < P:
+				P_next = P-delta_P
+				h_next = h
+				Piping[sec_num+1]['fluid'].update({'P':P_next, 'h':h_next})
+			else:
+				delta_P.display_unit = 'psi'
+				raise BaseException ('Pressure drop {:.3} is greater than input pressure {:.3}! '.format(delta_P, P))
+		else:
+			P_out = P-delta_P
+			Delta_P = P_in - P_out
+			Delta_P.display_unit = 'psi'
+
+	# print("Pressure drop for the piping is {:g}.".format(Delta_P))
+	# if Delta_P/P_set <= 0.03:
+	# 	dP_negligible = True
+	# else:
+	# 	dP_negligible = False
+	# 	print ('Delta_p/P_fr > 3%, additional consideration required')
+	return Delta_P
 
 
 
@@ -338,8 +397,16 @@ def make_sections(Piping, Section_start):
 		end = ind
 		Sections.append(Piping[start:end])
 		start = ind
-	Sections.append(Piping[start: -1])
+	Sections.append(Piping[start:])
 	return Sections
+
+
+
+
+
+
+
+
 
 
 
@@ -354,7 +421,18 @@ if __name__ == "__main__":
 
 	Test_pipe = {'D_nom':1, 'SCH':10}
 
-	print("Here is a dimensionless Reynolds number for 10^-3 kg/s of standard air in 1 in SCH 10 pipe: {:g}. The pipe is stainless if you want to know.".format(Re()))
+	print("Here is a dimensionless Reynolds number for 0.01 kg/s of standard air in 1 in SCH 10 pipe: {:g}. The pipe is stainless if you want to know.".format(Re()))
 	print("Pressure drop for 10 ft pipe would be {:g}, while for corrugated hose would 4 times bigger: {:g}".format (dp_pipe(), dp_pipe(Pipe = {'Corrugated':True, 'D_nom':1, 'SCH':10, 'L':10*ft})))
 	print ("And for a 90 deg elbow, pressure drop is {:g}.".format(dp_elbow()))
+
+	Piping = [{'D_nom':1, 
+			'SCH':10,
+			'L':10*ft,
+			'VJ':2.5,
+			'Orientation':'Vertical', 
+			'Corrugated':False, #Corrugated or straight
+			'fluid': {'fluid':'air', 'P':101325*Pa, 'T':38*degC}
+			},
+			]
+	print ("Flow for pressure drop for the straight pipe above: {:g}".format(calculate_flow(Piping, P_in=0.0482788*psig)))
 
