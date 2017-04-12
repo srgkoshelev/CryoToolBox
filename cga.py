@@ -42,10 +42,7 @@ def Q_vac (Pipe, External, P_fr):
 	Based on CGA S-1.3 2008 6.2.2. F = 1.
 
 	"""
-	fluid = Pipe['fluid']['fluid']
-	prop = rp.setup('def', fluid)
-	x = prop.get('x', [1])
-	M = rp.wmol(x)['wmix']*g/mol
+	(x, M, D_fluid) = rp_init(Pipe['fluid'])
 	P = Pipe['fluid']['P']
 	P_crit = rp.critp(x)['pcrit']*kPa #Critical pressure 
 	T = Pipe['fluid']['T']
@@ -99,15 +96,12 @@ def Q_air (Pipe, External, P_fr): #Required relief capacity due to air condensat
 	Diam = OD(Pipe)
 	L = Pipe['L']
 
-	fluid = Pipe['fluid']['fluid']
-	prop = rp.setup('def', fluid)
-	x = prop.get('x', [1])
-	M = rp.wmol(x)['wmix']*g/mol
+	(x, M, D_fluid) = rp_init(Pipe['fluid'])
 	P = Pipe['fluid']['P']
 	P_crit = rp.critp(x)['pcrit']*kPa #Critical pressure; 
 	T = Pipe['fluid']['T']
 
-	C_coef = 356*(K**0.5*kg/m**3)
+	C_coef = C_gas_flow(Pipe['fluid'])
 	if P <= P_crit:
 		D_vap = rp.satp(P_fr/kPa, x)['Dvap']*mol/L
 		Z = rp.therm2(T/K, D_vap/(mol/L), x)['Z'] #Compressibility factor
@@ -140,6 +134,9 @@ def Q_air (Pipe, External, P_fr): #Required relief capacity due to air condensat
 
 
 def to_scfma (M_dot, Fluid_data):
+	"""
+	Convert fluid mass flow into SCFM of air
+	"""
 	(x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
 	T_fluid = Fluid_data['T']
 	Z_fluid = rp.therm2(T_fluid/K, D_fluid/(mol/L), x_fluid)['Z'] #Compressibility factor
@@ -147,11 +144,14 @@ def to_scfma (M_dot, Fluid_data):
 	(x_air, M_air, D_air) = rp_init(Air)
 	T_air = Air['T']
 	Z_air = rp.therm2(T_air/K, D_air/(mol/L), x_air)['Z'] #Compressibility factor
-	Q_air =  M_dot/(D_air*M_air)*(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
+	Q_air =  M_dot*C_gas_flow(Air)/(D_air*M_air*C_gas_flow(Fluid_data))*(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
 	Q_air.display_unit = 'ft3/min'
 	return Q_air
 
 def from_scfma (Q_air, Fluid_data):
+	"""
+	Convert SCFM of air into mass flow of specified fluid
+	"""
 	(x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
 	T_fluid = Fluid_data['T']
 	Z_fluid = rp.therm2(T_fluid/K, D_fluid/(mol/L), x_fluid)['Z'] #Compressibility factor
@@ -159,6 +159,32 @@ def from_scfma (Q_air, Fluid_data):
 	(x_air, M_air, D_air) = rp_init(Air)
 	T_air = Air['T']
 	Z_air = rp.therm2(T_air/K, D_air/(mol/L), x_air)['Z'] #Compressibility factor
-	M_dot =  Q_air*(D_air*M_air)/(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
+	M_dot =  Q_air/(C_gas_flow(Air))*(D_air*M_air*C_gas_flow(Fluid_data))/(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
 	M_dot.display_unit = 'kg/s'
 	return M_dot
+
+
+def C_gas_flow (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+	"""
+	Calculate gas flow coefficient C based on Cp/Cv. 
+	"""
+	T_fluid = Fluid_data['T']
+	(x, M, D_fluid) = rp_init(Fluid_data)
+	Cp = rp.therm0(T_fluid/K, D_fluid/(mol/L), x)['cp']
+	Cv = rp.therm0(T_fluid/K, D_fluid/(mol/L), x)['cv']
+	k = Cp/Cv
+	return (122.67*log(k)+314.93)*(K**0.5*kg/m**3) #Equation fitted by SK from table by Fike TB8102
+
+def make_sections(Piping, Section_start):
+	"""
+	Separate Piping into independent sections for relief capacity calculation
+	"""
+	Sections = []
+	for i, ind in enumerate(Section_start):
+		if i == 0:
+			start = 0
+		end = ind
+		Sections.append(Piping[start:end])
+		start = ind
+	Sections.append(Piping[start:])
+	return Sections

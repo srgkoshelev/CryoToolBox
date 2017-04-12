@@ -106,18 +106,21 @@ NPS_raw = [{'NPS': 0.125,
 
 NPS_table = {}
 for el in NPS_raw:
-	NPS_table.update({el['NPS']:[el['OD']*inch, el[5]*inch, el[10]*inch, el[30]*inch, el[40]*inch, el[80]*inch, ]})
-sch_to_ind = {5:1, 10:2, 20:3, 30:3, 40:4, 80:5}
+	NPS_table.update({el['NPS']:{'OD':el['OD']*inch, 5:el[5]*inch, 10:el[10]*inch, 20:el[30]*inch, 30:el[30]*inch, 40:el[40]*inch, 80:el[80]*inch, }})
+
 
 
 def OD(Pipe):
+	"""
+	Return OD of the Pipe element based on NPS table
+	"""
 	if 'OD' in Pipe:
 		return Pipe['OD']
 
 	D_nom = Pipe['D_nom']
 	piping_type = Pipe.get('type', 'pipe')
-	if piping_type == 'pipe':
-		OD_pipe = NPS_table[D_nom][0]
+	if piping_type == 'pipe' or piping_type == 'NPS':
+		OD_pipe = NPS_table[D_nom]['OD']
 		Pipe.update({'OD':OD_pipe})
 		return OD_pipe
 	elif piping_type == 'tube':
@@ -129,17 +132,22 @@ def OD(Pipe):
 
 
 def wall(Pipe):
+	"""
+	Return wall thickness of Pipe element based on NPS table
+	"""
 	if 'wall' in Pipe:
 		return Pipe['wall']
 	else:
 		SCH = Pipe['SCH']
 		D_nom = Pipe['D_nom']
-		index = sch_to_ind[SCH]
-		wall_thick = NPS_table[D_nom][index]
+		wall_thick = NPS_table[D_nom][SCH]
 		Pipe.update({'wall':wall_thick})
 	return wall_thick
 
 def ID(Pipe):
+	"""
+	Return ID of the Pipe element based on NPS table
+	"""
 	if 'ID' in Pipe:
 		return Pipe['ID']
 	else:
@@ -148,9 +156,11 @@ def ID(Pipe):
 		return ID_pipe
 
 
-
-#Auxillary functions
 def make_surface (Pipe, method = 'OD'):
+	"""
+	Make surface element for convection heat load calculation.
+	Method determines which surface is considered. Orientation changes which dimension should be used for Nu  calculation. 
+	"""
 	T = Pipe['fluid']['T']
 	if method == 'OD':
 		Diam = OD(Pipe)
@@ -169,14 +179,18 @@ def make_surface (Pipe, method = 'OD'):
 
 
 def VJOD(Pipe):
+	"""
+	Return OD of Vacuum Jacket pipe (NPS)
+	"""
 	Jacket = {'D_nom':Pipe.get('VJ'), 'SCH':Pipe.get('VJSCH', 10)}
 	return OD(Jacket)
 
 
-
 #Hydraulic functions
 def Re (M_dot = 0.01*kg/s, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Dim = 1.097*inch):
-	#Calculate reynolds number for internal flow inside the pipe size of Dim. The mass flow and Fluid_data are required.
+	"""
+	Calculate Reynolds number for internal flow inside the pipe size of Dim.
+	"""
 	fluid = Fluid_data['fluid']
 	T_fluid = Fluid_data['T']
 	P_fluid = Fluid_data['P']
@@ -193,10 +207,12 @@ def Re (M_dot = 0.01*kg/s, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*de
 	return w_flow*d*rho_fluid/mu_fluid
 
 
-
 #Pressure drops for different configurations of piping
 
 def f_friction(M_dot = 0.01*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+	"""
+	Calculate friction coefficient for pressure drop calculation. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+	"""
 	Reynolds = Re(M_dot, Fluid_data, ID(Pipe))
 	if corrugated(Pipe):
 		mult = 4 #Using 4x multiplicator compared to straight pipe
@@ -211,16 +227,15 @@ def f_friction(M_dot = 0.01*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid
 		return max (64/Reynolds*mult, 1/(1.8*log10(Reynolds)-1.64)**2*mult)
 	
 
-
 def dp_pipe (M_dot = 0.01*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+	"""
+	Calculate pressure drop for a straight Pipe element. Works with hard pipe and corrugated hose (4x coefficient used). Calculation is based on Crane TP-410.
+	"""
 	fluid = Fluid_data['fluid']
 	T_fluid = Fluid_data['T']
 	P_fluid = Fluid_data['P']
 
 	ID_pipe = ID(Pipe)
-	# print ('\n\n\n\n')
-	# print (ID_pipe)
-	# print ('\n\n\n\n')
 	L_pipe = Pipe['L']
 
 	(x, M, D_fluid) = rp_init(Fluid_data)
@@ -237,11 +252,12 @@ def dp_pipe (M_dot = 0.01*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_d
 
 	if delta_P/P_fluid < 0.1:
 		return delta_P
-	elif delta_P/P_fluid < 0.4:
+	elif delta_P/P_fluid < 0.4: #If pressure drop above 10% of input pressure, recalculating for average density
+		D_fluid_in = D_fluid
 		P_fluid_out = P_fluid - delta_P
-		fluid_prop = rp.flsh ("TP", T_fluid/K, P_fluid_out/kPa, x)
-		D_fluid = fluid_prop['Dvap']*mol/L #currently supporting only vapor phase
-		rho_fluid = D_fluid*M
+		fluid_prop_out = rp.flsh ("TP", T_fluid/K, P_fluid_out/kPa, x)
+		D_fluid_out = fluid_prop_out['Dvap']*mol/L #currently supporting only vapor phase
+		rho_fluid = (D_fluid_in+D_fluid_out)/2*M
 		w_flow = M_dot/(rho_fluid*A)
 		f = f_friction(M_dot, Pipe, Fluid_data)
 		delta_P = rho_fluid*f*L_pipe*w_flow**2/(2*ID_pipe)
@@ -252,10 +268,15 @@ def dp_pipe (M_dot = 0.01*kg/s, Pipe = {'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_d
 
 
 def corrugated (Pipe = {'Corrugated':True}):
-	#Determines whether piping is corrugated
+	"""
+	Determines whether piping is corrugated
+	"""
 	return Pipe.get('Corrugated', False)
 
 def dp_elbow (M_dot = 0.01*kg/s, Elbow = {'R/D':1, 'D_nom':1, 'SCH':10, 'L':10*ft}, Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
+	"""
+	Pressure drop in an elbow fitting. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+	"""
 		
 	delta = Elbow.get('Angle', 90*deg)
 	if delta <= 70*deg:
@@ -314,21 +335,27 @@ def derivative(f, x, h):
 def solve(f, x0, h):
 	lastX = x0
 	nextX = lastX + 10* h  # different than lastX so loop starts OK
+	i = 0
+	i_max = 10
 	while (abs(lastX - nextX) > h): 
 		newY = f(nextX)                     
 		# print ("f(", nextX, ") = ", newY)     # print out progress... again just debug
 		lastX = nextX
 		nextX = lastX - newY / derivative(f, lastX, h)  # update estimate using N-R
+		i += 1
+		if i > i_max:
+			raise BaseException ("To many cycles! Possible instability.")
 	return nextX
 
 def flow_solve (f, x0, step = 1e-3*kg/s):
+	"""
+	Simpe iteration-based solver, backup if Newton solver fails.
+	"""
 	X = x0
 	while f(X) < -0.5*psi:
 		X += step
-		print (X, f(X))
+		# print (X, f(X))
 	return X
-
-
 
 
 def calculate_flow(Piping, P_in=1e-3*psig, P_out=0*psig, M_dot_0 = 1e-3*kg/s, M_step = 0.001*kg/s):
@@ -341,12 +368,11 @@ def calculate_flow(Piping, P_in=1e-3*psig, P_out=0*psig, M_dot_0 = 1e-3*kg/s, M_
 		return flow_solve(to_solve, M_dot_0, M_step)
 
 
-
-
 def dP_piping(M_dot, Piping):
-	'''Calculate pressure drop for whole piping; fluid properties should be already initialized for this to work.
+	"""
+	Calculate pressure drop for whole piping; fluid properties should be already initialized for this to work.
 	Enthalpy is assumed constant. Each two straight pipes are connected by an elbow.
-	'''
+	"""
 	(x, M, D_fluid) = rp_init(Piping[0]['fluid'])
 	P_in = Piping[0]['fluid']['P']
 	for sec_num, Pipe in enumerate (Piping):
@@ -378,36 +404,7 @@ def dP_piping(M_dot, Piping):
 			Delta_P = P_in - P_out
 			Delta_P.display_unit = 'psi'
 
-	# print("Pressure drop for the piping is {:g}.".format(Delta_P))
-	# if Delta_P/P_set <= 0.03:
-	# 	dP_negligible = True
-	# else:
-	# 	dP_negligible = False
-	# 	print ('Delta_p/P_fr > 3%, additional consideration required')
 	return Delta_P
-
-
-
-
-def make_sections(Piping, Section_start):
-	Sections = []
-	for i, ind in enumerate(Section_start):
-		if i == 0:
-			start = 0
-		end = ind
-		Sections.append(Piping[start:end])
-		start = ind
-	Sections.append(Piping[start:])
-	return Sections
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":

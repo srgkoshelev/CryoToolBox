@@ -8,7 +8,8 @@ from natu.units import kPa, uPa, kJ
 
 
 def rp_init (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
-	"""Shortcut initialization of refprop
+	"""
+	Shortcut initialization of refprop
 	Returns (x, M, D_fluid)
 	"""
 	fluid = Fluid_data['fluid']
@@ -23,7 +24,8 @@ def rp_init (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
 
 
 def Pr (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
-	"""Calculate Prandtl number for given fluid
+	"""
+	Calculate Prandtl number for given fluid
 	Properties of fluid are obtained from Refprop package
 	Units are handled by natu package
 	"""
@@ -39,7 +41,8 @@ def Pr (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}):
 	return Pr
 
 def Gr (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data = {'Dim':1.315*inch, 'T':100*K}):
-	"""Calculate Grashof number for given fluid and surface
+	"""
+	Calculate Grashof number for given fluid and surface
 	Properties of fluid are obtained from Refprop package
 	Units are handled by natu package
 	"""
@@ -58,14 +61,16 @@ def Gr (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data =
 	return Gr
 
 def Ra (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data = {'Dim':1.315*inch, 'T':100*K}):
-	"""Calculate Rayleigh number for given fluid and surface
+	"""
+	Calculate Rayleigh number for given fluid and surface
 	Properties of fluid are obtained from Refprop package
 	Units are handled by natu package
 	"""
 	return 	Gr(Fluid_data, Surface_data)*Pr(Fluid_data) 
 
 def heat_trans_coef (k_fluid = 0.02647*W/(m*K), Nu = 4, Dim = 1.315*inch, Case = {'convection':'free', 'body':'cyl_hor'}):
-	"""Calculate heat transfer coefficient for Nu routine
+	"""
+	Calculate heat transfer coefficient for Nu routine
 	Cases like external flow and pipe inside a pipe have different equations for Nu number - to be implemented
 	"""
 	h = k_fluid*Nu/Dim #convective heat transfer coefficient
@@ -74,7 +79,8 @@ def heat_trans_coef (k_fluid = 0.02647*W/(m*K), Nu = 4, Dim = 1.315*inch, Case =
 
 
 def Nu (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data = {'Dim':10*ft, 'T':100*K, 'Dim_sec':1.315*inch}, Case = {'convection':'free', 'body':'cyl_hor'}):
-	"""Calculate Nusselt number for given Fluid/Surface and specific case.
+	"""
+	Calculate Nusselt number for given Fluid/Surface and specific case.
 	Only natural convection currently supported.
 	Properties of fluid are obtained from Refprop package
 	Units are handled by natu package
@@ -127,7 +133,8 @@ def Nu (Fluid_data = {'fluid':'air', 'P':101325*Pa, 'T':38*degC}, Surface_data =
 
 
 def rad_hl (eps_cold = 0.55, eps_hot = 0.55, T_hot = 300*K, T_cold = 77*K, F1_2 = 1, eps_baffle = 0.02, N_baffles = 5):
-	"""Calculate radiative heat load including reduction due to baffles
+	"""
+	Calculate radiative heat load including reduction due to baffles
 	Based on Kaganer "Thermal insulation in cryogenic engineering", p. 42.
 	F1_2 = F_cold/F_hot
 	"""
