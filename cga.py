@@ -133,7 +133,7 @@ def Q_air (Pipe, External, P_fr): #Required relief capacity due to air condensat
 	return Q_a
 
 
-def to_scfma (M_dot, Fluid_data):
+def to_scfma (M_dot, Fluid_data = {'fluid':'Nitrogen', 'P':101325*Pa, 'T':38*degC}):
 	"""
 	Convert fluid mass flow into SCFM of air
 	"""
@@ -148,7 +148,7 @@ def to_scfma (M_dot, Fluid_data):
 	Q_air.display_unit = 'ft3/min'
 	return Q_air
 
-def from_scfma (Q_air, Fluid_data):
+def from_scfma (Q_air, Fluid_data = {'fluid':'Nitrogen', 'P':101325*Pa, 'T':38*degC}):
 	"""
 	Convert SCFM of air into mass flow of specified fluid
 	"""
@@ -188,3 +188,9 @@ def make_sections(Piping, Section_start):
 		start = ind
 	Sections.append(Piping[start:])
 	return Sections
+
+
+
+if __name__ == "__main__":
+	print ("100 SCFM of air is equivalent to {:.3g} of Nitrogen flow for P = 1 atm and T = 38 C.".format(from_scfma(100*ft**3/min)))
+	print ("CGA S-1.3 Formula from 6.1.4 a) gives 0.0547 kg/s for the same air capacity.")
