@@ -125,7 +125,7 @@ def OD(Pipe):
         if 'OD' in Pipe:
                 return Pipe['OD']
 
-        D_nom = Pipe['D_nom']
+        D_nom = D_pipe(Pipe)
         piping_type = Pipe.get('type', 'pipe')
         if piping_type == 'pipe' or piping_type == 'NPS':
                 OD_pipe = NPS_table[D_nom]['OD']
@@ -147,7 +147,7 @@ def wall(Pipe):
                 return Pipe['wall']
         else:
                 SCH = Pipe['SCH']
-                D_nom = Pipe['D_nom']
+                D_nom = D_pipe(Pipe)
                 wall_thick = NPS_table[D_nom][SCH]
                 Pipe.update({'wall':wall_thick})
         return wall_thick
@@ -162,6 +162,12 @@ def ID(Pipe):
                 ID_pipe = OD(Pipe) - 2*wall(Pipe)
                 Pipe.update({'ID':ID_pipe})
                 return ID_pipe
+
+def D_pipe(Pipe):
+    Diam = Pipe.get('D_nom') or Pipe.get('OD') or Pipe.get('ID')
+    if type(Diam) == type (Q_(1, ureg.m)):
+        Diam = Diam.to(ureg.inch).magnitude
+    return Diam
 
 def Area(Pipe):
     """
