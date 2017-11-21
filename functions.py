@@ -128,7 +128,7 @@ def rp_init (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg
         M = rp.wmol(x)['wmix']*ureg('g/mol')
         if T_fluid and P_fluid:
             fluid_prop = flsh ("TP", T_fluid, P_fluid, x)
-            D_fluid = fluid_prop['Dvap'] #currently supporting only vapor phase
+            D_fluid = fluid_prop['D'] 
             return (x, M, D_fluid)
         else: 
             return (x, M)
@@ -255,5 +255,5 @@ if __name__ == "__main__":
         print (gamma())
         print (rp_init({'fluid':'helium', 'T':Q_(20,ureg.degC), 'P':Q_(101325, ureg.Pa)}))
         print (rp_init({'fluid':'helium', 'T':Q_(4.2,ureg.K), 'P':Q_(101325, ureg.Pa)}))
-        print (satp(Q_(101325, ureg.Pa), [1])['Dliq']*ureg('mol/L'))
+        print (satp(Q_(101325, ureg.Pa), [1])['t']*ureg.K)
 

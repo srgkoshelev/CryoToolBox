@@ -110,11 +110,61 @@ NPS_raw = [{'NPS': 0.125,
                 40:  0.226,
                 80:  0.318,
                 },
+                {'NPS': 4,
+                'OD': 4.5,
+                5:  0.083,
+                10:  0.120,
+                30:  0.188,
+                40:  0.237,
+                80:  0.337,
+                },
+                {'NPS': 4.5,
+                'OD': 5.0,
+                40:  0.247,
+                80:  0.355,
+                },
+                {'NPS': 5,
+                'OD': 5.563,
+                5:  0.109,
+                10:  0.134,
+                40:  0.258,
+                80:  0.375,
+                },
+                {'NPS': 6,
+                'OD': 6.625,
+                5:  0.109,
+                10:  0.134,
+                40:  0.280,
+                80:  0.432,
+                },
+                {'NPS': 7,
+                'OD': 7.625,
+                40:  0.301,
+                80:  0.500,
+                },
+                {'NPS': 8,
+                'OD': 8.625,
+                5:  0.109,
+                10:  0.148,
+                40:  0.322,
+                80:  0.500,
+                },
+                {'NPS': 9,
+                'OD': 9.625,
+                40:  0.342,
+                80:  0.500,
+                },
         ]
 
 NPS_table = {}
 for el in NPS_raw:
-        NPS_table.update({el['NPS']:{'OD':el['OD']*ureg.inch, 5:el[5]*ureg.inch, 10:el[10]*ureg.inch, 20:el[30]*ureg.inch, 30:el[30]*ureg.inch, 40:el[40]*ureg.inch, 80:el[80]*ureg.inch, }})
+        Walls = {'OD':el['OD']*ureg.inch}
+        for sch in [5, 10, 20, 30, 40, 80]:
+            if el.get(sch):
+                Walls.update({sch:el[sch]*ureg.inch})
+        NPS_table.update({el['NPS']:Walls})
+
+        #NPS_table.update({el['NPS']:{'OD':el['OD']*ureg.inch, 5:el[5]*ureg.inch, 10:el[10]*ureg.inch, 20:el[30]*ureg.inch, 30:el[30]*ureg.inch, 40:el[40]*ureg.inch, 80:el[80]*ureg.inch, }})
 
 
 
@@ -148,7 +198,7 @@ def wall(Pipe):
         else:
                 SCH = Pipe['SCH']
                 D_nom = D_pipe(Pipe)
-                wall_thick = NPS_table[D_nom][SCH]
+                wall_thick = NPS_table[D_nom].get(SCH)
                 Pipe.update({'wall':wall_thick})
         return wall_thick
 
@@ -431,8 +481,8 @@ def dP_piping(M_dot, Piping):
 if __name__ == "__main__":
         print("Testing piping module...")
         print ("D_nom    OD    SCH    wall")
-        for D in [.125, .25, .375, .5, .75, 1, 1.125, 1.5, 2, 2.5, 3, 3.5]:
-                for sch in [5, 10, 20, 40, 80]:
+        for D in [.125, .25, .375, .5, .75, 1, 1.125, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9]:
+                for sch in [5, 10, 30, 40, 80]:
                         Pipe = {'D_nom':D, 'SCH':sch}
                         print (D, OD(Pipe), sch, wall(Pipe))
 
