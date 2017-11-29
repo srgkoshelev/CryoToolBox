@@ -314,12 +314,12 @@ def dp_pipe (M_dot = 0.01*ureg('kg/s'), Pipe = {'D_nom':1, 'SCH':10, 'L':10*ureg
 
         A = Area(Pipe)
         w_flow = M_dot/(rho_fluid*A)
-        w_flow.display_unit = 'm/s'
+        w_flow.ito(ureg.m/ureg.s)
 
         f = f_friction(M_dot, Pipe, Fluid_data)
 
         delta_P = rho_fluid*f*L_pipe*w_flow**2/(2*ID_pipe)
-        delta_P.display_unit = 'psi'
+        delta_P.ito(ureg.psi)
 
         if delta_P/P_fluid < 0.1:
                 return delta_P
@@ -332,7 +332,7 @@ def dp_pipe (M_dot = 0.01*ureg('kg/s'), Pipe = {'D_nom':1, 'SCH':10, 'L':10*ureg
                 w_flow = M_dot/(rho_fluid*A)
                 f = f_friction(M_dot, Pipe, Fluid_data)
                 delta_P = rho_fluid*f*L_pipe*w_flow**2/(2*ID_pipe)
-                delta_P.display_unit = 'psi'
+                delta_P.ito(ureg.psi)
                 return delta_P
         else:
                 raise BaseException ('Pressure drop is {:.0%} which is greater than 40% recommended by Crane TP-410. Consider separating pipeline into sections.'.format(delta_P/P_fluid))
@@ -468,12 +468,12 @@ def dP_piping(M_dot, Piping):
                                 h_next = h
                                 Piping[sec_num+1]['fluid'].update({'P':P_next, 'h':h_next})
                         else:
-                                delta_P.display_unit = 'psi'
+                                delta_P.ito(ureg.psi)
                                 raise BaseException ('Pressure drop {:.3} is greater than input pressure {:.3}! '.format(delta_P, P))
                 else:
                         P_out = P-delta_P
                         Delta_P = P_in - P_out
-                        Delta_P.display_unit = 'psi'
+                        Delta_P.ito(ureg.psi)
 
         return Delta_P
 
