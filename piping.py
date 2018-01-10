@@ -1,6 +1,4 @@
 #python3
-#from natu.units import *
-#from natu.units import kureg.Pa, uureg.Pa, kJ
 from math import pi, log10, sin, log
 from pyrefprop import refprop as rp
 import logging
@@ -18,7 +16,6 @@ class Pipe:
         self.D = D_nom #Nominal diameter
         self.SCH = SCH
         self.L = L
-        self.corrugated = False
 
     def OD(self):
             """
@@ -29,10 +26,6 @@ class Pipe:
             except AttributeError:
                 self._OD_ = NPS_table[self.D]['OD']
                 return self._OD_
-#            elif piping_type == 'tube':
-#                    OD_pipe = D_nom*ureg.inch
-#                    Pipe.update({'OD':OD_pipe})
-#                    return OD_pipe
 
     def wall(self):
             """
@@ -58,7 +51,11 @@ class Pipe:
         """
         Calculate cross sectional area of pipe
         """
-        return pi*self.ID()**2/4
+        try:
+            return self._Area_
+        except AttributeError:
+            self._Area_ = pi*self.ID()**2/4
+        return self._Area_
 
     def f_T(self):
         '''
@@ -66,12 +63,16 @@ class Pipe:
         Fitted logarithmic function to data from A-25.
         '''
         if self.ID()<0.2*ureg.inch or self.ID()>48*ureg.inch:
-            input('WARNING: Tabulated friction data is given for ID = 1/2..24 inch, given {.2~}'.format(self.ID()))
+            input('WARNING: Tabulated friction data is given for ID = 0.2..48 inch, given {.2~}'.format(self.ID()))
         ln_ID = log(self.ID().to(ureg.inch).magnitude)
         return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev
 
     def K(self):
-        return self.f_T()*self.L/self.ID()
+        try:
+            return self._K_
+        except AttributeError:
+            self._K_ = self.f_T()*self.L/self.ID()
+            return self._K_
     #TODO Implement more accurate method of friction factor estimation
 
 
@@ -122,10 +123,9 @@ class Corrugated_Pipe(Pipe):
 class Openning (Pipe):
     def __init__ (self, ID):
         self._ID_ = ID
-        self.corrugated = False
 
     def K(self):
-        return 1*ureg.dimensionless #For piping end
+        return 1 #For piping end
 
 class Tube (Pipe):
     def __init__(self, OD, wall, L=0*ureg.m):
@@ -133,7 +133,6 @@ class Tube (Pipe):
         self.D = OD.to(ureg.inch).magnitude
         self._wall_ = wall
         self.L = L
-        self.corrugated = False
 
 
 class Piping (list):
@@ -180,9 +179,6 @@ class Piping (list):
             w = A*(rho/(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5 #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6
         else:
             logger.warning('Sonic flow developed. Consider reducing massflow: {:.3~}'.format(m_dot))
-
-
-
 
     def m_dot(self, P_out=0*ureg.psig):
         '''
@@ -233,46 +229,19 @@ def f_friction(M_dot, pipe, Fluid_data):
         Calculate friction coefficient for pressure drop calculation. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
         """
         Re_num = Re(M_dot, Fluid_data, pipe.ID())
-        if pipe.corrugated:
+        mult = 1 #Default value for multiplier
+        try:
+            if pipe.corrugated:
                 mult = 4 #Using 4x multiplicator compared to straight pipe
-        else:
-                mult = 1
+        except Exception:
+            pass
         if Re_num < 2000:
-                return 64/Re_num*mult
+            return 64/Re_num*mult
         elif Re_num > 4000:
-                return 1/(1.8*log10(Re_num)-1.64)**2*mult
+            return 1/(1.8*log10(Re_num)-1.64)**2*mult
         else:
-                # print ("Warning: Re = {:g}, transition flow. Maximum value between pure laminar or pure turbulent flow will be used".format(Reynolds))
-                return max(64/Re_num*mult, 1/(1.8*log10(Re_num)-1.64)**2*mult)
+            return max(64/Re_num*mult, 1/(1.8*log10(Re_num)-1.64)**2*mult)
         
-
-def dP_pipe (M_dot, Pipe, Fluid_data={'fluid':'air', 'P':101325*ureg.Pa, 'T':Q_(38, ureg.degC)}):
-        """
-        Calculate pressure drop for a straight Pipe element. Works with hard pipe and corrugated hose (4x coefficient used). Calculation is based on Crane TP-410.
-        """
-        fluid, T_fluid, P_fluid = unpack_fluid(Fluid_data)
-        x, M, D_fluid = rp_init(Fluid_data)
-        rho_fluid = D_fluid*M
-
-        w_flow = M_dot/(rho_fluid*Pipe.Area())
-        f = f_friction(M_dot, Pipe, Fluid_data)
-        K = f*Pipe.L/Pipe.ID()
-
-        delta_P = dP_darcy(K, rho_fluid, w_flow)
-
-        if delta_P/P_fluid < 0.1:
-                return delta_P
-        elif delta_P/P_fluid < 0.4: #If pressure drop above 10% of input pressure, recalculating for average density
-                D_in = D_fluid
-                P_fluid_out = P_fluid - delta_P
-                D_out = rp.flsh ("TP", T_fluid, P_fluid_out, x)['D']
-                rho_fluid = (D_in+D_out)/2*M
-                w_flow = M_dot/(rho_fluid*Pipe.Area())
-                delta_P = dP_darcy(K, rho_fluid, w_flow)
-                return delta_P
-        else:
-                raise BaseException ('Pressure drop is {:.0%} which is greater than 40% recommended by Crane TP-410. Consider separating pipeline into sections.'.format(delta_P/P_fluid))
-
 def dP_darcy (K, rho, w):
     '''
     Darcy equation for pressure drop.
@@ -282,16 +251,6 @@ def dP_darcy (K, rho, w):
     '''
     d_P = K*rho*w**2/2
     return d_P.to(ureg.psi)
-
-def dP_openning (M_dot, openning, Fluid_data):
-    '''
-    Calculate pressure drop through the openning
-    '''
-    x, M, D_fluid = rp_init(Fluid_data)
-    rho = D_fluid*M
-    w = M_dot/(rho*openning.Area())
-    K = openning.K
-    return dP (K, rho, w)
 
 
 #def dp_elbow (M_dot = 0.01*ureg('kg/s'), Elbow = {'R/D':1, 'D_nom':1, 'SCH':10, 'L':10*ureg.ft}, Fluid_data = {'fluid':'air', 'P':101325*ureg.Pa, 'T':Q_(38, ureg.degC)}):
@@ -346,100 +305,4 @@ def dP_openning (M_dot, openning, Fluid_data):
 #        delta_P_frict = dP_pipe (M_dot, Elbow, Fluid_data)
 #
 #        return delta_P_frict+delta_P_local
-
-
-#Simple solver for calculating flow
-def derivative(f, x, h):
-                return (f(x+h) - f(x-h)) / (2*h)  # might want to return a small non-zero if ==0
-
-
-def solve(f, x0, h):
-        lastX = x0
-        nextX = lastX + 10* h  # different than lastX so loop starts OK
-        i = 0
-        i_max = 100
-        while (abs(lastX - nextX) > h): 
-            print (nextX)
-            try:
-                newY = f(nextX)                     
-                print ("f(", nextX, ") = ", newY)     # print out progress... again just debug
-                lastX = nextX
-                nextX = lastX - newY / derivative(f, lastX, h)  # update estimate using N-R
-                #i += 1
-                #if i > i_max:
-                #        raise BaseException ("To many cycles! Possible instability.")
-            except:
-                nextX *= 0.9
-        return nextX
-
-def flow_solve (f, x0, step):
-        """
-        Simpe iteration-based solver, backup if Newton solver fails.
-        """
-        X = x0
-        while f(X) < -0.5*ureg.psi:
-                X += step
-                print (X, f(X))
-        return X
-
-
-def calculate_flow(piping, P_in, P_out=0*ureg.psig, M_dot_0 = 1*ureg('g/s'), M_step = 0.1*ureg('g/s')):
-        def to_solve (M_dot):
-                return dP_piping(M_dot, piping)-(P_in-P_out)
-        return solve(to_solve, M_dot_0, M_step)
-
-        #try:
-        #except BaseException:
-        #return flow_solve(to_solve, M_dot_0, M_step)
-
-
-def dP_piping(M_dot, piping):
-    """
-    Calculate pressure drop for whole piping.
-    Enthalpy is assumed constant (case of adiabatic flow with no work).
-    """
-    (x, M, D_fluid) = rp_init(piping[0].fdata)
-    fluid, T0, P0 = unpack_fluid(piping[0].fdata)
-    piping[0].fdata['h'] = flsh('TP',T0, P0, x)['h']
-    for sec_num, Section in enumerate (piping):
-        try:
-            delta_P = dP_pipe(M_dot, Section, Section.fdata)
-        except AttributeError:
-            delta_P = dP_orifice(M_dot, Section, Section.fdata)
-        P_next = Section.fdata['P'] - delta_P
-#        if P_next < 0*ureg.psi:
-#            raise BaseException ('Pressure drop {:.3} is greater than input pressure {:.3} for flow {:.3}! '.format(delta_P, Section.fdata['P'], M_dot))
-        h_next = Section.fdata['h']
-        T_next = flsh('PH',P_next, h_next, x)['t']
-        try:
-            piping[sec_num+1].fdata = {'fluid':fluid, 'T':T_next, 'P':P_next, 'h':h_next}
-        except IndexError:
-            Delta_P = piping[0].fdata['P'] - P_next
-            return Delta_P.to(ureg.psi)
-        #TODO return auto-elbow (if needed) calculation
-
-
-#if __name__ == "__main__":
-#        print("Testing piping module...")
-##        print ("D_nom    OD    SCH    wall")
-##        for D in [.125, .25, .375, .5, .75, 1, 1.125, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9]:
-##                for sch in [5, 10, 30, 40, 80]:
-##                        Test_pipe = Pipe(D, sch)
-##                        print (D, Test_pipe.OD(), sch, Test_pipe.wall())
-#
-#        Test_pipe = Pipe(1, 10, 1*ureg.ft)
-#        Test_pipe_corr = Corrugated_Pipe(1,10, 1*ureg.ft)
-#        M_test = Q_(10, ureg.g/ureg.s)
-#        Fluid = {'fluid':'air', 'P':101325*ureg.Pa, 'T':Q_(38, ureg.degC)}
-#
-#        print("Here is a dimensionless Reynolds number for 0.01 kg/s of standard air in 1 in SCH 10 pipe: {:g}.".format(Re()))
-#        print("Pressure drop for 1 ft pipe would be {:.4~}, while for corrugated hose would 4 times bigger: {:.3~}".format (dP_pipe(M_test, Test_pipe, Fluid), dP_pipe(M_test, Test_pipe_corr, Fluid)))
-#        #print ("And for a 90 deg elbow, pressure drop is {:g}.".format(dp_elbow()))
-#
-#        Test_piping = Piping(Test_pipe, Fluid)
-#        print ("Flow for pressure drop for the straight pipe above: {:.3~}".format(calculate_flow(Test_piping, P_in=0.004828*ureg.psig)))
-#        Test_orifice = Orifice(100*ureg.mm)
-#        print("Pressure drop through 10 mm diameter orifice for the same flow will be {:.3~}".format (dP_orifice(M_test, Test_orifice, Fluid)))
-#        Test_piping.add(Test_orifice)
-#        print ('Pressure drop through pipe + orifice fo 10 g/s: {:.3~}'.format(dP_piping(M_test, Test_piping)))
 
