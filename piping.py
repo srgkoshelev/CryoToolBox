@@ -233,7 +233,7 @@ def f_friction(M_dot, pipe, Fluid_data):
         try:
             if pipe.corrugated:
                 mult = 4 #Using 4x multiplicator compared to straight pipe
-        except Exception:
+        except AttributeError:
             pass
         if Re_num < 2000:
             return 64/Re_num*mult
