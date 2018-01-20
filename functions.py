@@ -5,9 +5,6 @@ from pint import UnitRegistry
 ureg = UnitRegistry(autoconvert_offset_to_baseunit = True)
 Q_ = ureg.Quantity
 ureg.load_definitions('D:/Personal/Python repo/pint definitions.txt')
-#ureg.auto_reduce_dimensions = True
-#from natu.units import *
-#from natu.units import kPa, uPa, kJ
 
 #flsh = ureg.wraps (None, (None, ureg.K, ureg.kPa, None))(rp.flsh)
 def flsh(routine, var1, var2, x, kph=1):
@@ -64,7 +61,10 @@ def flsh(routine, var1, var2, x, kph=1):
         var2_unitless = var2
 
     refprop_output = rp.flsh(routine, var1_unitless, var2_unitless, x, kph=1)
-    Outputs = [('t', ureg.K), ('p', ureg.kPa), ('D', ureg.mol/ureg.L), ('Dliq', ureg.mol/ureg.L), ('Dvap', ureg.mol/ureg.L), ('x', None), ('xliq', None), ('xvap', None), ('q', None), ('e', ureg.J/ureg.mol), ('h', ureg.J/ureg.mol), ('s', ureg.J/(ureg.mol*ureg.K)), ('cv', ureg.J/(ureg.mol*ureg.K)), ('cp', ureg.J/(ureg.mol*ureg.K)), ('w', ureg.m/ureg.s)]
+    Outputs = [('t', ureg.K), ('p', ureg.kPa), ('D', ureg.mol/ureg.L), ('Dliq', ureg.mol/ureg.L), ('Dvap', ureg.mol/ureg.L),
+               ('x', None), ('xliq', None), ('xvap', None), ('q', None), ('e', ureg.J/ureg.mol), ('h', ureg.J/ureg.mol),
+               ('s', ureg.J/(ureg.mol*ureg.K)), ('cv', ureg.J/(ureg.mol*ureg.K)), ('cp', ureg.J/(ureg.mol*ureg.K)),
+               ('w', ureg.m/ureg.s), ('hfmix', None), ('kph', None), ('hrf', None), ('hfld', None)]
     Output_units = {}
     for output in Outputs:
         if output[0] in refprop_output:
@@ -74,23 +74,6 @@ def flsh(routine, var1, var2, x, kph=1):
                 var = refprop_output[output[0]]
             Output_units[output[0]] = var
     return Output_units
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 trnprp = ureg.wraps (None, (ureg.K, ureg('mol/L'), None))(rp.trnprp)
 satp = ureg.wraps(None, (ureg.kPa, None))(rp.satp) 
@@ -256,4 +239,5 @@ if __name__ == "__main__":
         print (rp_init({'fluid':'helium', 'T':Q_(20,ureg.degC), 'P':Q_(101325, ureg.Pa)}))
         print (rp_init({'fluid':'helium', 'T':Q_(4.2,ureg.K), 'P':Q_(101325, ureg.Pa)}))
         print (satp(Q_(101325, ureg.Pa), [1])['t']*ureg.K)
+        print (satp(Q_(101325, ureg.Pa), [1]))
 
