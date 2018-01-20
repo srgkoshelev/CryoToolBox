@@ -1,6 +1,5 @@
 #python3
 from math import pi, log10, sin, log
-from pyrefprop import refprop as rp
 import logging
 from .functions import *
 from .NPS_data import NPS_table
@@ -17,62 +16,67 @@ class Pipe:
         self.SCH = SCH
         self.L = L
 
+    @property
     def OD(self):
             """
             Return OD of the Pipe element based on NPS table
             """
             try:
-                return self._OD_
+                return self._OD
             except AttributeError:
-                self._OD_ = NPS_table[self.D]['OD']
-                return self._OD_
+                self._OD = NPS_table[self.D]['OD']
+                return self._OD
 
+    @property
     def wall(self):
             """
             Return wall thickness of Pipe element based on NPS table
             """
             try:
-                return self._wall_
+                return self._wall
             except AttributeError:
-                self._wall_ = NPS_table[self.D].get(self.SCH)
-                return self._wall_
+                self._wall = NPS_table[self.D].get(self.SCH)
+                return self._wall
 
+    @property
     def ID(self):
             """
             Return ID of the Pipe element based on NPS table
             """
             try:
-                return self._ID_
+                return self._ID
             except AttributeError:
-                self._ID_ = self.OD() - 2*self.wall()
-                return self._ID_
+                self._ID = self.OD - 2*self.wall
+                return self._ID
 
+    @property
     def Area(self):
         """
         Calculate cross sectional area of pipe
         """
         try:
-            return self._Area_
+            return self._Area
         except AttributeError:
-            self._Area_ = pi*self.ID()**2/4
-        return self._Area_
+            self._Area = pi*self.ID**2/4
+        return self._Area
 
     def f_T(self):
         '''
         Friction factor for complete turbulence for clean steel pipe.
         Fitted logarithmic function to data from A-25.
         '''
-        if self.ID()<0.2*ureg.inch or self.ID()>48*ureg.inch:
-            input('WARNING: Tabulated friction data is given for ID = 0.2..48 inch, given {.2~}'.format(self.ID()))
-        ln_ID = log(self.ID().to(ureg.inch).magnitude)
+        if self.ID<0.2*ureg.inch or self.ID>48*ureg.inch:
+            input('WARNING: Tabulated friction data is given for ID = 0.2..48 inch, given {.2~}'.format(self.ID))
+        ln_ID = log(self.ID.to(ureg.inch).magnitude)
         return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev
 
+    @property
     def K(self):
         try:
-            return self._K_
+            return self._K
         except AttributeError:
-            self._K_ = self.f_T()*self.L/self.ID()
-            return self._K_
+            self._K = self.f_T()*self.L/self.ID
+            return self._K
     #TODO Implement more accurate method of friction factor estimation
 
 
@@ -117,21 +121,23 @@ class Corrugated_Pipe(Pipe):
         super().__init__(D_nom, SCH, L) 
         self.corrugated = True
 
+    @property
     def K(self):
-        return 4*super().K() #Multiplier 4 is used for corrugated pipe
+        return 4*super().K #Multiplier 4 is used for corrugated pipe
 
 class Openning (Pipe):
     def __init__ (self, ID):
-        self._ID_ = ID
+        self._ID = ID
 
+    @property
     def K(self):
         return 1 #For piping end
 
 class Tube (Pipe):
     def __init__(self, OD, wall, L=0*ureg.m):
-        self._OD_ = OD
+        self._OD = OD
         self.D = OD.to(ureg.inch).magnitude
-        self._wall_ = wall
+        self._wall = wall
         self.L = L
 
 
@@ -148,9 +154,9 @@ class Piping (list):
 
     def K(self):
         K0 = 0*ureg.dimensionless
-        A0 = self[0].Area()
+        A0 = self[0].Area
         for section in self:
-            K0 += section.K()*(A0/section.Area())**2
+            K0 += section.K*(A0/section.Area)**2
         return (K0, A0)
 
     def dP(self, m_dot):
@@ -169,14 +175,16 @@ class Piping (list):
         if dP/P_0 <= 0.1:
             return dP
         elif dP/P_0 <= 0.4:
-            (_, _, D_out) = rp_init(self[0].fdata)
-            D_out = rp.flsh ("TP", T_fluid, P_fluid_out, x)['D']
+            (x, _, D_out) = rp_init(self[0].fdata)
+            T_0 = self[0].fdata['T']
+            D_out = flsh ("TP", T_0, P_out, x)['D']
             rho = (D_in+D_out)/2*M
             w = m_dot/(rho*Area)
             return dP_darcy (K, rho, w)
         elif 0.4<dP/P_0<(1-rc): #Subsonic flow
             logger.warning('Pressure drop too high for Darcy equation!')
             w = A*(rho/(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5 #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6
+            return dP_darcy (K, rho, w)
         else:
             logger.warning('Sonic flow developed. Consider reducing massflow: {:.3~}'.format(m_dot))
 
