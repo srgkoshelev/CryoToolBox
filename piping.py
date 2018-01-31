@@ -153,6 +153,37 @@ class Tube (Pipe):
         self._wall = wall
         self.L = L
 
+class Elbow(Pipe):
+    def __init__(self, D_nom, SCH=10, R_D=1.5, N=1, angle=90*ureg.deg):
+        super().__init__(D_nom, SCH)
+        self.R_D = R_D
+        self.N = N
+        self.angle = angle
+        self.L = R_D*self.ID*angle
+
+    @property
+    def K(self):
+        """
+        Pressure drop in an elbow fitting. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+        """
+        if self.angle <= 70*ureg.deg:
+            A1 = 0.9*sin(self.angle)
+        elif self.angle == 90*ureg.deg:
+            A1 = 1
+        elif self.angle >= 100*ureg.deg:
+            A1 = 0.7+0.35*self.angle/(90*ureg.deg)
+        else:
+            logger.error('Improper bend angle for elbow. 90 degrees used instead: {}'.format(self.angle))
+            A1 = 1
+
+        if self.R_D < 1:
+                B1 = 0.21*(self.R_D)**(-0.25)
+        else:
+                B1 = 0.21*(self.R_D)**(-0.5)
+
+        C1 = 1 #use different value for non-axis symmetric
+        return (A1*B1*C1+super().K)*self.N
+ 
 
 class Piping (list):
     '''
