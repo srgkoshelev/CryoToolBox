@@ -11,7 +11,7 @@ class Pipe:
     '''
     General NPS pipe class. All basic methods implemented.
     '''
-    def __init__ (self, D_nom, SCH, L=0*ureg.m):
+    def __init__ (self, D_nom, SCH=10, L=0*ureg.m):
         self.D = D_nom #Nominal diameter
         self.SCH = SCH
         self.L = L
@@ -117,13 +117,22 @@ class Corrugated_Pipe(Pipe):
     '''
     Corrugated pipe class.
     '''
-    def __init__ (self, D_nom, SCH, L=0*ureg.m):
-        super().__init__(D_nom, SCH, L) 
-        self.corrugated = True
+    def __init__ (self, D, L=0*ureg.m):
+        super().__init__(D, None, L) 
+        self.corrugated = True #deprecated
 
     @property
     def K(self):
         return 4*super().K #Multiplier 4 is used for corrugated pipe
+
+    @property
+    def OD(self):
+        logger.warning('For corrugated piping assumed OD = D')
+        return self.D
+    @property
+    def wall(self):
+        logger.warning('For corrugated piping assumed wall = 0')
+        return 0*ureg.m
 
 class Openning (Pipe):
     def __init__ (self, ID):
