@@ -189,38 +189,42 @@ class Piping (list):
     '''
     Piping system defined by nintial conditions and structure of pipe elements.
     '''
-    def __init__ (self, Pipe, Fluid_data):
-        self.append(Pipe)
-        self[0].fdata = Fluid_data #Initial conditions
+    def __init__ (self, Init_fdata, *Pipes):
+        self.init_cond = Init_fdata 
+        self.extend(Pipes)
 
     def add(self, *Pipes):
         self.extend(Pipes)
 
     def K(self):
-        K0 = 0*ureg.dimensionless
-        A0 = self[0].Area
-        for section in self:
-            K0 += section.K*(A0/section.Area)**2
-        return (K0, A0)
+        if len(self) > 0:
+            K0 = 0*ureg.dimensionless
+            A0 = self[0].Area
+            for section in self:
+                K0 += section.K*(A0/section.Area)**2
+            return (K0, A0)
+        else:
+            logger.error('Piping has no elements! Use Piping.add to add sections to piping.')
+
 
     def dP(self, m_dot):
         '''
         Calculate pressure drop through piping. Lumped method using Darcy equation is used.
         '''
-        (_, M, D_in) = rp_init(self[0].fdata)
-        P_0 = self[0].fdata['P']
+        (_, M, D_in) = rp_init(self.init_cond)
+        P_0 = self.init_cond['P']
         rho = D_in*M
         K, Area = self.K()
         w = m_dot/(rho*Area)
         dP = dP_darcy (K, rho, w)
         P_out = P_0 - dP
-        k = gamma(self[0].fdata) #adiabatic coefficient
+        k = gamma(self.init_cond) #adiabatic coefficient
         rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be depndent on the hydraulic resistance of the flow path
         if dP/P_0 <= 0.1:
             return dP
         elif dP/P_0 <= 0.4:
-            (x, _, D_out) = rp_init(self[0].fdata)
-            T_0 = self[0].fdata['T']
+            (x, _, D_out) = rp_init(self.init_cond)
+            T_0 = self.init_cond['T']
             D_out = flsh ("TP", T_0, P_out, x)['D']
             rho = (D_in+D_out)/2*M
             w = m_dot/(rho*Area)
@@ -237,11 +241,11 @@ class Piping (list):
         Calculate mass flow through the piping using initial conditions at the beginning of piping.
         Simple solution using Darcy equation is used.
         '''
-        (x, M, D) = rp_init(self[0].fdata)
-        P_0 = self[0].fdata['P']
+        (x, M, D) = rp_init(self.init_cond)
+        P_0 = self.init_cond['P']
         rho = D*M
         K, Area = self.K()
-        k = gamma(self[0].fdata) #adiabatic coefficient
+        k = gamma(self.init_cond) #adiabatic coefficient
         rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be depndent on the hydraulic resistance of the flow path
         if P_out/P_0 > rc: #Subsonic flow
             delta_P = P_0-P_out
