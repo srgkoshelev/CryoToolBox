@@ -123,7 +123,11 @@ class Corrugated_Pipe(Pipe):
 
     @property
     def K(self):
-        return 4*super().K #Multiplier 4 is used for corrugated pipe
+        try:
+            return self._K
+        except AttributeError:
+            self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
+        return self._K
 
     @property
     def OD(self):
