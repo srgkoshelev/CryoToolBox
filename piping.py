@@ -66,7 +66,7 @@ class Pipe:
         Fitted logarithmic function to data from A-25.
         '''
         if self.ID<0.2*ureg.inch or self.ID>48*ureg.inch:
-            input('WARNING: Tabulated friction data is given for ID = 0.2..48 inch, given {.2~}'.format(self.ID))
+            logger.warning('Tabulated friction data is given for ID = 0.2..48 inch, given {:.2~}'.format(self.ID))
         ln_ID = log(self.ID.to(ureg.inch).magnitude)
         return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev
 
@@ -78,33 +78,6 @@ class Pipe:
             self._K = self.f_T()*self.L/self.ID
             return self._K
     #TODO Implement more accurate method of friction factor estimation
-
-
-
-
-
-
-#def make_surface (Pipe, method = 'OD'):
-#        """
-#        Make surface element for convection heat load calculation.
-#        Method determines which surface is considered. Orientation changes which dimension should be used for Nu  calculation. 
-#        """
-#        T = Pipe['fluid']['T']
-#        if method == 'OD':
-#                Diam = OD(Pipe)
-#        elif method == 'VJ':
-#                Diam = VJOD(Pipe)
-#        elif method == 'average':
-#                Diam = (OD(Pipe) + VJOD(Pipe))/2
-#
-#        if Pipe['Orientation'] == 'Horizontal':
-#                Dim = Diam
-#                Dim_sec = Pipe['L']
-#        elif Pipe['Orientation'] == 'Vertical':
-#                Dim = Pipe['L']
-#                Dim_sec = Diam
-#        return {'T':T, 'Dim':Dim, 'Dim_sec':Dim_sec}
-
 class VJ_Pipe(Pipe):
     '''
     Vacuum jacketed pipe
