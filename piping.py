@@ -11,7 +11,7 @@ class Pipe:
     '''
     General NPS pipe class. All basic methods implemented.
     '''
-    def __init__ (self, D_nom, SCH=10, L=0*ureg.m):
+    def __init__ (self, D_nom, SCH=40, L=0*ureg.m):
         self.D = D_nom #Nominal diameter
         self.SCH = SCH
         self.L = L
