@@ -300,6 +300,31 @@ def dP_darcy (K, rho, w):
     d_P = K*rho*w**2/2
     return d_P.to(ureg.psi)
 
+def K_to_Cv(K, ID):
+    """Calculate flow coefficient Cv based on resistance coefficient value K.
+    Based on definition:
+    Cv = Q*sqrt(rho/(d_P*rho_w))
+    where Q - volumetric flow, rho - flow density, rho_w - water density at 60 F, d_P - pressure drop through the valve.
+    [Cv] = gal/(min*(psi)**0.5)
+    """
+    A = pi*ID**2/4
+    rho_w = 999*ureg('kg/m**3') #Water density at 60 F
+    Cv = A*(2/(K*rho_w))**0.5 #Based on Crane TP-410 p. 2-10 and unsimplified Darcy equation (see dP_darcy)
+    Cv.ito(ureg('gal/(min*(psi)**0.5)')) #Convention accepted in the US
+    return Cv
+
+def Cv_to_K(Cv, ID):
+    """Calculate resistance coefficient K based on flow coefficient value Cv.
+    Based on definition:
+    Cv = Q*sqrt(rho/(d_P*rho_w))
+    where Q - volumetric flow, rho - flow density, rho_w - water density at 60 F, d_P - pressure drop through the valve.
+    [Cv] = gal/(min*(psi)**0.5)
+    """
+    Cv = Cv*ureg('gal/(min*(psi)**0.5)') #Convention accepted in the US
+    A = pi*ID**2/4
+    rho_w = 999*ureg('kg/m**3') #Water density at 60 F
+    K = 2*A**2/(Cv**2*rho_w) #Based on Crane TP-410 p. 2-10 and unsimplified Darcy equation (see dP_darcy)
+    return K
 
 #def dp_elbow (M_dot = 0.01*ureg('kg/s'), Elbow = {'R/D':1, 'D_nom':1, 'SCH':10, 'L':10*ureg.ft}, Fluid_data = {'fluid':'air', 'P':101325*ureg.Pa, 'T':Q_(38, ureg.degC)}):
 #        """
