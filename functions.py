@@ -1,10 +1,15 @@
-from math import log
+from math import log, log10
 from pyrefprop import refprop as rp
 from pint import UnitRegistry
+import logging
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 ureg = UnitRegistry(autoconvert_offset_to_baseunit = True)
 Q_ = ureg.Quantity
 ureg.load_definitions('D:/Personal/Python repo/pint definitions.txt')
+sigma = Q_('stefan_boltzmann_constant')
 
 #flsh = ureg.wraps (None, (None, ureg.K, ureg.kPa, None))(rp.flsh)
 def flsh(routine, var1, var2, x, kph=1):
@@ -240,4 +245,8 @@ if __name__ == "__main__":
         print (rp_init({'fluid':'helium', 'T':Q_(4.2,ureg.K), 'P':Q_(101325, ureg.Pa)}))
         print (satp(Q_(101325, ureg.Pa), [1])['t']*ureg.K)
         print (satp(Q_(101325, ureg.Pa), [1]))
-
+        print(tc_304(150*ureg.K))
+        Leak = tc_304(150*ureg.K)*3.14159*0.125*ureg.inch*0.035*ureg.inch/(1*ureg.ft)*300*ureg.K
+        print(Leak)
+        print(Leak.to(ureg.W))
+        print((Leak/(7*ureg('kJ/kg'))).to(ureg.g/ureg.s))
