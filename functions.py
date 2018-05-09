@@ -235,7 +235,16 @@ def rad_hl (eps_cold = 0.55, eps_hot = 0.55, T_hot = 300*ureg.K, T_cold = 77*ure
         Eps_baffle_mut = eps_baffle/(2-eps_baffle)
         eta = (1+N_baffles*Eps_mut/Eps_baffle_mut)**(-1)
         q_baffle = eta*q0
-        return {'q0':q0, 'q_baffle':q_baffle, 'eta':eta}
+        return {'q0':q0.to(ureg.W/ureg.m**2), 'q_baffle':q_baffle.to(ureg.W/ureg.m**2), 'eta':eta}
+
+def tc_304(T):
+    Coefs = [-1.4087, 1.3982, 0.2543, -0.6260, 0.2334, 0.4256, -0.4658, 0.1650, -0.0199]
+    log10_k = 0
+    for ind, coef in enumerate(Coefs):
+        log10_k += log10(T.magnitude)**ind*coef
+    return 10**log10_k*ureg('(W/(m*K))')
+
+
 
 
 if __name__ == "__main__":
