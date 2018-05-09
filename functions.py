@@ -66,22 +66,76 @@ def flsh(routine, var1, var2, x, kph=1):
         var2_unitless = var2
 
     refprop_output = rp.flsh(routine, var1_unitless, var2_unitless, x, kph=1)
-    Outputs = [('t', ureg.K), ('p', ureg.kPa), ('D', ureg.mol/ureg.L), ('Dliq', ureg.mol/ureg.L), ('Dvap', ureg.mol/ureg.L),
-               ('x', None), ('xliq', None), ('xvap', None), ('q', None), ('e', ureg.J/ureg.mol), ('h', ureg.J/ureg.mol),
-               ('s', ureg.J/(ureg.mol*ureg.K)), ('cv', ureg.J/(ureg.mol*ureg.K)), ('cp', ureg.J/(ureg.mol*ureg.K)),
-               ('w', ureg.m/ureg.s), ('hfmix', None), ('kph', None), ('hrf', None), ('hfld', None)]
-    Output_units = {}
-    for output in Outputs:
-        if output[0] in refprop_output:
-            if output[1]:
-                var = refprop_output[output[0]]*output[1]
+    return rp_out_unit(refprop_output)
+
+
+
+
+Outputs = {'t':ureg.K, 'p':ureg.kPa, 'D':ureg.mol/ureg.L, 'Dliq':ureg.mol/ureg.L, 'Dvap':ureg.mol/ureg.L,
+           'x':None, 'xliq':None, 'xvap':None, 'q':None, 'e':ureg.J/ureg.mol, 'h':ureg.J/ureg.mol,
+           's':ureg.J/ureg.mol*ureg.K, 'cv':ureg.J/(ureg.mol*ureg.K), 'cp':ureg.J/(ureg.mol*ureg.K),
+           'w':ureg.m/ureg.s, 'hfmix':None, 'kph':None, 'hrf':None, 'hfld':None, 'nc':None,
+           'xkappa':None, 'beta':None, 'xisenk':None, 'xkt':None, 'betas':None, 'bs':None, 'xkkt':None,
+           'thrott':None, 'pint':None, 'spht':ureg.J/ureg.mol,
+           }
+
+def rp_value(value, name):
+    """Prepare the quantity for passing to rp function by obtaining a dimensionless value.
+    """
+    if Outputs[name]:
+        return value.to(Outputs[name]).magnitude
+    else:
+        return value
+
+def rp_out_unit (rp_output):
+    """ Add units to output of a refprop function.
+    """
+    Output_w_units = {}
+    for quantity, value in rp_output.items():
+        try:
+            unit = Outputs[quantity]
+            if unit:
+                Output_w_units[quantity] = value*unit
             else:
-                var = refprop_output[output[0]]
-            Output_units[output[0]] = var
-    return Output_units
+                Output_w_units[quantity] = value
+        except KeyError:
+            logger.warning('Quantity is missing from unit list, please update: {}'.format(quantity))
+    return Output_w_units
+
+def therm3(t, D, x):
+    t = rp_value(t, 't')
+    D = rp_value(D, 'D')
+    x = rp_value(x, 'x')
+    return rp_out_unit(rp.therm3(t, D, x))
+
+def satp(p, x, kph=2):
+    p = rp_value(p, 'p')
+    x = rp_value(x, 'x')
+    kph = rp_value(kph, 'kph')
+    return rp_out_unit(rp.satp(p, x, kph))
+
+def latent_heat(Fluid_data):
+    """Calculate latent heat/specific heat input for given conditions.
+    """
+    x,M,D = rp_init(Fluid_data)
+    _,T,P = unpack_fluid(Fluid_data)
+    props = flsh('TP', T, P, x)
+    quality = props['q']
+    if quality < 1: #For 2 phase region (including subcooled liquid) using latent heat of evaporation
+        props = satp(P, x)
+        Dliq = props['Dliq']
+        Dvap = props['Dvap']
+        h_liq = flsh('TD', T, Dliq, x)['h']
+        h_vap = flsh('TD', T, Dvap, x)['h']
+        L = (h_vap - h_liq)/M
+    else:
+        L = therm3(T,D,x)['spht']/M #Specific heat input
+    return L
+
+
 
 trnprp = ureg.wraps (None, (ureg.K, ureg('mol/L'), None))(rp.trnprp)
-satp = ureg.wraps(None, (ureg.kPa, None))(rp.satp) 
+#satp = ureg.wraps(None, (ureg.kPa, None))(rp.satp)  #Replaced by new wrapper
 
 
 def gamma (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.degC)}):
