@@ -127,7 +127,7 @@ class Tube (Pipe):
         self.L = L
 
 class Elbow(Pipe):
-    def __init__(self, D_nom, SCH=10, R_D=1.5, N=1, angle=90*ureg.deg):
+    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
         super().__init__(D_nom, SCH)
         self.R_D = R_D
         self.N = N
@@ -225,11 +225,30 @@ class Piping (list):
         else: #Sonic flow
             logger.warning('End pressure creates sonic flow. Max possible dP will be used')
             delta_P = P_0*(1-rc) #Crane TP-410, p 2-15
-        return Area*(2*delta_P*rho/K)**0.5 #Net expansion factor for discharge is assumed to be 1 (conservative value)
+        w = Area*(2*delta_P*rho/K)**0.5 #Net expansion factor for discharge is assumed to be 1 (conservative value)
+        return w.to(ureg.g/ureg.s)
 
 
-
-
+#def make_surface (Pipe, method = 'OD'):
+#        """
+#        Make surface element for convection heat load calculation.
+#        Method determines which surface is considered. Orientation changes which dimension should be used for Nu  calculation. 
+#        """
+#        T = Pipe['fluid']['T']
+#        if method == 'OD':
+#                Diam = OD(Pipe)
+#        elif method == 'VJ':
+#                Diam = VJOD(Pipe)
+#        elif method == 'average':
+#                Diam = (OD(Pipe) + VJOD(Pipe))/2
+#
+#        if Pipe['Orientation'] == 'Horizontal':
+#                Dim = Diam
+#                Dim_sec = Pipe['L']
+#        elif Pipe['Orientation'] == 'Vertical':
+#                Dim = Pipe['L']
+#                Dim_sec = Diam
+#        return {'T':T, 'Dim':Dim, 'Dim_sec':Dim_sec}
 
 
 #Hydraulic functions
