@@ -111,13 +111,30 @@ class Corrugated_Pipe(Pipe):
         logger.warning('For corrugated piping assumed wall = 0')
         return 0*ureg.m
 
-class Openning (Pipe):
+class Entrance (Pipe):
+    def __init__ (self, ID):
+        self._ID = ID
+
+    @property
+    def K(self):
+        return 0.5 #For piping entrance
+
+class Exit (Pipe):
     def __init__ (self, ID):
         self._ID = ID
 
     @property
     def K(self):
         return 1 #For piping end
+
+class Orifice(Pipe):
+    def __init__(self, ID):
+        self.Cd = 0.61 #Thin sharp edged orifice plate
+        self._ID = ID
+
+    @property
+    def K(self):
+        return 1/self.Cd**2
 
 class Tube (Pipe):
     def __init__(self, OD, wall, L=0*ureg.m):
@@ -156,11 +173,48 @@ class Elbow(Pipe):
 
         C1 = 1 #use different value for non-axis symmetric
         return (A1*B1*C1+super().K)*self.N
+
+class Tee(Pipe):
+    def __init__(self, D_nom, SCH=40, direction='thru'):
+        super().__init__(D_nom, SCH)
+        if direction in ['thru', 'through']:
+            self.direction = 'thru'
+        if direction in ['branch', 'side']:
+            self.direction = 'branch'
+        else:
+            logger.error('Tee direction is not recognized, try "thru" or "branch": {}'.format(direction))
+
+    @property
+    def K(self):
+        if self.direction == 'thru':
+            return 20*self.f_T() #Crane TP-410 p. A-29
+        if self.direction == 'branch':
+            return 60*self.f_T() #Crane TP-410 p. A-29
+
+class Valve(Pipe):
+    def __init__(self, D, Cv):
+        super().__init__(D, SCH=40, L=None)
+        self.Cv = Cv
+    
+    @property
+    def K(self):
+        return Cv_to_K(self.Cv, self.ID) 
  
+class Globe_valve(Pipe):
+    def __init__(self, D):
+        super().__init__(D, None, None)
+        self._ID = self.OD - 2*NPS_table[D].get(40) #ID for the valve is assumed equal to SCH40 ID
+
+    @property
+    def K(self):
+        return 340*self.f_T() #Using conservative value for a globe valve
+
+
+
 
 class Piping (list):
     '''
-    Piping system defined by nintial conditions and structure of pipe elements.
+    Piping system defined by intial conditions and structure of pipe elements.
     '''
     def __init__ (self, Init_fdata, *Pipes):
         self.init_cond = Init_fdata 
