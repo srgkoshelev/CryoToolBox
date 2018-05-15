@@ -394,56 +394,7 @@ def Cv_to_K(Cv, ID):
     K = 2*A**2/(Cv**2*rho_w) #Based on Crane TP-410 p. 2-10 and unsimplified Darcy equation (see dP_darcy)
     return K
 
-#def dp_elbow (M_dot = 0.01*ureg('kg/s'), Elbow = {'R/D':1, 'D_nom':1, 'SCH':10, 'L':10*ureg.ft}, Fluid_data = {'fluid':'air', 'P':101325*ureg.Pa, 'T':Q_(38, ureg.degC)}):
-#        """
-#        Pressure drop in an elbow fitting. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
-#        """
-#                
-#        delta = Elbow.get('Angle', 90*ureg.deg)
-#        if delta <= 70*ureg.deg:
-#                A1 = 0.9*sin(delta/rad)
-#        elif delta == 90*ureg.deg:
-#                A1 = 1
-#        elif delta >= 100*ureg.deg:
-#                A1 = 0.7+0.35*delta/(90*ureg.deg)
-#        else:
-#                raise BaseException ('Non standard angle is used: {:g}.'.format(delta))
-#
-#        R_frac_D = Elbow.get('R/D', 1) #Most of the elbows we use have R/D = 1.5 but it is not covered by this calculation. Using conservative value instead
-#        if (R_frac_D >= 0.5) and (R_frac_D <= 1):
-#                B1 = 0.21*(R_frac_D)**(-2.5)
-#        elif R_frac_D >= 10:
-#                B1 = 0.21*(R_frac_D)**(-0.5)
-#        else:
-#                raise BaseException ('Non standard elbow R/D is used: {:g}.'.format(R_frac_D))
-#
-#        a0_frac_b0 = Elbow.get('a0/b0', 1)
-#        if a0_frac_b0 == 1:
-#                C1 = 1
-#        elif a0_frac_b0 <=4:
-#                C1 = 0.85+0.125/a0_frac_b0
-#        else:
-#                C1 = 1.115-0.84/a0_frac_b0
-#
-#        zeta = A1*B1*C1
-#
-#        fluid = Fluid_data['fluid']
-#        T_fluid = Fluid_data['T']
-#        P_fluid = Fluid_data['P']
-#
-#        ID_pipe = ID(Elbow)
-#        L_pipe = pi*R_frac_D*ID_pipe/2
-#
-#
-#        (x, M, D_fluid) = rp_init(Fluid_data)
-#        rho_fluid = D_fluid*M
-#
-#        A = Area(Elbow)
-#        w_flow = M_dot/(rho_fluid*A)
-#
-#        delta_P_local = zeta*rho_fluid*w_flow**2/2
-#
-#        delta_P_frict = dP_pipe (M_dot, Elbow, Fluid_data)
-#
-#        return delta_P_frict+delta_P_local
-
+def beta(d1, d2):
+    """Calculate beta = d/D for contraction or enlargement
+    """
+    return min(d1, d2)/max(d1, d2)
