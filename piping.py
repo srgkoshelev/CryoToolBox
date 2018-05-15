@@ -128,6 +128,7 @@ class Exit (Pipe):
         return 1 #For piping end
 
 class Orifice(Pipe):
+    """Square-edged orifice plate"""
     def __init__(self, ID):
         self.Cd = 0.61 #Thin sharp edged orifice plate
         self._ID = ID
@@ -135,6 +136,12 @@ class Orifice(Pipe):
     @property
     def K(self):
         return 1/self.Cd**2
+
+class Conic_Orifice(Orifice):
+    def __init__(self, D, ID):
+        super().__init__(ID)
+        if NPS_table[D]['OD'] >= 1*ureg.inch: #For a smaller diameter using value for square-edged plate (unfounded assumption)
+            self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
 
 class Tube (Pipe):
     def __init__(self, OD, wall, L=0*ureg.m):
