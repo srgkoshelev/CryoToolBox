@@ -79,7 +79,9 @@ Outputs = {'t':ureg.K, 'p':ureg.kPa, 'D':ureg.mol/ureg.L, 'Dliq':ureg.mol/ureg.L
            's':ureg.J/ureg.mol*ureg.K, 'cv':ureg.J/(ureg.mol*ureg.K), 'cp':ureg.J/(ureg.mol*ureg.K),
            'w':ureg.m/ureg.s, 'hfmix':None, 'kph':None, 'hrf':None, 'hfld':None, 'nc':None,
            'xkappa':None, 'beta':None, 'xisenk':None, 'xkt':None, 'betas':None, 'bs':None, 'xkkt':None,
-           'thrott':None, 'pint':None, 'spht':ureg.J/ureg.mol,
+           'thrott':None, 'pint':None, 'spht':ureg.J/ureg.mol, 'wmm':ureg.g/ureg.mol, 'ttrp':ureg.K,
+           'tnbpt':ureg.K, 'tcrit':ureg.K, 'pcrit':ureg.kPa, 'Dcrit':ureg.mol/ureg.L, 'zcrit':None,
+           'acf':None, 'dip':ureg.debye, 'Rgas':ureg.J/(ureg.mol*ureg.K), 'icomp':None,
            }
 
 def rp_value(value, name):
@@ -105,32 +107,58 @@ def rp_out_unit (rp_output):
             logger.warning('Quantity is missing from unit list, please update: {}'.format(quantity))
     return Output_w_units
 
-def therm3(t, D, x):
-    t = rp_value(t, 't')
-    D = rp_value(D, 'D')
-    x = rp_value(x, 'x')
-    return rp_out_unit(rp.therm3(t, D, x))
+def rp_unitize(*names):
+    """Decorator for refprop functions.
+    Given the string names of the variables convert input to rp accepted dimensionless values.
+    Results are parsed to assign units.
+    Use:
+    @rp_unitize('p', 'x', 'kph')
+    def satp(p, x, kph=2):
+        return rp.satp(p, x, kph)
+    """
+    def rp_decorate(rp_func):
+        def rp_wrapper(*rp_args, **rp_kwargs):
+            rp_input_values = list(rp_args) + list(rp_kwargs.values())
+            rp_input = []
+            for value,name in zip(rp_input_values,names):
+                rp_input.append(rp_value(value,name))
+            return rp_out_unit(rp_func(*rp_input))
+        return rp_wrapper
+    return rp_decorate
 
+@rp_unitize('p', 'x', 'kph')
 def satp(p, x, kph=2):
-    p = rp_value(p, 'p')
-    x = rp_value(x, 'x')
-    kph = rp_value(kph, 'kph')
-    return rp_out_unit(rp.satp(p, x, kph))
+    return rp.satp(p, x, kph)
+
+@rp_unitize('t', 'D', 'x')
+def therm3(t, D, x):
+    return rp.therm3(t, D, x)
+
+@rp_unitize('icomp')
+def info(icomp=1):
+    return rp.info(icomp)
 
 def latent_heat(Fluid_data):
     """Calculate latent heat/specific heat input for given conditions.
     """
     x,M,D = rp_init(Fluid_data)
     _,T,P = unpack_fluid(Fluid_data)
-    props = flsh('TP', T, P, x)
-    quality = props['q']
-    if quality < 1: #For 2 phase region (including subcooled liquid) using latent heat of evaporation
-        props = satp(P, x)
-        Dliq = props['Dliq']
-        Dvap = props['Dvap']
-        h_liq = flsh('TD', T, Dliq, x)['h']
-        h_vap = flsh('TD', T, Dvap, x)['h']
-        L = (h_vap - h_liq)/M
+    crit_props = info()
+    T_crit = crit_props['tcrit']
+    D_crit = crit_props['Dcrit']
+    P_crit = flsh('TD', T_crit, D_crit, x)['p']
+    if T < T_crit and P < P_crit: #Two phase region only possible below critical point
+        props = flsh('TP', T, P, x)
+        quality = props['q']
+        if quality < 1: #For 2 phase region (including subcooled liquid) using latent heat of evaporation
+            props = satp(P, x)
+            Dliq = props['Dliq']
+            Dvap = props['Dvap']
+            h_liq = flsh('TD', T, Dliq, x)['h']
+            h_vap = flsh('TD', T, Dvap, x)['h']
+            L = (h_vap - h_liq)/M
+        else:
+            L = therm3(T,D,x)['spht']/M #Specific heat input
     else:
         L = therm3(T,D,x)['spht']/M #Specific heat input
     return L
@@ -138,7 +166,6 @@ def latent_heat(Fluid_data):
 
 
 trnprp = ureg.wraps (None, (ureg.K, ureg('mol/L'), None))(rp.trnprp)
-#satp = ureg.wraps(None, (ureg.kPa, None))(rp.satp)  #Replaced by new wrapper
 
 
 def gamma (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.degC)}):
@@ -309,8 +336,8 @@ if __name__ == "__main__":
         print (gamma())
         print (rp_init({'fluid':'helium', 'T':Q_(20,ureg.degC), 'P':Q_(101325, ureg.Pa)}))
         print (rp_init({'fluid':'helium', 'T':Q_(4.2,ureg.K), 'P':Q_(101325, ureg.Pa)}))
-        print (satp(Q_(101325, ureg.Pa), [1])['t']*ureg.K)
-        print (satp(Q_(101325, ureg.Pa), [1]))
+        print (satp(Q_(101325, ureg.Pa), [1])['t'])
+        print ('Decorator test:', satp(Q_(101325, ureg.Pa), [1]))
         print(tc_304(150*ureg.K))
         Leak = tc_304(150*ureg.K)*3.14159*0.125*ureg.inch*0.035*ureg.inch/(1*ureg.ft)*300*ureg.K
         print(Leak)
