@@ -2,13 +2,16 @@ from math import log, log10
 from pyrefprop import refprop as rp
 from pint import UnitRegistry
 import logging
+from functools import wraps
+import sys, os
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 ureg = UnitRegistry(autoconvert_offset_to_baseunit = True)
 Q_ = ureg.Quantity
-ureg.load_definitions('D:/Personal/Python repo/pint definitions.txt')
+__location__ = os.path.dirname(os.path.abspath(__file__))
+ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
 sigma = Q_('stefan_boltzmann_constant')
 
 #flsh = ureg.wraps (None, (None, ureg.K, ureg.kPa, None))(rp.flsh)
