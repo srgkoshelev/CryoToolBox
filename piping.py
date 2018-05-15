@@ -234,8 +234,16 @@ class Piping (list):
         if len(self) > 0:
             K0 = 0*ureg.dimensionless
             A0 = self[0].Area
+            ID_prev = self[0].ID #ID of the previous piping section; used for sudden contraction and enlargement calculations
             for section in self:
+                if ID_prev < section.ID: #Sudden enlargement
+                    K0 += (1-beta(ID_prev, section.ID)**2)**2/beta(ID_prev, section.ID)**4*(A0/section.Area)**2
+                    logger.debug('Enlargement: {:.3g} -> {:.3g}'.format(ID_prev, section.ID))
+                if ID_prev > section.ID: #Sudden contraction
+                    K0 += 0.5*(1-beta(ID_prev, section.ID))/2**0.25*(A0/section.Area)**2
+                    logger.debug('Contraction: {:.3g} -> {:.3g}'.format(ID_prev, section.ID))
                 K0 += section.K*(A0/section.Area)**2
+                ID_prev = section.ID
             return (K0, A0)
         else:
             logger.error('Piping has no elements! Use Piping.add to add sections to piping.')
