@@ -4,7 +4,6 @@ import logging
 from .functions import *
 from .NPS_data import NPS_table
 Q_ = ureg.Quantity
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 class Pipe:

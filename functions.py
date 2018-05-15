@@ -2,15 +2,18 @@ from math import log, log10
 from pyrefprop import refprop as rp
 from pint import UnitRegistry
 import logging
+import logging.config
 from functools import wraps
 import sys, os
+__location__ = os.path.dirname(os.path.abspath(__file__))
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.WARNING)
+# load the logging configuration
+logging.config.fileConfig(os.path.join(__location__, 'logging.ini'))
+
 logger = logging.getLogger(__name__)
 
 ureg = UnitRegistry(autoconvert_offset_to_baseunit = True)
 Q_ = ureg.Quantity
-__location__ = os.path.dirname(os.path.abspath(__file__))
 ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
 sigma = Q_('stefan_boltzmann_constant')
 
