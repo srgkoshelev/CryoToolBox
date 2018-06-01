@@ -17,6 +17,15 @@ Q_ = ureg.Quantity
 ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
 sigma = Q_('stefan_boltzmann_constant')
 
+#Setting units for "standard" flow
+T_NTP = Q_(68, ureg.degF) #Normal Temperature (NIST)
+P_NTP = Q_(14.7, ureg.psi) #Normal Pressure (NIST)
+
+T_MSC = Q_(15, ureg.degC) #Metric Standard Conditions (used by Crane TP-410)
+P_MSC = Q_(101325, ureg.Pa) #Metric Standard Conditions (used by Crane TP-410)
+
+Air = {'fluid':'air', 'P':P_NTP, 'T':T_NTP}
+
 #flsh = ureg.wraps (None, (None, ureg.K, ureg.kPa, None))(rp.flsh)
 def flsh(routine, var1, var2, x, kph=1):
     """
@@ -182,6 +191,7 @@ def gamma (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.d
     Cp = fluid_prop['cp']
     Cv = fluid_prop['cv']
     return Cp/Cv
+k = gamma
 
 def pack_fluid (fluid, T_fluid = Q_(15, ureg.degC), P_fluid = Q_(101325, ureg.Pa)):
         return {'fluid':fluid, 'P':P_fluid, 'T':T_fluid}
