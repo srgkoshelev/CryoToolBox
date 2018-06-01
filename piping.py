@@ -398,3 +398,24 @@ def beta(d1, d2):
     """Calculate beta = d/D for contraction or enlargement
     """
     return min(d1, d2)/max(d1, d2)
+
+def to_standard_flow(flow_rate, Fluid_data):
+    '''
+    Converting volumetric flow at certain conditions or mass flow to volumetric flow at NTP
+    '''
+    (x, M, D_NTP) = rp_init({'fluid':Fluid_data['fluid'], 'T':T_NTP, 'P':P_NTP})
+    if flow_rate.dimensionality == ureg('kg/s').dimensionality: #mass flow, flow conditions are unnecessary
+        q_std = flow_rate/(D_NTP*M)
+    elif flow_rate.dimensionality == ureg('m^3/s').dimensionality: #volumetric flow given, converting to standard pressure and temperature
+        if 'T' in Fluid_data and 'P' in Fluid_data:
+            (fluid, T_fluid, P_fluid) = unpack_fluid(Fluid_data)
+            (x, M, D_fluid) = rp_init(Fluid_data)
+            q_std = flow_rate*D_fluid/D_NTP
+        else:
+            logger.warning('Flow conditions for volumetric flow {:.3~} are not set. Assuming standard flow at NTP'.format(flow_rate))
+            q_std = flow_rate
+    else:
+        logger.warning('Flow dimensionality is not supported: {:.3~}'.format(flow_rate.dimensionality))
+    q_std.ito(ureg.ft**3/ureg.min)
+    return q_std
+
