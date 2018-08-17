@@ -94,6 +94,9 @@ Outputs = {'t':ureg.K, 'p':ureg.kPa, 'D':ureg.mol/ureg.L, 'Dliq':ureg.mol/ureg.L
            'thrott':None, 'pint':None, 'spht':ureg.J/ureg.mol, 'wmm':ureg.g/ureg.mol, 'ttrp':ureg.K,
            'tnbpt':ureg.K, 'tcrit':ureg.K, 'pcrit':ureg.kPa, 'Dcrit':ureg.mol/ureg.L, 'zcrit':None,
            'acf':None, 'dip':ureg.debye, 'Rgas':ureg.J/(ureg.mol*ureg.K), 'icomp':None,
+           'dpdD':ureg.kPa*ureg.L/ureg.mol, 'd2pdD2':ureg.kPa*ureg.L**2/ureg.mol**2,
+           'dpdt':ureg.kPa/ureg.K, 'dDdt':ureg.mol/(ureg.L*ureg.K), 'dDdp':ureg.mol/(ureg.L*ureg.kPa),
+           'Z':None, 'hjt':ureg.K/ureg.kPa, 'A':ureg.J/ureg.mol, 'G':ureg.J/ureg.mol, 'hmxnme':None,
            }
 
 def rp_value(value, name):
@@ -141,6 +144,10 @@ def rp_unitize(*names):
 @rp_unitize('p', 'x', 'kph')
 def satp(p, x, kph=2):
     return rp.satp(p, x, kph)
+
+@rp_unitize('t', 'D', 'x')
+def therm2(t, D, x):
+    return rp.therm2(t, D, x)
 
 @rp_unitize('t', 'D', 'x')
 def therm3(t, D, x):
