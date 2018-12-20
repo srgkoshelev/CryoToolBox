@@ -1,8 +1,6 @@
 #!python3
 from math import *
 from pyrefprop import refprop as rp
-import sys
-sys.path.append(r'D:\Personal\Python repo')
 from heat_transfer import functions as ht
 from heat_transfer.piping import *
 ureg = ht.ureg
@@ -134,12 +132,12 @@ def to_scfma (M_dot, Fluid_data):
         """
         (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
         T_fluid = Fluid_data['T']
-        Z_fluid = rp.therm2(T_fluid/K, D_fluid/(mol/L), x_fluid)['Z'] #Compressibility factor
+        Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
         (x_air, M_air, D_air) = rp_init(Air)
         T_air = Air['T']
-        Z_air = rp.therm2(T_air/K, D_air/(mol/L), x_air)['Z'] #Compressibility factor
+        Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
         Q_air =  M_dot*C_gas_const(Air)/(D_air*M_air*C_gas_const(Fluid_data))*(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
-        Q_air.ito(ureg.ft3/ureg.min)
+        Q_air.ito(ureg.ft**3/ureg.min)
         return Q_air
 
 def from_scfma (Q_air, Fluid_data):
@@ -148,10 +146,10 @@ def from_scfma (Q_air, Fluid_data):
         """
         (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
         T_fluid = Fluid_data['T']
-        Z_fluid = rp.therm2(T_fluid/K, D_fluid/(mol/L), x_fluid)['Z'] #Compressibility factor
+        Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
         (x_air, M_air, D_air) = rp_init(Air)
         T_air = Air['T']
-        Z_air = rp.therm2(T_air/K, D_air/(mol/L), x_air)['Z'] #Compressibility factor
+        Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
         M_dot =  Q_air/(C_gas_const(Air))*(D_air*M_air*C_gas_const(Fluid_data))/(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
         M_dot.ito(ureg.kg/ureg.s)
         return M_dot
@@ -182,5 +180,5 @@ def C_gas_const (Fluid_data):
 
 
 if __name__ == "__main__":
-        print ("100 SCFM of air is equivalent to {:.3g} of Nitrogen flow for P = 1 atm and T = 38 C.".format(from_scfma(100*ft**3/min)))
-        print ("CGA S-1.3 Formula from 6.1.4 a) gives 0.0547 kg/s for the same air capacity.")
+    print ("100 SCFM of air is equivalent to {:.3g} of Nitrogen flow for P = 1 atm and T = 38 C.".format(from_scfma(100*ureg('ft^3/min'), {'fluid':'air', 'P':1*ureg.atm, 'T':38*ureg.degC})))
+    print ("CGA S-1.3 Formula from 6.1.4 a) gives 0.0547 kg/s for the same air capacity.")
