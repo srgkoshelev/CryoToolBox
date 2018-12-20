@@ -348,8 +348,29 @@ def tc_304(T):
         log10_k += log10(T.magnitude)**ind*coef
     return 10**log10_k*ureg('(W/(m*K))')
 
+def polyval(p,x):
+    """Simple evaluation of a polynomial at a specific value using Horner's method
+    """
+    res = 0
+    for coef in p:
+        res = res*x + coef
+    return res
 
+def therm_exp(T, material='304'):
+    """Linear expansion, (L-L_293)/L_293, dimensionless
+    """
+    LinearExpansion = {'304':((1.7127E-8, -2.0261E-5, 9.2683E-3, -3.9811E-1, -2.9554E2,),(23*ureg.K, -300.04), (ureg('4 K'), ureg('300 K'))),
+     } #Data from NIST website
+    (Coeffs, (T_low, low_val), (T_min, T_max)) = LinearExpansion[material]
+    if T<T_min or T>T_max:
+        raise ValueError('NIST model is only defined for T=({T_min:.3~}..{T_max:.3~} for {material}: {T:.3~}'.format(T_min=T_min, T_max=T_max, material=material, T=T))
+    if T<T_low:
+        res = low_val
+    else:
+        res = polyval(Coeffs, T.to(ureg.K).magnitude)
+    return res*1e-5
 
+    
 
 if __name__ == "__main__":
         print (Ra().to_base_units())
