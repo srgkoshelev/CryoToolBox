@@ -233,7 +233,7 @@ class Piping (list):
         if len(self) > 0:
             K0 = 0*ureg.dimensionless
             A0 = self[0].Area
-            ID_prev = self[0].ID #ID of the previous piping section; used for sudden contraction and enlargement calculations
+            #ID_prev = self[0].ID #ID of the previous piping section; used for sudden contraction and enlargement calculations
             for section in self:
 #                if ID_prev < section.ID: #Sudden enlargement
 #                    K0 += (1-beta(ID_prev, section.ID)**2)**2/beta(ID_prev, section.ID)**4*(A0/section.Area)**2
@@ -272,10 +272,11 @@ class Piping (list):
             return dP_darcy (K, rho, w)
         elif 0.4<dP/P_0<(1-rc): #Subsonic flow
             logger.warning('Pressure drop too high for Darcy equation!')
-            w = A*(rho/(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5 #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6
+            w = (1/rho*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5 #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6
             return dP_darcy (K, rho, w)
         else:
-            logger.warning('Sonic flow developed. Consider reducing massflow: {:.3~}'.format(m_dot))
+            logger.warning('Sonic flow developed. Calculated value ignores density changes. Consider reducing massflow: {:.3~}'.format(m_dot))
+            return dP_darcy (K, rho, w)
 
     def m_dot(self, P_out=0*ureg.psig):
         '''
