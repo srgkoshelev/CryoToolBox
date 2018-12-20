@@ -223,7 +223,7 @@ class V_Cone(Pipe):
 
     @property
     def K(self):
-        return self._beta**2/(1-self._beta**4)**0.5*self._Cd
+        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cd)**2
 
 
 
