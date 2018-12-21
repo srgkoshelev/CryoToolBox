@@ -384,3 +384,4 @@ if __name__ == "__main__":
         print(Leak)
         print(Leak.to(ureg.W))
         print((Leak/(7*ureg('kJ/kg'))).to(ureg.g/ureg.s))
+        print(therm_exp(ureg('4.5 K'))*ureg('20 ft').to(ureg.inch))
