@@ -262,20 +262,21 @@ class Piping (list):
         '''
         Calculate pressure drop through piping. Lumped method using Darcy equation is used.
         '''
-        (_, M, D_in) = rp_init(self.init_cond)
+        (x, M, D_in) = rp_init(self.init_cond)
         P_0 = self.init_cond['P']
+        T_0 = self.init_cond['T']
         rho = D_in*M
         K, Area = self.K()
         w = m_dot/(rho*Area)
         dP = dP_darcy (K, rho, w)
+        q = flsh('TP', T_0, P_0, x)['q']
         P_out = P_0 - dP
         k = gamma(self.init_cond) #adiabatic coefficient
         rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be depndent on the hydraulic resistance of the flow path
-        if dP/P_0 <= 0.1:
+        if q < 0 or dP/P_0 <= 0.1: #if q<0 then fluid is a liquid
             return dP
         elif dP/P_0 <= 0.4:
             (x, _, D_out) = rp_init(self.init_cond)
-            T_0 = self.init_cond['T']
             D_out = flsh ("TP", T_0, P_out, x)['D']
             rho = (D_in+D_out)/2*M
             w = m_dot/(rho*Area)
