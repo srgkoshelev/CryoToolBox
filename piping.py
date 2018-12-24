@@ -216,14 +216,14 @@ class Globe_valve(Pipe):
         return 340*self.f_T() #Using conservative value for a globe valve
 
 class V_Cone(Pipe):
-    def __init__(self, D, beta, Cd, SCH=40):
+    def __init__(self, D, beta, Cf, SCH=40):
         super().__init__(D, SCH, None)
         self._beta = beta
-        self._Cd = Cd
+        self._Cf = Cf
 
     @property
     def K(self):
-        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cd)**2
+        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2
 
 
 
