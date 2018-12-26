@@ -76,7 +76,6 @@ class Pipe:
         except AttributeError:
             self._K = self.f_T()*self.L/self.ID
             return self._K
-    #TODO Implement more accurate method of friction factor estimation
 class VJ_Pipe(Pipe):
     '''
     Vacuum jacketed pipe
@@ -91,7 +90,6 @@ class Corrugated_Pipe(Pipe):
     '''
     def __init__ (self, D, L=0*ureg.m):
         super().__init__(D, None, L) 
-        self.corrugated = True #deprecated
 
     @property
     def K(self):
@@ -103,11 +101,11 @@ class Corrugated_Pipe(Pipe):
 
     @property
     def OD(self):
-        logger.warning('For corrugated piping assumed OD = D')
-        return self.D
+        logger.debug('For corrugated piping assumed OD = D')
+        return Q_(self.D, ureg.inch)
     @property
     def wall(self):
-        logger.warning('For corrugated piping assumed wall = 0')
+        logger.debug('For corrugated piping assumed wall = 0')
         return 0*ureg.m
 
 class Entrance (Pipe):
@@ -243,16 +241,8 @@ class Piping (list):
         if len(self) > 0:
             K0 = 0*ureg.dimensionless
             A0 = self[0].Area
-            #ID_prev = self[0].ID #ID of the previous piping section; used for sudden contraction and enlargement calculations
             for section in self:
-#                if ID_prev < section.ID: #Sudden enlargement
-#                    K0 += (1-beta(ID_prev, section.ID)**2)**2/beta(ID_prev, section.ID)**4*(A0/section.Area)**2
-#                    logger.debug('Enlargement: {:.3g} -> {:.3g}'.format(ID_prev, section.ID))
-#                if ID_prev > section.ID: #Sudden contraction
-#                    K0 += 0.5*(1-beta(ID_prev, section.ID))/2**0.25*(A0/section.Area)**2
-#                    logger.debug('Contraction: {:.3g} -> {:.3g}'.format(ID_prev, section.ID))
                 K0 += section.K*(A0/section.Area)**2
-#                ID_prev = section.ID
             return (K0, A0)
         else:
             logger.error('Piping has no elements! Use Piping.add to add sections to piping.')
@@ -308,29 +298,6 @@ class Piping (list):
         w = Area*(2*delta_P*rho/K)**0.5 #Net expansion factor for discharge is assumed to be 1 (conservative value)
         return w.to(ureg.g/ureg.s)
 
-
-#def make_surface (Pipe, method = 'OD'):
-#        """
-#        Make surface element for convection heat load calculation.
-#        Method determines which surface is considered. Orientation changes which dimension should be used for Nu  calculation. 
-#        """
-#        T = Pipe['fluid']['T']
-#        if method == 'OD':
-#                Diam = OD(Pipe)
-#        elif method == 'VJ':
-#                Diam = VJOD(Pipe)
-#        elif method == 'average':
-#                Diam = (OD(Pipe) + VJOD(Pipe))/2
-#
-#        if Pipe['Orientation'] == 'Horizontal':
-#                Dim = Diam
-#                Dim_sec = Pipe['L']
-#        elif Pipe['Orientation'] == 'Vertical':
-#                Dim = Pipe['L']
-#                Dim_sec = Diam
-#        return {'T':T, 'Dim':Dim, 'Dim_sec':Dim_sec}
-
-
 #Hydraulic functions
 def Re (M_dot = 0.01*ureg('kg/s'), Fluid_data = {'fluid':'air', 'P':101325*ureg.Pa, 'T':Q_(38, ureg.degC)}, Dim = 1.097*ureg.inch):
         """
@@ -347,10 +314,6 @@ def Re (M_dot = 0.01*ureg('kg/s'), Fluid_data = {'fluid':'air', 'P':101325*ureg.
         w_flow = M_dot/(rho_fluid*A)
         Re_number = w_flow*d*rho_fluid/mu_fluid
         return Re_number.to(ureg.dimensionless)
-        #TODO Make Re() a simple function; move more complex function to pipe class or create a class containing also Fluid_data
-
-
-#Pressure drops for different configurations of piping
 
 def f_friction(M_dot, pipe, Fluid_data):
         """
