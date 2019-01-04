@@ -1,4 +1,9 @@
 #python3
+
+#' % Utilities for hydraulics calculations
+#' % by Sergey Koshelev
+
+#' Importing math and thermodynamic functions, and NPS tabulated data. Setting up physical quantities for operations with units and lagging.
 from math import pi, log10, sin, log
 import logging
 from .functions import *
@@ -6,10 +11,11 @@ from .NPS_data import NPS_table
 Q_ = ureg.Quantity
 logger = logging.getLogger(__name__)
 
+#' Pipe class is used to create Pipe objects, representing actual parts of the pipeline. The Pipe object will contain information such as OD, ID, wall thickness, and can be used to calculate flow coefficient K that is used for flow calculations.
 class Pipe:
-    '''
-    General NPS pipe class. All basic methods implemented.
-    '''
+    """
+    NPS pipe class.
+    """
     def __init__ (self, D_nom, SCH=40, L=0*ureg.m):
         self.D = D_nom #Nominal diameter
         self.SCH = SCH
@@ -17,41 +23,41 @@ class Pipe:
 
     @property
     def OD(self):
-            """
-            Return OD of the Pipe element based on NPS table
-            """
-            try:
-                return self._OD
-            except AttributeError:
-                self._OD = NPS_table[self.D]['OD']
-                return self._OD
+        """
+        Return OD of the Pipe element based on NPS table.
+        """
+        try:
+            return self._OD
+        except AttributeError:
+            self._OD = NPS_table[self.D]['OD']
+            return self._OD
 
     @property
     def wall(self):
-            """
-            Return wall thickness of Pipe element based on NPS table
-            """
-            try:
-                return self._wall
-            except AttributeError:
-                self._wall = NPS_table[self.D].get(self.SCH)
-                return self._wall
+        """
+        Return wall thickness of Pipe element based on NPS table.
+        """
+        try:
+            return self._wall
+        except AttributeError:
+            self._wall = NPS_table[self.D].get(self.SCH)
+            return self._wall
 
     @property
     def ID(self):
-            """
-            Return ID of the Pipe element based on NPS table
-            """
-            try:
-                return self._ID
-            except AttributeError:
-                self._ID = self.OD - 2*self.wall
-                return self._ID
+        """
+        Return ID of the Pipe element based on NPS table.
+        """
+        try:
+            return self._ID
+        except AttributeError:
+            self._ID = self.OD - 2*self.wall
+            return self._ID
 
     @property
     def Area(self):
         """
-        Calculate cross sectional area of pipe
+        Calculate cross sectional area of pipe.
         """
         try:
             return self._Area
@@ -60,10 +66,10 @@ class Pipe:
         return self._Area
 
     def f_T(self):
-        '''
+        """
         Friction factor for complete turbulence for clean steel pipe.
         Fitted logarithmic function to data from A-25.
-        '''
+        """
         if self.ID<0.2*ureg.inch or self.ID>48*ureg.inch:
             logger.warning('Tabulated friction data is given for ID = 0.2..48 inch, given {:.2~}'.format(self.ID))
         ln_ID = log(self.ID.to(ureg.inch).magnitude)
@@ -71,16 +77,21 @@ class Pipe:
 
     @property
     def K(self):
+        """
+        Calculate flow coefficient for the Pipe element.
+        """
         try:
             return self._K
         except AttributeError:
             self._K = self.f_T()*self.L/self.ID
             return self._K
+
+#' Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
 class VJ_Pipe(Pipe):
-    '''
-    Vacuum jacketed pipe
-    '''
-    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH = 5):
+    """
+    Vacuum jacketed pipe.
+    """
+    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
         super().__init__(D_nom, SCH, L) 
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
 
@@ -109,23 +120,31 @@ class Corrugated_Pipe(Pipe):
         return 0*ureg.m
 
 class Entrance (Pipe):
+    """
+    Pipe entrance, flush, sharp edged.
+    """
     def __init__ (self, ID):
         self._ID = ID
 
     @property
     def K(self):
-        return 0.5 #For piping entrance
+        return 0.5 #Crane TP-410, A-29
 
 class Exit (Pipe):
+    """
+    Pipe exit, projecting or sharp-edged, or rounded.
+    """
     def __init__ (self, ID):
         self._ID = ID
 
     @property
     def K(self):
-        return 1 #For piping end
+        return 1 #Crane TP-410, A-29
 
 class Orifice(Pipe):
-    """Square-edged orifice plate"""
+    """
+    Square-edged orifice plate
+    """
     def __init__(self, ID):
         self.Cd = 0.61 #Thin sharp edged orifice plate
         self._ID = ID
@@ -135,12 +154,18 @@ class Orifice(Pipe):
         return 1/self.Cd**2
 
 class Conic_Orifice(Orifice):
+    """
+    Conic orifice
+    """
     def __init__(self, D, ID):
         super().__init__(ID)
         if NPS_table[D]['OD'] >= 1*ureg.inch: #For a smaller diameter using value for square-edged plate (unfounded assumption)
             self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
 
 class Tube (Pipe):
+    """
+    Tube, requires OD and wall thickness specified
+    """
     def __init__(self, OD, wall, L=0*ureg.m):
         self._OD = OD
         self.D = OD.to(ureg.inch).magnitude
@@ -148,6 +173,11 @@ class Tube (Pipe):
         self.L = L
 
 class Elbow(Pipe):
+    """
+    NPS elbow.
+    R_D: elbow radius/diameter ratio
+    N: number of elbows in the pipeline (to be used with lumped Darcy equation)
+    """
     def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
         super().__init__(D_nom, SCH)
         self.R_D = R_D
@@ -179,6 +209,9 @@ class Elbow(Pipe):
         return (A1*B1*C1+super().K)*self.N
 
 class Tee(Pipe):
+    """
+    NPS Tee fitting.
+    """
     def __init__(self, D_nom, SCH=40, direction='thru'):
         super().__init__(D_nom, SCH)
         if direction in ['thru', 'through']:
@@ -196,6 +229,9 @@ class Tee(Pipe):
             return 60*self.f_T() #Crane TP-410 p. A-29
 
 class Valve(Pipe):
+    """
+    Generic valve with known Cv.
+    """
     def __init__(self, D, Cv):
         super().__init__(D, SCH=40, L=None)
         self.Cv = Cv
@@ -205,15 +241,21 @@ class Valve(Pipe):
         return Cv_to_K(self.Cv, self.ID) 
  
 class Globe_valve(Pipe):
+    """
+    Globe valve.
+    """
     def __init__(self, D):
         super().__init__(D, None, None)
         self._ID = self.OD - 2*NPS_table[D].get(40) #ID for the valve is assumed equal to SCH40 ID
 
     @property
     def K(self):
-        return 340*self.f_T() #Using conservative value for a globe valve
+        return 340*self.f_T() #Horizontal ball valve with beta = 1
 
 class V_Cone(Pipe):
+    """
+    McCrometer V-Cone flowmeter.
+    """
     def __init__(self, D, beta, Cf, SCH=40):
         super().__init__(D, SCH, None)
         self._beta = beta
@@ -221,14 +263,14 @@ class V_Cone(Pipe):
 
     @property
     def K(self):
-        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2
+        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 #Equation is reverse-engineered from McCrometer V-Cone equations
 
 
 
-
+#' Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow. 
 class Piping (list):
     '''
-    Piping system defined by intial conditions and structure of pipe elements.
+    Piping system defined by initial conditions and structure of pipe elements.
     '''
     def __init__ (self, Init_fdata, *Pipes):
         self.init_cond = Init_fdata 
@@ -238,9 +280,12 @@ class Piping (list):
         self.extend(Pipes)
 
     def K(self):
+        """
+        Converting and adding flow coefficients K to same area.
+        """
         if len(self) > 0:
             K0 = 0*ureg.dimensionless
-            A0 = self[0].Area
+            A0 = self[0].Area #using area of the first element as base
             for section in self:
                 K0 += section.K*(A0/section.Area)**2
             return (K0, A0)
@@ -251,6 +296,7 @@ class Piping (list):
     def dP(self, m_dot):
         '''
         Calculate pressure drop through piping. Lumped method using Darcy equation is used.
+        The pressure dropped is checked for choked condition.
         '''
         (x, M, D_in) = rp_init(self.init_cond)
         P_0 = self.init_cond['P']
@@ -262,7 +308,7 @@ class Piping (list):
         q = flsh('TP', T_0, P_0, x)['q']
         P_out = P_0 - dP
         k = gamma(self.init_cond) #adiabatic coefficient
-        rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be depndent on the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be dependent on the hydraulic resistance of the flow path
         if q < 0 or dP/P_0 <= 0.1: #if q<0 then fluid is a liquid
             return dP
         elif dP/P_0 <= 0.4:
@@ -276,7 +322,7 @@ class Piping (list):
             w = (1/rho*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5 #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6
             return dP_darcy (K, rho, w)
         else:
-            logger.warning('Sonic flow developed. Calculated value ignores density changes. Consider reducing massflow: {:.3~}'.format(m_dot))
+            logger.warning('Sonic flow developed. Calculated value ignores density changes. Consider reducing mass flow: {:.3~}'.format(m_dot))
             return dP_darcy (K, rho, w)
 
     def m_dot(self, P_out=0*ureg.psig):
@@ -289,7 +335,7 @@ class Piping (list):
         rho = D*M
         K, Area = self.K()
         k = gamma(self.init_cond) #adiabatic coefficient
-        rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be depndent on the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be dependent on the hydraulic resistance of the flow path
         if P_out/P_0 > rc: #Subsonic flow
             delta_P = P_0-P_out
         else: #Sonic flow
@@ -298,10 +344,10 @@ class Piping (list):
         w = Area*(2*delta_P*rho/K)**0.5 #Net expansion factor for discharge is assumed to be 1 (conservative value)
         return w.to(ureg.g/ureg.s)
 
-#Hydraulic functions
-def Re (M_dot = 0.01*ureg('kg/s'), Fluid_data = {'fluid':'air', 'P':101325*ureg.Pa, 'T':Q_(38, ureg.degC)}, Dim = 1.097*ureg.inch):
+#' Supporting functions used for flow rate and pressure drop calculations.
+def Re (M_dot, Fluid_data, Dim):
         """
-        Reynolds number
+        Reynolds number.
         """
         fluid, T_fluid, P_fluid = unpack_fluid(Fluid_data)
         (x, M, D_fluid) = rp_init(Fluid_data)
@@ -318,20 +364,16 @@ def Re (M_dot = 0.01*ureg('kg/s'), Fluid_data = {'fluid':'air', 'P':101325*ureg.
 def f_friction(M_dot, pipe, Fluid_data):
         """
         Calculate friction coefficient for pressure drop calculation. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+        More accurate value using Re.
         """
         Re_num = Re(M_dot, Fluid_data, pipe.ID())
         mult = 1 #Default value for multiplier
-        try:
-            if pipe.corrugated:
-                mult = 4 #Using 4x multiplicator compared to straight pipe
-        except AttributeError:
-            pass
         if Re_num < 2000:
             return 64/Re_num*mult
         elif Re_num > 4000:
             return 1/(1.8*log10(Re_num)-1.64)**2*mult
         else:
-            return max(64/Re_num*mult, 1/(1.8*log10(Re_num)-1.64)**2*mult)
+            return max(64/Re_num*mult, 1/(1.8*log10(Re_num)-1.64)**2*mult) #For transitional region the highest of 2 regimes is used.
         
 def dP_darcy (K, rho, w):
     '''
@@ -344,7 +386,8 @@ def dP_darcy (K, rho, w):
     return d_P.to(ureg.psi)
 
 def K_to_Cv(K, ID):
-    """Calculate flow coefficient Cv based on resistance coefficient value K.
+    """
+    Calculate flow coefficient Cv based on resistance coefficient value K.
     Based on definition:
     Cv = Q*sqrt(rho/(d_P*rho_w))
     where Q - volumetric flow, rho - flow density, rho_w - water density at 60 F, d_P - pressure drop through the valve.
@@ -352,12 +395,13 @@ def K_to_Cv(K, ID):
     """
     A = pi*ID**2/4
     rho_w = 999*ureg('kg/m**3') #Water density at 60 F
-    Cv = A*(2/(K*rho_w))**0.5 #Based on Crane TP-410 p. 2-10 and unsimplified Darcy equation (see dP_darcy)
+    Cv = A*(2/(K*rho_w))**0.5 #Based on Crane TP-410 p. 2-10 and Darcy equation
     Cv.ito(ureg('gal/(min*(psi)**0.5)')) #Convention accepted in the US
     return Cv
 
 def Cv_to_K(Cv, ID):
-    """Calculate resistance coefficient K based on flow coefficient value Cv.
+    """
+    Calculate resistance coefficient K based on flow coefficient value Cv.
     Based on definition:
     Cv = Q*sqrt(rho/(d_P*rho_w))
     where Q - volumetric flow, rho - flow density, rho_w - water density at 60 F, d_P - pressure drop through the valve.
@@ -366,17 +410,18 @@ def Cv_to_K(Cv, ID):
     Cv = Cv*ureg('gal/(min*(psi)**0.5)') #Convention accepted in the US
     A = pi*ID**2/4
     rho_w = 999*ureg('kg/m**3') #Water density at 60 F
-    K = 2*A**2/(Cv**2*rho_w) #Based on Crane TP-410 p. 2-10 and unsimplified Darcy equation (see dP_darcy)
+    K = 2*A**2/(Cv**2*rho_w) #Based on Crane TP-410 p. 2-10 and Darcy equation
     return K
 
 def beta(d1, d2):
-    """Calculate beta = d/D for contraction or enlargement
+    """
+    Calculate beta = d/D for contraction or enlargement.
     """
     return min(d1, d2)/max(d1, d2)
 
 def to_standard_flow(flow_rate, Fluid_data):
     '''
-    Converting volumetric flow at certain conditions or mass flow to volumetric flow at NTP
+    Converting volumetric flow at certain conditions or mass flow to volumetric flow at NTP.
     '''
     (x, M, D_NTP) = rp_init({'fluid':Fluid_data['fluid'], 'T':T_NTP, 'P':P_NTP})
     if flow_rate.dimensionality == ureg('kg/s').dimensionality: #mass flow, flow conditions are unnecessary
@@ -387,10 +432,10 @@ def to_standard_flow(flow_rate, Fluid_data):
             (x, M, D_fluid) = rp_init(Fluid_data)
             q_std = flow_rate*D_fluid/D_NTP
         else:
-            logger.warning('Flow conditions for volumetric flow {:.3~} are not set. Assuming standard flow at NTP'.format(flow_rate))
+            logger.warning('Flow conditions for volumetric flow {:.3~} are not set. Assuming standard flow at NTP.'.format(flow_rate))
             q_std = flow_rate
     else:
-        logger.warning('Flow dimensionality is not supported: {:.3~}'.format(flow_rate.dimensionality))
+        logger.warning('Flow dimensionality is not supported: {:.3~}.'.format(flow_rate.dimensionality))
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std
 
