@@ -1,13 +1,19 @@
-#python3
-
 #' % Utilities for hydraulics calculations
 #' % by Sergey Koshelev
 
-#' Importing math and thermodynamic functions, and NPS tabulated data. Setting up physical quantities for operations with units and lagging.
+#' This document describes the functions that are used for hydraulic analysis. The code is written in python and utilizes refprop for fluid properties. A separate wrapper for refprop functions allowing transparent usage of units is used. The main source of the equations is Crane TP-410.
+#'
+#' Importing math and thermodynamic functions, and NPS tabulated data. Setting up physical quantities for operations with units and logging.
 from math import pi, log10, sin, log
 import logging
-from .functions import *
-from .NPS_data import NPS_table
+if __name__ == "__main__":
+    from heat_transfer.rp_wrapper import *
+    from heat_transfer.functions import *
+    from heat_transfer.NPS_data import NPS_table
+else:
+    from .rp_wrapper import *
+    from .functions import *
+    from .NPS_data import NPS_table
 Q_ = ureg.Quantity
 logger = logging.getLogger(__name__)
 
@@ -71,7 +77,8 @@ class Pipe:
         Fitted logarithmic function to data from A-25.
         """
         if self.ID<0.2*ureg.inch or self.ID>48*ureg.inch:
-            logger.warning('Tabulated friction data is given for ID = 0.2..48 inch, given {:.2~}'.format(self.ID))
+            logger.warning('''Tabulated friction data is given for 
+                           ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
         ln_ID = log(self.ID.to(ureg.inch).magnitude)
         return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev
 
@@ -159,7 +166,9 @@ class Conic_Orifice(Orifice):
     """
     def __init__(self, D, ID):
         super().__init__(ID)
-        if NPS_table[D]['OD'] >= 1*ureg.inch: #For a smaller diameter using value for square-edged plate (unfounded assumption)
+        if NPS_table[D]['OD'] >= 1*ureg.inch: 
+            #For a smaller diameter using value for 
+            #square-edged plate (unfounded assumption)
             self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
 
 class Tube (Pipe):
@@ -188,7 +197,8 @@ class Elbow(Pipe):
     @property
     def K(self):
         """
-        Pressure drop in an elbow fitting. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+        Pressure drop in an elbow fitting. 
+        Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
         """
         if self.angle <= 70*ureg.deg:
             A1 = 0.9*sin(self.angle)
@@ -197,7 +207,8 @@ class Elbow(Pipe):
         elif self.angle >= 100*ureg.deg:
             A1 = 0.7+0.35*self.angle/(90*ureg.deg)
         else:
-            logger.error('Improper bend angle for elbow. 90 degrees used instead: {}'.format(self.angle))
+            logger.error('''Improper bend angle for elbow. 
+            90 degrees used instead: {}'''.format(self.angle))
             A1 = 1
 
         if self.R_D < 1:
@@ -219,7 +230,8 @@ class Tee(Pipe):
         if direction in ['branch', 'side']:
             self.direction = 'branch'
         else:
-            logger.error('Tee direction is not recognized, try "thru" or "branch": {}'.format(direction))
+            logger.error('''Tee direction is not recognized, 
+                         try "thru" or "branch": {}'''.format(direction))
 
     @property
     def K(self):
@@ -246,7 +258,8 @@ class Globe_valve(Pipe):
     """
     def __init__(self, D):
         super().__init__(D, None, None)
-        self._ID = self.OD - 2*NPS_table[D].get(40) #ID for the valve is assumed equal to SCH40 ID
+        #ID for the valve is assumed equal to SCH40 ID:
+        self._ID = self.OD - 2*NPS_table[D].get(40) 
 
     @property
     def K(self):
@@ -263,14 +276,16 @@ class V_Cone(Pipe):
 
     @property
     def K(self):
-        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 #Equation is reverse-engineered from McCrometer V-Cone equations
+        #Equation is reverse-engineered from McCrometer V-Cone equations
+        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 
 
 
 
 #' Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow. 
 class Piping (list):
     '''
-    Piping system defined by initial conditions and structure of pipe elements.
+    Piping system defined by initial conditions and structure of 
+    pipe elements.
     '''
     def __init__ (self, Init_fdata, *Pipes):
         self.init_cond = Init_fdata 
@@ -290,12 +305,14 @@ class Piping (list):
                 K0 += section.K*(A0/section.Area)**2
             return (K0, A0)
         else:
-            logger.error('Piping has no elements! Use Piping.add to add sections to piping.')
+            logger.error('''Piping has no elements! 
+                         Use Piping.add to add sections to piping.''')
 
 
     def dP(self, m_dot):
         '''
-        Calculate pressure drop through piping. Lumped method using Darcy equation is used.
+        Calculate pressure drop through piping. 
+        Lumped method using Darcy equation is used.
         The pressure dropped is checked for choked condition.
         '''
         (x, M, D_in) = rp_init(self.init_cond)
@@ -308,7 +325,10 @@ class Piping (list):
         q = flsh('TP', T_0, P_0, x)['q']
         P_out = P_0 - dP
         k = gamma(self.init_cond) #adiabatic coefficient
-        rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be dependent on the hydraulic resistance of the flow path
+        #Critical pressure drop; 
+        #Note: according to Crane TP-410 should be dependent on 
+        #the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1)) 
         if q < 0 or dP/P_0 <= 0.1: #if q<0 then fluid is a liquid
             return dP
         elif dP/P_0 <= 0.4:
@@ -319,15 +339,19 @@ class Piping (list):
             return dP_darcy (K, rho, w)
         elif 0.4<dP/P_0<(1-rc): #Subsonic flow
             logger.warning('Pressure drop too high for Darcy equation!')
-            w = (1/rho*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5 #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6
+            #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
+            w = (1/rho*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5 
             return dP_darcy (K, rho, w)
         else:
-            logger.warning('Sonic flow developed. Calculated value ignores density changes. Consider reducing mass flow: {:.3~}'.format(m_dot))
+            logger.warning('''Sonic flow developed. Calculated value ignores 
+                           density changes. Consider reducing mass flow: 
+                           {:.3~}'''.format(m_dot))
             return dP_darcy (K, rho, w)
 
     def m_dot(self, P_out=0*ureg.psig):
         '''
-        Calculate mass flow through the piping using initial conditions at the beginning of piping.
+        Calculate mass flow through the piping using initial conditions 
+        at the beginning of piping.
         Simple solution using Darcy equation is used.
         '''
         (x, M, D) = rp_init(self.init_cond)
@@ -335,13 +359,19 @@ class Piping (list):
         rho = D*M
         K, Area = self.K()
         k = gamma(self.init_cond) #adiabatic coefficient
-        rc = (2/(k+1))**(k/(k-1)) #Critical pressure drop; Note: according to Crane TP-410 should be dependent on the hydraulic resistance of the flow path
+        #Critical pressure drop
+        #Note: according to Crane TP-410 should be dependent on 
+        #the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1)) 
         if P_out/P_0 > rc: #Subsonic flow
             delta_P = P_0-P_out
         else: #Sonic flow
-            logger.warning('End pressure creates sonic flow. Max possible dP will be used')
+            logger.warning('''End pressure creates sonic flow. 
+                           Max possible dP will be used''')
             delta_P = P_0*(1-rc) #Crane TP-410, p 2-15
-        w = Area*(2*delta_P*rho/K)**0.5 #Net expansion factor for discharge is assumed to be 1 (conservative value)
+        #Net expansion factor for discharge is assumed to be 1 
+        #(conservative value):
+        w = Area*(2*delta_P*rho/K)**0.5 
         return w.to(ureg.g/ureg.s)
 
 #' Supporting functions used for flow rate and pressure drop calculations.
@@ -363,7 +393,8 @@ def Re (M_dot, Fluid_data, Dim):
 
 def f_friction(M_dot, pipe, Fluid_data):
         """
-        Calculate friction coefficient for pressure drop calculation. Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+        Calculate friction coefficient for pressure drop calculation. 
+        Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
         More accurate value using Re.
         """
         Re_num = Re(M_dot, Fluid_data, pipe.ID())
@@ -373,7 +404,8 @@ def f_friction(M_dot, pipe, Fluid_data):
         elif Re_num > 4000:
             return 1/(1.8*log10(Re_num)-1.64)**2*mult
         else:
-            return max(64/Re_num*mult, 1/(1.8*log10(Re_num)-1.64)**2*mult) #For transitional region the highest of 2 regimes is used.
+            #For transitional region the highest of 2 regimes is used.
+            return max(64/Re_num*mult, 1/(1.8*log10(Re_num)-1.64)**2*mult) 
         
 def dP_darcy (K, rho, w):
     '''
@@ -390,7 +422,9 @@ def K_to_Cv(K, ID):
     Calculate flow coefficient Cv based on resistance coefficient value K.
     Based on definition:
     Cv = Q*sqrt(rho/(d_P*rho_w))
-    where Q - volumetric flow, rho - flow density, rho_w - water density at 60 F, d_P - pressure drop through the valve.
+    where Q - volumetric flow, rho - flow density
+    rho_w - water density at 60 F
+    d_P - pressure drop through the valve.
     [Cv] = gal/(min*(psi)**0.5)
     """
     A = pi*ID**2/4
@@ -404,7 +438,9 @@ def Cv_to_K(Cv, ID):
     Calculate resistance coefficient K based on flow coefficient value Cv.
     Based on definition:
     Cv = Q*sqrt(rho/(d_P*rho_w))
-    where Q - volumetric flow, rho - flow density, rho_w - water density at 60 F, d_P - pressure drop through the valve.
+    where Q - volumetric flow, rho - flow density
+    rho_w - water density at 60 F
+    d_P - pressure drop through the valve.
     [Cv] = gal/(min*(psi)**0.5)
     """
     Cv = Cv*ureg('gal/(min*(psi)**0.5)') #Convention accepted in the US
@@ -421,21 +457,27 @@ def beta(d1, d2):
 
 def to_standard_flow(flow_rate, Fluid_data):
     '''
-    Converting volumetric flow at certain conditions or mass flow to volumetric flow at NTP.
+    Converting volumetric flow at certain conditions or mass flow to 
+    flow at NTP.
     '''
     (x, M, D_NTP) = rp_init({'fluid':Fluid_data['fluid'], 'T':T_NTP, 'P':P_NTP})
-    if flow_rate.dimensionality == ureg('kg/s').dimensionality: #mass flow, flow conditions are unnecessary
+    if flow_rate.dimensionality == ureg('kg/s').dimensionality: 
+        #mass flow, flow conditions are unnecessary
         q_std = flow_rate/(D_NTP*M)
-    elif flow_rate.dimensionality == ureg('m^3/s').dimensionality: #volumetric flow given, converting to standard pressure and temperature
+    elif flow_rate.dimensionality == ureg('m^3/s').dimensionality: 
+        #volumetric flow given, converting to standard pressure and temperature
         if 'T' in Fluid_data and 'P' in Fluid_data:
             (fluid, T_fluid, P_fluid) = unpack_fluid(Fluid_data)
             (x, M, D_fluid) = rp_init(Fluid_data)
             q_std = flow_rate*D_fluid/D_NTP
         else:
-            logger.warning('Flow conditions for volumetric flow {:.3~} are not set. Assuming standard flow at NTP.'.format(flow_rate))
+            logger.warning('''Flow conditions for volumetric flow {:.3~} 
+                           are not set. Assuming standard flow at NTP.
+                           '''.format(flow_rate))
             q_std = flow_rate
     else:
-        logger.warning('Flow dimensionality is not supported: {:.3~}.'.format(flow_rate.dimensionality))
+        logger.warning('''Flow dimensionality is not supported: {:.3~}.
+                       '''.format(flow_rate.dimensionality))
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std
 
