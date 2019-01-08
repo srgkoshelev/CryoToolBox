@@ -23,7 +23,10 @@ class Pipe:
     NPS pipe class.
     """
     def __init__ (self, D_nom, SCH=40, L=0*ureg.m):
-        self.D = D_nom #Nominal diameter
+        try:
+            self.D = D_nom.magnitude #Nominal diameter
+        except AttributeError:
+            self.D = D_nom #Nominal diameter
         self.SCH = SCH
         self.L = L
 
@@ -120,7 +123,7 @@ class Corrugated_Pipe(Pipe):
     @property
     def OD(self):
         logger.debug('For corrugated piping assumed OD = D')
-        return Q_(self.D, ureg.inch)
+        return Q_(self.D*ureg.inch)
     @property
     def wall(self):
         logger.debug('For corrugated piping assumed wall = 0')
