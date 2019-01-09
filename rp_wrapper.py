@@ -1,4 +1,4 @@
-#' % Utilities for hydraulics calculations
+#' % Utility functions for Refprop python package
 #' % by Sergey Koshelev
 
 #' Importing math functions, unit handling package, and logging. Refprop is used for material properties.
@@ -79,10 +79,10 @@ def flsh(routine, var1, var2, x, kph=1):
     if routine == 'DE':   #molar density; internal energy
         var1_unitless = var1.to(ureg.mol/ureg.L).magnitude
         var2_unitless = var2.to(ureg.J/ureg.mol).magnitude
-    if routine == 'TQ':   #temperature; vapour quality
+    if routine == 'TQ':   #temperature; vapor quality
         var1_unitless = var1.to(ureg.K).magnitude
         var2_unitless = var2
-    if routine == 'PQ':   #pressure; vapour qaulity
+    if routine == 'PQ':   #pressure; vapor quality
         var1_unitless = var1.to(ureg.kPa).magnitude
         var2_unitless = var2
 
@@ -91,23 +91,30 @@ def flsh(routine, var1, var2, x, kph=1):
 
 
 
-
-Outputs = {'t':ureg.K, 'p':ureg.kPa, 'D':ureg.mol/ureg.L, 'Dliq':ureg.mol/ureg.L, 'Dvap':ureg.mol/ureg.L,
-           'x':None, 'xliq':None, 'xvap':None, 'q':None, 'e':ureg.J/ureg.mol, 'h':ureg.J/ureg.mol,
-           's':ureg.J/ureg.mol*ureg.K, 'cv':ureg.J/(ureg.mol*ureg.K), 'cp':ureg.J/(ureg.mol*ureg.K),
-           'w':ureg.m/ureg.s, 'hfmix':None, 'kph':None, 'hrf':None, 'hfld':None, 'nc':None,
-           'xkappa':None, 'beta':None, 'xisenk':None, 'xkt':None, 'betas':None, 'bs':None, 'xkkt':None,
-           'thrott':None, 'pint':None, 'spht':ureg.J/ureg.mol, 'wmm':ureg.g/ureg.mol, 'ttrp':ureg.K,
-           'tnbpt':ureg.K, 'tcrit':ureg.K, 'pcrit':ureg.kPa, 'Dcrit':ureg.mol/ureg.L, 'zcrit':None,
-           'acf':None, 'dip':ureg.debye, 'Rgas':ureg.J/(ureg.mol*ureg.K), 'icomp':None,
-           'dpdD':ureg.kPa*ureg.L/ureg.mol, 'd2pdD2':ureg.kPa*ureg.L**2/ureg.mol**2,
-           'dpdt':ureg.kPa/ureg.K, 'dDdt':ureg.mol/(ureg.L*ureg.K), 'dDdp':ureg.mol/(ureg.L*ureg.kPa),
-           'Z':None, 'hjt':ureg.K/ureg.kPa, 'A':ureg.J/ureg.mol, 'G':ureg.J/ureg.mol, 'hmxnme':None,
+#Dictionary defining units used by refprop package
+Outputs = {'t':ureg.K, 'p':ureg.kPa, 'D':ureg.mol/ureg.L,
+           'Dliq':ureg.mol/ureg.L, 'Dvap':ureg.mol/ureg.L, 'x':None,
+           'xliq':None, 'xvap':None, 'q':None, 'e':ureg.J/ureg.mol,
+           'h':ureg.J/ureg.mol, 's':ureg.J/ureg.mol*ureg.K,
+           'cv':ureg.J/(ureg.mol*ureg.K), 'cp':ureg.J/(ureg.mol*ureg.K),
+           'w':ureg.m/ureg.s, 'hfmix':None, 'kph':None, 'hrf':None,
+           'hfld':None, 'nc':None, 'xkappa':None, 'beta':None, 'xisenk':None,
+           'xkt':None, 'betas':None, 'bs':None, 'xkkt':None, 'thrott':None,
+           'pint':None, 'spht':ureg.J/ureg.mol, 'wmm':ureg.g/ureg.mol,
+           'ttrp':ureg.K, 'tnbpt':ureg.K, 'tcrit':ureg.K, 'pcrit':ureg.kPa,
+           'Dcrit':ureg.mol/ureg.L, 'zcrit':None, 'acf':None, 'dip':ureg.debye,
+           'Rgas':ureg.J/(ureg.mol*ureg.K), 'icomp':None,
+           'dpdD':ureg.kPa*ureg.L/ureg.mol,
+           'd2pdD2':ureg.kPa*ureg.L**2/ureg.mol**2, 'dpdt':ureg.kPa/ureg.K,
+           'dDdt':ureg.mol/(ureg.L*ureg.K), 'dDdp':ureg.mol/(ureg.L*ureg.kPa),
+           'Z':None, 'hjt':ureg.K/ureg.kPa, 'A':ureg.J/ureg.mol,
+           'G':ureg.J/ureg.mol, 'hmxnme':None,
            }
 
 def rp_value(value, name):
     """
-    Prepare the quantity for passing to rp function by obtaining a dimensionless value.
+    Prepare the quantity for passing to rp function by obtaining a
+    dimensionless value.
     """
     if Outputs[name]:
         return value.to(Outputs[name]).magnitude
@@ -127,13 +134,15 @@ def rp_out_unit (rp_output):
             else:
                 Output_w_units[quantity] = value
         except KeyError:
-            logger.warning('Quantity is missing from unit list, please update: {}'.format(quantity))
+            logger.warning('''Quantity is missing from unit list, please update:
+                           {}'''.format(quantity))
     return Output_w_units
 
 def rp_unitize(*names):
     """
     Decorator for refprop functions.
-    Given the string names of the variables convert input to rp accepted dimensionless values.
+    Given the string names of the variables convert input to rp accepted
+    dimensionless values.
     Results are parsed to assign units.
     Use:
     @rp_unitize('p', 'x', 'kph')
@@ -172,14 +181,16 @@ trnprp = ureg.wraps (None, (ureg.K, ureg('mol/L'), None))(rp.trnprp)
 def pack_fluid (fluid, T_fluid = Q_(15, ureg.degC), P_fluid = Q_(101325, ureg.Pa)):
         return {'fluid':fluid, 'P':P_fluid, 'T':T_fluid}
 
-def unpack_fluid (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.degC)}):
+def unpack_fluid (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa),
+                                'T':Q_(15,ureg.degC)}):
         fluid = Fluid_data.get('fluid')
         T_fluid = Fluid_data.get('T')
         P_fluid = Fluid_data.get('P')
         return (fluid, T_fluid, P_fluid)
 
 #' To use refprop one needs first to set up the fluid. Following function simplifies initialization and also returns most commonly required properties when possible.
-def rp_init (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.degC)}):
+def rp_init (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa),
+                           'T':Q_(15,ureg.degC)}):
         """
         Shortcut initialization of refprop
         Returns (x, M, D_fluid)
