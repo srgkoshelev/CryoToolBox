@@ -10,17 +10,22 @@ import logging.config
 from functools import wraps
 #' Setting up logging configuration file:
 import sys, os
-__location__ = os.path.dirname(os.path.abspath(__file__))
-
-# load the logging configuration:
-logging.config.fileConfig(os.path.join(__location__, 'logging.ini'))
-
+if __name__ != '__main__':
+    __location__ = os.path.dirname(os.path.abspath(__file__))
+    # load the logging configuration:
+    logging.config.fileConfig(os.path.join(__location__, 'logging.ini'))
+else:
+    # load the logging configuration:
+    logging.config.fileConfig(os.path.join('./', 'logging.ini'))
 logger = logging.getLogger(__name__)
 
 #' Configuring units package:
 ureg = UnitRegistry(autoconvert_offset_to_baseunit = True)
 Q_ = ureg.Quantity
-ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
+if __name__ != '__main__':
+    ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
+else:
+    ureg.load_definitions(os.path.join('./', 'pint definitions.txt'))
 sigma = Q_('stefan_boltzmann_constant')
 
 #Setting units for "standard" flow
