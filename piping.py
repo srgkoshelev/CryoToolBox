@@ -29,6 +29,7 @@ class Pipe:
             self.D = D_nom #Nominal diameter
         self.SCH = SCH
         self.L = L
+        self._type = 'NPS Pipe'
 
     @property
     def OD(self):
@@ -96,6 +97,9 @@ class Pipe:
             self._K = self.f_T()*self.L/self.ID
             return self._K
 
+    def __str__(self):
+        return f'{self._type}, OD={self.OD}, ID={self.ID}, wall={self.wall}'
+
 #' Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
 class VJ_Pipe(Pipe):
     """
@@ -104,6 +108,7 @@ class VJ_Pipe(Pipe):
     def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
         super().__init__(D_nom, SCH, L) 
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
+        self._type = 'Vacuum jacketed pipe'
 
 class Corrugated_Pipe(Pipe):
     '''
@@ -111,6 +116,7 @@ class Corrugated_Pipe(Pipe):
     '''
     def __init__ (self, D, L=0*ureg.m):
         super().__init__(D, None, L) 
+        self._type = 'Corrugated pipe'
 
     @property
     def K(self):
@@ -135,6 +141,7 @@ class Entrance (Pipe):
     """
     def __init__ (self, ID):
         self._ID = ID
+        self._type = 'Entrance'
 
     @property
     def K(self):
@@ -146,6 +153,7 @@ class Exit (Pipe):
     """
     def __init__ (self, ID):
         self._ID = ID
+        self._type = 'Exit'
 
     @property
     def K(self):
@@ -158,6 +166,7 @@ class Orifice(Pipe):
     def __init__(self, ID):
         self.Cd = 0.61 #Thin sharp edged orifice plate
         self._ID = ID
+        self._type = 'Orifice'
 
     @property
     def K(self):
@@ -173,6 +182,7 @@ class Conic_Orifice(Orifice):
             #For a smaller diameter using value for 
             #square-edged plate (unfounded assumption)
             self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
+        self._type = 'Conic orifice'
 
 class Tube (Pipe):
     """
@@ -183,6 +193,7 @@ class Tube (Pipe):
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
         self.L = L
+        self._type = 'Tube'
 
 class Elbow(Pipe):
     """
@@ -196,6 +207,7 @@ class Elbow(Pipe):
         self.N = N
         self.angle = angle
         self.L = R_D*self.ID*angle
+        self._type = 'Elbow'
 
     @property
     def K(self):
@@ -235,6 +247,7 @@ class Tee(Pipe):
         else:
             logger.error('''Tee direction is not recognized, 
                          try "thru" or "branch": {}'''.format(direction))
+        self._type = 'Tee'
 
     @property
     def K(self):
@@ -250,6 +263,7 @@ class Valve(Pipe):
     def __init__(self, D, Cv):
         super().__init__(D, SCH=40, L=None)
         self.Cv = Cv
+        self._type = 'Valve'
     
     @property
     def K(self):
@@ -263,6 +277,7 @@ class Globe_valve(Pipe):
         super().__init__(D, None, None)
         #ID for the valve is assumed equal to SCH40 ID:
         self._ID = self.OD - 2*NPS_table[D].get(40) 
+        self._type = 'Globe valve'
 
     @property
     def K(self):
@@ -276,6 +291,7 @@ class V_Cone(Pipe):
         super().__init__(D, SCH, None)
         self._beta = beta
         self._Cf = Cf
+        self._type = 'V-cone flow meter'
 
     @property
     def K(self):
