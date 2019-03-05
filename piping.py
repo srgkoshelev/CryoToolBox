@@ -9,6 +9,7 @@ from . import logger
 from . import ureg, Q_
 from .rp_wrapper import *
 from .functions import *
+from . import T_NTP, P_NTP
 from .NPS_data import NPS_table
 
 #' Pipe class is used to create Pipe objects, representing actual parts of the pipeline. The Pipe object will contain information such as OD, ID, wall thickness, and can be used to calculate flow coefficient K that is used for flow calculations.
