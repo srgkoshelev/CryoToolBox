@@ -1,8 +1,8 @@
 from math import log, log10
-from heat_transfer.rp_wrapper import *
+from . import logger
+from . import ureg, Q_
+from .rp_wrapper import *
 
-#' Configuring units package:
-Q_ = ureg.Quantity
 
 def latent_heat(Fluid_data):
     """
