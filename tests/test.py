@@ -1,7 +1,13 @@
 import heat_transfer as ht
+from heat_transfer import piping
 
 
 print (ht.Air)
+print(ht.latent_heat(ht.Air))
+Test_pipe = piping.Pipe(1, L=ht.ureg('1 m'))
+print(Test_pipe)
+Test_piping = piping.Piping(ht.Air, Test_pipe)
+print(Test_piping.m_dot(P_out = piping.ureg('1 psi')))
 #
 #    
 #
