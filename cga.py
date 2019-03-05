@@ -102,10 +102,3 @@
 
 
 
-if __name__ == "__main__":
-    print ("100 SCFM of air is equivalent to {:.3g} of Nitrogen flow for P = 1 atm and T = 38 C.".format(from_scfma(100*ureg('ft^3/min'), {'fluid':'air', 'P':1*ureg.atm, 'T':38*ureg.degC})))
-    print ("CGA S-1.3 Formula from 6.1.4 a) gives 0.0547 kg/s for the same air capacity.")
-    Fluid = ht.Air
-    Fluid['P'] = ht.ureg('690 kPa')
-    print(max_theta(Fluid))
-    print(spec_heat(Fluid))
