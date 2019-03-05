@@ -4,9 +4,12 @@ from . import ureg, Q_
 from .rp_wrapper import *
 
 
-def latent_heat(Fluid_data):
+# Basic thermodynamic functions
+def spec_heat(Fluid_data):
     """
     Calculate latent heat/specific heat input for given conditions.
+    For subcritical flow returns latent heat of evaporation,
+    for supercritical: specific heat input
     """
     x,M,D = rp_init(Fluid_data)
     _,T,P = unpack_fluid(Fluid_data)
@@ -30,6 +33,35 @@ def latent_heat(Fluid_data):
         L = therm3(T,D,x)['spht']/M #Specific heat input
     return L
 
+def to_scfma (M_dot, Fluid_data):
+        """
+        Convert mass flow rate into SCFM of air.
+        Assumption: Flow through a relief device with invariant Area/discharge coefficient (KA).
+        """
+        (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
+        T_fluid = Fluid_data['T']
+        Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
+        (x_air, M_air, D_air) = rp_init(Air)
+        T_air = Air['T']
+        Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
+        Q_air =  M_dot*C_gas_const(Air)/(D_air*M_air*C_gas_const(Fluid_data))*(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
+        Q_air.ito(ureg.ft**3/ureg.min)
+        return Q_air
+
+def from_scfma (Q_air, Fluid_data):
+        """
+        Convert SCFM of air into mass flow of specified fluid.
+        """
+        (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
+        T_fluid = Fluid_data['T']
+        Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
+        (x_air, M_air, D_air) = rp_init(Air)
+        T_air = Air['T']
+        Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
+        M_dot =  Q_air/(C_gas_const(Air))*(D_air*M_air*C_gas_const(Fluid_data))/(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
+        M_dot.ito(ureg.kg/ureg.s)
+        return M_dot
+
 def gamma (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.degC)}):
     """
     Calculate gamma (k) coefficient for the fluid
@@ -41,7 +73,37 @@ def gamma (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.d
     Cp = fluid_prop['cp']
     Cv = fluid_prop['cv']
     return Cp/Cv
-k = gamma
+k = gamma # A useful shortcut
+
+
+def max_theta(Fluid_data, step = 0.01):
+        """Calculate tepmerature at which sqrt(v)/SHI is max for safety calculations (CGA S-1.3 2008)
+        SHI - specific heat input v*(dh/dv)|p
+        step - temperature step
+        """
+        x, _, _ = rp_init(Fluid_data)
+        T_start = satp(Q_(101325, ureg.Pa),x)['t']  #Starting temperature - liquid temperature for atmospheric pressure. Vacuum should be handled separately.
+        T_end = 300*ureg.K
+        theta = ureg('0 mol**1.5/(J*l**0.5)')
+        T = T_start
+        P = Fluid_data['P']
+        while T <= T_end:
+            D_vap = flsh('TP', T, P, x)['Dvap']
+            theta_new = (D_vap**0.5)/therm3(T, D_vap, x)['spht'] 
+            if theta_new > theta:
+                theta = theta_new
+            else:
+                break #Function has only one maximum
+            T += step*ureg.K
+        return T
+
+def C_gas_const (Fluid_data):
+        """
+        Constant for gal or vapor which is the function of the ratio of specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
+        """
+        k = k(Fluid_data)
+        C = 520*(k*(2/(k+1))**((k+1)/(k-1)))**0.5*ureg('lb/(hr*lbf)*(degR)^0.5')
+        return C
 
 #' Functions for basic dimensionless quantities (Re number is a part of piping module).
 def Pr (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.degC)}):
