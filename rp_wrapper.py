@@ -4,38 +4,12 @@
 #' Importing math functions, unit handling package, and logging. Refprop is used for material properties.
 from math import log, log10
 from pyrefprop import refprop as rp
-from pint import UnitRegistry
-import logging
-import logging.config
 from functools import wraps
-#' Setting up logging configuration file:
-import sys, os
-if __name__ != '__main__':
-    __location__ = os.path.dirname(os.path.abspath(__file__))
-    # load the logging configuration:
-    logging.config.fileConfig(os.path.join(__location__, 'logging.ini'))
-else:
-    # load the logging configuration:
-    logging.config.fileConfig(os.path.join('./', 'logging.ini'))
-logger = logging.getLogger(__name__)
+from . import logger
+from . import ureg, Q_
 
-#' Configuring units package:
-ureg = UnitRegistry(autoconvert_offset_to_baseunit = True)
-Q_ = ureg.Quantity
-if __name__ != '__main__':
-    ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
-else:
-    ureg.load_definitions(os.path.join('./', 'pint definitions.txt'))
+
 sigma = Q_('stefan_boltzmann_constant')
-
-#Setting units for "standard" flow
-T_NTP = Q_(68, ureg.degF) #Normal Temperature (NIST)
-P_NTP = Q_(14.7, ureg.psi) #Normal Pressure (NIST)
-
-T_MSC = Q_(15, ureg.degC) #Metric Standard Conditions (used by Crane TP-410)
-P_MSC = Q_(101325, ureg.Pa) #Metric Standard Conditions (used by Crane TP-410)
-
-Air = {'fluid':'air', 'P':P_NTP, 'T':T_NTP}
 
 #' Refprop package uses dimensionless values for its functions. A series of wrapper functions are used to allow for units seamless integration.
 def flsh(routine, var1, var2, x, kph=1):
