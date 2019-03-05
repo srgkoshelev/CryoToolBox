@@ -176,6 +176,10 @@ def therm2(t, D, x):
 def therm3(t, D, x):
     return rp.therm3(t, D, x)
 
+@rp_unitize('x')
+def critp(x):
+    return rp.critp(x)
+
 @rp_unitize('icomp')
 def info(icomp=1):
     return rp.info(icomp)
@@ -194,8 +198,7 @@ def unpack_fluid (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa),
         return (fluid, T_fluid, P_fluid)
 
 #' To use refprop one needs first to set up the fluid. Following function simplifies initialization and also returns most commonly required properties when possible.
-def rp_init (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa),
-                           'T':Q_(15,ureg.degC)}):
+def rp_init (Fluid_data):
         """
         Shortcut initialization of refprop
         Returns (x, M, D_fluid)
