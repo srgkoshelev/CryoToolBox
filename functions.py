@@ -1,6 +1,7 @@
 from math import log, log10
 from . import logger
 from . import ureg, Q_
+from . import Air
 from .rp_wrapper import *
 
 
@@ -75,7 +76,6 @@ def gamma (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa), 'T':Q_(15,ureg.d
     return Cp/Cv
 k = gamma # A useful shortcut
 
-
 def max_theta(Fluid_data, step = 0.01):
         """Calculate tepmerature at which sqrt(v)/SHI is max for safety calculations (CGA S-1.3 2008)
         SHI - specific heat input v*(dh/dv)|p
@@ -101,8 +101,8 @@ def C_gas_const (Fluid_data):
         """
         Constant for gal or vapor which is the function of the ratio of specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
         """
-        k = k(Fluid_data)
-        C = 520*(k*(2/(k+1))**((k+1)/(k-1)))**0.5*ureg('lb/(hr*lbf)*(degR)^0.5')
+        k_ = k(Fluid_data)
+        C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg('lb/(hr*lbf)*(degR)^0.5')
         return C
 
 #' Functions for basic dimensionless quantities (Re number is a part of piping module).
