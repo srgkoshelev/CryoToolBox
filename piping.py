@@ -5,17 +5,11 @@
 #'
 #' Importing math and thermodynamic functions, and NPS tabulated data. Setting up physical quantities for operations with units and logging.
 from math import pi, log10, sin, log
-import logging
-if __name__ == "__main__":
-    from heat_transfer.rp_wrapper import *
-    from heat_transfer.functions import *
-    from heat_transfer.NPS_data import NPS_table
-else:
-    from .rp_wrapper import *
-    from .functions import *
-    from .NPS_data import NPS_table
-Q_ = ureg.Quantity
-logger = logging.getLogger(__name__)
+from . import logger
+from . import ureg, Q_
+from .rp_wrapper import *
+from .functions import *
+from .NPS_data import NPS_table
 
 #' Pipe class is used to create Pipe objects, representing actual parts of the pipeline. The Pipe object will contain information such as OD, ID, wall thickness, and can be used to calculate flow coefficient K that is used for flow calculations.
 class Pipe:
