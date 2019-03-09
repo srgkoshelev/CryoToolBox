@@ -10,11 +10,12 @@ from . import ureg, Q_
 from .rp_wrapper import *
 from .functions import *
 from . import T_NTP, P_NTP
+from . import os, __location__
 from pint import set_application_registry
 import pickle
 
 set_application_registry(ureg) #Should be used for both pickling and unpickling
-NPS_table = pickle.load(open("NPS.pkl", "rb")) 
+NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb")) 
 
 #' Pipe class is used to create Pipe objects, representing actual parts of the pipeline. The Pipe object will contain information such as OD, ID, wall thickness, and can be used to calculate flow coefficient K that is used for flow calculations.
 class Pipe:
