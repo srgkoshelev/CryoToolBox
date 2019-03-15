@@ -394,38 +394,6 @@ class Piping (list):
         return w.to(ureg.g/ureg.s)
 
 #' Supporting functions used for flow rate and pressure drop calculations.
-def Re (M_dot, Fluid_data, Dim):
-        """
-        Reynolds number.
-        """
-        fluid, T_fluid, P_fluid = unpack_fluid(Fluid_data)
-        (x, M, D_fluid) = rp_init(Fluid_data)
-        fluid_trans_prop = trnprp(T_fluid, D_fluid, x)
-        mu_fluid = fluid_trans_prop['eta']*ureg('uPa*s') #dynamic viscosity
-
-        d = Dim
-        A = pi*d**2/4
-        rho_fluid = D_fluid*M
-        w_flow = M_dot/(rho_fluid*A)
-        Re_number = w_flow*d*rho_fluid/mu_fluid
-        return Re_number.to(ureg.dimensionless)
-
-def f_friction(M_dot, pipe, Fluid_data):
-        """
-        Calculate friction coefficient for pressure drop calculation. 
-        Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
-        More accurate value using Re.
-        """
-        Re_num = Re(M_dot, Fluid_data, pipe.ID())
-        mult = 1 #Default value for multiplier
-        if Re_num < 2000:
-            return 64/Re_num*mult
-        elif Re_num > 4000:
-            return 1/(1.8*log10(Re_num)-1.64)**2*mult
-        else:
-            #For transitional region the highest of 2 regimes is used.
-            return max(64/Re_num*mult, 1/(1.8*log10(Re_num)-1.64)**2*mult) 
-        
 def dP_darcy (K, rho, w):
     '''
     Darcy equation for pressure drop.
