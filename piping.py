@@ -306,7 +306,7 @@ class Piping (list):
     Piping system defined by initial conditions and structure of 
     pipe elements.
     '''
-    def __init__ (self, Init_fdata, *Pipes):
+    def __init__ (self, Init_fdata, Pipes):
         self.init_cond = Init_fdata 
         self.extend(Pipes)
 
