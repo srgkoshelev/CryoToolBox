@@ -1,15 +1,14 @@
 import heat_transfer as ht
-from heat_transfer import piping
 
 
 Fluid = ht.Air
 print (Fluid)
 print(ht.max_theta(Fluid))
 print(ht.spec_heat(ht.Air))
-Test_pipe = piping.Pipe(1, L=ht.ureg('1 m'))
+Test_pipe = ht.piping.Pipe(1, L=ht.ureg('1 m'))
 print(Test_pipe)
-Test_piping = piping.Piping(ht.Air, Test_pipe)
-print(Test_piping.m_dot(P_out = piping.ureg('1 psi')))
+Test_piping = ht.piping.Piping(ht.Air, [Test_pipe])
+print(Test_piping.m_dot(P_out = ht.piping.ureg('1 psi')))
 print ("""100 SCFM of air is equivalent to {:.3g} of Nitrogen flow for P = 1 atm
        and T = 38 C.""".format(ht.from_scfma(100*ht.ureg('ft^3/min'), {'fluid':'air', 'P':1*ht.ureg.atm, 'T':38*ht.ureg.degC})))
 print ("CGA S-1.3 Formula from 6.1.4 a) gives 0.0547 kg/s for the same air capacity.")

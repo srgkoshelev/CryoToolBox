@@ -34,3 +34,4 @@ Air = {'fluid':'air', 'P':P_NTP, 'T':T_NTP}
 
 from .rp_wrapper import *
 from .functions import *
+from . import piping
