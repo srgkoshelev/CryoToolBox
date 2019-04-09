@@ -256,6 +256,28 @@ class Tee(Pipe):
         if self.direction == 'branch':
             return 60*self.f_T() #Crane TP-410 p. A-29
 
+class TubeTee(Tube):
+    """
+    Tee fitting based off NPS Tee fitting. 
+    """
+    def __init__(self, OD, wall, direction='thru'):
+        super().__init__(OD, wall)
+        if direction in ['thru', 'through']:
+            self.direction = 'thru'
+        if direction in ['branch', 'side']:
+            self.direction = 'branch'
+        else:
+            logger.error('''Tee direction is not recognized, 
+                         try "thru" or "branch": {}'''.format(direction))
+        self._type = 'Tee'
+
+    @property
+    def K(self):
+        if self.direction == 'thru':
+            return 20*self.f_T() #Crane TP-410 p. A-29
+        if self.direction == 'branch':
+            return 60*self.f_T() #Crane TP-410 p. A-29
+
 class Valve(Pipe):
     """
     Generic valve with known Cv.
