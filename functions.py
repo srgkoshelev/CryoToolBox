@@ -194,7 +194,7 @@ def Nu_cyl_vert(Fluid_data, T_cyl, D_cyl, L_cyl):
         Nusselt = (Nu_l**6 + Nu_t**6)**(1/6)
         return Nusselt.to_base_units()
 
-def  heat_trans_coef(Fluid_data, L_surf, Nu):
+def  heat_trans_coef(Fluid_data, Nu, L_surf):
         """
         Calculate heat transfer coefficient
         L_surf - characteristic length:
