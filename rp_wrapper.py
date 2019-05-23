@@ -87,7 +87,8 @@ Outputs = {'t':ureg.K, 'p':ureg.kPa, 'D':ureg.mol/ureg.L,
            'd2pdD2':ureg.kPa*ureg.L**2/ureg.mol**2, 'dpdt':ureg.kPa/ureg.K,
            'dDdt':ureg.mol/(ureg.L*ureg.K), 'dDdp':ureg.mol/(ureg.L*ureg.kPa),
            'Z':None, 'hjt':ureg.K/ureg.kPa, 'A':ureg.J/ureg.mol,
-           'G':ureg.J/ureg.mol, 'hmxnme':None,
+           'G':ureg.J/ureg.mol, 'hmxnme':None, 'eta':ureg.uPa*ureg.s,
+           'tcx':ureg.W/(ureg.m*ureg.K),
            }
 
 def rp_value(value, name):
