@@ -158,7 +158,9 @@ def critp(x):
 def info(icomp=1):
     return rp.info(icomp)
 
-trnprp = ureg.wraps (None, (ureg.K, ureg('mol/L'), None))(rp.trnprp)
+@rp_unitize('t', 'D', 'x')
+def trnprp(t, D, x):
+    return rp.trnprp(t, D, x)
 
 #' The package uses unified way of keeping track of fluid state, specifying fluid, pressure, temperature. Helper functions to pack and unpack the fluid state.
 def pack_fluid (fluid, T_fluid = Q_(15, ureg.degC), P_fluid = Q_(101325, ureg.Pa)):
