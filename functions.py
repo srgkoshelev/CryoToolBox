@@ -202,7 +202,7 @@ def  heat_trans_coef(Fluid_data, Nu, L_surf):
             Vertical cylinder: L_surf = L_cyl
         """
         x,M,D = rp_init(Fluid_data)
-        k_fluid = trnprp(T_fluid, D_fluid, x)['tcx']
+        k_fluid = trnprp(Fluid_data['T'], D, x)['tcx']
         return k_fluid*Nu/L_surf
 
 
