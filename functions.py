@@ -12,7 +12,7 @@ def spec_heat(Fluid_data):
 
     :Fluid_data: dict describing thermodynamic state (fluid, T, P)
     :returns:
-            for subcritical flow returns latent heat of evaporation,
+            for subcritical flow: latent heat of evaporation,
             for supercritical: specific heat input
     """
     x,M,D = rp_init(Fluid_data)
@@ -126,7 +126,7 @@ def C_gas_const (Fluid_data):
 
 def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K, F1_2=1, eps_baffle=0.02, N_baffles=5):
     """
-    Calculate radiative heat load including reduction due to baffles
+    Calculate radiative heat load including reduction due to baffles.
     Based on Kaganer "Thermal insulation in cryogenic engineering", p. 42.
 
     :eps_cold: emissivity of the cold surface
@@ -197,7 +197,7 @@ def Ra(Fluid_data, T_surf, L_surf):
 
 def Nu_cyl_hor(Fluid_data, T_cyl, D_cyl):
     """
-    Calculate Nusselt number for vertical cylinder .
+    Calculate Nusselt number for vertical cylinder.
     Only natural convection currently supported.
 
     :Fluid_data: dict describing thermodynamic state (fluid, T, P)
@@ -218,7 +218,7 @@ def Nu_cyl_hor(Fluid_data, T_cyl, D_cyl):
 
 def Nu_cyl_vert(Fluid_data, T_cyl, D_cyl, L_cyl):
     """
-    Calculate Nusselt number for vertical cylinder .
+    Calculate Nusselt number for vertical cylinder.
     Only natural convection currently supported.
 
     :Fluid_data: dict describing thermodynamic state (fluid, T, P)
