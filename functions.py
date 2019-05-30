@@ -106,14 +106,14 @@ def max_theta(Fluid_data, step = 0.01):
     theta = ureg('0 mol**1.5/(J*l**0.5)')
     T = T_start
     P = Fluid_data['P']
-        while T <= T_end:
-            D_vap = flsh('TP', T, P, x)['Dvap']
-            theta_new = (D_vap**0.5)/therm3(T, D_vap, x)['spht'] 
-            if theta_new > theta:
-                theta = theta_new
-            else:
-                break #Function has only one maximum
-            T += step*ureg.K
+    while T <= T_end:
+        D_vap = flsh('TP', T, P, x)['Dvap']
+        theta_new = (D_vap**0.5)/therm3(T, D_vap, x)['spht'] 
+        if theta_new > theta:
+            theta = theta_new
+        else:
+            break #Function has only one maximum
+        T += step*ureg.K
     return T
 
 def C_gas_const (Fluid_data):
