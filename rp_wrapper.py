@@ -6,6 +6,7 @@ from math import log, log10
 from pyrefprop import refprop as rp
 from functools import wraps
 from . import logger
+from . import T_NTP, P_NTP
 from . import ureg, Q_
 
 
@@ -164,15 +165,14 @@ def trnprp(t, D, x):
     return rp.trnprp(t, D, x)
 
 #' The package uses unified way of keeping track of fluid state, specifying fluid, pressure, temperature. Helper functions to pack and unpack the fluid state.
-def pack_fluid (fluid, T_fluid = Q_(15, ureg.degC), P_fluid = Q_(101325, ureg.Pa)):
-        return {'fluid':fluid, 'P':P_fluid, 'T':T_fluid}
+def pack_fluid (fluid, T=T_NTP, P=P_NTP):
+        return {'fluid':fluid, 'P':P, 'T':T}
 
-def unpack_fluid (Fluid_data = {'fluid':'air', 'P':Q_(101325,ureg.Pa),
-                                'T':Q_(15,ureg.degC)}):
+def unpack_fluid (Fluid_data):
         fluid = Fluid_data.get('fluid')
-        T_fluid = Fluid_data.get('T')
-        P_fluid = Fluid_data.get('P')
-        return (fluid, T_fluid, P_fluid)
+        T = Fluid_data.get('T')
+        P = Fluid_data.get('P')
+        return (fluid, T, P)
 
 #' To use refprop one needs first to set up the fluid. Following function simplifies initialization and also returns most commonly required properties when possible.
 def rp_init (Fluid_data):
