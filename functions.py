@@ -1,4 +1,4 @@
-from math import log, log10
+from math import log, log10, pi
 from . import logger
 from . import ureg, Q_
 from . import Air
@@ -148,6 +148,26 @@ def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K, F1_2
     eta = (1+N_baffles*Eps_mut/Eps_baffle_mut)**(-1)
     q_baffle = eta*q0
     return {'q0':q0.to(ureg.W/ureg.m**2), 'q_baffle':q_baffle.to(ureg.W/ureg.m**2), 'eta':eta}
+
+def Re(Fluid_data, m_dot, D):
+    """
+    Calculate Reynolds number.
+
+    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :M_dot: mass flow
+    :D: characteristic length/hydraulic diameter
+    :returns: Prandtl number, dimensionless
+    """
+    fluid, T_fluid, P_fluid = unpack_fluid(Fluid_data)
+    (x, M, D_fluid) = rp_init(Fluid_data)
+    fluid_trans_prop = trnprp(T_fluid, D_fluid, x)
+    mu_fluid = fluid_trans_prop['eta'] #dynamic viscosity
+
+    A = pi * D**2 / 4
+    rho_fluid = D_fluid * M
+    w_flow = m_dot / (rho_fluid*A)
+    Re_ = w_flow * D * rho_fluid / mu_fluid
+    return Re_.to_base_units()
 
 def Pr(Fluid_data):
     """
