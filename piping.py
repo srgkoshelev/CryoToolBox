@@ -23,6 +23,14 @@ class Pipe:
     NPS pipe class.
     """
     def __init__ (self, D_nom, SCH=40, L=0*ureg.m):
+        """
+        Initiate instance of the Pipe class.
+
+        :D_nom: nominal diameter of piping; can be dimensionless or having a unit
+        :SCH: pip schedule
+        :L: pipe length
+        :returns: None
+        """
         try:
             self.D = D_nom.magnitude #Nominal diameter
         except AttributeError:
@@ -34,7 +42,9 @@ class Pipe:
     @property
     def OD(self):
         """
-        Return OD of the Pipe element based on NPS table.
+        Return OD of the Pipe based on NPS table.
+
+        :returns: pipe OD in unit of length
         """
         try:
             return self._OD
@@ -45,7 +55,9 @@ class Pipe:
     @property
     def wall(self):
         """
-        Return wall thickness of Pipe element based on NPS table.
+        Return wall thickness of Pipe based on NPS table.
+
+        :returns: pipe wall in unit of length
         """
         try:
             return self._wall
@@ -56,7 +68,9 @@ class Pipe:
     @property
     def ID(self):
         """
-        Return ID of the Pipe element based on NPS table.
+        Return ID of the Pipe based on NPS table.
+
+        :returns: pipe ID in unit of length
         """
         try:
             return self._ID
@@ -68,6 +82,8 @@ class Pipe:
     def Area(self):
         """
         Calculate cross sectional area of pipe.
+
+        :returns: pipe cross section area
         """
         try:
             return self._Area
@@ -77,8 +93,10 @@ class Pipe:
 
     def f_T(self):
         """
-        Friction factor for complete turbulence for clean steel pipe.
+        Calculate Darcy friction factor for complete turbulence for clean steel pipe.
         Fitted logarithmic function to data from A-25.
+
+        :returns: Darcy friction factor
         """
         if self.ID<0.2*ureg.inch or self.ID>48*ureg.inch:
             logger.warning('''Tabulated friction data is given for 
@@ -89,7 +107,9 @@ class Pipe:
     @property
     def K(self):
         """
-        Calculate flow coefficient for the Pipe element.
+        Calculate resistance coefficient for the Pipe element.
+
+        :returns: resistance coefficient
         """
         try:
             return self._K
