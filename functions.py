@@ -182,7 +182,7 @@ def Pr(Fluid_data):
     mu = fluid_trans_prop['eta'] #dynamic viscosity
     k = fluid_trans_prop['tcx'] #thermal conductivity
     nu = mu/(D_fluid*M) #kinematic viscosity
-    Cp = flsh("TP", T_fluid, P_fluid, x)['cp']/M
+    Cp = flsh("TP", T_fluid, P_fluid, x)['cp'] / M
     Pr_ = Cp*mu/k
     return Pr_.to_base_units()
 
