@@ -369,4 +369,30 @@ def theta_temp(T, T_i, T_inf):
     theta_temp_ = (T-T_inf) / (T_i-T_inf)
     return theta_temp_.to_base_units()
 
+def nist_curve_fit(T, NIST_coefs): #TODO make hidden
+    """
+    Calculate specific heat capacity using NIST properties database.
+    https://trc.nist.gov/cryogenics/materials/materialproperties.htm
 
+    :T: temperature, K
+    :NIST_coefs: coefficients from NIST cryo properties database
+    :returns: specific heat capacity
+    """
+    y = 0
+    for ind, coef in enumerate(NIST_coefs):
+        #print('abcdefghi'[ind], coef) #TODO add DEBUG
+        y += coef*log10(T)**ind
+    return 10**y
+
+def nist_spec_heat(T, material='304ss'):
+    """
+    Calculate specific heat capacity using NIST properties database.
+    https://trc.nist.gov/cryogenics/materials/materialproperties.htm
+
+    :T: temperature
+    :NIST_coefs: coefficients from NIST cryo properties database
+    :returns: specific heat capacity
+    """
+    T = T.to(ureg.K).magnitude
+    #TODO add wrapper / coefficients / load from a file
+    pass
