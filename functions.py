@@ -3,6 +3,7 @@ from . import logger
 from . import ureg, Q_
 from . import Air
 from .rp_wrapper import *
+from scipy.interpolate import interp1d
 
 
 # Basic thermodynamic functions
@@ -274,11 +275,98 @@ def  heat_trans_coef(Fluid_data, Nu, L_surf):
     k_fluid = trnprp(Fluid_data['T'], D, x)['tcx']
     return k_fluid*Nu/L_surf
 
+def Bi(k, L_c, h):
+    """
+    Calculate Biot number for a solid.
 
+    :k: thermal conductivity of the solid
+    :L_c: characteristic length; L_c = V/A_s, where
+        :V: volume of the solid
+        :A_s: surface area of the solid
+    :h: heat transfer coefficient
+    :returns: Biot number, dimensionless
+    """
+    Bi_ = h * L_c / k
+    return Bi_.to_base_units()
 
+_zeta1_cyl_data = [0.1412, 0.1995, 0.2440, 0.2814, 0.3143, 0.3438, 0.3709,
+             0.3960, 0.4195, 0.4417, 0.5376, 0.6170, 0.6856, 0.7456,
+             0.8516, 0.9408, 1.0184, 1.0873, 1.1490, 1.2048, 1.2558,
+             1.5994, 1.7887, 1.9081, 1.9898, 2.0490, 2.0937, 2.1286,
+             2.1566, 2.1795, 2.2881, 2.3261, 2.3455, 2.3572, 2.3809,] #Table 5.1, Fundamentals of Heat and Mass Transfer, F. Incropera, 2006.
+_C1_cyl_data = [1.0025, 1.0050, 1.0075, 1.0099, 1.0124, 1.0148, 1.0173, 1.0197,
+          1.0222, 1.0246, 1.0365, 1.0483, 1.0598, 1.0712, 1.0932, 1.1143,
+          1.1345, 1.1539, 1.1724, 1.1902, 1.2071, 1.3384, 1.4191, 1.4698,
+          1.5029, 1.5253, 1.5411, 1.5526, 1.5611, 1.5677, 1.5919, 1.5973,
+          1.5993, 1.6002, 1.6015,] #Table 5.1, Fundamentals of Heat and Mass Transfer, F. Incropera, 2006.
+_Bi_data = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10,
+      0.15, 0.20, 0.25, 0.30, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2, 3,
+      4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 100]
+_C1_cyl_fin = interp1d(_Bi_data, _C1_cyl_data) #Linear interpolation for finite Biot numbers
+_zeta1_cyl_fin = interp1d(_Bi_data, _zeta1_cyl_data) #Linear interpolation for finite Biot numbers
 
+def C1_cyl(Bi):
+    """
+    Calculate first term C1 coefficient for infinite cylinder.
 
+    :Bi: Biot number
+    :returns: C1 for infinite cylinder
+    """
+    if Bi > 100:
+        C1 = 1.6018 #Table 5.1, Fundamentals of Heat and Mass Transfer, F. Incropera, 2006.
+    else:
+        C1 = _C1_cyl_fin(Bi)
+    return C1
 
+def zeta1_cyl(Bi):
+    """
+    Calculate first term zeta1 coefficient for infinite cylinder.
 
+    :Bi: Biot number
+    :returns: zeta1 for infinite cylinder
+    """
+    if Bi > 100:
+        zeta1 = 2.4050 #Table 5.1, Fundamentals of Heat and Mass Transfer, F. Incropera, 2006.
+    else:
+        zeta1 = _zeta1_cyl_fin(Bi)
+    return zeta1
+
+def Fo_cyl(theta, Bi):
+    """
+    Calculate Fourier number for infinite cylinder using approximate solution.
+    Approximate solution is applicable when the solid has uniform temperature.
+
+    :theta: dimensionless temperature difference
+    :Bi: Biot number
+    :returns: Fourier number, dimensionless
+    """
+    zeta1 = zeta1_cyl(Bi)
+    C1 = C1_cyl(Bi)
+    Fo_ = -1 / zeta1**2 * log(theta/C1)
+    return Q_(Fo_, ureg.dimensionless)
+
+def alpha(k, rho, C):
+    """
+    Calculate thermal diffusivity.
+
+    :k: thermal conductivity of the solid
+    :rho: density of the solid
+    :C: specific heat capacity
+    :returns: thermal diffusivity
+    """
+    alpha_ = k / (rho*C)
+    return alpha_.to(ureg.m**2/ureg.s)
+
+def theta_temp(T, T_i, T_inf):
+    """
+    Calculate dimensionless temperature difference. Used for transient conduction and convection.
+
+    :T: variable temperature of the solid
+    :T_i: initially uniform temperature of the solid
+    :T_inf: temperature of the medium
+    :returns: temperature difference, dimensionless
+    """
+    theta_temp_ = (T-T_inf) / (T_i-T_inf)
+    return theta_temp_.to_base_units()
 
 

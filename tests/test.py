@@ -12,6 +12,13 @@ print(Test_piping.m_dot(P_out = ht.piping.ureg('1 psi')))
 print ("""100 SCFM of air is equivalent to {:.3g} of Nitrogen flow for P = 1 atm
        and T = 38 C.""".format(ht.from_scfma(100*ht.ureg('ft^3/min'), {'fluid':'air', 'P':1*ht.ureg.atm, 'T':38*ht.ureg.degC})))
 print ("CGA S-1.3 Formula from 6.1.4 a) gives 0.0547 kg/s for the same air capacity.")
+Re = ht.Re(Fluid, ht.ureg('1g/s'), ht.ureg('5 mm'))
+print(Re)
+theta_temp = ht.theta_temp(ht.ureg('100 K'), ht.ureg('300 K'), ht.ureg('77 K'))
+Bi = ht.Bi(ht.ureg('1 W/(m*K)'), ht.ureg('1 cm'), ht.ureg('10 W/(m**2*K)'))
+Fo = ht.Fo_cyl(theta_temp, Bi)
+print(f'Biot number is: {Bi:.3}')
+print(f'Fourier number is: {Fo:.3}')
 #
 #    
 #
