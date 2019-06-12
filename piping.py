@@ -13,6 +13,7 @@ from . import T_NTP, P_NTP
 from . import os, __location__
 from pint import set_application_registry
 import pickle
+from scipy.optimize import root_scalar
 
 set_application_registry(ureg) #Should be used for both pickling and unpickling
 NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb")) 
@@ -434,6 +435,44 @@ class Piping (list):
         #(conservative value):
         w = Area*(2*delta_P*rho/K)**0.5 
         return w.to(ureg.g/ureg.s)
+
+    def _solver_func(self, P_in_Pa, m_dot, P_out_act):
+        """
+        Solver function for calculating upstream pressure given flow and downstream pressure.
+
+        :P_in_Pa: input pressure in Pa, float
+        :args: calculation parameters:
+            :m_dot: mass flow
+            :P_out_act: actual downstream pressure
+        """
+        P_in = Q_(P_in_Pa, ureg.Pa)
+        self.init_cond['P'] = P_in
+        P_out_calc = P_in - self.dP(m_dot)
+        P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
+        P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
+        return P_out_calc_Pa - P_out_act_Pa
+
+    def P_in(self, m_dot, P_out=ureg('0 psig'), P_min=ureg('0 psig'), P_max=ureg('1000 bar')):
+        """
+        Calculate upstream pressure given mass flow and downstream pressure.
+
+        :m_dot: mass flow
+        :P_out: downstream pressure
+        :P_min: min expected pressure; should be lower than actual value
+        :P_max: max expected pressure; should be higher than actual value
+        """
+        args = (m_dot, P_out) #arguments passed to _solver_func
+        P_min_Pa = P_min.to(ureg.Pa).magnitude #Convert pressure to dimensionless form
+        P_max_Pa = P_max.to(ureg.Pa).magnitude
+        bracket = [P_min_Pa, P_max_Pa]
+        logger_level = logger.getEffectiveLevel()
+        logger.setLevel(40) #ERROR and CRITICAL only will be shown; WARNING is suppressed
+        solution = root_scalar(self._solver_func, args, bracket=bracket, method='brentq')
+        logger.setLevel(logger_level)
+        P_in = Q_(solution.root, ureg.Pa)
+        self.init_cond['P'] = P_in
+        logger.debug(f'Comparing pressure drop:\n    dP method:\n        {self.dP(m_dot).to(ureg.psi)}\n    P_in - P_out:\n        {(P_in-P_out).to(ureg.psi)}')
+        logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
 
 #' Supporting functions used for flow rate and pressure drop calculations.
 def dP_darcy (K, rho, w):

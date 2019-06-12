@@ -6,7 +6,7 @@ Fluid = ht.Air
 print (Fluid)
 print(ht.max_theta(Fluid))
 print(ht.spec_heat(ht.Air))
-Test_pipe = ht.piping.Pipe(1, L=ht.ureg('1 m'))
+Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))
 print(Test_pipe)
 Test_piping = ht.piping.Piping(ht.Air, [Test_pipe])
 print(Test_piping.m_dot(P_out = ht.piping.ureg('1 psi')))
@@ -24,6 +24,11 @@ G10_sc = [-2.4083, 7.6006, -8.2982, 7.3301, -4.2386, 1.4294, -0.24396, 0.015236,
 G10_tc = [-4.1236, 13.788, -26.088, 26.272, -14.663, 4.4954, -0.6905, 0.0397, 0] #normal direction
 print(ht.nist_curve_fit(300, G10_tc))
 print(quad(lambda x: ht.nist_curve_fit(x, G10_tc ), 77, 300)[0]/(77-300))
+
+print('\nTesting invert dP calc')
+m_dot = ht.ureg('1000 g/s')
+P_out = ht.ureg('0 psig')
+Test_piping.P_in(m_dot, P_out)
 #
 #    
 #
