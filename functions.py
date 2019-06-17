@@ -38,22 +38,33 @@ def spec_heat(Fluid_data):
         L = therm3(T,D,x)['spht']/M #Specific heat input
     return L
 
-def to_scfma (M_dot, Fluid_data):
+def to_scfma (M_dot_fluid, Fluid_data):
     """
     Convert mass flow rate into equivalent flow of air.
     Flow through a relief device with invariant Area/discharge coefficient (KA).
 
-    :M_dot: mass flow rate
+    :M_dot_fluid: mass flow rate
     :Fluid_data: dict describing thermodynamic state (fluid, T, P)
     :returns: volumetric air flow rate
     """
+    #Fluid properties
     (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
     T_fluid = Fluid_data['T']
     Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
+    MZT_fluid = (M_fluid/(Z_fluid*T_fluid))**0.5 #Commonly used square root group
+    C_fluid = C_gas_const(Fluid_data)
+
+    #Air properties
     (x_air, M_air, D_air) = rp_init(Air)
     T_air = Air['T']
     Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
-    Q_air =  M_dot*C_gas_const(Air)/(D_air*M_air*C_gas_const(Fluid_data))*(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
+    rho_air = D_air * M_air
+    MZT_air = (M_air/(Z_air*T_air))**0.5 #Commonly used square root group
+    C_air = C_gas_const(Air)
+
+    #Calculation
+    M_dot_air =  M_dot_fluid * C_air / C_fluid * MZT_air / MZT_fluid 
+    Q_air = M_dot_air / rho_air
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air
 
@@ -67,15 +78,26 @@ def from_scfma (Q_air, Fluid_data):
     :Fluid_data: dict describing thermodynamic state (fluid, T, P)
     :returns: mass flow rate
     """
+    #Fluid properties
     (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
     T_fluid = Fluid_data['T']
     Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
+    MZT_fluid = (M_fluid/(Z_fluid*T_fluid))**0.5 #Commonly used square root group
+    C_fluid = C_gas_const(Fluid_data)
+
+    #Air properties
     (x_air, M_air, D_air) = rp_init(Air)
     T_air = Air['T']
     Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
-    M_dot =  Q_air/(C_gas_const(Air))*(D_air*M_air*C_gas_const(Fluid_data))/(T_fluid*Z_fluid*M_air/(M_fluid*T_air*Z_air))**0.5
-    M_dot.ito(ureg.kg/ureg.s)
-    return M_dot
+    rho_air = D_air * M_air
+    MZT_air = (M_air/(Z_air*T_air))**0.5 #Commonly used square root group
+    C_air = C_gas_const(Air)
+
+    #Calculation
+    M_dot_air = Q_air * rho_air
+    M_dot_fluid =  M_dot_air * C_fluid / C_air * MZT_fluid / MZT_air
+    M_dot_fluid.ito(ureg.kg/ureg.s)
+    return M_dot_fluid
 
 def gamma (Fluid_data):
     """
