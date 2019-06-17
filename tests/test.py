@@ -29,6 +29,15 @@ print('\nTesting invert dP calc')
 m_dot = ht.ureg('1000 g/s')
 P_out = ht.ureg('0 psig')
 Test_piping.P_in(m_dot, P_out)
+#for p in range(1,100,10):
+#    m_dot = ht.ureg('1 g/s')
+#    P_test = ht.Q_(p, ht.ureg.psig)
+#    Test_piping.init_cond['fluid'] = 'helium'
+#    Test_piping.init_cond['P'] = P_test
+#    T_test = ht.max_theta(Test_piping.init_cond)
+#    Test_piping.init_cond['T'] = T_test
+#    print(Test_piping.init_cond['P'].to(ht.ureg.psig), Test_piping.init_cond['T'].to(ht.ureg.K))
+#    print (Test_piping.dP(m_dot))
 #
 #    
 #
