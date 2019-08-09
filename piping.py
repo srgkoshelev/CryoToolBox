@@ -205,11 +205,11 @@ class Conic_Orifice(Orifice):
             self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
         self._type = 'Conic orifice'
 
-class Tube (Pipe):
+class Tube(Pipe):
     """
     Tube, requires OD and wall thickness specified
     """
-    def __init__(self, OD, wall, L=0*ureg.m):
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m):
         self._OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
@@ -263,7 +263,7 @@ class Tee(Pipe):
         super().__init__(D_nom, SCH)
         if direction in ['thru', 'through']:
             self.direction = 'thru'
-        if direction in ['branch', 'side']:
+        elif direction in ['branch', 'side']:
             self.direction = 'branch'
         else:
             logger.error('''Tee direction is not recognized, 
@@ -274,7 +274,7 @@ class Tee(Pipe):
     def K(self):
         if self.direction == 'thru':
             return 20*self.f_T() #Crane TP-410 p. A-29
-        if self.direction == 'branch':
+        elif self.direction == 'branch':
             return 60*self.f_T() #Crane TP-410 p. A-29
 
 class TubeTee(Tube):
@@ -285,7 +285,7 @@ class TubeTee(Tube):
         super().__init__(OD, wall)
         if direction in ['thru', 'through']:
             self.direction = 'thru'
-        if direction in ['branch', 'side']:
+        elif direction in ['branch', 'side']:
             self.direction = 'branch'
         else:
             logger.error('''Tee direction is not recognized, 
@@ -296,7 +296,7 @@ class TubeTee(Tube):
     def K(self):
         if self.direction == 'thru':
             return 20*self.f_T() #Crane TP-410 p. A-29
-        if self.direction == 'branch':
+        elif self.direction == 'branch':
             return 60*self.f_T() #Crane TP-410 p. A-29
 
 class Valve(Pipe):
