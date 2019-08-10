@@ -14,6 +14,7 @@ from . import os, __location__
 from pint import set_application_registry
 import pickle
 from scipy.optimize import root_scalar
+from abc import ABC, abstractmethod
 
 set_application_registry(ureg) #Should be used for both pickling and unpickling
 NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb")) 
@@ -255,49 +256,40 @@ class Elbow(Pipe):
         C1 = 1 #use different value for non-axis symmetric
         return (A1*B1*C1+super().K)*self.N
 
-class Tee(Pipe):
+class Tee(ABC):
+    @abstractmethod
+    def __init__(self, direction):
+        if direction in ['thru', 'through']:
+            self.direction = 'thru'
+        elif direction in ['branch', 'side']:
+            self.direction = 'branch'
+        else:
+            logger.error('''Tee direction is not recognized, 
+                         try "thru" or "branch": {}'''.format(direction))
+        self._type = 'Tee'
+
+    @property
+    def K(self):
+        if self.direction == 'thru':
+            return 20*self.f_T() #Crane TP-410 p. A-29
+        elif self.direction == 'branch':
+            return 60*self.f_T() #Crane TP-410 p. A-29
+
+class PipeTee(Tee, Pipe):
     """
     NPS Tee fitting.
     """
     def __init__(self, D_nom, SCH=40, direction='thru'):
-        super().__init__(D_nom, SCH)
-        if direction in ['thru', 'through']:
-            self.direction = 'thru'
-        elif direction in ['branch', 'side']:
-            self.direction = 'branch'
-        else:
-            logger.error('''Tee direction is not recognized, 
-                         try "thru" or "branch": {}'''.format(direction))
-        self._type = 'Tee'
+        Pipe.__init__(self, D_nom, SCH)
+        super().__init__(direction)
 
-    @property
-    def K(self):
-        if self.direction == 'thru':
-            return 20*self.f_T() #Crane TP-410 p. A-29
-        elif self.direction == 'branch':
-            return 60*self.f_T() #Crane TP-410 p. A-29
-
-class TubeTee(Tube):
+class TubeTee(Tee, Tube):
     """
     Tee fitting based off NPS Tee fitting. 
     """
     def __init__(self, OD, wall, direction='thru'):
-        super().__init__(OD, wall)
-        if direction in ['thru', 'through']:
-            self.direction = 'thru'
-        elif direction in ['branch', 'side']:
-            self.direction = 'branch'
-        else:
-            logger.error('''Tee direction is not recognized, 
-                         try "thru" or "branch": {}'''.format(direction))
-        self._type = 'Tee'
-
-    @property
-    def K(self):
-        if self.direction == 'thru':
-            return 20*self.f_T() #Crane TP-410 p. A-29
-        elif self.direction == 'branch':
-            return 60*self.f_T() #Crane TP-410 p. A-29
+        Tee.__init__(self, OD, wall)
+        super().__init__(direction)
 
 class Valve(Pipe):
     """
