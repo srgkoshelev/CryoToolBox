@@ -334,6 +334,7 @@ class Contraction:
         """
         self._beta = beta(ID1, ID2)
         self._theta = theta
+        self._type = 'Contraction'
         self.ID = min(ID1, ID2)
         if theta <= 45*ureg.deg:
             self.K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
@@ -354,6 +355,7 @@ class Enlargement:
         """
         self._beta = beta(ID1, ID2)
         self._theta = theta
+        self._type = 'Enlargement'
         self.ID = min(ID1, ID2)
         if theta <= 45*ureg.deg:
             self.K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
