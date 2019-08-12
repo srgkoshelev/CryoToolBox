@@ -289,15 +289,15 @@ class TubeTee(Tee, Tube):
         Tube.__init__(self, OD, wall)
         super().__init__(direction)
 
-class Valve(Pipe):
+class Valve:
     """
     Generic valve with known Cv.
     """
-    def __init__(self, D, Cv):
-        super().__init__(D, SCH=40, L=None)
-        self.Cv = Cv
+    def __init__(self, ID, Cv):
+        self._Cv = Cv
+        self.ID = ID
         self._type = 'Valve'
-        self.K = Cv_to_K(self.Cv, self.ID) 
+        self.K = Cv_to_K(self._Cv, self.ID) 
  
 class Globe_valve(Pipe):
     """
