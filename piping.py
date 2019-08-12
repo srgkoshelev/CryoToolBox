@@ -257,6 +257,10 @@ class Elbow(Pipe):
         return (A1*B1*C1+super().K)*self.N
 
 class Tee(ABC):
+    """
+    Abstract Tee class. __init__ method is abstract to avoid instantiation of this class.
+    method K defines flow resistance calculation.
+    """
     @abstractmethod
     def __init__(self, direction):
         if direction in ['thru', 'through']:
@@ -275,7 +279,7 @@ class Tee(ABC):
         elif self.direction == 'branch':
             return 60*self.f_T() #Crane TP-410 p. A-29
 
-class PipeTee(Tee, Pipe):
+class PipeTee(Tee, Pipe): #MRO makes method K from Tee class to override method from Pipe class
     """
     NPS Tee fitting.
     """
@@ -285,10 +289,10 @@ class PipeTee(Tee, Pipe):
 
 class TubeTee(Tee, Tube):
     """
-    Tee fitting based off NPS Tee fitting. 
+    Tee fitting based.
     """
     def __init__(self, OD, wall, direction='thru'):
-        Tee.__init__(self, OD, wall)
+        Tube.__init__(self, OD, wall)
         super().__init__(direction)
 
 class Valve(Pipe):
