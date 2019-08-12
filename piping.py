@@ -164,10 +164,7 @@ class Entrance (Pipe):
     def __init__ (self, ID):
         self._ID = ID
         self._type = 'Entrance'
-
-    @property
-    def K(self):
-        return 0.5 #Crane TP-410, A-29
+        self.K = 0.5 #Crane TP-410, A-29
 
 class Exit (Pipe):
     """
@@ -176,10 +173,7 @@ class Exit (Pipe):
     def __init__ (self, ID):
         self._ID = ID
         self._type = 'Exit'
-
-    @property
-    def K(self):
-        return 1 #Crane TP-410, A-29
+        self.K = 1 #Crane TP-410, A-29
 
 class Orifice(Pipe):
     """
@@ -303,10 +297,7 @@ class Valve(Pipe):
         super().__init__(D, SCH=40, L=None)
         self.Cv = Cv
         self._type = 'Valve'
-    
-    @property
-    def K(self):
-        return Cv_to_K(self.Cv, self.ID) 
+        self.K = Cv_to_K(self.Cv, self.ID) 
  
 class Globe_valve(Pipe):
     """
@@ -317,10 +308,7 @@ class Globe_valve(Pipe):
         #ID for the valve is assumed equal to SCH40 ID:
         self._ID = self.OD - 2*NPS_table[D].get(40) 
         self._type = 'Globe valve'
-
-    @property
-    def K(self):
-        return 340*self.f_T() #Horizontal ball valve with beta = 1
+        self.K = 340*self.f_T() #Horizontal ball valve with beta = 1
 
 class V_Cone(Pipe):
     """
@@ -331,11 +319,8 @@ class V_Cone(Pipe):
         self._beta = beta
         self._Cf = Cf
         self._type = 'V-cone flow meter'
-
-    @property
-    def K(self):
         #Equation is reverse-engineered from McCrometer V-Cone equations
-        return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 
+        self.K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 
 
 class Contraction:
     """
