@@ -333,7 +333,45 @@ class V_Cone(Pipe):
         #Equation is reverse-engineered from McCrometer V-Cone equations
         return 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 
 
+class Contraction:
+    """
+    Sudden and gradual contraction based on Crane TP-410.
+    """
+    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+        """
+        ID1: upstream pipe ID
+        ID2: downstream pipe ID
+        theta: contraction angle
+        """
+        self._beta = beta(ID1, ID2)
+        self._theta = theta
+        self.ID = min(ID1, ID2)
+        if theta <= 45*ureg.deg:
+            self.K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+        elif theta <= 180*ureg.deg:
+            self.K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+        else:
+            logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
+class Enlargement:
+    """
+    Sudden and gradual enlargement based on Crane TP-410.
+    """
+    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+        """
+        ID1: upstream pipe ID
+        ID2: downstream pipe ID
+        theta: contraction angle
+        """
+        self._beta = beta(ID1, ID2)
+        self._theta = theta
+        self.ID = min(ID1, ID2)
+        if theta <= 45*ureg.deg:
+            self.K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
+        elif theta <= 180*ureg.deg:
+            self.K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+        else:
+            logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
 #' Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow. 
 class Piping (list):
