@@ -4,7 +4,7 @@
 #' This document describes the functions that are used for hydraulic analysis. The code is written in python and utilizes refprop for fluid properties. A separate wrapper for refprop functions allowing transparent usage of units is used. The main source of the equations is Crane TP-410.
 #'
 #' Importing math and thermodynamic functions, and NPS tabulated data. Setting up physical quantities for operations with units and logging.
-from math import pi, log10, sin, log
+from math import pi, log10, sin, log, sqrt
 from . import logger
 from . import ureg, Q_
 from .rp_wrapper import *
@@ -164,7 +164,7 @@ class Entrance (Pipe):
     def __init__ (self, ID):
         self._ID = ID
         self._type = 'Entrance'
-        self.K = 0.5 #Crane TP-410, A-29
+        self._K = 0.5 #Crane TP-410, A-29
 
 class Exit (Pipe):
     """
@@ -173,7 +173,7 @@ class Exit (Pipe):
     def __init__ (self, ID):
         self._ID = ID
         self._type = 'Exit'
-        self.K = 1 #Crane TP-410, A-29
+        self._K = 1 #Crane TP-410, A-29
 
 class Orifice(Pipe):
     """
@@ -297,12 +297,7 @@ class Valve(Pipe):
         self._Cv = Cv
         self._ID = ID
         self._type = 'Valve'
-    @property
-    def ID(self):
-        return self._ID
-    @property
-    def K(self):
-        return Cv_to_K(self._Cv, self.ID) 
+        self._K = Cv_to_K(self._Cv, self.ID) 
  
 class Globe_valve(Pipe):
     """
@@ -313,7 +308,7 @@ class Globe_valve(Pipe):
         #ID for the valve is assumed equal to SCH40 ID:
         self._ID = self.OD - 2*NPS_table[D].get(40) 
         self._type = 'Globe valve'
-        self.K = 340*self.f_T() #Horizontal ball valve with beta = 1
+        self._K = 340*self.f_T() #Horizontal ball valve with beta = 1
 
 class V_Cone(Pipe):
     """
@@ -325,9 +320,9 @@ class V_Cone(Pipe):
         self._Cf = Cf
         self._type = 'V-cone flow meter'
         #Equation is reverse-engineered from McCrometer V-Cone equations
-        self.K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 
+        self._K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2 
 
-class Contraction:
+class Contraction(Pipe):
     """
     Sudden and gradual contraction based on Crane TP-410.
     """
@@ -340,15 +335,15 @@ class Contraction:
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = 'Contraction'
-        self.ID = min(ID1, ID2)
+        self._ID = min(ID1, ID2)
         if theta <= 45*ureg.deg:
-            self.K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+            self._K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
         elif theta <= 180*ureg.deg:
-            self.K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
-class Enlargement:
+class Enlargement(Pipe):
     """
     Sudden and gradual enlargement based on Crane TP-410.
     """
@@ -361,11 +356,11 @@ class Enlargement:
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = 'Enlargement'
-        self.ID = min(ID1, ID2)
+        self._ID = min(ID1, ID2)
         if theta <= 45*ureg.deg:
-            self.K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
+            self._K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
         elif theta <= 180*ureg.deg:
-            self.K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
