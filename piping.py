@@ -575,3 +575,22 @@ def to_standard_flow(flow_rate, Fluid_data):
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std
 
+def equivalent_orifice(m_dot, dP, Fluid_data=Air):
+    """
+    Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given flow and pressure drop.
+    """
+    Cd = 0.61
+    _,M,D = rp_init(Fluid_data)
+    rho = D * M
+    ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
+    return ID.to(ureg.inch)
+
+def to_mass_flow(Q_std, Fluid_data=Air):
+    """
+    Calculate mass flow for given volumetric flow at standard conditions.
+    """
+    fluid = Fluid_data['fluid']
+    x,M,D_std = rp_init({'fluid':fluid, 'T':T_NTP, 'P':P_NTP})
+    rho_std = D_std * M
+    m_dot = Q_std * rho_std
+    return m_dot.to(ureg.g/ureg.s)
