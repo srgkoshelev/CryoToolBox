@@ -589,3 +589,39 @@ def to_mass_flow(Q_std, Fluid_data=Air):
     rho_std = D_std * M
     m_dot = Q_std * rho_std
     return m_dot.to(ureg.g/ureg.s)
+
+#Parallel Plate relief valve designed by Fermilab
+class ParallelPlateRelief:
+    def __init__(self, Springs, Plate, Supply_pipe):
+        """
+        Initiate Parallel Plate instance.
+
+        Springs: dictionary containing 'N' - number of springs, 'k' - spring rate, and 'dx_precomp' - pre-compression length
+        Plate: dictionary containing 'OD_plate' - OD of the plate, 'OD_O_ring' - OD of the O-Ring installed, and 'W_plate' - plate weight
+        Supply_pipe: Pipe/Tube object of upstream pipe
+        """
+        self.Springs = Springs
+        self.Plate = Plate
+        self.Supply_pipe = Supply_pipe
+    def P_set(self):
+        """"
+        Calculate set (lift) pressure of the Parallel Plate relief
+        """
+        A_lift = pi * self.Plate['OD_O_ring']**2 / 4 #Before lifting pressure affects area within O-Ring OD
+        F_precomp = self.Springs['N'] * self.Springs['k'] * self.Springs['dx_precomp']
+        F_lift = F_precomp + self.Plate['W_plate'] #Force required to lift the plate
+        self.F_lift = F_lift
+        P_set = F_lift / A_lift
+        return P_set.to(ureg.psi)
+    def P_open(self):
+        """
+        Calculate pressure required to fully open Parallel Plate relief
+        """
+        dx_open = self.Supply_pipe.Area / (pi*self.Plate['OD_plate']) #compression required to provide vent area equal to supply pipe area
+        F_open = self.F_lift = self.Springs['N']*self.Springs['k']*dx_open #Force at fully open
+        #At fully open pressure is distributed as:
+        #Full pressure for up to supply pipe diameter
+        #Linear fall off up to plate OD
+        A_open = self.Supply_pipe.Area + pi/8*(self.Plate['OD_plate']**2 - self.Supply_pipe.ID**2)
+        P_open = F_open / A_open
+        return P_open.to(ureg.psi)
