@@ -7,7 +7,7 @@
 from math import pi, log10, sin, log, sqrt
 from . import logger
 from . import ureg, Q_
-from .rp_wrapper import *
+from .cp_wrapper import *
 from .functions import *
 from . import T_NTP, P_NTP
 from . import os, __location__

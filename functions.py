@@ -2,7 +2,7 @@ from math import log, log10, pi
 from . import logger
 from . import ureg, Q_
 from . import Air
-from .rp_wrapper import *
+from .cp_wrapper import *
 from scipy.interpolate import interp1d
 
 

@@ -3,10 +3,6 @@ import logging
 import logging.config
 import sys, os
 
-
-
-
-
 #Setting up logging
 __location__ = os.path.dirname(os.path.abspath(__file__))
 logging.config.fileConfig(os.path.join(__location__, 'logging.ini'))
@@ -16,8 +12,6 @@ logger = logging.getLogger(__name__)
 ureg = UnitRegistry(autoconvert_offset_to_baseunit = True)
 Q_ = ureg.Quantity
 ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
-
-
 
 
 #Setting units for "standard" flow
@@ -31,6 +25,6 @@ P_MSC = Q_(101325, ureg.Pa) #Metric Standard Conditions (used by Crane TP-410)
 Air = {'fluid':'air', 'P':P_NTP, 'T':T_NTP}
 
 
-from .rp_wrapper import *
+from .cp_wrapper import *
 from .functions import *
 from . import piping
