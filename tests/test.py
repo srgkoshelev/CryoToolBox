@@ -2,11 +2,13 @@ import heat_transfer as ht
 from scipy.integrate import quad
 
 
-Test_State = ht.State('HEOS', 'water')
-print(ht.CP.DmolarT_INPUTS)
+Test_State = ht.State('HEOS', 'helium')
 Test_State.update('DmolarT_INPUTS', ht.Q_('1e-6 mol/m**3'), ht.Q_('300 K'))
-print(Test_State.conductivity)
-print(Test_State._AbstractState.phase())
+print(ht.CP.DmolarT_INPUTS)
+print(Test_State.Prandtl)
+print(Test_State.cpmass)
+print(Test_State._AbstractState.first_partial_deriv(ht.CP.iHmass, ht.CP.iT, ht.CP.iP))
+print(type(ht.CP.iHmass))
 #print(ht.max_theta(Fluid))
 #print(ht.spec_heat(ht.Air))
 #Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))
