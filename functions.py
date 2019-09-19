@@ -118,8 +118,7 @@ def max_theta(Fluid_data, step = 0.01):
     """
     Calculate tepmerature at which theta=sqrt(v)/SHI is max. Used for safety calculations (CGA S-1.3 2008).
     SHI - specific heat input v*(dh/dv)|p
-
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+_data: dict describing thermodynamic state (fluid, T, P)
     :step: temperature step
     :returns: temperature for max theta
     """

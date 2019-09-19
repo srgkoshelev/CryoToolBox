@@ -3,13 +3,21 @@ from scipy.integrate import quad
 
 
 Test_State = ht.State('HEOS', 'helium')
-Test_State.update('DmolarT_INPUTS', ht.Q_('1e-6 mol/m**3'), ht.Q_('300 K'))
+Test_State.update('PT_INPUTS', ht.Q_('49.17 psi'), ht.Q_('11.029 degR'))
+P_SHI = ht.Q_('100 psi')
+T_SHI = 2.6579 * P_SHI.to(ht.ureg.psi).magnitude**0.3653 * ht.ureg.degR #Bruce S. formula
+Test_State.update('PT_INPUTS', P_SHI, T_SHI)
+Test_State.update('PT_INPUTS', ht.Q_('17 psi'), ht.Q_('4.2 K'))
 print(ht.CP.DmolarT_INPUTS)
 print(Test_State.Prandtl)
 print(Test_State.cpmass)
-print(Test_State.hmass)
 print(Test_State._AbstractState.first_partial_deriv(ht.CP.iHmass, ht.CP.iT, ht.CP.iP))
 print(Test_State.first_partial_deriv('iHmass', 'iT', 'iP'))
+print(Test_State.specific_heat_input.to(ht.ureg.BTU/ht.ureg.lb))
+@ht.ureg.wraps(ht.ureg.BTU/ht.ureg.lb, ht.ureg.psi)
+def theta_bruce(P):
+    return 0.5724 * P**0.6813
+print(theta_bruce(P_SHI))
 #print(ht.max_theta(Fluid))
 #print(ht.spec_heat(ht.Air))
 #Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))

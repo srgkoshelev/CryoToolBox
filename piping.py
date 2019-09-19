@@ -398,6 +398,7 @@ class Piping (list):
         Lumped method using Darcy equation is used.
         The pressure dropped is checked for choked condition.
         '''
+        #TODO Rewrite to work with CP
         (x, M, D_in) = rp_init(self.init_cond)
         P_0 = self.init_cond['P']
         T_0 = self.init_cond['T']
@@ -437,6 +438,7 @@ class Piping (list):
         at the beginning of piping.
         Simple solution using Darcy equation is used.
         '''
+        #TODO Rewrite to work with CP
         (x, M, D) = rp_init(self.init_cond)
         P_0 = self.init_cond['P']
         rho = D*M
@@ -549,6 +551,7 @@ def to_standard_flow(flow_rate, Fluid_data):
     Converting volumetric flow at certain conditions or mass flow to 
     flow at NTP.
     '''
+    #TODO Rewrite to work with CP
     (x, M, D_NTP) = rp_init({'fluid':Fluid_data['fluid'], 'T':T_NTP, 'P':P_NTP})
     if flow_rate.dimensionality == ureg('kg/s').dimensionality: 
         #mass flow, flow conditions are unnecessary
@@ -575,6 +578,7 @@ def equivalent_orifice(m_dot, dP, Fluid_data=Air):
     Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given flow and pressure drop.
     """
     Cd = 0.61
+    #TODO Rewrite to work with CP
     _,M,D = rp_init(Fluid_data)
     rho = D * M
     ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
@@ -584,6 +588,7 @@ def to_mass_flow(Q_std, Fluid_data=Air):
     """
     Calculate mass flow for given volumetric flow at standard conditions.
     """
+    #TODO Rewrite to work with CP
     fluid = Fluid_data['fluid']
     x,M,D_std = rp_init({'fluid':fluid, 'T':T_NTP, 'P':P_NTP})
     rho_std = D_std * M

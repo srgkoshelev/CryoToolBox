@@ -234,3 +234,14 @@ class State:
         Constant_CP_const = CP_const_unit[Constant][0]
         result = self._AbstractState.first_partial_deriv(Of_CP_const, Wrt_CP_const, Constant_CP_const)
         return result * output_unit
+
+    @property
+    def specific_heat_input(self):
+        """
+        Calculate Specific heat input, v * (dh/dv)|p.
+        This function is not described in AbstractState class.
+        """
+        #Because specific volume is not available as function of the AbstratState, density is used instead
+        #The resulting function is: -Dmass*(dHmass/Dmass)|p
+        return (-self.rhomass) * self.first_partial_deriv('iHmass', 'iDmass', 'iP')
+
