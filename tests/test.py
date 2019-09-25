@@ -9,6 +9,7 @@ T_SHI = 2.6579 * P_SHI.to(ht.ureg.psi).magnitude**0.3653 * ht.ureg.degR #Bruce S
 Test_State.update('P', P_SHI, 'T', T_SHI)
 Test_State.update('T', ht.Q_('4.2 K'), 'Q', ht.Q_('1'))
 print(ht.to_scfma(ht.Q_('1 g/s'), Test_State))
+print(ht.from_scfma(ht.Q_('0.443 ft**3/min'), Test_State))
 print(Test_State.Prandtl)
 print(Test_State.Dmolar)
 print(Test_State.Cpmass)

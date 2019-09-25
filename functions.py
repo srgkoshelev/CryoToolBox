@@ -13,7 +13,7 @@ def to_scfma (M_dot_fluid, Fluid):
     Flow through a relief device with invariant Area/discharge coefficient (KA).
 
     :M_dot_fluid: mass flow rate
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: thermodynamic state ThermState instance
     :returns: volumetric air flow rate
     """
     #Fluid properties
@@ -30,35 +30,28 @@ def to_scfma (M_dot_fluid, Fluid):
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air
 
-def from_scfma (Q_air, Fluid_data):
+def from_scfma (Q_air, Fluid):
     """
     Convert volumetric air flow rate into equivalent mass flow of specified fluid.
     Flow through a relief device with invariant Area/discharge coefficient (KA).
     Invert function to to_scfma().
 
     :Q_air: volumetric air flow rate
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: thermodynamic state ThermState instance
     :returns: mass flow rate
     """
     #Fluid properties
-    (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
-    T_fluid = Fluid_data['T']
-    Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
-    MZT_fluid = (M_fluid/(Z_fluid*T_fluid))**0.5 #Commonly used square root group
-    C_fluid = C_gas_const(Fluid_data)
+    MZT_fluid = (Fluid.molar_mass / (Fluid.compressibility_factor*Fluid.T))**0.5 #Commonly used square root group
+    C_fluid = Fluid.C_gas_constant
 
     #Air properties
-    (x_air, M_air, D_air) = rp_init(Air)
-    T_air = Air['T']
-    Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
-    rho_air = D_air * M_air
-    MZT_air = (M_air/(Z_air*T_air))**0.5 #Commonly used square root group
-    C_air = C_gas_const(Air)
+    MZT_air = (Air.molar_mass / (Air.compressibility_factor*Air.T))**0.5 #Commonly used square root group
+    C_air = Air.C_gas_constant
 
     #Calculation
-    M_dot_air = Q_air * rho_air
+    M_dot_air = Q_air * Air.Dmass
     M_dot_fluid =  M_dot_air * C_fluid / C_air * MZT_fluid / MZT_air
-    M_dot_fluid.ito(ureg.kg/ureg.s)
+    M_dot_fluid.ito(ureg.g/ureg.s)
     return M_dot_fluid
 
 
