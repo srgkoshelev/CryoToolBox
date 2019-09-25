@@ -3,16 +3,17 @@ from scipy.integrate import quad
 
 
 Test_State = ht.State('HEOS', 'helium')
-Test_State.update('PT_INPUTS', ht.Q_('49.17 psi'), ht.Q_('11.029 degR'))
+#Test_State.update('PT_INPUTS', ht.Q_('49.17 psi'), ht.Q_('11.029 degR'))
 P_SHI = ht.Q_('100 psi')
 T_SHI = 2.6579 * P_SHI.to(ht.ureg.psi).magnitude**0.3653 * ht.ureg.degR #Bruce S. formula
-Test_State.update('PT_INPUTS', P_SHI, T_SHI)
-Test_State.update('PT_INPUTS', ht.Q_('17 psi'), ht.Q_('4.2 K'))
+Test_State.update('P', P_SHI, 'T', T_SHI)
+#Test_State.update('T', ht.Q_('4.2 K'), 'P', ht.Q_('17 psi'))
 print(ht.CP.DmolarT_INPUTS)
 print(Test_State.Prandtl)
+print(Test_State.Dmolar)
 print(Test_State.cpmass)
 print(Test_State._AbstractState.first_partial_deriv(ht.CP.iHmass, ht.CP.iT, ht.CP.iP))
-print(Test_State.first_partial_deriv('iHmass', 'iT', 'iP'))
+print(Test_State.first_partial_deriv('Hmass', 'T', 'P'))
 print(Test_State.specific_heat_input.to(ht.ureg.BTU/ht.ureg.lb))
 @ht.ureg.wraps(ht.ureg.BTU/ht.ureg.lb, ht.ureg.psi)
 def theta_bruce(P):
