@@ -2,16 +2,16 @@ import heat_transfer as ht
 from scipy.integrate import quad
 
 
-Test_State = ht.State('HEOS', 'helium')
+Test_State = ht.ThermState('helium')
 #Test_State.update('PT_INPUTS', ht.Q_('49.17 psi'), ht.Q_('11.029 degR'))
 P_SHI = ht.Q_('100 psi')
 T_SHI = 2.6579 * P_SHI.to(ht.ureg.psi).magnitude**0.3653 * ht.ureg.degR #Bruce S. formula
 Test_State.update('P', P_SHI, 'T', T_SHI)
-#Test_State.update('T', ht.Q_('4.2 K'), 'P', ht.Q_('17 psi'))
-print(ht.CP.DmolarT_INPUTS)
+Test_State.update('T', ht.Q_('4.2 K'), 'Q', ht.Q_('1'))
+print(ht.to_scfma(ht.Q_('1 g/s'), Test_State))
 print(Test_State.Prandtl)
 print(Test_State.Dmolar)
-print(Test_State.cpmass)
+print(Test_State.Cpmass)
 print(Test_State._AbstractState.first_partial_deriv(ht.CP.iHmass, ht.CP.iT, ht.CP.iP))
 print(Test_State.first_partial_deriv('Hmass', 'T', 'P'))
 print(Test_State.specific_heat_input.to(ht.ureg.BTU/ht.ureg.lb))
@@ -19,6 +19,17 @@ print(Test_State.specific_heat_input.to(ht.ureg.BTU/ht.ureg.lb))
 def theta_bruce(P):
     return 0.5724 * P**0.6813
 print(theta_bruce(P_SHI))
+print('\nCalculating evaporation heat')
+Test_State.update('T', ht.Q_('4.2 K'), 'Q', ht.Q_('0'))
+Hmass_liq = Test_State.Hmass
+print(Hmass_liq)
+print(Test_State.specific_heat_input)
+Test_State.update('T', ht.Q_('4.2 K'), 'Q', ht.Q_('1'))
+Hmass_vap = Test_State.Hmass
+print(Hmass_vap)
+Hmass_evap = Hmass_vap - Hmass_liq
+print(Hmass_evap)
+print(Test_State.specific_heat_input)
 #print(ht.max_theta(Fluid))
 #print(ht.spec_heat(ht.Air))
 #Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))

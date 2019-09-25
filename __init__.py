@@ -21,10 +21,10 @@ P_NTP = Q_(14.7, ureg.psi) #Normal Pressure (NIST)
 T_MSC = Q_(15, ureg.degC) #Metric Standard Conditions (used by Crane TP-410)
 P_MSC = Q_(101325, ureg.Pa) #Metric Standard Conditions (used by Crane TP-410)
 
-#Default fluids
-Air = {'fluid':'air', 'P':P_NTP, 'T':T_NTP}
-
-
 from .cp_wrapper import *
+#Default fluids
+Air = ThermState('air')
+Air.update('T', T_NTP, 'P', P_NTP)
 from .functions import *
 from . import piping
+

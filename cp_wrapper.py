@@ -1,7 +1,7 @@
 # Pint wrapper for CoolProp AbstractState
 # Abstract state is used as a data point of a process flow for which properties are calculated
 import CoolProp.CoolProp as CP
-from . import ureg
+from . import ureg, T_NTP, P_NTP
 
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
@@ -114,8 +114,11 @@ CP_inputs = {
     'DmolarUmolar': CP.DmolarUmolar_INPUTS,
 }
 
-class State:
-    def __init__(self, backend, fluid):
+class ThermState:
+    def __init__(self, fluid, backend="HEOS"):
+        """
+        Available backends: HEOS (opensource), REFPROP. See http://www.coolprop.org/coolprop/REFPROP.html for details.
+        """
         self._AbstractState = CP.AbstractState(backend, fluid)
 
     def update(self, input_name1, input_value1, input_name2, input_value2):
@@ -136,7 +139,7 @@ class State:
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
-    def p_critical(self):
+    def P_critical(self):
         return self._AbstractState.p_critical()
 
     @property
@@ -166,7 +169,7 @@ class State:
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
-    def p(self):
+    def P(self):
         return self._AbstractState.p()
 
     @property
@@ -185,38 +188,51 @@ class State:
         return self._AbstractState.gas_constant()
 
     @property
-    @ureg.wraps(CP_const_unit['Z'][1], None)
+    #@ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
-        return self._AbstractState.compressibility_factor()
+        Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
+        return Z_.to(ureg.dimensionless)
+        #Temporarily unavailable function
+        #return self._AbstractState.compressibility_factor()
 
     @property
     @ureg.wraps(CP_const_unit['Hmolar'][1], None)
-    def hmolar(self):
+    def Hmolar(self):
         return self._AbstractState.hmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Hmass'][1], None)
-    def hmass(self):
+    def Hmass(self):
         return self._AbstractState.hmass()
 
     @property
+    @ureg.wraps(CP_const_unit['Smolar'][1], None)
+    def Smolar(self):
+        return self._AbstractState.smolar()
+
+    @property
+    @ureg.wraps(CP_const_unit['Smass'][1], None)
+    def Smass(self):
+        return self._AbstractState.smass()
+
+    @property
     @ureg.wraps(CP_const_unit['Cpmolar'][1], None)
-    def cpmolar(self):
+    def Cpmolar(self):
         return self._AbstractState.cpmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Cpmass'][1], None)
-    def cpmass(self):
+    def Cpmass(self):
         return self._AbstractState.cpmass()
 
     @property
     @ureg.wraps(CP_const_unit['Cvmolar'][1], None)
-    def cvmolar(self):
+    def Cvmolar(self):
         return self._AbstractState.cvmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Cvmass'][1], None)
-    def cvmass(self):
+    def Cvmass(self):
         return self._AbstractState.cvmass()
 
     @property
@@ -252,3 +268,26 @@ class State:
         #The resulting function is: -Dmass*(dHmass/Dmass)|p
         return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
 
+    @property
+    def gamma(self):
+        """
+        Calculate gamma (k) coefficient.
+
+        :returns: gamma = k = Cp/Cv
+        """
+        #To avoid real gas effects influencing Cp and Cv, calculating at gamma at NTP
+        T_current = self.T
+        S_current = self.Smass
+        self.update('P', P_NTP, 'T', T_NTP)
+        _gamma = self.Cpmass / self.Cvmass
+        self.update('T', T_current, 'Smass', S_current)
+        return _gamma
+
+    @property
+    def C_gas_constant(self):
+        """
+        Constant for gas or vapor which is the function of the ratio of specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
+        """
+        k_ = self.gamma
+        C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg('lb/(hr*lbf)*(degR)^0.5')
+        return C

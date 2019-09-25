@@ -7,38 +7,7 @@ from scipy.interpolate import interp1d
 
 
 # Basic thermodynamic functions
-def spec_heat(Fluid_data):
-    """
-    Calculate latent heat/specific heat input.
-
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
-    :returns:
-            for subcritical flow: latent heat of evaporation,
-            for supercritical: specific heat input
-    """
-    x,M,D = rp_init(Fluid_data)
-    _,T,P = unpack_fluid(Fluid_data)
-    crit_props = info()
-    T_crit = crit_props['tcrit']
-    D_crit = crit_props['Dcrit']
-    P_crit = flsh('TD', T_crit, D_crit, x)['p']
-    if T < T_crit and P < P_crit: #Two phase region only possible below critical point
-        props = flsh('TP', T, P, x)
-        quality = props['q']
-        if quality < 1: #For 2 phase region (including subcooled liquid) using latent heat of evaporation
-            props = satp(P, x)
-            Dliq = props['Dliq']
-            Dvap = props['Dvap']
-            h_liq = flsh('TD', T, Dliq, x)['h']
-            h_vap = flsh('TD', T, Dvap, x)['h']
-            L = (h_vap - h_liq)/M
-        else:
-            L = therm3(T,D,x)['spht']/M #Specific heat input
-    else:
-        L = therm3(T,D,x)['spht']/M #Specific heat input
-    return L
-
-def to_scfma (M_dot_fluid, Fluid_data):
+def to_scfma (M_dot_fluid, Fluid):
     """
     Convert mass flow rate into equivalent flow of air.
     Flow through a relief device with invariant Area/discharge coefficient (KA).
@@ -48,23 +17,16 @@ def to_scfma (M_dot_fluid, Fluid_data):
     :returns: volumetric air flow rate
     """
     #Fluid properties
-    (x_fluid, M_fluid, D_fluid) = rp_init(Fluid_data)
-    T_fluid = Fluid_data['T']
-    Z_fluid = therm2(T_fluid, D_fluid, x_fluid)['Z'] #Compressibility factor
-    MZT_fluid = (M_fluid/(Z_fluid*T_fluid))**0.5 #Commonly used square root group
-    C_fluid = C_gas_const(Fluid_data)
+    MZT_fluid = (Fluid.molar_mass / (Fluid.compressibility_factor*Fluid.T))**0.5 #Commonly used square root group
+    C_fluid = Fluid.C_gas_constant
 
     #Air properties
-    (x_air, M_air, D_air) = rp_init(Air)
-    T_air = Air['T']
-    Z_air = therm2(T_air, D_air, x_air)['Z'] #Compressibility factor
-    rho_air = D_air * M_air
-    MZT_air = (M_air/(Z_air*T_air))**0.5 #Commonly used square root group
-    C_air = C_gas_const(Air)
+    MZT_air = (Air.molar_mass / (Air.compressibility_factor*Air.T))**0.5 #Commonly used square root group
+    C_air = Air.C_gas_constant
 
     #Calculation
-    M_dot_air =  M_dot_fluid * C_air / C_fluid * MZT_air / MZT_fluid 
-    Q_air = M_dot_air / rho_air
+    M_dot_air =  M_dot_fluid * C_air / C_fluid * MZT_air / MZT_fluid
+    Q_air = M_dot_air / Air.Dmass
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air
 
@@ -99,22 +61,9 @@ def from_scfma (Q_air, Fluid_data):
     M_dot_fluid.ito(ureg.kg/ureg.s)
     return M_dot_fluid
 
-def gamma (Fluid_data):
-    """
-    Calculate gamma (k) coefficient.
-
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
-    :returns: gamma = k = Cp/Cv
-    """
-    (fluid, T_fluid, P_fluid) = unpack_fluid(Fluid_data)
-    (x, M, D_fluid) = rp_init(Fluid_data)
-    fluid_prop = flsh ("TP", T_fluid, P_fluid, x)
-    Cp = fluid_prop['cp']
-    Cv = fluid_prop['cv']
-    return Cp/Cv
-k = gamma # A useful shortcut
 
 def max_theta(Fluid_data, step = 0.01):
+    #TODO Move to cp_wrapper
     """
     Calculate tepmerature at which theta=sqrt(v)/SHI is max. Used for safety calculations (CGA S-1.3 2008).
     SHI - specific heat input v*(dh/dv)|p
@@ -138,13 +87,6 @@ _data: dict describing thermodynamic state (fluid, T, P)
         T += step*ureg.K
     return T
 
-def C_gas_const (Fluid_data):
-    """
-    Constant for gas or vapor which is the function of the ratio of specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
-    """
-    k_ = k(Fluid_data)
-    C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg('lb/(hr*lbf)*(degR)^0.5')
-    return C
 
 def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K, F1_2=1, eps_baffle=0.02, N_baffles=5):
     """
@@ -192,6 +134,7 @@ def Re(Fluid_data, m_dot, D):
     return Re_.to_base_units()
 
 def Pr(Fluid_data):
+    #TODO Use instance method
     """
     Calculate Prandtl number.
 
