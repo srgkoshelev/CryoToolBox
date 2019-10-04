@@ -291,3 +291,11 @@ class ThermState:
         k_ = self.gamma
         C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg('lb/(hr*lbf)*(degR)^0.5')
         return C
+
+    @property
+    def name(self):
+        """
+        Return fluid name (backend dependent)
+        """
+        return self._AbstractState.name()
+

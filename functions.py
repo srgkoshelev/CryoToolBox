@@ -55,29 +55,32 @@ def from_scfma (Q_air, Fluid):
     return M_dot_fluid
 
 
-def max_theta(Fluid_data, step = 0.01):
+def max_theta_temp(Fluid, step = 0.01):
     #TODO Move to cp_wrapper
     """
-    Calculate tepmerature at which theta=sqrt(v)/SHI is max. Used for safety calculations (CGA S-1.3 2008).
+    Calculate temperature at which sqrt(v)/SHI is max. Used for safety calculations (CGA S-1.3 2008).
     SHI - specific heat input v*(dh/dv)|p
-_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :step: temperature step
     :returns: temperature for max theta
     """
-    x, _, _ = rp_init(Fluid_data)
-    T_start = satp(Q_(101325, ureg.Pa),x)['t']  #Starting temperature - liquid temperature for atmospheric pressure. Vacuum should be handled separately.
+    TempState = ThermState(Fluid.name) #Only working for pure fluids and pre-defined mixtures
+    #TempState.update('P', Fluid.P, 'Q', 1*ureg.dimensionless) #Starting from saturated vapor
+    #TODO fix for supercritical state
+    TempState.update('P', Fluid.P, 'T', ureg('4.2 K')) #stub
+    T_start = TempState.T
     T_end = 300*ureg.K
-    theta = ureg('0 mol**1.5/(J*l**0.5)')
+    cga_criterion = ureg('0 m/J * (m*kg)**0.5') #CGA criterion for calculating temperature of specific heat input
     T = T_start
-    P = Fluid_data['P']
     while T <= T_end:
-        D_vap = flsh('TP', T, P, x)['Dvap']
-        theta_new = (D_vap**0.5)/therm3(T, D_vap, x)['spht'] 
-        if theta_new > theta:
-            theta = theta_new
+        spec_vol = 1/TempState.Dmass #specific volume
+        cga_criterion_new = (spec_vol**0.5)/TempState.specific_heat_input
+        if cga_criterion_new > cga_criterion:
+            cga_criterion = cga_criterion_new
         else:
             break #Function has only one maximum
         T += step*ureg.K
+        TempState.update('P', TempState.P, 'T', T)
     return T
 
 
