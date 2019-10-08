@@ -56,7 +56,6 @@ def from_scfma (Q_air, Fluid):
 
 
 def max_theta_temp(Fluid, step = 0.01):
-    #TODO Move to cp_wrapper
     """
     Calculate temperature at which sqrt(v)/SHI is max. Used for safety calculations (CGA S-1.3 2008).
     SHI - specific heat input v*(dh/dv)|p
