@@ -51,9 +51,9 @@ CP_const_unit = {
     #'surface_tension': (CP.isurface_tension, ),
     'Prandtl': (CP.iPrandtl, ureg.dimensionless),
     #'speed_sound': (CP.ispeed_sound, ),
-    #'isothermal_compressibility': (CP.iisothermal_compressibility, ),
-    #'isobaric_expansion_coefficient': (CP.iisobaric_expansion_coefficient, ),
-    #'isentropic_expansion_coefficient': (CP.iisentropic_expansion_coefficient, ),
+    'isothermal_compressibility': (CP.iisothermal_compressibility, ureg.Pa**-1),
+    'isobaric_expansion_coefficient': (CP.iisobaric_expansion_coefficient, ureg.K**-1),
+    'isentropic_expansion_coefficient': (CP.iisentropic_expansion_coefficient, ureg.dimensionless),
     #'fundamental_derivative_of_gas_dynamics': (CP.ifundamental_derivative_of_gas_dynamics, ),
     #'alphar': (CP.ialphar, ),
     #'alpha0': (CP.ialpha0, ),
@@ -279,6 +279,21 @@ class ThermState:
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T_min(self):
         return self._AbstractState.Tmin()
+
+    @property
+    @ureg.wraps(CP_const_unit['isothermal_compressibility'][1], None)
+    def isothermal_compressibility(self):
+        return self._AbstractState.isothermal_compressibility()
+
+    @property
+    @ureg.wraps(CP_const_unit['isobaric_expansion_coefficient'][1], None)
+    def isobaric_expansion_coefficient(self):
+        return self._AbstractState.isobaric_expansion_coefficient()
+
+    @property
+    @ureg.wraps(CP_const_unit['isentropic_expansion_coefficient'][1], None)
+    def isentropic_expansion_coefficient(self):
+        return self._AbstractState.isentropic_expansion_coefficient()
 
     @property
     @ureg.wraps(CP_const_unit['Prandtl'][1], None)

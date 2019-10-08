@@ -110,89 +110,66 @@ def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K, F1_2
     q_baffle = eta*q0
     return {'q0':q0.to(ureg.W/ureg.m**2), 'q_baffle':q_baffle.to(ureg.W/ureg.m**2), 'eta':eta}
 
-def Re(Fluid_data, m_dot, D):
+def Re(Fluid, m_dot, D):
     """
     Calculate Reynolds number.
 
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
-    :M_dot: mass flow
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
+    :m_dot: mass flow
     :D: characteristic length/hydraulic diameter
-    :returns: Prandtl number, dimensionless
+    :returns: Reynolds number, dimensionless
     """
-    #TODO migrate to CP
-    fluid, T_fluid, P_fluid = unpack_fluid(Fluid_data)
-    (x, M, D_fluid) = rp_init(Fluid_data)
-    fluid_trans_prop = trnprp(T_fluid, D_fluid, x)
-    mu_fluid = fluid_trans_prop['eta'] #dynamic viscosity
-
     A = pi * D**2 / 4
-    rho_fluid = D_fluid * M
-    w_flow = m_dot / (rho_fluid*A)
-    Re_ = w_flow * D * rho_fluid / mu_fluid
+    w_flow = m_dot / (Fluid.Dmass*A)
+    Re_ = w_flow * D * Fluid.Dmass / Fluid.viscosity
     return Re_.to_base_units()
 
-def Pr(Fluid_data):
-    #TODO Use instance method
+def Pr(Fluid):
     """
     Calculate Prandtl number.
 
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :returns: Prandtl number, dimensionless
     """
-    (fluid, T_fluid, P_fluid) = unpack_fluid(Fluid_data)
-    (x, M, D_fluid) = rp_init(Fluid_data)
-    fluid_trans_prop = trnprp(T_fluid, D_fluid, x)
-    mu = fluid_trans_prop['eta'] #dynamic viscosity
-    k = fluid_trans_prop['tcx'] #thermal conductivity
-    nu = mu/(D_fluid*M) #kinematic viscosity
-    Cp = flsh("TP", T_fluid, P_fluid, x)['cp'] / M
-    Pr_ = Cp*mu/k
-    return Pr_.to_base_units()
+    return Fluid.Prandtl
 
-def Gr(Fluid_data, T_surf, L_surf):
+def Gr(Fluid, T_surf, L_surf):
     """
     Calculate Grashof number.
 
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :T_surf: surface temperature
     :L_surf: characteristic length
     :returns: Grashof number, dimensionless
     """
-    #TODO migrate to CP
-    (fluid, T_fluid, P_fluid) = unpack_fluid(Fluid_data)
-    (x, M, D_fluid) = rp_init(Fluid_data)
-    fluid_trans_prop = trnprp(T_fluid, D_fluid, x)
-    mu_fluid = fluid_trans_prop['eta'] #dynamic viscosity
-    nu_fluid = mu_fluid/(D_fluid*M) #kinematic viscosity
-    beta_exp = 1/(T_fluid.to('K')) #volumetric thermal expansion coefficient
-    Gr_ = ureg.g_0 * L_surf**3 * beta_exp * (T_fluid-T_surf) / nu_fluid**2 #Grashof number
-    return Gr_.to_base_units()
+    nu_fluid = Fluid.viscosity/Fluid.Dmass #kinematic viscosity
+    beta_exp = Fluid.isobaric_expansion_coefficient
+    Gr_ = ureg.g_0 * L_surf**3 * beta_exp * (T_surf-Fluid.T) / nu_fluid**2 #Grashof number
+    return Gr_.to(ureg.dimensionless)
 
-def Ra(Fluid_data, T_surf, L_surf):
+def Ra(Fluid, T_surf, L_surf):
     """
     Calculate Rayleigh number.
 
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :T_surf: surface temperature
     :L_surf: characteristic length
     :returns: Rayleigh number, dimensionless
     """
-    #TODO migrate to CP
-    return  Gr(Fluid_data, T_surf, L_surf)*Pr(Fluid_data)
+    return  Gr(Fluid, T_surf, L_surf)*Fluid.Prandtl
 
-def Nu_cyl_hor(Fluid_data, T_cyl, D_cyl):
+def Nu_cyl_hor(Fluid, T_cyl, D_cyl):
     """
     Calculate Nusselt number for vertical cylinder.
     Only natural convection currently supported.
 
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :T_cyl: surface temperature
     :D_cyl: cylinder diameter
     :returns: Nusselt number, dimensionless
     """
-    #TODO migrate to CP
-    Pr_ = Pr(Fluid_data)
-    Ra_ = Ra(Fluid_data, T_cyl, D_cyl)
+    Pr_ = Fluid.Prandtl
+    Ra_ = Ra(Fluid, T_cyl, D_cyl)
     C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9) #Handbook of heat transfer, Rohsenow, Hartnet, Cho (4.13)
     Nu_T = 0.772*C_l*Ra_**(1/4) #Handbook of heat transfer, Rohsenow, Hartnet, Cho (4.45)
     f = 1-0.13/Nu_T**0.16
@@ -200,22 +177,21 @@ def Nu_cyl_hor(Fluid_data, T_cyl, D_cyl):
     C_t = 0.0002*log(Pr_)**3 - 0.0027*log(Pr_)**2 + 0.0061*log(Pr_) + 0.1054
     Nu_t = 0.103*Ra_**(1/3)
     Nu_ = (Nu_l**10 + Nu_t**10)**(1/10) #Nu number, Handbook of heat transfer, Rohsenow, Hartnet, Cho
-    return Nu_.to_base_units()
+    return Nu_.to(ureg.dimensionless)
 
-def Nu_cyl_vert(Fluid_data, T_cyl, D_cyl, L_cyl):
+def Nu_cyl_vert(Fluid, T_cyl, D_cyl, L_cyl):
     """
     Calculate Nusselt number for vertical cylinder.
     Only natural convection currently supported.
 
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :T_cyl: surface temperature
     :D_cyl: cylinder diameter
     :L_cyl: cylinder length
     :returns: Nusselt number, dimensionless
     """
-    #TODO migrate to CP
-    Pr_ = Pr(Fluid_data)
-    Ra_ = Ra(Fluid_data, T_cyl, D_cyl)
+    Pr_ = Fluid.Prandtl
+    Ra_ = Ra(Fluid, T_cyl, D_cyl)
     C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9) #Handbook of heat transfer, Rohsenow, Hartnet, Cho (4.13)
     C_t_vert = (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42 #Handbook of heat transfer, Rohsenow, Hartnet, Cho (4.24)
     Nu_T_plate = C_l * Ra_**0.25
@@ -224,23 +200,21 @@ def Nu_cyl_vert(Fluid_data, T_cyl, D_cyl, L_cyl):
     Nu_l = zeta / (log(1+zeta)*Nu_l_plate)
     Nu_t = C_t_vert*Ra_**(1/3)/(1+1.4e9*Pr_/Ra_)
     Nu_ = (Nu_l**6 + Nu_t**6)**(1/6)
-    return Nu_.to_base_units()
+    return Nu_.to(ureg.dimensionless)
 
-def  heat_trans_coef(Fluid_data, Nu, L_surf):
+def  heat_trans_coef(Fluid, Nu, L_surf):
     """
     Calculate heat transfer coefficient.
 
-    :Fluid_data: dict describing thermodynamic state (fluid, T, P)
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :Nu: Nusselt number
     :L_surf: characteristic length:
         :Horizontal cylinder: L_surf = D_cyl
         :Vertical cylinder: L_surf = L_cyl
     :returns: heat transfer coefficient
     """
-    #TODO migrate to CP
-    x,M,D = rp_init(Fluid_data)
-    k_fluid = trnprp(Fluid_data['T'], D, x)['tcx']
-    return k_fluid*Nu/L_surf
+    h = Fluid.conductivity * Nu / L_surf
+    return h.to(ureg.W/(ureg.m**2*ureg.K))
 
 def Bi(k, L_c, h):
     """
