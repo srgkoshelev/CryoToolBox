@@ -57,30 +57,32 @@ def from_scfma (Q_air, Fluid):
 
 def max_theta_temp(Fluid, step = 0.01):
     """
-    Calculate temperature at which sqrt(v)/SHI is max. Used for safety calculations (CGA S-1.3 2008).
-    SHI - specific heat input v*(dh/dv)|p
+    Calculate temperature for flow capacity calculation per CGA S-1.3 2008 6.1.3.
     :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :step: temperature step
-    :returns: temperature for max theta
+    :returns: temperature
     """
     TempState = ThermState(Fluid.name) #Only working for pure fluids and pre-defined mixtures
-    #TempState.update('P', Fluid.P, 'Q', 1*ureg.dimensionless) #Starting from saturated vapor
-    #TODO fix for supercritical state
-    TempState.update('P', Fluid.P, 'T', ureg('4.2 K')) #stub
-    T_start = TempState.T
-    T_end = 300*ureg.K
-    cga_criterion = ureg('0 m/J * (m*kg)**0.5') #CGA criterion for calculating temperature of specific heat input
-    T = T_start
-    while T <= T_end:
-        spec_vol = 1/TempState.Dmass #specific volume
-        cga_criterion_new = (spec_vol**0.5)/TempState.specific_heat_input
-        if cga_criterion_new > cga_criterion:
-            cga_criterion = cga_criterion_new
-        else:
-            break #Function has only one maximum
-        T += step*ureg.K
-        TempState.update('P', TempState.P, 'T', T)
-    return T
+    if Fluid.T > Fluid.T_critical or Fluid.P > Fluid.P_critical:
+        TempState.update('P', Fluid.P, 'T', Fluid.T_min)
+        T_start = TempState.T
+        T_end = 300*ureg.K
+        cga_criterion = ureg('0 m/J * (m*kg)**0.5') #CGA criterion for calculating temperature of specific heat input
+        T = T_start
+        while T <= T_end:
+            spec_vol = 1/TempState.Dmass #specific volume
+            cga_criterion_new = (spec_vol**0.5)/TempState.specific_heat_input
+            if cga_criterion_new > cga_criterion:
+                cga_criterion = cga_criterion_new
+            else:
+                break #Function has only one maximum
+            T += step*ureg.K
+            TempState.update('P', TempState.P, 'T', T)
+        return T
+    else:
+        TempState.update('P', Fluid.P, 'Q', ureg('1'))
+        return TempState.T #saturation temperature
+
 
 
 def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K, F1_2=1, eps_baffle=0.02, N_baffles=5):
@@ -117,6 +119,7 @@ def Re(Fluid_data, m_dot, D):
     :D: characteristic length/hydraulic diameter
     :returns: Prandtl number, dimensionless
     """
+    #TODO migrate to CP
     fluid, T_fluid, P_fluid = unpack_fluid(Fluid_data)
     (x, M, D_fluid) = rp_init(Fluid_data)
     fluid_trans_prop = trnprp(T_fluid, D_fluid, x)
@@ -155,6 +158,7 @@ def Gr(Fluid_data, T_surf, L_surf):
     :L_surf: characteristic length
     :returns: Grashof number, dimensionless
     """
+    #TODO migrate to CP
     (fluid, T_fluid, P_fluid) = unpack_fluid(Fluid_data)
     (x, M, D_fluid) = rp_init(Fluid_data)
     fluid_trans_prop = trnprp(T_fluid, D_fluid, x)
@@ -173,6 +177,7 @@ def Ra(Fluid_data, T_surf, L_surf):
     :L_surf: characteristic length
     :returns: Rayleigh number, dimensionless
     """
+    #TODO migrate to CP
     return  Gr(Fluid_data, T_surf, L_surf)*Pr(Fluid_data)
 
 def Nu_cyl_hor(Fluid_data, T_cyl, D_cyl):
@@ -185,6 +190,7 @@ def Nu_cyl_hor(Fluid_data, T_cyl, D_cyl):
     :D_cyl: cylinder diameter
     :returns: Nusselt number, dimensionless
     """
+    #TODO migrate to CP
     Pr_ = Pr(Fluid_data)
     Ra_ = Ra(Fluid_data, T_cyl, D_cyl)
     C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9) #Handbook of heat transfer, Rohsenow, Hartnet, Cho (4.13)
@@ -207,6 +213,7 @@ def Nu_cyl_vert(Fluid_data, T_cyl, D_cyl, L_cyl):
     :L_cyl: cylinder length
     :returns: Nusselt number, dimensionless
     """
+    #TODO migrate to CP
     Pr_ = Pr(Fluid_data)
     Ra_ = Ra(Fluid_data, T_cyl, D_cyl)
     C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9) #Handbook of heat transfer, Rohsenow, Hartnet, Cho (4.13)
@@ -230,6 +237,7 @@ def  heat_trans_coef(Fluid_data, Nu, L_surf):
         :Vertical cylinder: L_surf = L_cyl
     :returns: heat transfer coefficient
     """
+    #TODO migrate to CP
     x,M,D = rp_init(Fluid_data)
     k_fluid = trnprp(Fluid_data['T'], D, x)['tcx']
     return k_fluid*Nu/L_surf

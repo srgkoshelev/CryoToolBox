@@ -9,18 +9,18 @@ CP_const_unit = {
     #'acentric_factor': (CP.iacentric_factor, ),
     #'Dmolar_reducing': (CP.irhomolar_reducing, ),
     'Dmolar_critical': (CP.irhomolar_critical, ureg.mol/ureg.m**3),
-    #'T_reducing': (CP.iT_reducing, ), 
+    'T_reducing': (CP.iT_reducing, ureg.K), 
     'T_critical': (CP.iT_critical, ureg.K),
     #'Dmass_reducing': (CP.irhomass_reducing, ),
     'Dmass_critical': (CP.irhomass_critical, ureg.kg/ureg.m**3),
     'P_critical': (CP.iP_critical, ureg.Pa),
-    #'P_reducing': (CP.iP_reducing, ),
-    #'T_triple': (CP.iT_triple, ),
-    #'P_triple': (CP.iP_triple, ),
-    #'T_min': (CP.iT_min, ),
-    #'T_max': (CP.iT_max, ),
-    #'P_max': (CP.iP_max, ),
-    #'P_min': (CP.iP_min, ),
+    'P_reducing': (CP.iP_reducing, ureg.Pa),
+    'T_triple': (CP.iT_triple, ureg.K),
+    'P_triple': (CP.iP_triple, ureg.Pa),
+    'T_min': (CP.iT_min, ureg.K),
+    'T_max': (CP.iT_max, ureg.K),
+    'P_max': (CP.iP_max, ureg.Pa),
+    'P_min': (CP.iP_min, ureg.Pa),
     #'dipole_moment': (CP.idipole_moment, ),
     'T': (CP.iT, ureg.K),
     'P': (CP.iP, ureg.Pa),
@@ -244,6 +244,41 @@ class ThermState:
     @ureg.wraps(CP_const_unit['conductivity'][1], None)
     def conductivity(self):
         return self._AbstractState.conductivity()
+
+    @property
+    @ureg.wraps(CP_const_unit['P'][1], None)
+    def P_reducing(self):
+        return self._AbstractState.p_reducing()
+
+    @property
+    @ureg.wraps(CP_const_unit['P'][1], None)
+    def P_triple(self):
+        return self._AbstractState.ptriple()
+
+    @property
+    @ureg.wraps(CP_const_unit['P'][1], None)
+    def P_max(self):
+        return self._AbstractState.pmax()
+
+    @property
+    @ureg.wraps(CP_const_unit['T'][1], None)
+    def T_reducing(self):
+        return self._AbstractState.T_reducing()
+
+    @property
+    @ureg.wraps(CP_const_unit['T'][1], None)
+    def T_triple(self):
+        return self._AbstractState.Ttriple()
+
+    @property
+    @ureg.wraps(CP_const_unit['T'][1], None)
+    def T_max(self):
+        return self._AbstractState.Tmax()
+
+    @property
+    @ureg.wraps(CP_const_unit['T'][1], None)
+    def T_min(self):
+        return self._AbstractState.Tmin()
 
     @property
     @ureg.wraps(CP_const_unit['Prandtl'][1], None)
