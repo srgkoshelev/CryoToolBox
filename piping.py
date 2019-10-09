@@ -542,22 +542,20 @@ def beta(d1, d2):
     """
     return min(d1, d2)/max(d1, d2)
 
-def to_standard_flow(flow_rate, Fluid_data):
+def to_standard_flow(flow_rate, Fluid):
     '''
     Converting volumetric flow at certain conditions or mass flow to 
     flow at NTP.
     '''
-    #TODO Rewrite to work with CP
-    (x, M, D_NTP) = rp_init({'fluid':Fluid_data['fluid'], 'T':T_NTP, 'P':P_NTP})
+    Fluid_NTP = ThermState(Fluid.name)
+    Fluid_NTP.update('T', T_NTP, 'P', P_NTP)
     if flow_rate.dimensionality == ureg('kg/s').dimensionality: 
         #mass flow, flow conditions are unnecessary
-        q_std = flow_rate/(D_NTP*M)
+        q_std = flow_rate / Fluid_NTP.Dmass
     elif flow_rate.dimensionality == ureg('m^3/s').dimensionality: 
         #volumetric flow given, converting to standard pressure and temperature
-        if 'T' in Fluid_data and 'P' in Fluid_data:
-            (fluid, T_fluid, P_fluid) = unpack_fluid(Fluid_data)
-            (x, M, D_fluid) = rp_init(Fluid_data)
-            q_std = flow_rate*D_fluid/D_NTP
+        if Fluid.Dmass != -float('Inf'): #By default ThermState is initialized with all fields == -inf
+            q_std = flow_rate * Fluid.Dmass / Fluid_NTP.Dmass
         else:
             logger.warning('''Flow conditions for volumetric flow {:.3~} 
                            are not set. Assuming standard flow at NTP.
@@ -569,26 +567,22 @@ def to_standard_flow(flow_rate, Fluid_data):
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std
 
-def equivalent_orifice(m_dot, dP, Fluid_data=Air):
+def equivalent_orifice(m_dot, dP, Fluid=Air):
     """
     Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given flow and pressure drop.
     """
     Cd = 0.61
-    #TODO Rewrite to work with CP
-    _,M,D = rp_init(Fluid_data)
-    rho = D * M
+    rho = Fluid.Dmass
     ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
     return ID.to(ureg.inch)
 
-def to_mass_flow(Q_std, Fluid_data=Air):
+def to_mass_flow(Q_std, Fluid=Air):
     """
     Calculate mass flow for given volumetric flow at standard conditions.
     """
-    #TODO Rewrite to work with CP
-    fluid = Fluid_data['fluid']
-    x,M,D_std = rp_init({'fluid':fluid, 'T':T_NTP, 'P':P_NTP})
-    rho_std = D_std * M
-    m_dot = Q_std * rho_std
+    Fluid_NTP = ThermState(Fluid.name)
+    Fluid_NTP.update('T', T_NTP, 'P', P_NTP)
+    m_dot = Q_std * Fluid_NTP.Dmass
     return m_dot.to(ureg.g/ureg.s)
 
 #Parallel Plate relief valve designed by Fermilab
