@@ -400,7 +400,7 @@ class Piping (list):
         '''
         P_0 = self.Fluid.P
         T_0 = self.Fluid.T
-        rho_0 = self.Dmass
+        rho_0 = self.Fluid.Dmass
         K, Area = self.K()
         w = m_dot / (rho_0*Area)
         dP = dP_darcy (K, rho_0, w) #first iteration
