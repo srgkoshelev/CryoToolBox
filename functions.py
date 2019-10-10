@@ -62,7 +62,7 @@ def max_theta_temp(Fluid, step = 0.01):
     :step: temperature step
     :returns: temperature
     """
-    TempState = ThermState(Fluid.name) #Only working for pure fluids and pre-defined mixtures
+    TempState = ThermState(Fluid.name, backend=Fluid.backend) #Only working for pure fluids and pre-defined mixtures
     if Fluid.T > Fluid.T_critical or Fluid.P > Fluid.P_critical:
         TempState.update('P', Fluid.P, 'T', Fluid.T_min)
         T_start = TempState.T

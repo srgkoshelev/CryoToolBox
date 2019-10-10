@@ -349,3 +349,10 @@ class ThermState:
         """
         return self._AbstractState.name()
 
+    @property
+    def backend(self):
+        """
+        Return backend name
+        """
+        return self._AbstractState.backend_name()
+

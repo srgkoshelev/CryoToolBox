@@ -413,7 +413,7 @@ class Piping (list):
         if self.Fluid.Q < 0 or dP/P_0 <= 0.1: #if q<0 then fluid is a liquid
             return dP
         elif dP/P_0 <= 0.4:
-            TempState = ThermState(Fluid.name) #Only working for pure fluids and pre-defined mixtures
+            TempState = ThermState(Fluid.name, backend=Fluid.backend) #Only working for pure fluids and pre-defined mixtures
             TempState.update('T', T_0, 'P', P_out)
             rho_out = TempState.Dmass
             rho_ave = (rho_0+rho_out) / 2
