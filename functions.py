@@ -83,7 +83,10 @@ def max_theta_temp(Fluid, step = 0.01):
         TempState.update('P', Fluid.P, 'Q', ureg('1'))
         return TempState.T #saturation temperature
 
-
+def spec_heat(Fluid):
+    #TODO write latent heat/SHI function
+    #TODO write check for supercritical (P>Pcrit)
+    pass
 
 def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K, F1_2=1, eps_baffle=0.02, N_baffles=5):
     """
@@ -144,7 +147,7 @@ def Gr(Fluid, T_surf, L_surf):
     """
     nu_fluid = Fluid.viscosity/Fluid.Dmass #kinematic viscosity
     beta_exp = Fluid.isobaric_expansion_coefficient
-    Gr_ = ureg.g_0 * L_surf**3 * beta_exp * (T_surf-Fluid.T) / nu_fluid**2 #Grashof number
+    Gr_ = ureg.g_0 * L_surf**3 * beta_exp * abs(T_surf-Fluid.T) / nu_fluid**2 #Grashof number
     return Gr_.to(ureg.dimensionless)
 
 def Ra(Fluid, T_surf, L_surf):
