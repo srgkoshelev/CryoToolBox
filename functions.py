@@ -55,15 +55,15 @@ def from_scfma (Q_air, Fluid):
     return M_dot_fluid
 
 
-def max_theta_temp(Fluid, step = 0.01):
+def max_theta(Fluid, step = 0.01):
     """
-    Calculate temperature for flow capacity calculation per CGA S-1.3 2008 6.1.3.
+    Calculate latent heat/specific heat input and temperature for flow capacity calculation per CGA S-1.3 2008 6.1.3.
     :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
     :step: temperature step
-    :returns: temperature
+    :returns: tuple (specific heat, temperature)
     """
     TempState = ThermState(Fluid.name, backend=Fluid.backend) #Only working for pure fluids and pre-defined mixtures
-    if Fluid.T > Fluid.T_critical or Fluid.P > Fluid.P_critical:
+    if Fluid.P > Fluid.P_critical:
         TempState.update('P', Fluid.P, 'T', Fluid.T_min)
         T_start = TempState.T
         T_end = 300*ureg.K
@@ -78,15 +78,14 @@ def max_theta_temp(Fluid, step = 0.01):
                 break #Function has only one maximum
             T += step*ureg.K
             TempState.update('P', TempState.P, 'T', T)
-        return T
+        return (TempState.specific_heat_input, T)
     else:
-        TempState.update('P', Fluid.P, 'Q', ureg('1'))
-        return TempState.T #saturation temperature
-
-def spec_heat(Fluid):
-    #TODO write latent heat/SHI function
-    #TODO write check for supercritical (P>Pcrit)
-    pass
+        TempState.update('P', Fluid.P, 'Q', Q_('0'))
+        h_liquid = TempState.Hmass
+        TempState.update('P', Fluid.P, 'Q', Q_('1'))
+        h_vapor = TempState.Hmass
+        latent_heat = h_vapor - h_liquid
+        return (latent_heat, TempState.T) #saturation temperature
 
 def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K, F1_2=1, eps_baffle=0.02, N_baffles=5):
     """
