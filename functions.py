@@ -55,7 +55,7 @@ def from_scfma (Q_air, Fluid):
     return M_dot_fluid
 
 
-def max_theta(Fluid, step = 0.01):
+def theta_heat(Fluid, step = 0.01):
     """
     Calculate latent heat/specific heat input and temperature for flow capacity calculation per CGA S-1.3 2008 6.1.3.
     :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
@@ -64,6 +64,7 @@ def max_theta(Fluid, step = 0.01):
     """
     TempState = ThermState(Fluid.name, backend=Fluid.backend) #Only working for pure fluids and pre-defined mixtures
     if Fluid.P > Fluid.P_critical:
+        print(f'{Fluid.name} is supercritical at {Fluid.P:.3~g}. Specific heat input will be used')
         TempState.update('P', Fluid.P, 'T', Fluid.T_min)
         T_start = TempState.T
         T_end = 300*ureg.K
@@ -80,6 +81,7 @@ def max_theta(Fluid, step = 0.01):
             TempState.update('P', TempState.P, 'T', T)
         return (TempState.specific_heat_input, T)
     else:
+        print(f'{Fluid.name} is subcritical at {Fluid.P:.3~g}. Latent heat of evaporation will be used')
         TempState.update('P', Fluid.P, 'Q', Q_('0'))
         h_liquid = TempState.Hmass
         TempState.update('P', Fluid.P, 'Q', Q_('1'))

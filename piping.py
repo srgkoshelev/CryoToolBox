@@ -471,7 +471,7 @@ class Piping (list):
         P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
         return P_out_calc_Pa - P_out_act_Pa
 
-    def P_in(self, m_dot, P_out=ureg('0 psig'), P_min=ureg('0 psig'), P_max=ureg('1000 bar')):
+    def P_in(self, m_dot, P_out=ureg('0 psig'), P_min=ureg('0 psig'), P_max=ureg('200 bar')):
         """
         Calculate upstream pressure given mass flow and downstream pressure.
 
