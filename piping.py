@@ -120,7 +120,7 @@ class Pipe:
             return self._K
 
     def __str__(self):
-        return f'{self._type}, OD={self.OD}, ID={self.ID}, wall={self.wall}'
+        return f'NPS {self.D}" SCH {self.SCH}'
 
 #' Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
 class VJ_Pipe(Pipe):
