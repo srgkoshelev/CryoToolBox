@@ -437,6 +437,9 @@ class Piping (list):
         Simple solution using Darcy equation is used.
         '''
         P_0 = self.Fluid.P
+        if P_0 <= P_out:
+            logger.warning('Input pressure less or equal to output: {P_0:.3g}, {P_out:.3g}')
+            return Q_('0 g/s')
         rho = self.Fluid.Dmass
         K, Area = self.K()
         k = self.Fluid.gamma #adiabatic coefficient
