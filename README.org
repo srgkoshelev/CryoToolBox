@@ -1,4 +1,4 @@
 # heat-transfer
 * Introduction
 `heat-transfer` is a Python module for simple heat transfer and hydraulics calculation using [[https://github.com/CoolProp/CoolProp][CoolProp]] back-end and [[https://github.com/hgrecco/pint][Pint]] for unit handling.
-Description of module's inner workings can be found [[./wiki/Home][here]].
+Description of module's inner workings can be found [[https://github.com/srgkoshelev/heat_transfer/wiki][here]].
