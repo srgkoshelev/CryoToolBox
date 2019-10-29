@@ -101,7 +101,7 @@ class Pipe:
         :returns: Darcy friction factor
         """
         if self.ID<0.2*ureg.inch or self.ID>48*ureg.inch:
-            logger.warning('''Tabulated friction data is given for 
+            logger.debug('''Tabulated friction data is given for 
                            ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
         ln_ID = log(self.ID.to(ureg.inch).magnitude)
         return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev
