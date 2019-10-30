@@ -24,13 +24,14 @@ class Pipe:
     """
     NPS pipe class.
     """
-    def __init__ (self, D_nom, SCH=40, L=0*ureg.m):
+    def __init__ (self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm')):
         """
         Initiate instance of the Pipe class.
 
         :D_nom: nominal diameter of piping; can be dimensionless or having a unit
         :SCH: pip schedule
         :L: pipe length
+        :c: sum of the mechanical allowances plus corrosion and erosion allowances
         :returns: None
         """
         try:
@@ -39,6 +40,9 @@ class Pipe:
             self.D = D_nom #Nominal diameter
         self.SCH = SCH
         self.L = L
+        self.c = c
+        #c = Q_('0.5 mm') for unspecified machined surfaces
+        # TODO add calculation for c based on thread depth c = h of B1.20.1
         self._type = 'NPS Pipe'
 
     @property
@@ -119,29 +123,74 @@ class Pipe:
             self._K = self.f_T()*self.L/self.ID
             return self._K
 
-    def pressure_design_thick(self, P, S, E, W, Y, c=Q_('0 mm')):
+    def pressure_design_thick(self, P):
         """
         Calculate pressure design thickness for given pressure and pipe material.
         Based on B31.3 304.1.
         :P: internal design pressure, gauge
+        """
+        if self.check_material_defined(): # Check whether S, E, W, and Y are defined
+            pass
+        D = self.OD
+        d = self.ID
+        S, E, W, Y = self.S, self.E, self.W, self.Y
+        t = P * D / (2*(S*E*W + P*Y))
+        # TODO add 3b equation handling:
+        # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
+        if (t >= D/6) or (P/(S*E)) > 0.385:
+            logger.error('Calculate design thickness in accordance \
+            with B31.3 304.1.2 (b)')
+            return None
+        tm = t + self.c
+        return tm
+
+    def update(self, **kwargs):
+        """
+        Add attributes, e.g. material stress or weld joint strength to the pipe.
+        """
+        self.__dict__.update(kwargs)
+
+    def check_material_defined(self):
+        """Check whether instance has following material properties defined:
         :S: Stress value for pipe material
         :E: Quality factor from Table A-1A or A-1B
         :W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
         :Y: coefficient from Table 304.1.1
-        :c: sum of the mechanical allowances plus corrosion and erosion allowances
         """
-        D = self.OD
-        d = self.ID
-        t = P * D / (2*(S*E*W+P*Y))
-        # TODO add 3b equation handling:
-        # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
-        if (t >= D/6) or (P/(S*E)) > 0.385:
-            logger.error('Calculate design thickness in accordance with B31.3 304.1.2 (b)')
-            return None
-        tm = t + c
-        #c = Q_('0.5 mm') for unspecified machined surfaces
-        # TODO add calculation for c based on thread depth c = h of B1.20.1
-        return (tm, self.wall>tm)
+        try:
+            self.S; self.E; self.W; self.Y
+        except AttributeError:
+            raise AttributeError('S, E, W, Y properties of the piping need to be \
+            defined')
+
+    def branch_reinforcement(self, BranchPipe, P, beta=Q_('90 deg'), d_1=None,
+                             T_r=Q_('0 in')):
+        """
+        Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
+        :BranchPipe: Branch pipe/tube instance with S, E, W, Y properties defined
+        :P: Design pressure
+        :beta: Smaller angle between axes of branch and run
+        :d_1: Effective length removed from pipe at branch (opening for branch)
+        :T_r: Minimum thickness of reinforcing ring
+        """
+        t_h = self.pressure_design_thick(P)
+        if d_1 is None:
+            d_1 = BranchPipe.OD
+        D_h = self.OD
+        T_h = self.wall
+        T_b = BranchPipe.wall
+        t_b = BranchPipe.pressure_design_thick(P)
+        c = max(self.c, BranchPipe.c) # Max allowance is used for calculation
+        # B31.3 has no specification which allowance to use
+        d_2 = half_width(d_1, T_b, T_h, c, D_h)
+        A_1 = t_h * d_1 * (2-sin(beta))
+        A_2 = (2*d_2-d_1) * (T_h - t_h - c)
+        L_4 = min(2.5*(T_h-c), 2.5*(T_b-c)) # height of reinforcement zone outside of run pipe
+        A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * BranchPipe.S / self.S
+        print(f'Required Reinforcement Area A_1: {A_1.to(ureg.inch**2):.3g~}')
+        A_avail = A_2 + A_3 # Ignoring welding reinforcement
+        print(f'Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}')
+        print(f'Weld branch connection is safe: {A_avail>A_1}')
 
     def __str__(self):
         return f'NPS {self.D}" SCH {self.SCH}'
@@ -322,7 +371,7 @@ class Valve(Pipe):
         self._ID = ID
         self._type = 'Valve'
         self._K = Cv_to_K(self._Cv, self.ID) 
- 
+
 class Globe_valve(Pipe):
     """
     Globe valve.
@@ -647,3 +696,10 @@ class ParallelPlateRelief:
         A_open = self.Supply_pipe.Area + pi/8*(self.Plate['OD_plate']**2 - self.Supply_pipe.ID**2)
         P_open = F_open / A_open
         return P_open.to(ureg.psi)
+
+def half_width(d_1, T_b, T_h, c, D_h):
+    """
+    Calculate 'half width' of reinforcement zone per B31.3 304.3.3.
+    """
+    d_2_a = (T_b-c) + (T_h-c) + d_1/2
+    return min(max(d_1, d_2_a), D_h)
