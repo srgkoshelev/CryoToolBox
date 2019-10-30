@@ -119,6 +119,30 @@ class Pipe:
             self._K = self.f_T()*self.L/self.ID
             return self._K
 
+    def pressure_design_thick(self, P, S, E, W, Y, c=Q_('0 mm')):
+        """
+        Calculate pressure design thickness for given pressure and pipe material.
+        Based on B31.3 304.1.
+        :P: internal design pressure, gauge
+        :S: Stress value for pipe material
+        :E: Quality factor from Table A-1A or A-1B
+        :W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
+        :Y: coefficient from Table 304.1.1
+        :c: sum of the mechanical allowances plus corrosion and erosion allowances
+        """
+        D = self.OD
+        d = self.ID
+        t = P * D / (2*(S*E*W+P*Y))
+        # TODO add 3b equation handling:
+        # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
+        if (t >= D/6) or (P/(S*E)) > 0.385:
+            logger.error('Calculate design thickness in accordance with B31.3 304.1.2 (b)')
+            return None
+        tm = t + c
+        #c = Q_('0.5 mm') for unspecified machined surfaces
+        # TODO add calculation for c based on thread depth c = h of B1.20.1
+        return (tm, self.wall>tm)
+
     def __str__(self):
         return f'NPS {self.D}" SCH {self.SCH}'
 
