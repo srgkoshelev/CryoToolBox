@@ -123,7 +123,7 @@ class Pipe:
             self._K = self.f_T()*self.L/self.ID
             return self._K
 
-    def pressure_design_thick(self, P):
+    def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
         """
         Calculate pressure design thickness for given pressure and pipe material.
         Based on B31.3 304.1.
@@ -134,6 +134,7 @@ class Pipe:
         D = self.OD
         d = self.ID
         S, E, W, Y = self.S, self.E, self.W, self.Y
+        P = P_int - P_ext # Differential pressure across the wall
         t = P * D / (2*(S*E*W + P*Y))
         # TODO add 3b equation handling:
         # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
@@ -277,11 +278,12 @@ class Tube(Pipe):
     """
     Tube, requires OD and wall thickness specified
     """
-    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m):
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
         self._OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
         self.L = L
+        self.c = c
         self._type = 'Tube'
 
 class Elbow(Pipe):
