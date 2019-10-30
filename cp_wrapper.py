@@ -52,9 +52,12 @@ CP_const_unit = {
     'Prandtl': (CP.iPrandtl, ureg.dimensionless),
     #'speed_sound': (CP.ispeed_sound, ),
     'isothermal_compressibility': (CP.iisothermal_compressibility, ureg.Pa**-1),
-    'isobaric_expansion_coefficient': (CP.iisobaric_expansion_coefficient, ureg.K**-1),
-    'isentropic_expansion_coefficient': (CP.iisentropic_expansion_coefficient, ureg.dimensionless),
-    #'fundamental_derivative_of_gas_dynamics': (CP.ifundamental_derivative_of_gas_dynamics, ),
+    'isobaric_expansion_coefficient':
+    (CP.iisobaric_expansion_coefficient, ureg.K**-1),
+    'isentropic_expansion_coefficient':
+    (CP.iisentropic_expansion_coefficient, ureg.dimensionless),
+    #'fundamental_derivative_of_gas_dynamics':
+    #(CP.ifundamental_derivative_of_gas_dynamics, ),
     #'alphar': (CP.ialphar, ),
     #'alpha0': (CP.ialpha0, ),
     #'Bvirial': (CP.iBvirial, ),
@@ -117,20 +120,26 @@ CP_inputs = {
 class ThermState:
     def __init__(self, fluid, backend="HEOS"):
         """
-        Available backends: HEOS (opensource), REFPROP. See http://www.coolprop.org/coolprop/REFPROP.html for details.
+        Available backends: HEOS (opensource), REFPROP.
+        See http://www.coolprop.org/coolprop/REFPROP.html for details.
         """
         self._AbstractState = CP.AbstractState(backend, fluid)
 
     def update(self, input_name1, input_value1, input_name2, input_value2):
         if input_name1 < input_name2: #Sorting inputs alphabetically
             CP_input_str = input_name1 + input_name2
-            CP_input_value1 = input_value1.to(CP_const_unit[input_name1][1]).magnitude
-            CP_input_value2 = input_value2.to(CP_const_unit[input_name2][1]).magnitude
+            CP_input_value1 = input_value1.to(
+                CP_const_unit[input_name1][1]).magnitude
+            CP_input_value2 = input_value2.to(
+                CP_const_unit[input_name2][1]).magnitude
         else:
             CP_input_str = input_name2 + input_name1
-            CP_input_value1 = input_value2.to(CP_const_unit[input_name2][1]).magnitude
-            CP_input_value2 = input_value1.to(CP_const_unit[input_name1][1]).magnitude
-        self._AbstractState.update(CP_inputs[CP_input_str], CP_input_value1, CP_input_value2)
+            CP_input_value1 = input_value2.to(
+                CP_const_unit[input_name2][1]).magnitude
+            CP_input_value2 = input_value1.to(
+                CP_const_unit[input_name1][1]).magnitude
+        self._AbstractState.update(
+            CP_inputs[CP_input_str], CP_input_value1, CP_input_value2)
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
@@ -305,7 +314,8 @@ class ThermState:
         Of_CP_const = CP_const_unit[Of][0]
         Wrt_CP_const = CP_const_unit[Wrt][0]
         Constant_CP_const = CP_const_unit[Constant][0]
-        result = self._AbstractState.first_partial_deriv(Of_CP_const, Wrt_CP_const, Constant_CP_const)
+        result = self._AbstractState.first_partial_deriv(
+            Of_CP_const, Wrt_CP_const, Constant_CP_const)
         return result * output_unit
 
     @property
@@ -314,8 +324,9 @@ class ThermState:
         Calculate Specific heat input, v * (dh/dv)|p.
         This function is not described in AbstractState class.
         """
-        #Because specific volume is not available as function of the AbstratState, density is used instead
-        #The resulting function is: -Dmass*(dHmass/Dmass)|p
+        # Because specific volume is not available as function of the AbstratState,
+        # density is used instead
+        # The resulting function is: -Dmass*(dHmass/Dmass)|p
         return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
 
     @property
@@ -336,10 +347,12 @@ class ThermState:
     @property
     def C_gas_constant(self):
         """
-        Constant for gas or vapor which is the function of the ratio of specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
+        Constant for gas or vapor which is the function of the ratio of
+        specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
         """
         k_ = self.gamma
-        C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg('lb/(hr*lbf)*(degR)^0.5')
+        C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg(
+            'lb/(hr*lbf)*(degR)^0.5')
         return C
 
     @property
@@ -355,4 +368,3 @@ class ThermState:
         Return backend name
         """
         return self._AbstractState.backend_name()
-
