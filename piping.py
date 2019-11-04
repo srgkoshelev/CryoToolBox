@@ -608,11 +608,12 @@ def Cv_to_K(Cv, ID):
     d_P - pressure drop through the valve.
     [Cv] = gal/(min*(psi)**0.5)
     """
-    Cv = Cv*ureg('gal/(min*(psi)**0.5)') #Convention accepted in the US
+    if isinstance(Cv, (int, float)): # Check if dimensionless input
+        Cv = Cv*ureg('gal/(min*(psi)**0.5)') #Convention accepted in the US
     A = pi*ID**2/4
     rho_w = 999*ureg('kg/m**3') #Water density at 60 F
     K = 2*A**2/(Cv**2*rho_w) #Based on Crane TP-410 p. 2-10 and Darcy equation
-    return K
+    return K.to(ureg.dimensionless)
 
 def beta(d1, d2):
     """
@@ -705,3 +706,14 @@ def half_width(d_1, T_b, T_h, c, D_h):
     """
     d_2_a = (T_b-c) + (T_h-c) + d_1/2
     return min(max(d_1, d_2_a), D_h)
+
+def PRV_flow(ID, Kd, Fluid):
+    """
+    Calculate mass flow through the relief valve based on BPVC VIII div. 1 UG-131 (e) (2).
+    """
+    A = pi * ID**2 /4
+    C = Fluid.C_gas_constant
+    P = Fluid.P
+    W_T = C * A * P * Fluid.MZT # Theoretical flow
+    W_a = W_T * Kd # Actual flow
+    return W_a.to(ureg.g/ureg.s)

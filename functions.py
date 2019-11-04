@@ -16,16 +16,11 @@ def to_scfma (M_dot_fluid, Fluid):
     :Fluid: thermodynamic state ThermState instance
     :returns: volumetric air flow rate
     """
-    #Fluid properties
-    MZT_fluid = (Fluid.molar_mass / (Fluid.compressibility_factor*Fluid.T))**0.5 #Commonly used square root group
     C_fluid = Fluid.C_gas_constant
-
-    #Air properties
-    MZT_air = (Air.molar_mass / (Air.compressibility_factor*Air.T))**0.5 #Commonly used square root group
     C_air = Air.C_gas_constant
 
     #Calculation
-    M_dot_air =  M_dot_fluid * C_air / C_fluid * MZT_air / MZT_fluid
+    M_dot_air =  M_dot_fluid * C_air / C_fluid * Air.MZT / Fluid.MZT
     Q_air = M_dot_air / Air.Dmass
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air
@@ -40,17 +35,12 @@ def from_scfma (Q_air, Fluid):
     :Fluid: thermodynamic state ThermState instance
     :returns: mass flow rate
     """
-    #Fluid properties
-    MZT_fluid = (Fluid.molar_mass / (Fluid.compressibility_factor*Fluid.T))**0.5 #Commonly used square root group
     C_fluid = Fluid.C_gas_constant
-
-    #Air properties
-    MZT_air = (Air.molar_mass / (Air.compressibility_factor*Air.T))**0.5 #Commonly used square root group
     C_air = Air.C_gas_constant
 
     #Calculation
     M_dot_air = Q_air * Air.Dmass
-    M_dot_fluid =  M_dot_air * C_fluid / C_air * MZT_fluid / MZT_air
+    M_dot_fluid =  M_dot_air * C_fluid / C_air * Fluid.MZT / Air.MZT
     M_dot_fluid.ito(ureg.g/ureg.s)
     return M_dot_fluid
 

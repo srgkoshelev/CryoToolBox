@@ -1,5 +1,3 @@
-# Pint wrapper for CoolProp AbstractState
-# Abstract state is used as a data point of a process flow for which properties are calculated
 import CoolProp.CoolProp as CP
 from . import ureg, T_NTP, P_NTP
 
@@ -352,7 +350,7 @@ class ThermState:
         """
         k_ = self.gamma
         C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg(
-            'lb/(hr*lbf)*(degR)^0.5')
+            'lb/(hr*lbf)*(mol*degR/g)^0.5')
         return C
 
     @property
@@ -368,3 +366,14 @@ class ThermState:
         Return backend name
         """
         return self._AbstractState.backend_name()
+
+    def __str__(self):
+        return f'{self.name.capitalize()} at T = {self.T.to(ureg.K):.3~g~} and P = {self.P.to(ureg.psi):.3g~}.'
+
+    @property
+    def MZT(self):
+        """
+        Calculate sqrt(M/(ZT)) a commonly used square root group for discharge flow calculation.
+        """
+        MZT_ = (self.molar_mass / (self.compressibility_factor*self.T))**0.5
+        return MZT_

@@ -103,3 +103,6 @@ ENV/
 #Vim swap files
 *.swo
 *.swp
+
+#Wiki for the project
+/wiki
