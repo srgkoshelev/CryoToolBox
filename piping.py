@@ -42,7 +42,6 @@ class Pipe:
         self.SCH = SCH
         self._wall = NPS_table[self.D].get(self.SCH)
         self._ID = self.OD - 2*self.wall
-        self._Area = pi*self.ID**2/4
         self.L = L
         self._K = self.f_T()*self.L/self.ID
         self.c = c
@@ -84,7 +83,7 @@ class Pipe:
 
         :returns: pipe cross section area
         """
-        return self._Area
+        return pi * self.ID**2 / 4
 
     @property
     def volume(self):
@@ -269,7 +268,9 @@ class Tube(Pipe):
         self._OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
+        self._ID = self.OD - 2*self.wall
         self.L = L
+        self._K = self.f_T()*self.L/self.ID
         self.c = c
         self._type = 'Tube'
 
