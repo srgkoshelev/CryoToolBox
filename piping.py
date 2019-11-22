@@ -439,16 +439,15 @@ class Piping (list):
         """
         Converting and adding flow coefficients K to same area.
         """
-        if len(self) > 0:
-            K0 = 0*ureg.dimensionless
+        K0 = 0*ureg.dimensionless
+        try:
             A0 = self[0].Area #using area of the first element as base
-            for section in self:
-                K0 += section.K*(A0/section.Area)**2
-            return (K0, A0)
-        else:
-            logger.error('''Piping has no elements! 
-                         Use Piping.add to add sections to piping.''')
-
+        except IndexError:
+            raise IndexError('''Piping has no elements! 
+                                Use Piping.add to add sections to piping.''')
+        for section in self:
+            K0 += section.K*(A0/section.Area)**2
+        return (K0, A0)
 
     def dP(self, m_dot):
         '''
