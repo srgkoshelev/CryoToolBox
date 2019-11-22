@@ -86,6 +86,10 @@ class Pipe:
         """
         return self._Area
 
+    @property
+    def volume(self):
+        return self.Area * self.L
+
     def f_T(self):
         """
         Calculate Darcy friction factor for complete turbulence for clean steel pipe.
