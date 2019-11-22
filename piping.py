@@ -389,12 +389,14 @@ class Contraction(Pipe):
     """
     Sudden and gradual contraction based on Crane TP-410.
     """
-    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+    def __init__(self, Pipe1, Pipe2, theta=ureg('180 deg')):
         """
-        ID1: upstream pipe ID
-        ID2: downstream pipe ID
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
         theta: contraction angle
         """
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = 'Contraction'
@@ -410,12 +412,14 @@ class Enlargement(Pipe):
     """
     Sudden and gradual enlargement based on Crane TP-410.
     """
-    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+    def __init__(self, Pipe1, Pipe2, theta=ureg('180 deg')):
         """
-        ID1: upstream pipe ID
-        ID2: downstream pipe ID
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
         theta: contraction angle
         """
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = 'Enlargement'
