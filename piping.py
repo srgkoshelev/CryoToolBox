@@ -454,6 +454,13 @@ class Piping (list):
             K0 += section.K*(A0/section.Area)**2
         return (K0, A0)
 
+    @property
+    def volume(self):
+        self._volume = 0 * ureg.ft**3
+        for pipe in self:
+            self._volume += pipe.volume
+        return self._volume
+
     def dP(self, m_dot):
         '''
         Calculate pressure drop through piping. 
