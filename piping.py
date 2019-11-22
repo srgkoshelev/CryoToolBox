@@ -226,6 +226,10 @@ class Entrance (Pipe):
         self._type = 'Entrance'
         self._K = 0.5 #Crane TP-410, A-29
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Exit (Pipe):
     """
     Pipe exit, projecting or sharp-edged, or rounded.
@@ -234,6 +238,10 @@ class Exit (Pipe):
         self._ID = ID
         self._type = 'Exit'
         self._K = 1 #Crane TP-410, A-29
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
 
 class Orifice(Pipe):
     """
@@ -248,6 +256,10 @@ class Orifice(Pipe):
     def K(self):
         return 1/self.Cd**2
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Conic_Orifice(Orifice):
     """
     Conic orifice
@@ -259,6 +271,10 @@ class Conic_Orifice(Orifice):
             #square-edged plate (unfounded assumption)
             self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
         self._type = 'Conic orifice'
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
 
 class Tube(Pipe):
     """
@@ -362,6 +378,10 @@ class Valve(Pipe):
         self._type = 'Valve'
         self._K = Cv_to_K(self._Cv, self.ID) 
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Globe_valve(Pipe):
     """
     Globe valve.
@@ -372,6 +392,10 @@ class Globe_valve(Pipe):
         self._ID = self.OD - 2*NPS_table[D].get(40) 
         self._type = 'Globe valve'
         self._K = 340*self.f_T() #Horizontal ball valve with beta = 1
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
 
 class V_Cone(Pipe):
     """
@@ -408,6 +432,10 @@ class Contraction(Pipe):
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Enlargement(Pipe):
     """
     Sudden and gradual enlargement based on Crane TP-410.
@@ -430,6 +458,10 @@ class Enlargement(Pipe):
             self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
 
 #' Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow. 
 class Piping (list):
