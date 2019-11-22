@@ -38,8 +38,13 @@ class Pipe:
             self.D = D_nom.magnitude #Nominal diameter
         except AttributeError:
             self.D = D_nom #Nominal diameter
+        self._OD = NPS_table[self.D]['OD']
         self.SCH = SCH
+        self._wall = NPS_table[self.D].get(self.SCH)
+        self._ID = self.OD - 2*self.wall
+        self._Area = pi*self.ID**2/4
         self.L = L
+        self._K = self.f_T()*self.L/self.ID
         self.c = c
         #c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
@@ -52,11 +57,7 @@ class Pipe:
 
         :returns: pipe OD in unit of length
         """
-        try:
-            return self._OD
-        except AttributeError:
-            self._OD = NPS_table[self.D]['OD']
-            return self._OD
+        return self._OD
 
     @property
     def wall(self):
@@ -65,11 +66,7 @@ class Pipe:
 
         :returns: pipe wall in unit of length
         """
-        try:
-            return self._wall
-        except AttributeError:
-            self._wall = NPS_table[self.D].get(self.SCH)
-            return self._wall
+        return self._wall
 
     @property
     def ID(self):
@@ -78,11 +75,7 @@ class Pipe:
 
         :returns: pipe ID in unit of length
         """
-        try:
-            return self._ID
-        except AttributeError:
-            self._ID = self.OD - 2*self.wall
-            return self._ID
+        return self._ID
 
     @property
     def Area(self):
@@ -91,10 +84,6 @@ class Pipe:
 
         :returns: pipe cross section area
         """
-        try:
-            return self._Area
-        except AttributeError:
-            self._Area = pi*self.ID**2/4
         return self._Area
 
     def f_T(self):
@@ -117,11 +106,7 @@ class Pipe:
 
         :returns: resistance coefficient
         """
-        try:
-            return self._K
-        except AttributeError:
-            self._K = self.f_T()*self.L/self.ID
-            return self._K
+        return self._K
 
     def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
         """
@@ -202,7 +187,7 @@ class VJ_Pipe(Pipe):
     Vacuum jacketed pipe.
     """
     def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
-        super().__init__(D_nom, SCH, L) 
+        super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
         self._type = 'Vacuum jacketed pipe'
 
@@ -211,21 +196,19 @@ class Corrugated_Pipe(Pipe):
     Corrugated pipe class.
     '''
     def __init__ (self, D, L=0*ureg.m):
-        super().__init__(D, None, L) 
+        super().__init__(D, None, L)
+        self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
         self._type = 'Corrugated pipe'
 
     @property
     def K(self):
-        try:
-            return self._K
-        except AttributeError:
-            self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
         return self._K
 
     @property
     def OD(self):
         logger.debug('For corrugated piping assumed OD = D')
         return Q_(self.D*ureg.inch)
+
     @property
     def wall(self):
         logger.debug('For corrugated piping assumed wall = 0')
