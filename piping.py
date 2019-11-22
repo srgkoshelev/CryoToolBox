@@ -290,14 +290,14 @@ class Tube(Pipe):
         self.c = c
         self._type = 'Tube'
 
-class Elbow(Pipe):
+class AbstractElbow(ABC):
     """
-    NPS elbow.
+    Abstract Elbow class. __init__ method is abstract to avoid instantiation of this class.
+    method K defines flow resistance calculation.
     R_D: elbow radius/diameter ratio
     N: number of elbows in the pipeline (to be used with lumped Darcy equation)
     """
-    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
-        super().__init__(D_nom, SCH)
+    def __init__(self, R_D, N, angle):
         self.R_D = R_D
         self.N = N
         self.angle = angle
@@ -329,15 +329,31 @@ class Elbow(Pipe):
         C1 = 1 #use different value for non-axis symmetric
         return (A1*B1*C1+super().K)*self.N
 
-class Tee(ABC):
+class PipeElbow(AbstractElbow, Pipe): #MRO makes method K from Elbow class to override method from Pipe class
+    """
+    NPS Tee fitting.
+    """
+    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
+        Pipe.__init__(self, D_nom, SCH)
+        super().__init__(R_D, N, angle)
+
+class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to override method from Pipe class
+    """
+    NPS Tee fitting.
+    """
+    def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
+        Tube.__init__(self, OD, wall)
+        super().__init__(R_D, N, angle)
+
+class AbstractTee(ABC):
     """
     Abstract Tee class. __init__ method is abstract to avoid instantiation of this class.
     method K defines flow resistance calculation.
     """
     @abstractmethod
     def __init__(self, direction):
-        if direction in ['thru', 'through']:
-            self.direction = 'thru'
+        if direction in ['thru', 'through', 'run']:
+            self.direction = 'run'
         elif direction in ['branch', 'side']:
             self.direction = 'branch'
         else:
@@ -347,12 +363,12 @@ class Tee(ABC):
 
     @property
     def K(self):
-        if self.direction == 'thru':
+        if self.direction == 'run':
             return 20*self.f_T() #Crane TP-410 p. A-29
         elif self.direction == 'branch':
             return 60*self.f_T() #Crane TP-410 p. A-29
 
-class PipeTee(Tee, Pipe): #MRO makes method K from Tee class to override method from Pipe class
+class PipeTee(AbstractTee, Pipe): #MRO makes method K from Tee class to override method from Pipe class
     """
     NPS Tee fitting.
     """
@@ -360,7 +376,7 @@ class PipeTee(Tee, Pipe): #MRO makes method K from Tee class to override method 
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(direction)
 
-class TubeTee(Tee, Tube):
+class TubeTee(AbstractTee, Tube):
     """
     Tee fitting based.
     """
