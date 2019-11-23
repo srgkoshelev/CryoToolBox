@@ -77,7 +77,7 @@ class Pipe:
         return self._ID
 
     @property
-    def Area(self):
+    def area(self):
         """
         Calculate cross sectional area of pipe.
 
@@ -87,7 +87,7 @@ class Pipe:
 
     @property
     def volume(self):
-        return self.Area * self.L
+        return self.area * self.L
 
     def f_T(self):
         """
@@ -498,12 +498,12 @@ class Piping (list):
         """
         K0 = 0*ureg.dimensionless
         try:
-            A0 = self[0].Area #using area of the first element as base
+            A0 = self[0].area #using area of the first element as base
         except IndexError:
             raise IndexError('''Piping has no elements! 
                                 Use Piping.add to add sections to piping.''')
         for section in self:
-            K0 += section.K*(A0/section.Area)**2
+            K0 += section.K*(A0/section.area)**2
         return (K0, A0)
 
     @property
@@ -522,8 +522,8 @@ class Piping (list):
         P_0 = self.Fluid.P
         T_0 = self.Fluid.T
         rho_0 = self.Fluid.Dmass
-        K, Area = self.K()
-        w = m_dot / (rho_0*Area)
+        K, area = self.K()
+        w = m_dot / (rho_0*area)
         dP = dP_darcy (K, rho_0, w) #first iteration
         P_out = P_0 - dP
         k = self.Fluid.gamma #adiabatic coefficient
@@ -538,7 +538,7 @@ class Piping (list):
             TempState.update('T', T_0, 'P', P_out)
             rho_out = TempState.Dmass
             rho_ave = (rho_0+rho_out) / 2
-            w = m_dot/(rho_ave*Area)
+            w = m_dot/(rho_ave*area)
             return dP_darcy (K, rho_ave, w)
         elif 0.4<dP/P_0<(1-rc): #Subsonic flow
             logger.warning('Pressure drop too high for Darcy equation!')
@@ -562,7 +562,7 @@ class Piping (list):
             logger.warning('Input pressure less or equal to output: {P_0:.3g}, {P_out:.3g}')
             return Q_('0 g/s')
         rho = self.Fluid.Dmass
-        K, Area = self.K()
+        K, area = self.K()
         k = self.Fluid.gamma #adiabatic coefficient
         #Critical pressure drop
         #Note: according to Crane TP-410 should be dependent on 
@@ -576,7 +576,7 @@ class Piping (list):
             delta_P = P_0*(1-rc) #Crane TP-410, p 2-15
         #Net expansion factor for discharge is assumed to be 1 
         #(conservative value):
-        m_dot_ = Area * (2*delta_P*rho/K)**0.5 
+        m_dot_ = area * (2*delta_P*rho/K)**0.5 
         return m_dot_.to(ureg.g/ureg.s)
 
     def _solver_func(self, P_in_Pa, m_dot, P_out_act):
@@ -737,12 +737,12 @@ class ParallelPlateRelief:
         """
         Calculate pressure required to fully open Parallel Plate relief
         """
-        dx_open = self.Supply_pipe.Area / (pi*self.Plate['OD_plate']) #compression required to provide vent area equal to supply pipe area
+        dx_open = self.Supply_pipe.area / (pi*self.Plate['OD_plate']) #compression required to provide vent area equal to supply pipe area
         F_open = self.F_lift = self.Springs['N']*self.Springs['k']*dx_open #Force at fully open
         #At fully open pressure is distributed as:
         #Full pressure for up to supply pipe diameter
         #Linear fall off up to plate OD
-        A_open = self.Supply_pipe.Area + pi/8*(self.Plate['OD_plate']**2 - self.Supply_pipe.ID**2)
+        A_open = self.Supply_pipe.area + pi/8*(self.Plate['OD_plate']**2 - self.Supply_pipe.ID**2)
         P_open = F_open / A_open
         return P_open.to(ureg.psi)
 
