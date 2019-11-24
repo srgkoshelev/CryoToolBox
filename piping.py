@@ -43,8 +43,12 @@ class Pipe:
             self.D = D_nom.magnitude # If united
         except AttributeError:
             self.D = D_nom
+        self._OD = NPS_table[self.D]['OD']
         self.SCH = SCH
+        self._wall = NPS_table[self.D].get(self.SCH)
+        self._ID = self.OD - 2*self.wall
         self.L = L
+        self._K = self.f_T()*self.L/self.ID
         self.c = c
         #c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
@@ -59,11 +63,7 @@ class Pipe:
         :obj:`Quantity`
             Pipe OD in unit of length
         """
-        try:
-            return self._OD
-        except AttributeError:
-            self._OD = NPS_table[self.D]['OD']
-            return self._OD
+        return self._OD
 
     @property
     def wall(self):
@@ -72,11 +72,7 @@ class Pipe:
 
         :returns: pipe wall in unit of length
         """
-        try:
-            return self._wall
-        except AttributeError:
-            self._wall = NPS_table[self.D].get(self.SCH)
-            return self._wall
+        return self._wall
 
     @property
     def ID(self):
@@ -85,24 +81,20 @@ class Pipe:
 
         :returns: pipe ID in unit of length
         """
-        try:
-            return self._ID
-        except AttributeError:
-            self._ID = self.OD - 2*self.wall
-            return self._ID
+        return self._ID
 
     @property
-    def Area(self):
+    def area(self):
         """
         Calculate cross sectional area of pipe.
 
         :returns: pipe cross section area
         """
-        try:
-            return self._Area
-        except AttributeError:
-            self._Area = pi*self.ID**2/4
-        return self._Area
+        return pi * self.ID**2 / 4
+
+    @property
+    def volume(self):
+        return self.area * self.L
 
     def f_T(self):
         """
@@ -124,11 +116,7 @@ class Pipe:
 
         :returns: resistance coefficient
         """
-        try:
-            return self._K
-        except AttributeError:
-            self._K = self.f_T()*self.L/self.ID
-            return self._K
+        return self._K
 
     def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
         """
@@ -219,20 +207,18 @@ class Corrugated_Pipe(Pipe):
     '''
     def __init__ (self, D, L=0*ureg.m):
         super().__init__(D, None, L)
+        self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
         self._type = 'Corrugated pipe'
 
     @property
     def K(self):
-        try:
-            return self._K
-        except AttributeError:
-            self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
         return self._K
 
     @property
     def OD(self):
         logger.debug('For corrugated piping assumed OD = D')
         return Q_(self.D*ureg.inch)
+
     @property
     def wall(self):
         logger.debug('For corrugated piping assumed wall = 0')
@@ -247,6 +233,10 @@ class Entrance (Pipe):
         self._type = 'Entrance'
         self._K = 0.5 #Crane TP-410, A-29
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Exit (Pipe):
     """
     Pipe exit, projecting or sharp-edged, or rounded.
@@ -255,6 +245,10 @@ class Exit (Pipe):
         self._ID = ID
         self._type = 'Exit'
         self._K = 1 #Crane TP-410, A-29
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
 
 class Orifice(Pipe):
     """
@@ -269,6 +263,10 @@ class Orifice(Pipe):
     def K(self):
         return 1/self.Cd**2
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Conic_Orifice(Orifice):
     """
     Conic orifice
@@ -281,6 +279,10 @@ class Conic_Orifice(Orifice):
             self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
         self._type = 'Conic orifice'
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Tube(Pipe):
     """
     Tube, requires OD and wall thickness specified
@@ -289,18 +291,20 @@ class Tube(Pipe):
         self._OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
+        self._ID = self.OD - 2*self.wall
         self.L = L
+        self._K = self.f_T()*self.L/self.ID
         self.c = c
         self._type = 'Tube'
 
-class Elbow(Pipe):
+class AbstractElbow(ABC):
     """
-    NPS elbow.
+    Abstract Elbow class. __init__ method is abstract to avoid instantiation of this class.
+    method K defines flow resistance calculation.
     R_D: elbow radius/diameter ratio
     N: number of elbows in the pipeline (to be used with lumped Darcy equation)
     """
-    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
-        super().__init__(D_nom, SCH)
+    def __init__(self, R_D, N, angle):
         self.R_D = R_D
         self.N = N
         self.angle = angle
@@ -332,15 +336,31 @@ class Elbow(Pipe):
         C1 = 1 #use different value for non-axis symmetric
         return (A1*B1*C1+super().K)*self.N
 
-class Tee(ABC):
+class PipeElbow(AbstractElbow, Pipe): #MRO makes method K from Elbow class to override method from Pipe class
+    """
+    NPS Tee fitting.
+    """
+    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
+        Pipe.__init__(self, D_nom, SCH)
+        super().__init__(R_D, N, angle)
+
+class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to override method from Pipe class
+    """
+    NPS Tee fitting.
+    """
+    def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
+        Tube.__init__(self, OD, wall)
+        super().__init__(R_D, N, angle)
+
+class AbstractTee(ABC):
     """
     Abstract Tee class. __init__ method is abstract to avoid instantiation of this class.
     method K defines flow resistance calculation.
     """
     @abstractmethod
     def __init__(self, direction):
-        if direction in ['thru', 'through']:
-            self.direction = 'thru'
+        if direction in ['thru', 'through', 'run']:
+            self.direction = 'run'
         elif direction in ['branch', 'side']:
             self.direction = 'branch'
         else:
@@ -350,12 +370,12 @@ class Tee(ABC):
 
     @property
     def K(self):
-        if self.direction == 'thru':
+        if self.direction == 'run':
             return 20*self.f_T() #Crane TP-410 p. A-29
         elif self.direction == 'branch':
             return 60*self.f_T() #Crane TP-410 p. A-29
 
-class PipeTee(Tee, Pipe): #MRO makes method K from Tee class to override method from Pipe class
+class PipeTee(AbstractTee, Pipe): #MRO makes method K from Tee class to override method from Pipe class
     """
     NPS Tee fitting.
     """
@@ -363,7 +383,7 @@ class PipeTee(Tee, Pipe): #MRO makes method K from Tee class to override method 
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(direction)
 
-class TubeTee(Tee, Tube):
+class TubeTee(AbstractTee, Tube):
     """
     Tee fitting based.
     """
@@ -381,6 +401,10 @@ class Valve(Pipe):
         self._type = 'Valve'
         self._K = Cv_to_K(self._Cv, self.ID)
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Globe_valve(Pipe):
     """
     Globe valve.
@@ -391,6 +415,10 @@ class Globe_valve(Pipe):
         self._ID = self.OD - 2*NPS_table[D].get(40)
         self._type = 'Globe valve'
         self._K = 340*self.f_T() #Horizontal ball valve with beta = 1
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
 
 class V_Cone(Pipe):
     """
@@ -408,12 +436,14 @@ class Contraction(Pipe):
     """
     Sudden and gradual contraction based on Crane TP-410.
     """
-    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+    def __init__(self, Pipe1, Pipe2, theta=ureg('180 deg')):
         """
-        ID1: upstream pipe ID
-        ID2: downstream pipe ID
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
         theta: contraction angle
         """
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = 'Contraction'
@@ -425,16 +455,22 @@ class Contraction(Pipe):
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Enlargement(Pipe):
     """
     Sudden and gradual enlargement based on Crane TP-410.
     """
-    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+    def __init__(self, Pipe1, Pipe2, theta=ureg('180 deg')):
         """
-        ID1: upstream pipe ID
-        ID2: downstream pipe ID
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
         theta: contraction angle
         """
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = 'Enlargement'
@@ -446,11 +482,15 @@ class Enlargement(Pipe):
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
-#' Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow.
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
 class Piping (list):
     '''
     Piping system defined by initial conditions and structure of
     pipe elements.
+    Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow.
     '''
     def __init__ (self, Fluid, Pipes=[]):
         self.Fluid = Fluid
@@ -463,16 +503,22 @@ class Piping (list):
         """
         Converting and adding flow coefficients K to same area.
         """
-        if len(self) > 0:
-            K0 = 0*ureg.dimensionless
-            A0 = self[0].Area #using area of the first element as base
-            for section in self:
-                K0 += section.K*(A0/section.Area)**2
-            return (K0, A0)
-        else:
-            logger.error('''Piping has no elements!
-                         Use Piping.add to add sections to piping.''')
+        K0 = 0*ureg.dimensionless
+        try:
+            A0 = self[0].area #using area of the first element as base
+        except IndexError:
+            raise IndexError('''Piping has no elements!
+                                Use Piping.add to add sections to piping.''')
+        for section in self:
+            K0 += section.K*(A0/section.area)**2
+        return (K0, A0)
 
+    @property
+    def volume(self):
+        self._volume = 0 * ureg.ft**3
+        for pipe in self:
+            self._volume += pipe.volume
+        return self._volume
 
     def dP(self, m_dot):
         '''
@@ -483,8 +529,8 @@ class Piping (list):
         P_0 = self.Fluid.P
         T_0 = self.Fluid.T
         rho_0 = self.Fluid.Dmass
-        K, Area = self.K()
-        w = m_dot / (rho_0*Area)
+        K, area = self.K()
+        w = m_dot / (rho_0*area)
         dP = dP_darcy (K, rho_0, w) #first iteration
         P_out = P_0 - dP
         k = self.Fluid.gamma #adiabatic coefficient
@@ -499,7 +545,7 @@ class Piping (list):
             TempState.update('T', T_0, 'P', P_out)
             rho_out = TempState.Dmass
             rho_ave = (rho_0+rho_out) / 2
-            w = m_dot/(rho_ave*Area)
+            w = m_dot/(rho_ave*area)
             return dP_darcy (K, rho_ave, w)
         elif 0.4<dP/P_0<(1-rc): #Subsonic flow
             logger.warning('Pressure drop too high for Darcy equation!')
@@ -523,7 +569,7 @@ class Piping (list):
             logger.warning('Input pressure less or equal to output: {P_0:.3g}, {P_out:.3g}')
             return Q_('0 g/s')
         rho = self.Fluid.Dmass
-        K, Area = self.K()
+        K, area = self.K()
         k = self.Fluid.gamma #adiabatic coefficient
         #Critical pressure drop
         #Note: according to Crane TP-410 should be dependent on
@@ -537,7 +583,7 @@ class Piping (list):
             delta_P = P_0*(1-rc) #Crane TP-410, p 2-15
         #Net expansion factor for discharge is assumed to be 1
         #(conservative value):
-        m_dot_ = Area * (2*delta_P*rho/K)**0.5
+        m_dot_ = area * (2*delta_P*rho/K)**0.5
         return m_dot_.to(ureg.g/ureg.s)
 
     def _solver_func(self, P_in_Pa, m_dot, P_out_act):
@@ -698,12 +744,12 @@ class ParallelPlateRelief:
         """
         Calculate pressure required to fully open Parallel Plate relief
         """
-        dx_open = self.Supply_pipe.Area / (pi*self.Plate['OD_plate']) #compression required to provide vent area equal to supply pipe area
+        dx_open = self.Supply_pipe.area / (pi*self.Plate['OD_plate']) #compression required to provide vent area equal to supply pipe area
         F_open = self.F_lift = self.Springs['N']*self.Springs['k']*dx_open #Force at fully open
         #At fully open pressure is distributed as:
         #Full pressure for up to supply pipe diameter
         #Linear fall off up to plate OD
-        A_open = self.Supply_pipe.Area + pi/8*(self.Plate['OD_plate']**2 - self.Supply_pipe.ID**2)
+        A_open = self.Supply_pipe.area + pi/8*(self.Plate['OD_plate']**2 - self.Supply_pipe.ID**2)
         P_open = F_open / A_open
         return P_open.to(ureg.psi)
 

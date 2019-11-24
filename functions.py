@@ -5,6 +5,10 @@ from . import Air
 from .cp_wrapper import *
 from scipy.interpolate import interp1d
 
+E_TNT = Q_('4850 J/g') #TNT equivalent Energy of Explosion (PNNL)
+z_1 = Q_('200 ft') #Scaled distance for debris and missile damage (PNNL)
+z_2 = Q_('15 ft') #Scaled distance for eardrum rupture (PNNL)
+z_3 = Q_('6.7 ft') #Scaled distance for lung damage (PNNL)
 
 # Basic thermodynamic functions
 def to_scfma (M_dot_fluid, Fluid):
@@ -331,3 +335,20 @@ def nist_spec_heat(T, material='304ss'):
     T = T.to(ureg.K).magnitude
     #TODO add wrapper / coefficients / load from a file
     pass
+
+def stored_energy(Piping):
+    """Calculate stored energy in piping using Baker equation."""
+    P = Piping.Fluid.P
+    V = Piping.volume
+    k = Piping.Fluid.gamma
+    E_stored = P * V / (k-1) * (1-(P_NTP/P)**((k-1)/k))
+    return E_stored.to(ureg.lbf*ureg.ft)
+
+def blast_radius(E_stored):
+    """Calculate maximum distance for debris, eardrum rupture and
+    lung damage based on PNNL paper."""
+    W_TNT = E_stored / E_TNT #Energy equivalent in TNT
+    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**0.5
+    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**0.5
+    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**0.5
+    return (D_1 , D_2, D_3)
