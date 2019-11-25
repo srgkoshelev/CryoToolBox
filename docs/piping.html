@@ -195,24 +195,23 @@ class Pipe:
                              T_r=Q_(&#39;0 in&#39;)):
         &#34;&#34;&#34;Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
 
-        #### Parameters:
-        BranchPipe (:obj:`Pipe`)
-        : Branch pipe/tube instance with S, E, W, Y
-            properties defined
+        Parameters
+        ----------
+        BranchPipe : :obj:`Pipe`
+            Branch pipe/tube instance with S, E, W, Y properties defined
+        P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            Design pressure
+        beta : :obj:`pint.Quantity` {dimensionless}
+            Smaller angle between axes of branch and run
+        d_1 : :obj:`pint.Quantity` {length: 1}
+            Effective length removed from pipe at branch (opening for branch)
+        T_r : :obj:`pint.Quantity` {length: 1}
+            Minimum thickness of reinforcing ring
 
-        P (:obj:`pint.Quantity` {length: -1, mass: 1, time: -2})
-        : Design pressure
+        Returns
+        -------
+        None
 
-        beta (:obj:`pint.Quantity` {dimensionless})
-        : Smaller angle between
-            axes of branch and run
-
-        d_1 (:obj:`pint.Quantity` {length: 1})
-        : Effective length removed from
-            pipe at branch (opening for branch)
-
-        T_r (:obj:`pint.Quantity` {length: 1})
-        : Minimum thickness of reinforcing ring
         &#34;&#34;&#34;
         t_h = self.pressure_design_thick(P)
         if d_1 is None:
@@ -1983,24 +1982,23 @@ Should have unit of length.</dd>
                              T_r=Q_(&#39;0 in&#39;)):
         &#34;&#34;&#34;Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
 
-        #### Parameters:
-        BranchPipe (:obj:`Pipe`)
-        : Branch pipe/tube instance with S, E, W, Y
-            properties defined
+        Parameters
+        ----------
+        BranchPipe : :obj:`Pipe`
+            Branch pipe/tube instance with S, E, W, Y properties defined
+        P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            Design pressure
+        beta : :obj:`pint.Quantity` {dimensionless}
+            Smaller angle between axes of branch and run
+        d_1 : :obj:`pint.Quantity` {length: 1}
+            Effective length removed from pipe at branch (opening for branch)
+        T_r : :obj:`pint.Quantity` {length: 1}
+            Minimum thickness of reinforcing ring
 
-        P (:obj:`pint.Quantity` {length: -1, mass: 1, time: -2})
-        : Design pressure
+        Returns
+        -------
+        None
 
-        beta (:obj:`pint.Quantity` {dimensionless})
-        : Smaller angle between
-            axes of branch and run
-
-        d_1 (:obj:`pint.Quantity` {length: 1})
-        : Effective length removed from
-            pipe at branch (opening for branch)
-
-        T_r (:obj:`pint.Quantity` {length: 1})
-        : Minimum thickness of reinforcing ring
         &#34;&#34;&#34;
         t_h = self.pressure_design_thick(P)
         if d_1 is None:
@@ -2134,21 +2132,23 @@ def wall(self):
 </code></dt>
 <dd>
 <section class="desc"><p>Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.</p>
-<h4 id="parameters">Parameters:</h4>
+<h2 id="parameters">Parameters</h2>
 <dl>
-<dt>BranchPipe (:obj:<a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe"><code>Pipe</code></a>)</dt>
-<dd>Branch pipe/tube instance with S, E, W, Y
-properties defined</dd>
-<dt>P (:obj:<code>pint.Quantity</code> {length: -1, mass: 1, time: -2})</dt>
+<dt><strong><code>BranchPipe</code></strong> :&ensp;:<code>obj</code>:<code>&lt;a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe"&gt;</code>Pipe<code>&lt;/a&gt;</code></dt>
+<dd>Branch pipe/tube instance with S, E, W, Y properties defined</dd>
+<dt><strong><code>P</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}</dt>
 <dd>Design pressure</dd>
-<dt>beta (:obj:<code>pint.Quantity</code> {dimensionless})</dt>
-<dd>Smaller angle between
-axes of branch and run</dd>
-<dt>d_1 (:obj:<code>pint.Quantity</code> {length: 1})</dt>
-<dd>Effective length removed from
-pipe at branch (opening for branch)</dd>
-<dt>T_r (:obj:<code>pint.Quantity</code> {length: 1})</dt>
+<dt><strong><code>beta</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>dimensionless</code>}</dt>
+<dd>Smaller angle between axes of branch and run</dd>
+<dt><strong><code>d_1</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: <code>1</code>}</dt>
+<dd>Effective length removed from pipe at branch (opening for branch)</dd>
+<dt><strong><code>T_r</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: <code>1</code>}</dt>
 <dd>Minimum thickness of reinforcing ring</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>None</code></dt>
+<dd>&nbsp;</dd>
 </dl></section>
 <details class="source">
 <summary>
@@ -2158,24 +2158,23 @@ pipe at branch (opening for branch)</dd>
                          T_r=Q_(&#39;0 in&#39;)):
     &#34;&#34;&#34;Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
 
-    #### Parameters:
-    BranchPipe (:obj:`Pipe`)
-    : Branch pipe/tube instance with S, E, W, Y
-        properties defined
+    Parameters
+    ----------
+    BranchPipe : :obj:`Pipe`
+        Branch pipe/tube instance with S, E, W, Y properties defined
+    P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        Design pressure
+    beta : :obj:`pint.Quantity` {dimensionless}
+        Smaller angle between axes of branch and run
+    d_1 : :obj:`pint.Quantity` {length: 1}
+        Effective length removed from pipe at branch (opening for branch)
+    T_r : :obj:`pint.Quantity` {length: 1}
+        Minimum thickness of reinforcing ring
 
-    P (:obj:`pint.Quantity` {length: -1, mass: 1, time: -2})
-    : Design pressure
+    Returns
+    -------
+    None
 
-    beta (:obj:`pint.Quantity` {dimensionless})
-    : Smaller angle between
-        axes of branch and run
-
-    d_1 (:obj:`pint.Quantity` {length: 1})
-    : Effective length removed from
-        pipe at branch (opening for branch)
-
-    T_r (:obj:`pint.Quantity` {length: 1})
-    : Minimum thickness of reinforcing ring
     &#34;&#34;&#34;
     t_h = self.pressure_design_thick(P)
     if d_1 is None:

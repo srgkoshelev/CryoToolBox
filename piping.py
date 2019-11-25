@@ -56,52 +56,43 @@ class Pipe:
 
     @property
     def OD(self):
-        """Return OD of the Pipe based on NPS table.
-
-        Returns
-        -------
-        :obj:`Quantity`
-            Pipe OD in unit of length
+        """:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
         """
         return self._OD
 
     @property
     def wall(self):
-        """
-        Return wall thickness of Pipe based on NPS table.
-
-        :returns: pipe wall in unit of length
+        """:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
         """
         return self._wall
 
     @property
     def ID(self):
-        """
-        Return ID of the Pipe based on NPS table.
-
-        :returns: pipe ID in unit of length
+        """:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
         """
         return self._ID
 
     @property
     def area(self):
-        """
-        Calculate cross sectional area of pipe.
-
-        :returns: pipe cross section area
+        """:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
         """
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
+        """:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+        """
         return self.area * self.L
 
     def f_T(self):
-        """
-        Calculate Darcy friction factor for complete turbulence for clean steel pipe.
+        """Calculate Darcy friction factor for complete turbulence for clean steel pipe.
+
         Fitted logarithmic function to data from A-25.
 
-        :returns: Darcy friction factor
+        Returns
+        -------
+        :obj:`pint.Quantity` {dimensionless}
+            Darcy friction factor.
         """
         if self.ID<0.2*ureg.inch or self.ID>48*ureg.inch:
             logger.debug('''Tabulated friction data is given for
@@ -111,18 +102,26 @@ class Pipe:
 
     @property
     def K(self):
-        """
-        Calculate resistance coefficient for the Pipe element.
-
-        :returns: resistance coefficient
+        """:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
         """
         return self._K
 
     def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
-        """
-        Calculate pressure design thickness for given pressure and pipe material.
+        """Calculate pressure design thickness for given pressure and pipe material.
+
         Based on B31.3 304.1.
-        :P: internal design pressure, gauge
+
+        Parameters
+        ----------
+        P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            Internal pressure, absolute
+        P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            External pressure, absolute
+
+        Returns
+        -------
+        :obj:`pint.Quantity` {length: 1}
+            Minimum required wall thickness.
         """
         if self.check_material_defined(): # Check whether S, E, W, and Y are defined
             pass
@@ -141,17 +140,22 @@ class Pipe:
         return tm
 
     def update(self, **kwargs):
-        """
-        Add attributes, e.g. material stress or weld joint strength to the pipe.
+        """ Add attributes, e.g. material stress or weld joint strength to the pipe.
+
+        Parameters
+        ----------
+        **kwargs
+            Parameters of the pipe, e.g. S=Q_('16700 psi'), Y=0.4.
         """
         self.__dict__.update(kwargs)
 
     def check_material_defined(self):
-        """Check whether instance has following material properties defined:
-        :S: Stress value for pipe material
-        :E: Quality factor from Table A-1A or A-1B
-        :W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
-        :Y: coefficient from Table 304.1.1
+        """Check whether following properties S, E, W, Y for stress calculations are defined.
+
+        * S: Stress value for pipe material
+        * E: Quality factor from Table A-1A or A-1B
+        * W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
+        * Y: coefficient from Table 304.1.1
         """
         try:
             self.S; self.E; self.W; self.Y
@@ -161,13 +165,25 @@ class Pipe:
 
     def branch_reinforcement(self, BranchPipe, P, beta=Q_('90 deg'), d_1=None,
                              T_r=Q_('0 in')):
-        """
-        Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
-        :BranchPipe: Branch pipe/tube instance with S, E, W, Y properties defined
-        :P: Design pressure
-        :beta: Smaller angle between axes of branch and run
-        :d_1: Effective length removed from pipe at branch (opening for branch)
-        :T_r: Minimum thickness of reinforcing ring
+        """Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
+
+        Parameters
+        ----------
+        BranchPipe : :obj:`Pipe`
+            Branch pipe/tube instance with S, E, W, Y properties defined
+        P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            Design pressure
+        beta : :obj:`pint.Quantity` {dimensionless}
+            Smaller angle between axes of branch and run
+        d_1 : :obj:`pint.Quantity` {length: 1}
+            Effective length removed from pipe at branch (opening for branch)
+        T_r : :obj:`pint.Quantity` {length: 1}
+            Minimum thickness of reinforcing ring
+
+        Returns
+        -------
+        None
+
         """
         t_h = self.pressure_design_thick(P)
         if d_1 is None:
