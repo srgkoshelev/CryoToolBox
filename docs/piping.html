@@ -1,0 +1,3234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.7.2" />
+<title>heat_transfer.piping API documentation</title>
+<meta name="description" content="Utilities for hydraulics calculations …" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>heat_transfer.piping</code></h1>
+</header>
+<section id="section-intro">
+<p>Utilities for hydraulics calculations.</p>
+<p>Contains functions for hydrodynamic calculations. The main source of the equations is Crane TP-410.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;Utilities for hydraulics calculations.
+
+Contains functions for hydrodynamic calculations. The main source of the equations is Crane TP-410.
+&#34;&#34;&#34;
+from math import pi, log10, sin, log, sqrt
+from . import logger
+from . import ureg, Q_
+from .cp_wrapper import *
+from .functions import *
+from . import T_NTP, P_NTP
+from . import os, __location__
+from pint import set_application_registry
+import pickle
+from scipy.optimize import root_scalar
+from abc import ABC, abstractmethod
+
+set_application_registry(ureg) #Should be used for both pickling and unpickling
+NPS_table = pickle.load(open(os.path.join(__location__, &#34;NPS.pkl&#34;), &#34;rb&#34;))
+
+class Pipe:
+    &#34;&#34;&#34;NPS pipe class.
+
+    Pipe objects represent actual parts of the pipeline. The Pipe object
+    will contain information such as OD, ID, wall thickness, and can be
+    used to calculate flow coefficient K that is used for flow calculations.
+    &#34;&#34;&#34;
+    def __init__ (self, D_nom, SCH=40, L=0*ureg.m, c=Q_(&#39;0 mm&#39;)):
+        &#34;&#34;&#34;Generate Pipe object.
+
+        Parameters
+        ----------
+        D_nom : int or :obj:`Quantity`
+            Nominal diameter of piping; can be dimensionless or having a unit of length.
+        SCH : int
+            Pipe schedule. Default value is SCH 40 (STD).
+        L : :obj:`Quantity`
+            Pipe length
+        c : :obj:`Quantity`
+            Sum of the mechanical allowances plus corrosion and erosion allowances.
+            Should have unit of length.
+        &#34;&#34;&#34;
+        try:
+            self.D = D_nom.magnitude # If united
+        except AttributeError:
+            self.D = D_nom
+        self._OD = NPS_table[self.D][&#39;OD&#39;]
+        self.SCH = SCH
+        self._wall = NPS_table[self.D].get(self.SCH)
+        self._ID = self.OD - 2*self.wall
+        self.L = L
+        self._K = self.f_T()*self.L/self.ID
+        self.c = c
+        #c = Q_(&#39;0.5 mm&#39;) for unspecified machined surfaces
+        # TODO add calculation for c based on thread depth c = h of B1.20.1
+        self._type = &#39;NPS Pipe&#39;
+
+    @property
+    def OD(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
+        &#34;&#34;&#34;
+        return self._OD
+
+    @property
+    def wall(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
+        &#34;&#34;&#34;
+        return self._wall
+
+    @property
+    def ID(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
+        &#34;&#34;&#34;
+        return self._ID
+
+    @property
+    def area(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
+        &#34;&#34;&#34;
+        return pi * self.ID**2 / 4
+
+    @property
+    def volume(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+        &#34;&#34;&#34;
+        return self.area * self.L
+
+    def f_T(self):
+        &#34;&#34;&#34;Calculate Darcy friction factor for complete turbulence for clean steel pipe.
+
+        Fitted logarithmic function to data from A-25.
+
+        Returns
+        -------
+        :obj:`pint.Quantity` {dimensionless}
+            Darcy friction factor.
+        &#34;&#34;&#34;
+        if self.ID&lt;0.2*ureg.inch or self.ID&gt;48*ureg.inch:
+            logger.debug(&#39;&#39;&#39;Tabulated friction data is given for
+                           ID = 0.2..48 inch, given {:.2~}&#39;&#39;&#39;.format(self.ID))
+        ln_ID = log(self.ID.to(ureg.inch).magnitude)
+        return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev
+
+    @property
+    def K(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
+        &#34;&#34;&#34;
+        return self._K
+
+    def pressure_design_thick(self, P_int, P_ext=Q_(&#39;0 psig&#39;)):
+        &#34;&#34;&#34;Calculate pressure design thickness for given pressure and pipe material.
+
+        Based on B31.3 304.1.
+
+        Parameters
+        ----------
+        P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            Internal pressure, absolute
+        P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            External pressure, absolute
+
+        Returns
+        -------
+        :obj:`pint.Quantity` {length: 1}
+            Minimum required wall thickness.
+        &#34;&#34;&#34;
+        if self.check_material_defined(): # Check whether S, E, W, and Y are defined
+            pass
+        D = self.OD
+        d = self.ID
+        S, E, W, Y = self.S, self.E, self.W, self.Y
+        P = P_int - P_ext # Differential pressure across the wall
+        t = P * D / (2*(S*E*W + P*Y))
+        # TODO add 3b equation handling:
+        # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
+        if (t &gt;= D/6) or (P/(S*E)) &gt; 0.385:
+            logger.error(&#39;Calculate design thickness in accordance \
+            with B31.3 304.1.2 (b)&#39;)
+            return None
+        tm = t + self.c
+        return tm
+
+    def update(self, **kwargs):
+        &#34;&#34;&#34; Add attributes, e.g. material stress or weld joint strength to the pipe.
+
+        Parameters
+        ----------
+        **kwargs
+            Parameters of the pipe, e.g. S=Q_(&#39;16700 psi&#39;), Y=0.4.
+        &#34;&#34;&#34;
+        self.__dict__.update(kwargs)
+
+    def check_material_defined(self):
+        &#34;&#34;&#34;Check whether following properties S, E, W, Y for stress calculations are defined.
+
+        * S: Stress value for pipe material
+        * E: Quality factor from Table A-1A or A-1B
+        * W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
+        * Y: coefficient from Table 304.1.1
+        &#34;&#34;&#34;
+        try:
+            self.S; self.E; self.W; self.Y
+        except AttributeError:
+            raise AttributeError(&#39;S, E, W, Y properties of the piping need to be \
+            defined&#39;)
+
+    def branch_reinforcement(self, BranchPipe, P, beta=Q_(&#39;90 deg&#39;), d_1=None,
+                             T_r=Q_(&#39;0 in&#39;)):
+        &#34;&#34;&#34;Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
+
+        #### Parameters:
+        BranchPipe (:obj:`Pipe`)
+        : Branch pipe/tube instance with S, E, W, Y
+            properties defined
+
+        P (:obj:`pint.Quantity` {length: -1, mass: 1, time: -2})
+        : Design pressure
+
+        beta (:obj:`pint.Quantity` {dimensionless})
+        : Smaller angle between
+            axes of branch and run
+
+        d_1 (:obj:`pint.Quantity` {length: 1})
+        : Effective length removed from
+            pipe at branch (opening for branch)
+
+        T_r (:obj:`pint.Quantity` {length: 1})
+        : Minimum thickness of reinforcing ring
+        &#34;&#34;&#34;
+        t_h = self.pressure_design_thick(P)
+        if d_1 is None:
+            d_1 = BranchPipe.OD
+        D_h = self.OD
+        T_h = self.wall
+        T_b = BranchPipe.wall
+        t_b = BranchPipe.pressure_design_thick(P)
+        c = max(self.c, BranchPipe.c) # Max allowance is used for calculation
+        # B31.3 has no specification which allowance to use
+        d_2 = half_width(d_1, T_b, T_h, c, D_h)
+        A_1 = t_h * d_1 * (2-sin(beta))
+        A_2 = (2*d_2-d_1) * (T_h - t_h - c)
+        L_4 = min(2.5*(T_h-c), 2.5*(T_b-c)) # height of reinforcement zone outside of run pipe
+        A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * BranchPipe.S / self.S
+        print(f&#39;Required Reinforcement Area A_1: {A_1.to(ureg.inch**2):.3g~}&#39;)
+        A_avail = A_2 + A_3 # Ignoring welding reinforcement
+        print(f&#39;Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}&#39;)
+        print(f&#39;Weld branch connection is safe: {A_avail&gt;A_1}&#39;)
+
+    def __str__(self):
+        return f&#39;NPS {self.D}&#34; SCH {self.SCH}&#39;
+
+#&#39; Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
+class VJ_Pipe(Pipe):
+    &#34;&#34;&#34;
+    Vacuum jacketed pipe.
+    &#34;&#34;&#34;
+    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
+        super().__init__(D_nom, SCH, L)
+        self.VJ = Pipe(VJ_D, VJ_SCH, L)
+        self._type = &#39;Vacuum jacketed pipe&#39;
+
+class Corrugated_Pipe(Pipe):
+    &#39;&#39;&#39;
+    Corrugated pipe class.
+    &#39;&#39;&#39;
+    def __init__ (self, D, L=0*ureg.m):
+        super().__init__(D, None, L)
+        self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
+        self._type = &#39;Corrugated pipe&#39;
+
+    @property
+    def K(self):
+        return self._K
+
+    @property
+    def OD(self):
+        logger.debug(&#39;For corrugated piping assumed OD = D&#39;)
+        return Q_(self.D*ureg.inch)
+
+    @property
+    def wall(self):
+        logger.debug(&#39;For corrugated piping assumed wall = 0&#39;)
+        return 0*ureg.m
+
+class Entrance (Pipe):
+    &#34;&#34;&#34;
+    Pipe entrance, flush, sharp edged.
+    &#34;&#34;&#34;
+    def __init__ (self, ID):
+        self._ID = ID
+        self._type = &#39;Entrance&#39;
+        self._K = 0.5 #Crane TP-410, A-29
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class Exit (Pipe):
+    &#34;&#34;&#34;
+    Pipe exit, projecting or sharp-edged, or rounded.
+    &#34;&#34;&#34;
+    def __init__ (self, ID):
+        self._ID = ID
+        self._type = &#39;Exit&#39;
+        self._K = 1 #Crane TP-410, A-29
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class Orifice(Pipe):
+    &#34;&#34;&#34;
+    Square-edged orifice plate
+    &#34;&#34;&#34;
+    def __init__(self, ID):
+        self.Cd = 0.61 #Thin sharp edged orifice plate
+        self._ID = ID
+        self._type = &#39;Orifice&#39;
+
+    @property
+    def K(self):
+        return 1/self.Cd**2
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class Conic_Orifice(Orifice):
+    &#34;&#34;&#34;
+    Conic orifice
+    &#34;&#34;&#34;
+    def __init__(self, D, ID):
+        super().__init__(ID)
+        if NPS_table[D][&#39;OD&#39;] &gt;= 1*ureg.inch:
+            #For a smaller diameter using value for
+            #square-edged plate (unfounded assumption)
+            self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
+        self._type = &#39;Conic orifice&#39;
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class Tube(Pipe):
+    &#34;&#34;&#34;
+    Tube, requires OD and wall thickness specified
+    &#34;&#34;&#34;
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
+        self._OD = OD
+        self.D = OD.to(ureg.inch).magnitude
+        self._wall = wall
+        self._ID = self.OD - 2*self.wall
+        self.L = L
+        self._K = self.f_T()*self.L/self.ID
+        self.c = c
+        self._type = &#39;Tube&#39;
+
+class AbstractElbow(ABC):
+    &#34;&#34;&#34;
+    Abstract Elbow class. __init__ method is abstract to avoid instantiation of this class.
+    method K defines flow resistance calculation.
+    R_D: elbow radius/diameter ratio
+    N: number of elbows in the pipeline (to be used with lumped Darcy equation)
+    &#34;&#34;&#34;
+    def __init__(self, R_D, N, angle):
+        self.R_D = R_D
+        self.N = N
+        self.angle = angle
+        self.L = R_D*self.ID*angle
+        self._type = &#39;Elbow&#39;
+
+    @property
+    def K(self):
+        &#34;&#34;&#34;
+        Pressure drop in an elbow fitting.
+        Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+        &#34;&#34;&#34;
+        if self.angle &lt;= 70*ureg.deg:
+            A1 = 0.9*sin(self.angle)
+        elif self.angle == 90*ureg.deg:
+            A1 = 1
+        elif self.angle &gt;= 100*ureg.deg:
+            A1 = 0.7+0.35*self.angle/(90*ureg.deg)
+        else:
+            logger.error(&#39;&#39;&#39;Improper bend angle for elbow.
+            90 degrees used instead: {}&#39;&#39;&#39;.format(self.angle))
+            A1 = 1
+
+        if self.R_D &lt; 1:
+                B1 = 0.21*(self.R_D)**(-0.25)
+        else:
+                B1 = 0.21*(self.R_D)**(-0.5)
+
+        C1 = 1 #use different value for non-axis symmetric
+        return (A1*B1*C1+super().K)*self.N
+
+class PipeElbow(AbstractElbow, Pipe): #MRO makes method K from Elbow class to override method from Pipe class
+    &#34;&#34;&#34;
+    NPS Tee fitting.
+    &#34;&#34;&#34;
+    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
+        Pipe.__init__(self, D_nom, SCH)
+        super().__init__(R_D, N, angle)
+
+class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to override method from Pipe class
+    &#34;&#34;&#34;
+    NPS Tee fitting.
+    &#34;&#34;&#34;
+    def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
+        Tube.__init__(self, OD, wall)
+        super().__init__(R_D, N, angle)
+
+class AbstractTee(ABC):
+    &#34;&#34;&#34;
+    Abstract Tee class. __init__ method is abstract to avoid instantiation of this class.
+    method K defines flow resistance calculation.
+    &#34;&#34;&#34;
+    @abstractmethod
+    def __init__(self, direction):
+        if direction in [&#39;thru&#39;, &#39;through&#39;, &#39;run&#39;]:
+            self.direction = &#39;run&#39;
+        elif direction in [&#39;branch&#39;, &#39;side&#39;]:
+            self.direction = &#39;branch&#39;
+        else:
+            logger.error(&#39;&#39;&#39;Tee direction is not recognized,
+                         try &#34;thru&#34; or &#34;branch&#34;: {}&#39;&#39;&#39;.format(direction))
+        self._type = &#39;Tee&#39;
+
+    @property
+    def K(self):
+        if self.direction == &#39;run&#39;:
+            return 20*self.f_T() #Crane TP-410 p. A-29
+        elif self.direction == &#39;branch&#39;:
+            return 60*self.f_T() #Crane TP-410 p. A-29
+
+class PipeTee(AbstractTee, Pipe): #MRO makes method K from Tee class to override method from Pipe class
+    &#34;&#34;&#34;
+    NPS Tee fitting.
+    &#34;&#34;&#34;
+    def __init__(self, D_nom, SCH=40, direction=&#39;thru&#39;):
+        Pipe.__init__(self, D_nom, SCH)
+        super().__init__(direction)
+
+class TubeTee(AbstractTee, Tube):
+    &#34;&#34;&#34;
+    Tee fitting based.
+    &#34;&#34;&#34;
+    def __init__(self, OD, wall, direction=&#39;thru&#39;):
+        Tube.__init__(self, OD, wall)
+        super().__init__(direction)
+
+class Valve(Pipe):
+    &#34;&#34;&#34;
+    Generic valve with known Cv.
+    &#34;&#34;&#34;
+    def __init__(self, ID, Cv):
+        self._Cv = Cv
+        self._ID = ID
+        self._type = &#39;Valve&#39;
+        self._K = Cv_to_K(self._Cv, self.ID)
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class Globe_valve(Pipe):
+    &#34;&#34;&#34;
+    Globe valve.
+    &#34;&#34;&#34;
+    def __init__(self, D):
+        super().__init__(D, None, None)
+        #ID for the valve is assumed equal to SCH40 ID:
+        self._ID = self.OD - 2*NPS_table[D].get(40)
+        self._type = &#39;Globe valve&#39;
+        self._K = 340*self.f_T() #Horizontal ball valve with beta = 1
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class V_Cone(Pipe):
+    &#34;&#34;&#34;
+    McCrometer V-Cone flowmeter.
+    &#34;&#34;&#34;
+    def __init__(self, D, beta, Cf, SCH=40):
+        super().__init__(D, SCH, None)
+        self._beta = beta
+        self._Cf = Cf
+        self._type = &#39;V-cone flow meter&#39;
+        #Equation is reverse-engineered from McCrometer V-Cone equations
+        self._K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2
+
+class Contraction(Pipe):
+    &#34;&#34;&#34;
+    Sudden and gradual contraction based on Crane TP-410.
+    &#34;&#34;&#34;
+    def __init__(self, Pipe1, Pipe2, theta=ureg(&#39;180 deg&#39;)):
+        &#34;&#34;&#34;
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
+        theta: contraction angle
+        &#34;&#34;&#34;
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
+        self._beta = beta(ID1, ID2)
+        self._theta = theta
+        self._type = &#39;Contraction&#39;
+        self._ID = min(ID1, ID2)
+        if theta &lt;= 45*ureg.deg:
+            self._K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+        elif theta &lt;= 180*ureg.deg:
+            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+        else:
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class Enlargement(Pipe):
+    &#34;&#34;&#34;
+    Sudden and gradual enlargement based on Crane TP-410.
+    &#34;&#34;&#34;
+    def __init__(self, Pipe1, Pipe2, theta=ureg(&#39;180 deg&#39;)):
+        &#34;&#34;&#34;
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
+        theta: contraction angle
+        &#34;&#34;&#34;
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
+        self._beta = beta(ID1, ID2)
+        self._theta = theta
+        self._type = &#39;Enlargement&#39;
+        self._ID = min(ID1, ID2)
+        if theta &lt;= 45*ureg.deg:
+            self._K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
+        elif theta &lt;= 180*ureg.deg:
+            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+        else:
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3
+
+class Piping (list):
+    &#39;&#39;&#39;
+    Piping system defined by initial conditions and structure of
+    pipe elements.
+    Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow.
+    &#39;&#39;&#39;
+    def __init__ (self, Fluid, Pipes=[]):
+        self.Fluid = Fluid
+        self.extend(Pipes)
+
+    def add(self, *Pipes):
+        self.extend(Pipes)
+
+    def K(self):
+        &#34;&#34;&#34;
+        Converting and adding flow coefficients K to same area.
+        &#34;&#34;&#34;
+        K0 = 0*ureg.dimensionless
+        try:
+            A0 = self[0].area #using area of the first element as base
+        except IndexError:
+            raise IndexError(&#39;&#39;&#39;Piping has no elements!
+                                Use Piping.add to add sections to piping.&#39;&#39;&#39;)
+        for section in self:
+            K0 += section.K*(A0/section.area)**2
+        return (K0, A0)
+
+    @property
+    def volume(self):
+        self._volume = 0 * ureg.ft**3
+        for pipe in self:
+            self._volume += pipe.volume
+        return self._volume
+
+    def dP(self, m_dot):
+        &#39;&#39;&#39;
+        Calculate pressure drop through piping.
+        Lumped method using Darcy equation is used.
+        The pressure dropped is checked for choked condition.
+        &#39;&#39;&#39;
+        P_0 = self.Fluid.P
+        T_0 = self.Fluid.T
+        rho_0 = self.Fluid.Dmass
+        K, area = self.K()
+        w = m_dot / (rho_0*area)
+        dP = dP_darcy (K, rho_0, w) #first iteration
+        P_out = P_0 - dP
+        k = self.Fluid.gamma #adiabatic coefficient
+        #Critical pressure drop;
+        #Note: according to Crane TP-410 should be dependent on
+        #the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1))
+        if self.Fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1: #if q&lt;0 then fluid is a liquid
+            return dP
+        elif dP/P_0 &lt;= 0.4:
+            TempState = ThermState(Fluid.name, backend=Fluid.backend) #Only working for pure fluids and pre-defined mixtures
+            TempState.update(&#39;T&#39;, T_0, &#39;P&#39;, P_out)
+            rho_out = TempState.Dmass
+            rho_ave = (rho_0+rho_out) / 2
+            w = m_dot/(rho_ave*area)
+            return dP_darcy (K, rho_ave, w)
+        elif 0.4&lt;dP/P_0&lt;(1-rc): #Subsonic flow
+            logger.warning(&#39;Pressure drop too high for Darcy equation!&#39;)
+            #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
+            w = (1/rho_0*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5
+            return dP_darcy (K, rho_0, w)
+        else:
+            logger.warning(&#39;&#39;&#39;Sonic flow developed. Calculated value ignores
+                           density changes. Consider reducing mass flow:
+                           {:.3~}&#39;&#39;&#39;.format(m_dot))
+            return dP_darcy (K, rho_0, w)
+
+    def m_dot(self, P_out=0*ureg.psig):
+        &#39;&#39;&#39;
+        Calculate mass flow through the piping using initial conditions
+        at the beginning of piping.
+        Simple solution using Darcy equation is used.
+        &#39;&#39;&#39;
+        P_0 = self.Fluid.P
+        if P_0 &lt;= P_out:
+            logger.warning(&#39;Input pressure less or equal to output: {P_0:.3g}, {P_out:.3g}&#39;)
+            return Q_(&#39;0 g/s&#39;)
+        rho = self.Fluid.Dmass
+        K, area = self.K()
+        k = self.Fluid.gamma #adiabatic coefficient
+        #Critical pressure drop
+        #Note: according to Crane TP-410 should be dependent on
+        #the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1))
+        if P_out/P_0 &gt; rc: #Subsonic flow
+            delta_P = P_0-P_out
+        else: #Sonic flow
+            logger.warning(&#39;&#39;&#39;End pressure creates sonic flow.
+                           Max possible dP will be used&#39;&#39;&#39;)
+            delta_P = P_0*(1-rc) #Crane TP-410, p 2-15
+        #Net expansion factor for discharge is assumed to be 1
+        #(conservative value):
+        m_dot_ = area * (2*delta_P*rho/K)**0.5
+        return m_dot_.to(ureg.g/ureg.s)
+
+    def _solver_func(self, P_in_Pa, m_dot, P_out_act):
+        &#34;&#34;&#34;
+        Solver function for calculating upstream pressure given flow and downstream pressure.
+
+        :P_in_Pa: input pressure in Pa, float
+        :args: calculation parameters:
+            :m_dot: mass flow
+            :P_out_act: actual downstream pressure
+        &#34;&#34;&#34;
+        P_in = Q_(P_in_Pa, ureg.Pa)
+        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        P_out_calc = P_in - self.dP(m_dot)
+        P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
+        P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
+        return P_out_calc_Pa - P_out_act_Pa
+
+    def P_in(self, m_dot, P_out=ureg(&#39;0 psig&#39;), P_min=ureg(&#39;0 psig&#39;), P_max=ureg(&#39;200 bar&#39;)):
+        &#34;&#34;&#34;
+        Calculate upstream pressure given mass flow and downstream pressure.
+
+        :m_dot: mass flow
+        :P_out: downstream pressure
+        :P_min: min expected pressure; should be lower than actual value
+        :P_max: max expected pressure; should be higher than actual value
+        &#34;&#34;&#34;
+        args = (m_dot, P_out) #arguments passed to _solver_func
+        P_min_Pa = P_min.to(ureg.Pa).magnitude #Convert pressure to dimensionless form
+        P_max_Pa = P_max.to(ureg.Pa).magnitude
+        bracket = [P_min_Pa, P_max_Pa]
+        logger_level = logger.getEffectiveLevel()
+        logger.setLevel(40) #ERROR and CRITICAL only will be shown; WARNING is suppressed
+        solution = root_scalar(self._solver_func, args, bracket=bracket, method=&#39;brentq&#39;)
+        logger.setLevel(logger_level)
+        P_in = Q_(solution.root, ureg.Pa)
+        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        logger.debug(f&#39;Comparing pressure drop:\n    dP method:\n        {self.dP(m_dot).to(ureg.psi)}\n    P_in - P_out:\n        {(P_in-P_out).to(ureg.psi)}&#39;)
+        logger.info(f&#39;Calculated initial pressure: {P_in.to(ureg.psi):.1~f}&#39;)
+
+#&#39; Supporting functions used for flow rate and pressure drop calculations.
+def dP_darcy (K, rho, w):
+    &#39;&#39;&#39;
+    Darcy equation for pressure drop.
+    K - resistance coefficient
+    rho - density of flow at entrance
+    w - flow speed
+    &#39;&#39;&#39;
+    d_P = K*rho*w**2/2
+    return d_P.to(ureg.psi)
+
+def K_to_Cv(K, ID):
+    &#34;&#34;&#34;
+    Calculate flow coefficient Cv based on resistance coefficient value K.
+    Based on definition:
+    Cv = Q*sqrt(rho/(d_P*rho_w))
+    where Q - volumetric flow, rho - flow density
+    rho_w - water density at 60 F
+    d_P - pressure drop through the valve.
+    [Cv] = gal/(min*(psi)**0.5)
+    &#34;&#34;&#34;
+    A = pi*ID**2/4
+    rho_w = 999*ureg(&#39;kg/m**3&#39;) #Water density at 60 F
+    Cv = A*(2/(K*rho_w))**0.5 #Based on Crane TP-410 p. 2-10 and Darcy equation
+    Cv.ito(ureg(&#39;gal/(min*(psi)**0.5)&#39;)) #Convention accepted in the US
+    return Cv
+
+def Cv_to_K(Cv, ID):
+    &#34;&#34;&#34;
+    Calculate resistance coefficient K based on flow coefficient value Cv.
+    Based on definition:
+    Cv = Q*sqrt(rho/(d_P*rho_w))
+    where Q - volumetric flow, rho - flow density
+    rho_w - water density at 60 F
+    d_P - pressure drop through the valve.
+    [Cv] = gal/(min*(psi)**0.5)
+    &#34;&#34;&#34;
+    if isinstance(Cv, (int, float)): # Check if dimensionless input
+        Cv = Cv*ureg(&#39;gal/(min*(psi)**0.5)&#39;) #Convention accepted in the US
+    A = pi*ID**2/4
+    rho_w = 999*ureg(&#39;kg/m**3&#39;) #Water density at 60 F
+    K = 2*A**2/(Cv**2*rho_w) #Based on Crane TP-410 p. 2-10 and Darcy equation
+    return K.to(ureg.dimensionless)
+
+def beta(d1, d2):
+    &#34;&#34;&#34;
+    Calculate beta = d/D for contraction or enlargement.
+    &#34;&#34;&#34;
+    return min(d1, d2)/max(d1, d2)
+
+def to_standard_flow(flow_rate, Fluid):
+    &#39;&#39;&#39;
+    Converting volumetric flow at certain conditions or mass flow to
+    flow at NTP.
+    &#39;&#39;&#39;
+    Fluid_NTP = ThermState(Fluid.name)
+    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    if flow_rate.dimensionality == ureg(&#39;kg/s&#39;).dimensionality:
+        #mass flow, flow conditions are unnecessary
+        q_std = flow_rate / Fluid_NTP.Dmass
+    elif flow_rate.dimensionality == ureg(&#39;m^3/s&#39;).dimensionality:
+        #volumetric flow given, converting to standard pressure and temperature
+        if Fluid.Dmass != -float(&#39;Inf&#39;): #By default ThermState is initialized with all fields == -inf
+            q_std = flow_rate * Fluid.Dmass / Fluid_NTP.Dmass
+        else:
+            logger.warning(&#39;&#39;&#39;Flow conditions for volumetric flow {:.3~}
+                           are not set. Assuming standard flow at NTP.
+                           &#39;&#39;&#39;.format(flow_rate))
+            q_std = flow_rate
+    else:
+        logger.warning(&#39;&#39;&#39;Flow dimensionality is not supported: {:.3~}.
+                       &#39;&#39;&#39;.format(flow_rate.dimensionality))
+    q_std.ito(ureg.ft**3/ureg.min)
+    return q_std
+
+def equivalent_orifice(m_dot, dP, Fluid=Air):
+    &#34;&#34;&#34;
+    Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given flow and pressure drop.
+    &#34;&#34;&#34;
+    Cd = 0.61
+    rho = Fluid.Dmass
+    ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
+    return ID.to(ureg.inch)
+
+def to_mass_flow(Q_std, Fluid=Air):
+    &#34;&#34;&#34;
+    Calculate mass flow for given volumetric flow at standard conditions.
+    &#34;&#34;&#34;
+    Fluid_NTP = ThermState(Fluid.name)
+    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    m_dot = Q_std * Fluid_NTP.Dmass
+    return m_dot.to(ureg.g/ureg.s)
+
+#Parallel Plate relief valve designed by Fermilab
+class ParallelPlateRelief:
+    def __init__(self, Springs, Plate, Supply_pipe):
+        &#34;&#34;&#34;
+        Initiate Parallel Plate instance.
+
+        Springs: dictionary containing &#39;N&#39; - number of springs, &#39;k&#39; - spring rate, and &#39;dx_precomp&#39; - pre-compression length
+        Plate: dictionary containing &#39;OD_plate&#39; - OD of the plate, &#39;OD_O_ring&#39; - OD of the O-Ring installed, and &#39;W_plate&#39; - plate weight
+        Supply_pipe: Pipe/Tube object of upstream pipe
+        &#34;&#34;&#34;
+        self.Springs = Springs
+        self.Plate = Plate
+        self.Supply_pipe = Supply_pipe
+    def P_set(self):
+        &#34;&#34;&#34;&#34;
+        Calculate set (lift) pressure of the Parallel Plate relief
+        &#34;&#34;&#34;
+        A_lift = pi * self.Plate[&#39;OD_O_ring&#39;]**2 / 4 #Before lifting pressure affects area within O-Ring OD
+        F_precomp = self.Springs[&#39;N&#39;] * self.Springs[&#39;k&#39;] * self.Springs[&#39;dx_precomp&#39;]
+        F_lift = F_precomp + self.Plate[&#39;W_plate&#39;] #Force required to lift the plate
+        self.F_lift = F_lift
+        P_set = F_lift / A_lift
+        return P_set.to(ureg.psi)
+    def P_open(self):
+        &#34;&#34;&#34;
+        Calculate pressure required to fully open Parallel Plate relief
+        &#34;&#34;&#34;
+        dx_open = self.Supply_pipe.area / (pi*self.Plate[&#39;OD_plate&#39;]) #compression required to provide vent area equal to supply pipe area
+        F_open = self.F_lift = self.Springs[&#39;N&#39;]*self.Springs[&#39;k&#39;]*dx_open #Force at fully open
+        #At fully open pressure is distributed as:
+        #Full pressure for up to supply pipe diameter
+        #Linear fall off up to plate OD
+        A_open = self.Supply_pipe.area + pi/8*(self.Plate[&#39;OD_plate&#39;]**2 - self.Supply_pipe.ID**2)
+        P_open = F_open / A_open
+        return P_open.to(ureg.psi)
+
+def half_width(d_1, T_b, T_h, c, D_h):
+    &#34;&#34;&#34;
+    Calculate &#39;half width&#39; of reinforcement zone per B31.3 304.3.3.
+    &#34;&#34;&#34;
+    d_2_a = (T_b-c) + (T_h-c) + d_1/2
+    return min(max(d_1, d_2_a), D_h)
+
+def PRV_flow(ID, Kd, Fluid):
+    &#34;&#34;&#34;
+    Calculate mass flow through the relief valve based on BPVC VIII div. 1 UG-131 (e) (2).
+    &#34;&#34;&#34;
+    A = pi * ID**2 /4
+    C = Fluid.C_gas_constant
+    P = Fluid.P
+    W_T = C * A * P * Fluid.MZT # Theoretical flow
+    W_a = W_T * Kd # Actual flow
+    return W_a.to(ureg.g/ureg.s)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="heat_transfer.piping.Cv_to_K"><code class="name flex">
+<span>def <span class="ident">Cv_to_K</span></span>(<span>Cv, ID)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate resistance coefficient K based on flow coefficient value Cv.
+Based on definition:
+Cv = Q<em>sqrt(rho/(d_P</em>rho_w))
+where Q - volumetric flow, rho - flow density
+rho_w - water density at 60 F
+d_P - pressure drop through the valve.
+[Cv] = gal/(min<em>(psi)</em>*0.5)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Cv_to_K(Cv, ID):
+    &#34;&#34;&#34;
+    Calculate resistance coefficient K based on flow coefficient value Cv.
+    Based on definition:
+    Cv = Q*sqrt(rho/(d_P*rho_w))
+    where Q - volumetric flow, rho - flow density
+    rho_w - water density at 60 F
+    d_P - pressure drop through the valve.
+    [Cv] = gal/(min*(psi)**0.5)
+    &#34;&#34;&#34;
+    if isinstance(Cv, (int, float)): # Check if dimensionless input
+        Cv = Cv*ureg(&#39;gal/(min*(psi)**0.5)&#39;) #Convention accepted in the US
+    A = pi*ID**2/4
+    rho_w = 999*ureg(&#39;kg/m**3&#39;) #Water density at 60 F
+    K = 2*A**2/(Cv**2*rho_w) #Based on Crane TP-410 p. 2-10 and Darcy equation
+    return K.to(ureg.dimensionless)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.K_to_Cv"><code class="name flex">
+<span>def <span class="ident">K_to_Cv</span></span>(<span>K, ID)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate flow coefficient Cv based on resistance coefficient value K.
+Based on definition:
+Cv = Q<em>sqrt(rho/(d_P</em>rho_w))
+where Q - volumetric flow, rho - flow density
+rho_w - water density at 60 F
+d_P - pressure drop through the valve.
+[Cv] = gal/(min<em>(psi)</em>*0.5)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def K_to_Cv(K, ID):
+    &#34;&#34;&#34;
+    Calculate flow coefficient Cv based on resistance coefficient value K.
+    Based on definition:
+    Cv = Q*sqrt(rho/(d_P*rho_w))
+    where Q - volumetric flow, rho - flow density
+    rho_w - water density at 60 F
+    d_P - pressure drop through the valve.
+    [Cv] = gal/(min*(psi)**0.5)
+    &#34;&#34;&#34;
+    A = pi*ID**2/4
+    rho_w = 999*ureg(&#39;kg/m**3&#39;) #Water density at 60 F
+    Cv = A*(2/(K*rho_w))**0.5 #Based on Crane TP-410 p. 2-10 and Darcy equation
+    Cv.ito(ureg(&#39;gal/(min*(psi)**0.5)&#39;)) #Convention accepted in the US
+    return Cv</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.PRV_flow"><code class="name flex">
+<span>def <span class="ident">PRV_flow</span></span>(<span>ID, Kd, Fluid)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate mass flow through the relief valve based on BPVC VIII div. 1 UG-131 (e) (2).</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def PRV_flow(ID, Kd, Fluid):
+    &#34;&#34;&#34;
+    Calculate mass flow through the relief valve based on BPVC VIII div. 1 UG-131 (e) (2).
+    &#34;&#34;&#34;
+    A = pi * ID**2 /4
+    C = Fluid.C_gas_constant
+    P = Fluid.P
+    W_T = C * A * P * Fluid.MZT # Theoretical flow
+    W_a = W_T * Kd # Actual flow
+    return W_a.to(ureg.g/ureg.s)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.beta"><code class="name flex">
+<span>def <span class="ident">beta</span></span>(<span>d1, d2)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate beta = d/D for contraction or enlargement.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def beta(d1, d2):
+    &#34;&#34;&#34;
+    Calculate beta = d/D for contraction or enlargement.
+    &#34;&#34;&#34;
+    return min(d1, d2)/max(d1, d2)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.dP_darcy"><code class="name flex">
+<span>def <span class="ident">dP_darcy</span></span>(<span>K, rho, w)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Darcy equation for pressure drop.
+K - resistance coefficient
+rho - density of flow at entrance
+w - flow speed</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def dP_darcy (K, rho, w):
+    &#39;&#39;&#39;
+    Darcy equation for pressure drop.
+    K - resistance coefficient
+    rho - density of flow at entrance
+    w - flow speed
+    &#39;&#39;&#39;
+    d_P = K*rho*w**2/2
+    return d_P.to(ureg.psi)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.equivalent_orifice"><code class="name flex">
+<span>def <span class="ident">equivalent_orifice</span></span>(<span>m_dot, dP, Fluid=&lt;heat_transfer.cp_wrapper.ThermState object&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given flow and pressure drop.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def equivalent_orifice(m_dot, dP, Fluid=Air):
+    &#34;&#34;&#34;
+    Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given flow and pressure drop.
+    &#34;&#34;&#34;
+    Cd = 0.61
+    rho = Fluid.Dmass
+    ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
+    return ID.to(ureg.inch)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.half_width"><code class="name flex">
+<span>def <span class="ident">half_width</span></span>(<span>d_1, T_b, T_h, c, D_h)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate 'half width' of reinforcement zone per B31.3 304.3.3.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def half_width(d_1, T_b, T_h, c, D_h):
+    &#34;&#34;&#34;
+    Calculate &#39;half width&#39; of reinforcement zone per B31.3 304.3.3.
+    &#34;&#34;&#34;
+    d_2_a = (T_b-c) + (T_h-c) + d_1/2
+    return min(max(d_1, d_2_a), D_h)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.to_mass_flow"><code class="name flex">
+<span>def <span class="ident">to_mass_flow</span></span>(<span>Q_std, Fluid=&lt;heat_transfer.cp_wrapper.ThermState object&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate mass flow for given volumetric flow at standard conditions.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_mass_flow(Q_std, Fluid=Air):
+    &#34;&#34;&#34;
+    Calculate mass flow for given volumetric flow at standard conditions.
+    &#34;&#34;&#34;
+    Fluid_NTP = ThermState(Fluid.name)
+    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    m_dot = Q_std * Fluid_NTP.Dmass
+    return m_dot.to(ureg.g/ureg.s)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.to_standard_flow"><code class="name flex">
+<span>def <span class="ident">to_standard_flow</span></span>(<span>flow_rate, Fluid)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Converting volumetric flow at certain conditions or mass flow to
+flow at NTP.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_standard_flow(flow_rate, Fluid):
+    &#39;&#39;&#39;
+    Converting volumetric flow at certain conditions or mass flow to
+    flow at NTP.
+    &#39;&#39;&#39;
+    Fluid_NTP = ThermState(Fluid.name)
+    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    if flow_rate.dimensionality == ureg(&#39;kg/s&#39;).dimensionality:
+        #mass flow, flow conditions are unnecessary
+        q_std = flow_rate / Fluid_NTP.Dmass
+    elif flow_rate.dimensionality == ureg(&#39;m^3/s&#39;).dimensionality:
+        #volumetric flow given, converting to standard pressure and temperature
+        if Fluid.Dmass != -float(&#39;Inf&#39;): #By default ThermState is initialized with all fields == -inf
+            q_std = flow_rate * Fluid.Dmass / Fluid_NTP.Dmass
+        else:
+            logger.warning(&#39;&#39;&#39;Flow conditions for volumetric flow {:.3~}
+                           are not set. Assuming standard flow at NTP.
+                           &#39;&#39;&#39;.format(flow_rate))
+            q_std = flow_rate
+    else:
+        logger.warning(&#39;&#39;&#39;Flow dimensionality is not supported: {:.3~}.
+                       &#39;&#39;&#39;.format(flow_rate.dimensionality))
+    q_std.ito(ureg.ft**3/ureg.min)
+    return q_std</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="heat_transfer.piping.AbstractElbow"><code class="flex name class">
+<span>class <span class="ident">AbstractElbow</span></span>
+<span>(</span><span>R_D, N, angle)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Abstract Elbow class. <strong>init</strong> method is abstract to avoid instantiation of this class.
+method K defines flow resistance calculation.
+R_D: elbow radius/diameter ratio
+N: number of elbows in the pipeline (to be used with lumped Darcy equation)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AbstractElbow(ABC):
+    &#34;&#34;&#34;
+    Abstract Elbow class. __init__ method is abstract to avoid instantiation of this class.
+    method K defines flow resistance calculation.
+    R_D: elbow radius/diameter ratio
+    N: number of elbows in the pipeline (to be used with lumped Darcy equation)
+    &#34;&#34;&#34;
+    def __init__(self, R_D, N, angle):
+        self.R_D = R_D
+        self.N = N
+        self.angle = angle
+        self.L = R_D*self.ID*angle
+        self._type = &#39;Elbow&#39;
+
+    @property
+    def K(self):
+        &#34;&#34;&#34;
+        Pressure drop in an elbow fitting.
+        Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+        &#34;&#34;&#34;
+        if self.angle &lt;= 70*ureg.deg:
+            A1 = 0.9*sin(self.angle)
+        elif self.angle == 90*ureg.deg:
+            A1 = 1
+        elif self.angle &gt;= 100*ureg.deg:
+            A1 = 0.7+0.35*self.angle/(90*ureg.deg)
+        else:
+            logger.error(&#39;&#39;&#39;Improper bend angle for elbow.
+            90 degrees used instead: {}&#39;&#39;&#39;.format(self.angle))
+            A1 = 1
+
+        if self.R_D &lt; 1:
+                B1 = 0.21*(self.R_D)**(-0.25)
+        else:
+                B1 = 0.21*(self.R_D)**(-0.5)
+
+        C1 = 1 #use different value for non-axis symmetric
+        return (A1*B1*C1+super().K)*self.N</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>abc.ABC</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.PipeElbow" href="#heat_transfer.piping.PipeElbow">PipeElbow</a></li>
+<li><a title="heat_transfer.piping.TubeElbow" href="#heat_transfer.piping.TubeElbow">TubeElbow</a></li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="heat_transfer.piping.AbstractElbow.K"><code class="name">var <span class="ident">K</span></code></dt>
+<dd>
+<section class="desc"><p>Pressure drop in an elbow fitting.
+Based on Handbook of Hydraulic Resistance by I.E. Idelchik.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def K(self):
+    &#34;&#34;&#34;
+    Pressure drop in an elbow fitting.
+    Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+    &#34;&#34;&#34;
+    if self.angle &lt;= 70*ureg.deg:
+        A1 = 0.9*sin(self.angle)
+    elif self.angle == 90*ureg.deg:
+        A1 = 1
+    elif self.angle &gt;= 100*ureg.deg:
+        A1 = 0.7+0.35*self.angle/(90*ureg.deg)
+    else:
+        logger.error(&#39;&#39;&#39;Improper bend angle for elbow.
+        90 degrees used instead: {}&#39;&#39;&#39;.format(self.angle))
+        A1 = 1
+
+    if self.R_D &lt; 1:
+            B1 = 0.21*(self.R_D)**(-0.25)
+    else:
+            B1 = 0.21*(self.R_D)**(-0.5)
+
+    C1 = 1 #use different value for non-axis symmetric
+    return (A1*B1*C1+super().K)*self.N</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="heat_transfer.piping.AbstractTee"><code class="flex name class">
+<span>class <span class="ident">AbstractTee</span></span>
+<span>(</span><span>direction)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Abstract Tee class. <strong>init</strong> method is abstract to avoid instantiation of this class.
+method K defines flow resistance calculation.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class AbstractTee(ABC):
+    &#34;&#34;&#34;
+    Abstract Tee class. __init__ method is abstract to avoid instantiation of this class.
+    method K defines flow resistance calculation.
+    &#34;&#34;&#34;
+    @abstractmethod
+    def __init__(self, direction):
+        if direction in [&#39;thru&#39;, &#39;through&#39;, &#39;run&#39;]:
+            self.direction = &#39;run&#39;
+        elif direction in [&#39;branch&#39;, &#39;side&#39;]:
+            self.direction = &#39;branch&#39;
+        else:
+            logger.error(&#39;&#39;&#39;Tee direction is not recognized,
+                         try &#34;thru&#34; or &#34;branch&#34;: {}&#39;&#39;&#39;.format(direction))
+        self._type = &#39;Tee&#39;
+
+    @property
+    def K(self):
+        if self.direction == &#39;run&#39;:
+            return 20*self.f_T() #Crane TP-410 p. A-29
+        elif self.direction == &#39;branch&#39;:
+            return 60*self.f_T() #Crane TP-410 p. A-29</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>abc.ABC</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.PipeTee" href="#heat_transfer.piping.PipeTee">PipeTee</a></li>
+<li><a title="heat_transfer.piping.TubeTee" href="#heat_transfer.piping.TubeTee">TubeTee</a></li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="heat_transfer.piping.AbstractTee.K"><code class="name">var <span class="ident">K</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def K(self):
+    if self.direction == &#39;run&#39;:
+        return 20*self.f_T() #Crane TP-410 p. A-29
+    elif self.direction == &#39;branch&#39;:
+        return 60*self.f_T() #Crane TP-410 p. A-29</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="heat_transfer.piping.Conic_Orifice"><code class="flex name class">
+<span>class <span class="ident">Conic_Orifice</span></span>
+<span>(</span><span>D, ID)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Conic orifice</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Conic_Orifice(Orifice):
+    &#34;&#34;&#34;
+    Conic orifice
+    &#34;&#34;&#34;
+    def __init__(self, D, ID):
+        super().__init__(ID)
+        if NPS_table[D][&#39;OD&#39;] &gt;= 1*ureg.inch:
+            #For a smaller diameter using value for
+            #square-edged plate (unfounded assumption)
+            self.Cd = 0.73 #Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
+        self._type = &#39;Conic orifice&#39;
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Orifice" href="#heat_transfer.piping.Orifice">Orifice</a></li>
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Orifice" href="#heat_transfer.piping.Orifice">Orifice</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Orifice.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Orifice.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Contraction"><code class="flex name class">
+<span>class <span class="ident">Contraction</span></span>
+<span>(</span><span>Pipe1, Pipe2, theta=&lt;Quantity(180, &#x27;degree&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Sudden and gradual contraction based on Crane TP-410.</p>
+<p>Pipe1: upstream pipe
+Pipe2: downstream pipe
+theta: contraction angle</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Contraction(Pipe):
+    &#34;&#34;&#34;
+    Sudden and gradual contraction based on Crane TP-410.
+    &#34;&#34;&#34;
+    def __init__(self, Pipe1, Pipe2, theta=ureg(&#39;180 deg&#39;)):
+        &#34;&#34;&#34;
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
+        theta: contraction angle
+        &#34;&#34;&#34;
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
+        self._beta = beta(ID1, ID2)
+        self._theta = theta
+        self._type = &#39;Contraction&#39;
+        self._ID = min(ID1, ID2)
+        if theta &lt;= 45*ureg.deg:
+            self._K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+        elif theta &lt;= 180*ureg.deg:
+            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+        else:
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Corrugated_Pipe"><code class="flex name class">
+<span>class <span class="ident">Corrugated_Pipe</span></span>
+<span>(</span><span>D, L=&lt;Quantity(0, &#x27;meter&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Corrugated pipe class.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Corrugated_Pipe(Pipe):
+    &#39;&#39;&#39;
+    Corrugated pipe class.
+    &#39;&#39;&#39;
+    def __init__ (self, D, L=0*ureg.m):
+        super().__init__(D, None, L)
+        self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
+        self._type = &#39;Corrugated pipe&#39;
+
+    @property
+    def K(self):
+        return self._K
+
+    @property
+    def OD(self):
+        logger.debug(&#39;For corrugated piping assumed OD = D&#39;)
+        return Q_(self.D*ureg.inch)
+
+    @property
+    def wall(self):
+        logger.debug(&#39;For corrugated piping assumed wall = 0&#39;)
+        return 0*ureg.m</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Enlargement"><code class="flex name class">
+<span>class <span class="ident">Enlargement</span></span>
+<span>(</span><span>Pipe1, Pipe2, theta=&lt;Quantity(180, &#x27;degree&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Sudden and gradual enlargement based on Crane TP-410.</p>
+<p>Pipe1: upstream pipe
+Pipe2: downstream pipe
+theta: contraction angle</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Enlargement(Pipe):
+    &#34;&#34;&#34;
+    Sudden and gradual enlargement based on Crane TP-410.
+    &#34;&#34;&#34;
+    def __init__(self, Pipe1, Pipe2, theta=ureg(&#39;180 deg&#39;)):
+        &#34;&#34;&#34;
+        Pipe1: upstream pipe
+        Pipe2: downstream pipe
+        theta: contraction angle
+        &#34;&#34;&#34;
+        ID1 = Pipe1.ID
+        ID2 = Pipe2.ID
+        self._beta = beta(ID1, ID2)
+        self._theta = theta
+        self._type = &#39;Enlargement&#39;
+        self._ID = min(ID1, ID2)
+        if theta &lt;= 45*ureg.deg:
+            self._K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
+        elif theta &lt;= 180*ureg.deg:
+            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+        else:
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Entrance"><code class="flex name class">
+<span>class <span class="ident">Entrance</span></span>
+<span>(</span><span>ID)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Pipe entrance, flush, sharp edged.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Entrance (Pipe):
+    &#34;&#34;&#34;
+    Pipe entrance, flush, sharp edged.
+    &#34;&#34;&#34;
+    def __init__ (self, ID):
+        self._ID = ID
+        self._type = &#39;Entrance&#39;
+        self._K = 0.5 #Crane TP-410, A-29
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Exit"><code class="flex name class">
+<span>class <span class="ident">Exit</span></span>
+<span>(</span><span>ID)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Pipe exit, projecting or sharp-edged, or rounded.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Exit (Pipe):
+    &#34;&#34;&#34;
+    Pipe exit, projecting or sharp-edged, or rounded.
+    &#34;&#34;&#34;
+    def __init__ (self, ID):
+        self._ID = ID
+        self._type = &#39;Exit&#39;
+        self._K = 1 #Crane TP-410, A-29
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Globe_valve"><code class="flex name class">
+<span>class <span class="ident">Globe_valve</span></span>
+<span>(</span><span>D)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Globe valve.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Globe_valve(Pipe):
+    &#34;&#34;&#34;
+    Globe valve.
+    &#34;&#34;&#34;
+    def __init__(self, D):
+        super().__init__(D, None, None)
+        #ID for the valve is assumed equal to SCH40 ID:
+        self._ID = self.OD - 2*NPS_table[D].get(40)
+        self._type = &#39;Globe valve&#39;
+        self._K = 340*self.f_T() #Horizontal ball valve with beta = 1
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Orifice"><code class="flex name class">
+<span>class <span class="ident">Orifice</span></span>
+<span>(</span><span>ID)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Square-edged orifice plate</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Orifice(Pipe):
+    &#34;&#34;&#34;
+    Square-edged orifice plate
+    &#34;&#34;&#34;
+    def __init__(self, ID):
+        self.Cd = 0.61 #Thin sharp edged orifice plate
+        self._ID = ID
+        self._type = &#39;Orifice&#39;
+
+    @property
+    def K(self):
+        return 1/self.Cd**2
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Conic_Orifice" href="#heat_transfer.piping.Conic_Orifice">Conic_Orifice</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.ParallelPlateRelief"><code class="flex name class">
+<span>class <span class="ident">ParallelPlateRelief</span></span>
+<span>(</span><span>Springs, Plate, Supply_pipe)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Initiate Parallel Plate instance.</p>
+<p>Springs: dictionary containing 'N' - number of springs, 'k' - spring rate, and 'dx_precomp' - pre-compression length
+Plate: dictionary containing 'OD_plate' - OD of the plate, 'OD_O_ring' - OD of the O-Ring installed, and 'W_plate' - plate weight
+Supply_pipe: Pipe/Tube object of upstream pipe</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParallelPlateRelief:
+    def __init__(self, Springs, Plate, Supply_pipe):
+        &#34;&#34;&#34;
+        Initiate Parallel Plate instance.
+
+        Springs: dictionary containing &#39;N&#39; - number of springs, &#39;k&#39; - spring rate, and &#39;dx_precomp&#39; - pre-compression length
+        Plate: dictionary containing &#39;OD_plate&#39; - OD of the plate, &#39;OD_O_ring&#39; - OD of the O-Ring installed, and &#39;W_plate&#39; - plate weight
+        Supply_pipe: Pipe/Tube object of upstream pipe
+        &#34;&#34;&#34;
+        self.Springs = Springs
+        self.Plate = Plate
+        self.Supply_pipe = Supply_pipe
+    def P_set(self):
+        &#34;&#34;&#34;&#34;
+        Calculate set (lift) pressure of the Parallel Plate relief
+        &#34;&#34;&#34;
+        A_lift = pi * self.Plate[&#39;OD_O_ring&#39;]**2 / 4 #Before lifting pressure affects area within O-Ring OD
+        F_precomp = self.Springs[&#39;N&#39;] * self.Springs[&#39;k&#39;] * self.Springs[&#39;dx_precomp&#39;]
+        F_lift = F_precomp + self.Plate[&#39;W_plate&#39;] #Force required to lift the plate
+        self.F_lift = F_lift
+        P_set = F_lift / A_lift
+        return P_set.to(ureg.psi)
+    def P_open(self):
+        &#34;&#34;&#34;
+        Calculate pressure required to fully open Parallel Plate relief
+        &#34;&#34;&#34;
+        dx_open = self.Supply_pipe.area / (pi*self.Plate[&#39;OD_plate&#39;]) #compression required to provide vent area equal to supply pipe area
+        F_open = self.F_lift = self.Springs[&#39;N&#39;]*self.Springs[&#39;k&#39;]*dx_open #Force at fully open
+        #At fully open pressure is distributed as:
+        #Full pressure for up to supply pipe diameter
+        #Linear fall off up to plate OD
+        A_open = self.Supply_pipe.area + pi/8*(self.Plate[&#39;OD_plate&#39;]**2 - self.Supply_pipe.ID**2)
+        P_open = F_open / A_open
+        return P_open.to(ureg.psi)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="heat_transfer.piping.ParallelPlateRelief.P_open"><code class="name flex">
+<span>def <span class="ident">P_open</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate pressure required to fully open Parallel Plate relief</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def P_open(self):
+    &#34;&#34;&#34;
+    Calculate pressure required to fully open Parallel Plate relief
+    &#34;&#34;&#34;
+    dx_open = self.Supply_pipe.area / (pi*self.Plate[&#39;OD_plate&#39;]) #compression required to provide vent area equal to supply pipe area
+    F_open = self.F_lift = self.Springs[&#39;N&#39;]*self.Springs[&#39;k&#39;]*dx_open #Force at fully open
+    #At fully open pressure is distributed as:
+    #Full pressure for up to supply pipe diameter
+    #Linear fall off up to plate OD
+    A_open = self.Supply_pipe.area + pi/8*(self.Plate[&#39;OD_plate&#39;]**2 - self.Supply_pipe.ID**2)
+    P_open = F_open / A_open
+    return P_open.to(ureg.psi)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.ParallelPlateRelief.P_set"><code class="name flex">
+<span>def <span class="ident">P_set</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>"
+Calculate set (lift) pressure of the Parallel Plate relief</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def P_set(self):
+    &#34;&#34;&#34;&#34;
+    Calculate set (lift) pressure of the Parallel Plate relief
+    &#34;&#34;&#34;
+    A_lift = pi * self.Plate[&#39;OD_O_ring&#39;]**2 / 4 #Before lifting pressure affects area within O-Ring OD
+    F_precomp = self.Springs[&#39;N&#39;] * self.Springs[&#39;k&#39;] * self.Springs[&#39;dx_precomp&#39;]
+    F_lift = F_precomp + self.Plate[&#39;W_plate&#39;] #Force required to lift the plate
+    self.F_lift = F_lift
+    P_set = F_lift / A_lift
+    return P_set.to(ureg.psi)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="heat_transfer.piping.Pipe"><code class="flex name class">
+<span>class <span class="ident">Pipe</span></span>
+<span>(</span><span>D_nom, SCH=40, L=&lt;Quantity(0, &#x27;meter&#x27;)&gt;, c=&lt;Quantity(0, &#x27;millimeter&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>NPS pipe class.</p>
+<p>Pipe objects represent actual parts of the pipeline. The Pipe object
+will contain information such as OD, ID, wall thickness, and can be
+used to calculate flow coefficient K that is used for flow calculations.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Pipe:
+    &#34;&#34;&#34;NPS pipe class.
+
+    Pipe objects represent actual parts of the pipeline. The Pipe object
+    will contain information such as OD, ID, wall thickness, and can be
+    used to calculate flow coefficient K that is used for flow calculations.
+    &#34;&#34;&#34;
+    def __init__ (self, D_nom, SCH=40, L=0*ureg.m, c=Q_(&#39;0 mm&#39;)):
+        &#34;&#34;&#34;Generate Pipe object.
+
+        Parameters
+        ----------
+        D_nom : int or :obj:`Quantity`
+            Nominal diameter of piping; can be dimensionless or having a unit of length.
+        SCH : int
+            Pipe schedule. Default value is SCH 40 (STD).
+        L : :obj:`Quantity`
+            Pipe length
+        c : :obj:`Quantity`
+            Sum of the mechanical allowances plus corrosion and erosion allowances.
+            Should have unit of length.
+        &#34;&#34;&#34;
+        try:
+            self.D = D_nom.magnitude # If united
+        except AttributeError:
+            self.D = D_nom
+        self._OD = NPS_table[self.D][&#39;OD&#39;]
+        self.SCH = SCH
+        self._wall = NPS_table[self.D].get(self.SCH)
+        self._ID = self.OD - 2*self.wall
+        self.L = L
+        self._K = self.f_T()*self.L/self.ID
+        self.c = c
+        #c = Q_(&#39;0.5 mm&#39;) for unspecified machined surfaces
+        # TODO add calculation for c based on thread depth c = h of B1.20.1
+        self._type = &#39;NPS Pipe&#39;
+
+    @property
+    def OD(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
+        &#34;&#34;&#34;
+        return self._OD
+
+    @property
+    def wall(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
+        &#34;&#34;&#34;
+        return self._wall
+
+    @property
+    def ID(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
+        &#34;&#34;&#34;
+        return self._ID
+
+    @property
+    def area(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
+        &#34;&#34;&#34;
+        return pi * self.ID**2 / 4
+
+    @property
+    def volume(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+        &#34;&#34;&#34;
+        return self.area * self.L
+
+    def f_T(self):
+        &#34;&#34;&#34;Calculate Darcy friction factor for complete turbulence for clean steel pipe.
+
+        Fitted logarithmic function to data from A-25.
+
+        Returns
+        -------
+        :obj:`pint.Quantity` {dimensionless}
+            Darcy friction factor.
+        &#34;&#34;&#34;
+        if self.ID&lt;0.2*ureg.inch or self.ID&gt;48*ureg.inch:
+            logger.debug(&#39;&#39;&#39;Tabulated friction data is given for
+                           ID = 0.2..48 inch, given {:.2~}&#39;&#39;&#39;.format(self.ID))
+        ln_ID = log(self.ID.to(ureg.inch).magnitude)
+        return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev
+
+    @property
+    def K(self):
+        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
+        &#34;&#34;&#34;
+        return self._K
+
+    def pressure_design_thick(self, P_int, P_ext=Q_(&#39;0 psig&#39;)):
+        &#34;&#34;&#34;Calculate pressure design thickness for given pressure and pipe material.
+
+        Based on B31.3 304.1.
+
+        Parameters
+        ----------
+        P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            Internal pressure, absolute
+        P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+            External pressure, absolute
+
+        Returns
+        -------
+        :obj:`pint.Quantity` {length: 1}
+            Minimum required wall thickness.
+        &#34;&#34;&#34;
+        if self.check_material_defined(): # Check whether S, E, W, and Y are defined
+            pass
+        D = self.OD
+        d = self.ID
+        S, E, W, Y = self.S, self.E, self.W, self.Y
+        P = P_int - P_ext # Differential pressure across the wall
+        t = P * D / (2*(S*E*W + P*Y))
+        # TODO add 3b equation handling:
+        # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
+        if (t &gt;= D/6) or (P/(S*E)) &gt; 0.385:
+            logger.error(&#39;Calculate design thickness in accordance \
+            with B31.3 304.1.2 (b)&#39;)
+            return None
+        tm = t + self.c
+        return tm
+
+    def update(self, **kwargs):
+        &#34;&#34;&#34; Add attributes, e.g. material stress or weld joint strength to the pipe.
+
+        Parameters
+        ----------
+        **kwargs
+            Parameters of the pipe, e.g. S=Q_(&#39;16700 psi&#39;), Y=0.4.
+        &#34;&#34;&#34;
+        self.__dict__.update(kwargs)
+
+    def check_material_defined(self):
+        &#34;&#34;&#34;Check whether following properties S, E, W, Y for stress calculations are defined.
+
+        * S: Stress value for pipe material
+        * E: Quality factor from Table A-1A or A-1B
+        * W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
+        * Y: coefficient from Table 304.1.1
+        &#34;&#34;&#34;
+        try:
+            self.S; self.E; self.W; self.Y
+        except AttributeError:
+            raise AttributeError(&#39;S, E, W, Y properties of the piping need to be \
+            defined&#39;)
+
+    def branch_reinforcement(self, BranchPipe, P, beta=Q_(&#39;90 deg&#39;), d_1=None,
+                             T_r=Q_(&#39;0 in&#39;)):
+        &#34;&#34;&#34;Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
+
+        #### Parameters:
+        BranchPipe (:obj:`Pipe`)
+        : Branch pipe/tube instance with S, E, W, Y
+            properties defined
+
+        P (:obj:`pint.Quantity` {length: -1, mass: 1, time: -2})
+        : Design pressure
+
+        beta (:obj:`pint.Quantity` {dimensionless})
+        : Smaller angle between
+            axes of branch and run
+
+        d_1 (:obj:`pint.Quantity` {length: 1})
+        : Effective length removed from
+            pipe at branch (opening for branch)
+
+        T_r (:obj:`pint.Quantity` {length: 1})
+        : Minimum thickness of reinforcing ring
+        &#34;&#34;&#34;
+        t_h = self.pressure_design_thick(P)
+        if d_1 is None:
+            d_1 = BranchPipe.OD
+        D_h = self.OD
+        T_h = self.wall
+        T_b = BranchPipe.wall
+        t_b = BranchPipe.pressure_design_thick(P)
+        c = max(self.c, BranchPipe.c) # Max allowance is used for calculation
+        # B31.3 has no specification which allowance to use
+        d_2 = half_width(d_1, T_b, T_h, c, D_h)
+        A_1 = t_h * d_1 * (2-sin(beta))
+        A_2 = (2*d_2-d_1) * (T_h - t_h - c)
+        L_4 = min(2.5*(T_h-c), 2.5*(T_b-c)) # height of reinforcement zone outside of run pipe
+        A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * BranchPipe.S / self.S
+        print(f&#39;Required Reinforcement Area A_1: {A_1.to(ureg.inch**2):.3g~}&#39;)
+        A_avail = A_2 + A_3 # Ignoring welding reinforcement
+        print(f&#39;Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}&#39;)
+        print(f&#39;Weld branch connection is safe: {A_avail&gt;A_1}&#39;)
+
+    def __str__(self):
+        return f&#39;NPS {self.D}&#34; SCH {self.SCH}&#39;</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.VJ_Pipe" href="#heat_transfer.piping.VJ_Pipe">VJ_Pipe</a></li>
+<li><a title="heat_transfer.piping.Corrugated_Pipe" href="#heat_transfer.piping.Corrugated_Pipe">Corrugated_Pipe</a></li>
+<li><a title="heat_transfer.piping.Entrance" href="#heat_transfer.piping.Entrance">Entrance</a></li>
+<li><a title="heat_transfer.piping.Exit" href="#heat_transfer.piping.Exit">Exit</a></li>
+<li><a title="heat_transfer.piping.Orifice" href="#heat_transfer.piping.Orifice">Orifice</a></li>
+<li><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></li>
+<li><a title="heat_transfer.piping.PipeElbow" href="#heat_transfer.piping.PipeElbow">PipeElbow</a></li>
+<li><a title="heat_transfer.piping.PipeTee" href="#heat_transfer.piping.PipeTee">PipeTee</a></li>
+<li><a title="heat_transfer.piping.Valve" href="#heat_transfer.piping.Valve">Valve</a></li>
+<li><a title="heat_transfer.piping.Globe_valve" href="#heat_transfer.piping.Globe_valve">Globe_valve</a></li>
+<li><a title="heat_transfer.piping.V_Cone" href="#heat_transfer.piping.V_Cone">V_Cone</a></li>
+<li><a title="heat_transfer.piping.Contraction" href="#heat_transfer.piping.Contraction">Contraction</a></li>
+<li><a title="heat_transfer.piping.Enlargement" href="#heat_transfer.piping.Enlargement">Enlargement</a></li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="heat_transfer.piping.Pipe.ID"><code class="name">var <span class="ident">ID</span></code></dt>
+<dd>
+<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: ID of the Pipe based on NPS table.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def ID(self):
+    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
+    &#34;&#34;&#34;
+    return self._ID</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.K"><code class="name">var <span class="ident">K</span></code></dt>
+<dd>
+<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: Resistance coefficient.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def K(self):
+    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
+    &#34;&#34;&#34;
+    return self._K</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.OD"><code class="name">var <span class="ident">OD</span></code></dt>
+<dd>
+<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: Pipe OD based on NPS table.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def OD(self):
+    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
+    &#34;&#34;&#34;
+    return self._OD</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.area"><code class="name">var <span class="ident">area</span></code></dt>
+<dd>
+<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 2}: Cross sectional area of pipe.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def area(self):
+    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
+    &#34;&#34;&#34;
+    return pi * self.ID**2 / 4</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.volume"><code class="name">var <span class="ident">volume</span></code></dt>
+<dd>
+<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 3}: Pipe inner volume.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def volume(self):
+    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+    &#34;&#34;&#34;
+    return self.area * self.L</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.wall"><code class="name">var <span class="ident">wall</span></code></dt>
+<dd>
+<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: Wall thickness of Pipe based on NPS table.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def wall(self):
+    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
+    &#34;&#34;&#34;
+    return self._wall</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="heat_transfer.piping.Pipe.branch_reinforcement"><code class="name flex">
+<span>def <span class="ident">branch_reinforcement</span></span>(<span>self, BranchPipe, P, beta=&lt;Quantity(90, &#x27;degree&#x27;)&gt;, d_1=None, T_r=&lt;Quantity(0, &#x27;inch&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.</p>
+<h4 id="parameters">Parameters:</h4>
+<dl>
+<dt>BranchPipe (:obj:<a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe"><code>Pipe</code></a>)</dt>
+<dd>Branch pipe/tube instance with S, E, W, Y
+properties defined</dd>
+<dt>P (:obj:<code>pint.Quantity</code> {length: -1, mass: 1, time: -2})</dt>
+<dd>Design pressure</dd>
+<dt>beta (:obj:<code>pint.Quantity</code> {dimensionless})</dt>
+<dd>Smaller angle between
+axes of branch and run</dd>
+<dt>d_1 (:obj:<code>pint.Quantity</code> {length: 1})</dt>
+<dd>Effective length removed from
+pipe at branch (opening for branch)</dd>
+<dt>T_r (:obj:<code>pint.Quantity</code> {length: 1})</dt>
+<dd>Minimum thickness of reinforcing ring</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def branch_reinforcement(self, BranchPipe, P, beta=Q_(&#39;90 deg&#39;), d_1=None,
+                         T_r=Q_(&#39;0 in&#39;)):
+    &#34;&#34;&#34;Calculate branch reinforcement status for given BranchPipe and reinforcing ring thickness, Tr.
+
+    #### Parameters:
+    BranchPipe (:obj:`Pipe`)
+    : Branch pipe/tube instance with S, E, W, Y
+        properties defined
+
+    P (:obj:`pint.Quantity` {length: -1, mass: 1, time: -2})
+    : Design pressure
+
+    beta (:obj:`pint.Quantity` {dimensionless})
+    : Smaller angle between
+        axes of branch and run
+
+    d_1 (:obj:`pint.Quantity` {length: 1})
+    : Effective length removed from
+        pipe at branch (opening for branch)
+
+    T_r (:obj:`pint.Quantity` {length: 1})
+    : Minimum thickness of reinforcing ring
+    &#34;&#34;&#34;
+    t_h = self.pressure_design_thick(P)
+    if d_1 is None:
+        d_1 = BranchPipe.OD
+    D_h = self.OD
+    T_h = self.wall
+    T_b = BranchPipe.wall
+    t_b = BranchPipe.pressure_design_thick(P)
+    c = max(self.c, BranchPipe.c) # Max allowance is used for calculation
+    # B31.3 has no specification which allowance to use
+    d_2 = half_width(d_1, T_b, T_h, c, D_h)
+    A_1 = t_h * d_1 * (2-sin(beta))
+    A_2 = (2*d_2-d_1) * (T_h - t_h - c)
+    L_4 = min(2.5*(T_h-c), 2.5*(T_b-c)) # height of reinforcement zone outside of run pipe
+    A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * BranchPipe.S / self.S
+    print(f&#39;Required Reinforcement Area A_1: {A_1.to(ureg.inch**2):.3g~}&#39;)
+    A_avail = A_2 + A_3 # Ignoring welding reinforcement
+    print(f&#39;Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}&#39;)
+    print(f&#39;Weld branch connection is safe: {A_avail&gt;A_1}&#39;)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.check_material_defined"><code class="name flex">
+<span>def <span class="ident">check_material_defined</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Check whether following properties S, E, W, Y for stress calculations are defined.</p>
+<ul>
+<li>S: Stress value for pipe material</li>
+<li>E: Quality factor from Table A-1A or A-1B</li>
+<li>W: Weld joint strength reduction factor in accordance with 302.3.5 (e)</li>
+<li>Y: coefficient from Table 304.1.1</li>
+</ul></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_material_defined(self):
+    &#34;&#34;&#34;Check whether following properties S, E, W, Y for stress calculations are defined.
+
+    * S: Stress value for pipe material
+    * E: Quality factor from Table A-1A or A-1B
+    * W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
+    * Y: coefficient from Table 304.1.1
+    &#34;&#34;&#34;
+    try:
+        self.S; self.E; self.W; self.Y
+    except AttributeError:
+        raise AttributeError(&#39;S, E, W, Y properties of the piping need to be \
+        defined&#39;)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.f_T"><code class="name flex">
+<span>def <span class="ident">f_T</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate Darcy friction factor for complete turbulence for clean steel pipe.</p>
+<p>Fitted logarithmic function to data from A-25.</p>
+<h2 id="returns">Returns</h2>
+<p>:obj:<code>pint.Quantity</code> {dimensionless}
+Darcy friction factor.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def f_T(self):
+    &#34;&#34;&#34;Calculate Darcy friction factor for complete turbulence for clean steel pipe.
+
+    Fitted logarithmic function to data from A-25.
+
+    Returns
+    -------
+    :obj:`pint.Quantity` {dimensionless}
+        Darcy friction factor.
+    &#34;&#34;&#34;
+    if self.ID&lt;0.2*ureg.inch or self.ID&gt;48*ureg.inch:
+        logger.debug(&#39;&#39;&#39;Tabulated friction data is given for
+                       ID = 0.2..48 inch, given {:.2~}&#39;&#39;&#39;.format(self.ID))
+    ln_ID = log(self.ID.to(ureg.inch).magnitude)
+    return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2 #Fitting by S. Koshelev</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.pressure_design_thick"><code class="name flex">
+<span>def <span class="ident">pressure_design_thick</span></span>(<span>self, P_int, P_ext=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate pressure design thickness for given pressure and pipe material.</p>
+<p>Based on B31.3 304.1.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>P_int</code></strong> :&ensp;<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}</dt>
+<dd>Internal pressure, absolute</dd>
+<dt><strong><code>P_ext</code></strong> :&ensp;<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}</dt>
+<dd>External pressure, absolute</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>:obj:<code>pint.Quantity</code> {length: 1}
+Minimum required wall thickness.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pressure_design_thick(self, P_int, P_ext=Q_(&#39;0 psig&#39;)):
+    &#34;&#34;&#34;Calculate pressure design thickness for given pressure and pipe material.
+
+    Based on B31.3 304.1.
+
+    Parameters
+    ----------
+    P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        Internal pressure, absolute
+    P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        External pressure, absolute
+
+    Returns
+    -------
+    :obj:`pint.Quantity` {length: 1}
+        Minimum required wall thickness.
+    &#34;&#34;&#34;
+    if self.check_material_defined(): # Check whether S, E, W, and Y are defined
+        pass
+    D = self.OD
+    d = self.ID
+    S, E, W, Y = self.S, self.E, self.W, self.Y
+    P = P_int - P_ext # Differential pressure across the wall
+    t = P * D / (2*(S*E*W + P*Y))
+    # TODO add 3b equation handling:
+    # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
+    if (t &gt;= D/6) or (P/(S*E)) &gt; 0.385:
+        logger.error(&#39;Calculate design thickness in accordance \
+        with B31.3 304.1.2 (b)&#39;)
+        return None
+    tm = t + self.c
+    return tm</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Pipe.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Add attributes, e.g. material stress or weld joint strength to the pipe.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>Parameters of the pipe, e.g. S=Q_('16700 psi'), Y=0.4.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self, **kwargs):
+    &#34;&#34;&#34; Add attributes, e.g. material stress or weld joint strength to the pipe.
+
+    Parameters
+    ----------
+    **kwargs
+        Parameters of the pipe, e.g. S=Q_(&#39;16700 psi&#39;), Y=0.4.
+    &#34;&#34;&#34;
+    self.__dict__.update(kwargs)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="heat_transfer.piping.PipeElbow"><code class="flex name class">
+<span>class <span class="ident">PipeElbow</span></span>
+<span>(</span><span>D_nom, SCH=40, R_D=1.5, N=1, angle=&lt;Quantity(90, &#x27;degree&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>NPS Tee fitting.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PipeElbow(AbstractElbow, Pipe): #MRO makes method K from Elbow class to override method from Pipe class
+    &#34;&#34;&#34;
+    NPS Tee fitting.
+    &#34;&#34;&#34;
+    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
+        Pipe.__init__(self, D_nom, SCH)
+        super().__init__(R_D, N, angle)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.AbstractElbow" href="#heat_transfer.piping.AbstractElbow">AbstractElbow</a></li>
+<li>abc.ABC</li>
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.AbstractElbow" href="#heat_transfer.piping.AbstractElbow">AbstractElbow</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.AbstractElbow.K" href="#heat_transfer.piping.AbstractElbow.K">K</a></code></li>
+</ul>
+</li>
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.PipeTee"><code class="flex name class">
+<span>class <span class="ident">PipeTee</span></span>
+<span>(</span><span>D_nom, SCH=40, direction='thru')</span>
+</code></dt>
+<dd>
+<section class="desc"><p>NPS Tee fitting.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PipeTee(AbstractTee, Pipe): #MRO makes method K from Tee class to override method from Pipe class
+    &#34;&#34;&#34;
+    NPS Tee fitting.
+    &#34;&#34;&#34;
+    def __init__(self, D_nom, SCH=40, direction=&#39;thru&#39;):
+        Pipe.__init__(self, D_nom, SCH)
+        super().__init__(direction)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.AbstractTee" href="#heat_transfer.piping.AbstractTee">AbstractTee</a></li>
+<li>abc.ABC</li>
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Piping"><code class="flex name class">
+<span>class <span class="ident">Piping</span></span>
+<span>(</span><span>Fluid, Pipes=[])</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Piping system defined by initial conditions and structure of
+pipe elements.
+Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Piping (list):
+    &#39;&#39;&#39;
+    Piping system defined by initial conditions and structure of
+    pipe elements.
+    Piping is modeled as a list of Pipe objects with given conditions at the beginning. Implemented methods allow to calculate pressure drop for given mass flow rate or mass flow rate for given pressure drop using lumped Darcy equation. All flow coefficients K are converted to the same base and added together to calculate single K value for the whole piping. This K value is used with Darcy equation to calculate pressure drop or mass flow.
+    &#39;&#39;&#39;
+    def __init__ (self, Fluid, Pipes=[]):
+        self.Fluid = Fluid
+        self.extend(Pipes)
+
+    def add(self, *Pipes):
+        self.extend(Pipes)
+
+    def K(self):
+        &#34;&#34;&#34;
+        Converting and adding flow coefficients K to same area.
+        &#34;&#34;&#34;
+        K0 = 0*ureg.dimensionless
+        try:
+            A0 = self[0].area #using area of the first element as base
+        except IndexError:
+            raise IndexError(&#39;&#39;&#39;Piping has no elements!
+                                Use Piping.add to add sections to piping.&#39;&#39;&#39;)
+        for section in self:
+            K0 += section.K*(A0/section.area)**2
+        return (K0, A0)
+
+    @property
+    def volume(self):
+        self._volume = 0 * ureg.ft**3
+        for pipe in self:
+            self._volume += pipe.volume
+        return self._volume
+
+    def dP(self, m_dot):
+        &#39;&#39;&#39;
+        Calculate pressure drop through piping.
+        Lumped method using Darcy equation is used.
+        The pressure dropped is checked for choked condition.
+        &#39;&#39;&#39;
+        P_0 = self.Fluid.P
+        T_0 = self.Fluid.T
+        rho_0 = self.Fluid.Dmass
+        K, area = self.K()
+        w = m_dot / (rho_0*area)
+        dP = dP_darcy (K, rho_0, w) #first iteration
+        P_out = P_0 - dP
+        k = self.Fluid.gamma #adiabatic coefficient
+        #Critical pressure drop;
+        #Note: according to Crane TP-410 should be dependent on
+        #the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1))
+        if self.Fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1: #if q&lt;0 then fluid is a liquid
+            return dP
+        elif dP/P_0 &lt;= 0.4:
+            TempState = ThermState(Fluid.name, backend=Fluid.backend) #Only working for pure fluids and pre-defined mixtures
+            TempState.update(&#39;T&#39;, T_0, &#39;P&#39;, P_out)
+            rho_out = TempState.Dmass
+            rho_ave = (rho_0+rho_out) / 2
+            w = m_dot/(rho_ave*area)
+            return dP_darcy (K, rho_ave, w)
+        elif 0.4&lt;dP/P_0&lt;(1-rc): #Subsonic flow
+            logger.warning(&#39;Pressure drop too high for Darcy equation!&#39;)
+            #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
+            w = (1/rho_0*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5
+            return dP_darcy (K, rho_0, w)
+        else:
+            logger.warning(&#39;&#39;&#39;Sonic flow developed. Calculated value ignores
+                           density changes. Consider reducing mass flow:
+                           {:.3~}&#39;&#39;&#39;.format(m_dot))
+            return dP_darcy (K, rho_0, w)
+
+    def m_dot(self, P_out=0*ureg.psig):
+        &#39;&#39;&#39;
+        Calculate mass flow through the piping using initial conditions
+        at the beginning of piping.
+        Simple solution using Darcy equation is used.
+        &#39;&#39;&#39;
+        P_0 = self.Fluid.P
+        if P_0 &lt;= P_out:
+            logger.warning(&#39;Input pressure less or equal to output: {P_0:.3g}, {P_out:.3g}&#39;)
+            return Q_(&#39;0 g/s&#39;)
+        rho = self.Fluid.Dmass
+        K, area = self.K()
+        k = self.Fluid.gamma #adiabatic coefficient
+        #Critical pressure drop
+        #Note: according to Crane TP-410 should be dependent on
+        #the hydraulic resistance of the flow path
+        rc = (2/(k+1))**(k/(k-1))
+        if P_out/P_0 &gt; rc: #Subsonic flow
+            delta_P = P_0-P_out
+        else: #Sonic flow
+            logger.warning(&#39;&#39;&#39;End pressure creates sonic flow.
+                           Max possible dP will be used&#39;&#39;&#39;)
+            delta_P = P_0*(1-rc) #Crane TP-410, p 2-15
+        #Net expansion factor for discharge is assumed to be 1
+        #(conservative value):
+        m_dot_ = area * (2*delta_P*rho/K)**0.5
+        return m_dot_.to(ureg.g/ureg.s)
+
+    def _solver_func(self, P_in_Pa, m_dot, P_out_act):
+        &#34;&#34;&#34;
+        Solver function for calculating upstream pressure given flow and downstream pressure.
+
+        :P_in_Pa: input pressure in Pa, float
+        :args: calculation parameters:
+            :m_dot: mass flow
+            :P_out_act: actual downstream pressure
+        &#34;&#34;&#34;
+        P_in = Q_(P_in_Pa, ureg.Pa)
+        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        P_out_calc = P_in - self.dP(m_dot)
+        P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
+        P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
+        return P_out_calc_Pa - P_out_act_Pa
+
+    def P_in(self, m_dot, P_out=ureg(&#39;0 psig&#39;), P_min=ureg(&#39;0 psig&#39;), P_max=ureg(&#39;200 bar&#39;)):
+        &#34;&#34;&#34;
+        Calculate upstream pressure given mass flow and downstream pressure.
+
+        :m_dot: mass flow
+        :P_out: downstream pressure
+        :P_min: min expected pressure; should be lower than actual value
+        :P_max: max expected pressure; should be higher than actual value
+        &#34;&#34;&#34;
+        args = (m_dot, P_out) #arguments passed to _solver_func
+        P_min_Pa = P_min.to(ureg.Pa).magnitude #Convert pressure to dimensionless form
+        P_max_Pa = P_max.to(ureg.Pa).magnitude
+        bracket = [P_min_Pa, P_max_Pa]
+        logger_level = logger.getEffectiveLevel()
+        logger.setLevel(40) #ERROR and CRITICAL only will be shown; WARNING is suppressed
+        solution = root_scalar(self._solver_func, args, bracket=bracket, method=&#39;brentq&#39;)
+        logger.setLevel(logger_level)
+        P_in = Q_(solution.root, ureg.Pa)
+        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        logger.debug(f&#39;Comparing pressure drop:\n    dP method:\n        {self.dP(m_dot).to(ureg.psi)}\n    P_in - P_out:\n        {(P_in-P_out).to(ureg.psi)}&#39;)
+        logger.info(f&#39;Calculated initial pressure: {P_in.to(ureg.psi):.1~f}&#39;)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.list</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="heat_transfer.piping.Piping.volume"><code class="name">var <span class="ident">volume</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def volume(self):
+    self._volume = 0 * ureg.ft**3
+    for pipe in self:
+        self._volume += pipe.volume
+    return self._volume</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="heat_transfer.piping.Piping.K"><code class="name flex">
+<span>def <span class="ident">K</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Converting and adding flow coefficients K to same area.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def K(self):
+    &#34;&#34;&#34;
+    Converting and adding flow coefficients K to same area.
+    &#34;&#34;&#34;
+    K0 = 0*ureg.dimensionless
+    try:
+        A0 = self[0].area #using area of the first element as base
+    except IndexError:
+        raise IndexError(&#39;&#39;&#39;Piping has no elements!
+                            Use Piping.add to add sections to piping.&#39;&#39;&#39;)
+    for section in self:
+        K0 += section.K*(A0/section.area)**2
+    return (K0, A0)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Piping.P_in"><code class="name flex">
+<span>def <span class="ident">P_in</span></span>(<span>self, m_dot, P_out=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;, P_min=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;, P_max=&lt;Quantity(200, &#x27;bar&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate upstream pressure given mass flow and downstream pressure.</p>
+<p>:m_dot: mass flow
+:P_out: downstream pressure
+:P_min: min expected pressure; should be lower than actual value
+:P_max: max expected pressure; should be higher than actual value</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def P_in(self, m_dot, P_out=ureg(&#39;0 psig&#39;), P_min=ureg(&#39;0 psig&#39;), P_max=ureg(&#39;200 bar&#39;)):
+    &#34;&#34;&#34;
+    Calculate upstream pressure given mass flow and downstream pressure.
+
+    :m_dot: mass flow
+    :P_out: downstream pressure
+    :P_min: min expected pressure; should be lower than actual value
+    :P_max: max expected pressure; should be higher than actual value
+    &#34;&#34;&#34;
+    args = (m_dot, P_out) #arguments passed to _solver_func
+    P_min_Pa = P_min.to(ureg.Pa).magnitude #Convert pressure to dimensionless form
+    P_max_Pa = P_max.to(ureg.Pa).magnitude
+    bracket = [P_min_Pa, P_max_Pa]
+    logger_level = logger.getEffectiveLevel()
+    logger.setLevel(40) #ERROR and CRITICAL only will be shown; WARNING is suppressed
+    solution = root_scalar(self._solver_func, args, bracket=bracket, method=&#39;brentq&#39;)
+    logger.setLevel(logger_level)
+    P_in = Q_(solution.root, ureg.Pa)
+    self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+    logger.debug(f&#39;Comparing pressure drop:\n    dP method:\n        {self.dP(m_dot).to(ureg.psi)}\n    P_in - P_out:\n        {(P_in-P_out).to(ureg.psi)}&#39;)
+    logger.info(f&#39;Calculated initial pressure: {P_in.to(ureg.psi):.1~f}&#39;)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Piping.add"><code class="name flex">
+<span>def <span class="ident">add</span></span>(<span>self, *Pipes)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add(self, *Pipes):
+    self.extend(Pipes)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Piping.dP"><code class="name flex">
+<span>def <span class="ident">dP</span></span>(<span>self, m_dot)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate pressure drop through piping.
+Lumped method using Darcy equation is used.
+The pressure dropped is checked for choked condition.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def dP(self, m_dot):
+    &#39;&#39;&#39;
+    Calculate pressure drop through piping.
+    Lumped method using Darcy equation is used.
+    The pressure dropped is checked for choked condition.
+    &#39;&#39;&#39;
+    P_0 = self.Fluid.P
+    T_0 = self.Fluid.T
+    rho_0 = self.Fluid.Dmass
+    K, area = self.K()
+    w = m_dot / (rho_0*area)
+    dP = dP_darcy (K, rho_0, w) #first iteration
+    P_out = P_0 - dP
+    k = self.Fluid.gamma #adiabatic coefficient
+    #Critical pressure drop;
+    #Note: according to Crane TP-410 should be dependent on
+    #the hydraulic resistance of the flow path
+    rc = (2/(k+1))**(k/(k-1))
+    if self.Fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1: #if q&lt;0 then fluid is a liquid
+        return dP
+    elif dP/P_0 &lt;= 0.4:
+        TempState = ThermState(Fluid.name, backend=Fluid.backend) #Only working for pure fluids and pre-defined mixtures
+        TempState.update(&#39;T&#39;, T_0, &#39;P&#39;, P_out)
+        rho_out = TempState.Dmass
+        rho_ave = (rho_0+rho_out) / 2
+        w = m_dot/(rho_ave*area)
+        return dP_darcy (K, rho_ave, w)
+    elif 0.4&lt;dP/P_0&lt;(1-rc): #Subsonic flow
+        logger.warning(&#39;Pressure drop too high for Darcy equation!&#39;)
+        #Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
+        w = (1/rho_0*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5
+        return dP_darcy (K, rho_0, w)
+    else:
+        logger.warning(&#39;&#39;&#39;Sonic flow developed. Calculated value ignores
+                       density changes. Consider reducing mass flow:
+                       {:.3~}&#39;&#39;&#39;.format(m_dot))
+        return dP_darcy (K, rho_0, w)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.piping.Piping.m_dot"><code class="name flex">
+<span>def <span class="ident">m_dot</span></span>(<span>self, P_out=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate mass flow through the piping using initial conditions
+at the beginning of piping.
+Simple solution using Darcy equation is used.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def m_dot(self, P_out=0*ureg.psig):
+    &#39;&#39;&#39;
+    Calculate mass flow through the piping using initial conditions
+    at the beginning of piping.
+    Simple solution using Darcy equation is used.
+    &#39;&#39;&#39;
+    P_0 = self.Fluid.P
+    if P_0 &lt;= P_out:
+        logger.warning(&#39;Input pressure less or equal to output: {P_0:.3g}, {P_out:.3g}&#39;)
+        return Q_(&#39;0 g/s&#39;)
+    rho = self.Fluid.Dmass
+    K, area = self.K()
+    k = self.Fluid.gamma #adiabatic coefficient
+    #Critical pressure drop
+    #Note: according to Crane TP-410 should be dependent on
+    #the hydraulic resistance of the flow path
+    rc = (2/(k+1))**(k/(k-1))
+    if P_out/P_0 &gt; rc: #Subsonic flow
+        delta_P = P_0-P_out
+    else: #Sonic flow
+        logger.warning(&#39;&#39;&#39;End pressure creates sonic flow.
+                       Max possible dP will be used&#39;&#39;&#39;)
+        delta_P = P_0*(1-rc) #Crane TP-410, p 2-15
+    #Net expansion factor for discharge is assumed to be 1
+    #(conservative value):
+    m_dot_ = area * (2*delta_P*rho/K)**0.5
+    return m_dot_.to(ureg.g/ureg.s)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="heat_transfer.piping.Tube"><code class="flex name class">
+<span>class <span class="ident">Tube</span></span>
+<span>(</span><span>OD, wall=&lt;Quantity(0, &#x27;meter&#x27;)&gt;, L=&lt;Quantity(0, &#x27;meter&#x27;)&gt;, c=&lt;Quantity(0, &#x27;meter&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Tube, requires OD and wall thickness specified</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Tube(Pipe):
+    &#34;&#34;&#34;
+    Tube, requires OD and wall thickness specified
+    &#34;&#34;&#34;
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
+        self._OD = OD
+        self.D = OD.to(ureg.inch).magnitude
+        self._wall = wall
+        self._ID = self.OD - 2*self.wall
+        self.L = L
+        self._K = self.f_T()*self.L/self.ID
+        self.c = c
+        self._type = &#39;Tube&#39;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.TubeElbow" href="#heat_transfer.piping.TubeElbow">TubeElbow</a></li>
+<li><a title="heat_transfer.piping.TubeTee" href="#heat_transfer.piping.TubeTee">TubeTee</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.TubeElbow"><code class="flex name class">
+<span>class <span class="ident">TubeElbow</span></span>
+<span>(</span><span>OD, wall, R_D=1.5, N=1, angle=&lt;Quantity(90, &#x27;degree&#x27;)&gt;)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>NPS Tee fitting.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to override method from Pipe class
+    &#34;&#34;&#34;
+    NPS Tee fitting.
+    &#34;&#34;&#34;
+    def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
+        Tube.__init__(self, OD, wall)
+        super().__init__(R_D, N, angle)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.AbstractElbow" href="#heat_transfer.piping.AbstractElbow">AbstractElbow</a></li>
+<li>abc.ABC</li>
+<li><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></li>
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.AbstractElbow" href="#heat_transfer.piping.AbstractElbow">AbstractElbow</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.AbstractElbow.K" href="#heat_transfer.piping.AbstractElbow.K">K</a></code></li>
+</ul>
+</li>
+<li><code><b><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Tube.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.TubeTee"><code class="flex name class">
+<span>class <span class="ident">TubeTee</span></span>
+<span>(</span><span>OD, wall, direction='thru')</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Tee fitting based.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TubeTee(AbstractTee, Tube):
+    &#34;&#34;&#34;
+    Tee fitting based.
+    &#34;&#34;&#34;
+    def __init__(self, OD, wall, direction=&#39;thru&#39;):
+        Tube.__init__(self, OD, wall)
+        super().__init__(direction)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.AbstractTee" href="#heat_transfer.piping.AbstractTee">AbstractTee</a></li>
+<li>abc.ABC</li>
+<li><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></li>
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Tube.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Tube.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.VJ_Pipe"><code class="flex name class">
+<span>class <span class="ident">VJ_Pipe</span></span>
+<span>(</span><span>D_nom, SCH, L, VJ_D, VJ_SCH=5)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Vacuum jacketed pipe.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class VJ_Pipe(Pipe):
+    &#34;&#34;&#34;
+    Vacuum jacketed pipe.
+    &#34;&#34;&#34;
+    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
+        super().__init__(D_nom, SCH, L)
+        self.VJ = Pipe(VJ_D, VJ_SCH, L)
+        self._type = &#39;Vacuum jacketed pipe&#39;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.V_Cone"><code class="flex name class">
+<span>class <span class="ident">V_Cone</span></span>
+<span>(</span><span>D, beta, Cf, SCH=40)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>McCrometer V-Cone flowmeter.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class V_Cone(Pipe):
+    &#34;&#34;&#34;
+    McCrometer V-Cone flowmeter.
+    &#34;&#34;&#34;
+    def __init__(self, D, beta, Cf, SCH=40):
+        super().__init__(D, SCH, None)
+        self._beta = beta
+        self._Cf = Cf
+        self._type = &#39;V-cone flow meter&#39;
+        #Equation is reverse-engineered from McCrometer V-Cone equations
+        self._K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="heat_transfer.piping.Valve"><code class="flex name class">
+<span>class <span class="ident">Valve</span></span>
+<span>(</span><span>ID, Cv)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Generic valve with known Cv.</p>
+<p>Generate Pipe object.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Pipe length</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
+Should have unit of length.</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Valve(Pipe):
+    &#34;&#34;&#34;
+    Generic valve with known Cv.
+    &#34;&#34;&#34;
+    def __init__(self, ID, Cv):
+        self._Cv = Cv
+        self._ID = ID
+        self._type = &#39;Valve&#39;
+        self._K = Cv_to_K(self._Cv, self.ID)
+
+    @property
+    def volume(self):
+        return 0 * ureg.ft**3</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<ul class="hlist">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="heat_transfer" href="index.html">heat_transfer</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="two-column">
+<li><code><a title="heat_transfer.piping.Cv_to_K" href="#heat_transfer.piping.Cv_to_K">Cv_to_K</a></code></li>
+<li><code><a title="heat_transfer.piping.K_to_Cv" href="#heat_transfer.piping.K_to_Cv">K_to_Cv</a></code></li>
+<li><code><a title="heat_transfer.piping.PRV_flow" href="#heat_transfer.piping.PRV_flow">PRV_flow</a></code></li>
+<li><code><a title="heat_transfer.piping.beta" href="#heat_transfer.piping.beta">beta</a></code></li>
+<li><code><a title="heat_transfer.piping.dP_darcy" href="#heat_transfer.piping.dP_darcy">dP_darcy</a></code></li>
+<li><code><a title="heat_transfer.piping.equivalent_orifice" href="#heat_transfer.piping.equivalent_orifice">equivalent_orifice</a></code></li>
+<li><code><a title="heat_transfer.piping.half_width" href="#heat_transfer.piping.half_width">half_width</a></code></li>
+<li><code><a title="heat_transfer.piping.to_mass_flow" href="#heat_transfer.piping.to_mass_flow">to_mass_flow</a></code></li>
+<li><code><a title="heat_transfer.piping.to_standard_flow" href="#heat_transfer.piping.to_standard_flow">to_standard_flow</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="heat_transfer.piping.AbstractElbow" href="#heat_transfer.piping.AbstractElbow">AbstractElbow</a></code></h4>
+<ul class="">
+<li><code><a title="heat_transfer.piping.AbstractElbow.K" href="#heat_transfer.piping.AbstractElbow.K">K</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.AbstractTee" href="#heat_transfer.piping.AbstractTee">AbstractTee</a></code></h4>
+<ul class="">
+<li><code><a title="heat_transfer.piping.AbstractTee.K" href="#heat_transfer.piping.AbstractTee.K">K</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Conic_Orifice" href="#heat_transfer.piping.Conic_Orifice">Conic_Orifice</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Contraction" href="#heat_transfer.piping.Contraction">Contraction</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Corrugated_Pipe" href="#heat_transfer.piping.Corrugated_Pipe">Corrugated_Pipe</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Enlargement" href="#heat_transfer.piping.Enlargement">Enlargement</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Entrance" href="#heat_transfer.piping.Entrance">Entrance</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Exit" href="#heat_transfer.piping.Exit">Exit</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Globe_valve" href="#heat_transfer.piping.Globe_valve">Globe_valve</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Orifice" href="#heat_transfer.piping.Orifice">Orifice</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.ParallelPlateRelief" href="#heat_transfer.piping.ParallelPlateRelief">ParallelPlateRelief</a></code></h4>
+<ul class="">
+<li><code><a title="heat_transfer.piping.ParallelPlateRelief.P_open" href="#heat_transfer.piping.ParallelPlateRelief.P_open">P_open</a></code></li>
+<li><code><a title="heat_transfer.piping.ParallelPlateRelief.P_set" href="#heat_transfer.piping.ParallelPlateRelief.P_set">P_set</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></code></h4>
+<ul class="">
+<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.PipeElbow" href="#heat_transfer.piping.PipeElbow">PipeElbow</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.PipeTee" href="#heat_transfer.piping.PipeTee">PipeTee</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Piping" href="#heat_transfer.piping.Piping">Piping</a></code></h4>
+<ul class="two-column">
+<li><code><a title="heat_transfer.piping.Piping.K" href="#heat_transfer.piping.Piping.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Piping.P_in" href="#heat_transfer.piping.Piping.P_in">P_in</a></code></li>
+<li><code><a title="heat_transfer.piping.Piping.add" href="#heat_transfer.piping.Piping.add">add</a></code></li>
+<li><code><a title="heat_transfer.piping.Piping.dP" href="#heat_transfer.piping.Piping.dP">dP</a></code></li>
+<li><code><a title="heat_transfer.piping.Piping.m_dot" href="#heat_transfer.piping.Piping.m_dot">m_dot</a></code></li>
+<li><code><a title="heat_transfer.piping.Piping.volume" href="#heat_transfer.piping.Piping.volume">volume</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.TubeElbow" href="#heat_transfer.piping.TubeElbow">TubeElbow</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.TubeTee" href="#heat_transfer.piping.TubeTee">TubeTee</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.VJ_Pipe" href="#heat_transfer.piping.VJ_Pipe">VJ_Pipe</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.V_Cone" href="#heat_transfer.piping.V_Cone">V_Cone</a></code></h4>
+</li>
+<li>
+<h4><code><a title="heat_transfer.piping.Valve" href="#heat_transfer.piping.Valve">Valve</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
