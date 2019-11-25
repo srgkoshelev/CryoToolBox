@@ -169,7 +169,7 @@ class Pipe:
 
         Parameters
         ----------
-        BranchPipe : :obj: `Pipe`
+        BranchPipe : :obj:``Pipe``
             Branch pipe/tube instance with S, E, W, Y properties defined
         P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
             Design pressure
