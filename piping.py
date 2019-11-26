@@ -205,7 +205,7 @@ class Pipe:
         print(f'Weld branch connection is safe: {A_avail>A_1}')
 
     def __str__(self):
-        return f'NPS {self.D}" SCH {self.SCH}'
+        return f'{self._type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
 
 #' Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
 class VJ_Pipe(Pipe):
@@ -216,6 +216,10 @@ class VJ_Pipe(Pipe):
         super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
         self._type = 'Vacuum jacketed pipe'
+
+    def __str__(self):
+        return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ_D}" SCH,\
+        {self.VJ_SCH}, L={self.L:.3~g}'
 
 class Corrugated_Pipe(Pipe):
     '''
@@ -253,7 +257,10 @@ class Entrance (Pipe):
     def volume(self):
         return 0 * ureg.ft**3
 
-class Exit (Pipe):
+    def __str__(self):
+        return f'{self._type}, {ID:.3g~}'
+
+class Exit (Entrance):
     """
     Pipe exit, projecting or sharp-edged, or rounded.
     """
@@ -265,6 +272,9 @@ class Exit (Pipe):
     @property
     def volume(self):
         return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f'Exit opening, {ID:.3g~}'
 
 class Orifice(Pipe):
     """
@@ -313,6 +323,9 @@ class Tube(Pipe):
         self.c = c
         self._type = 'Tube'
 
+    def __str__(self):
+        return f'{self._type}, {self.OD:.3g~}"x{self.wall:.3g~}", L={self.L:.3g~}'
+
 class AbstractElbow(ABC):
     """
     Abstract Elbow class. __init__ method is abstract to avoid instantiation of this class.
@@ -325,7 +338,7 @@ class AbstractElbow(ABC):
         self.N = N
         self.angle = angle
         self.L = R_D*self.ID*angle
-        self._type = 'Elbow'
+        self._type = 'AbstractElbow'
 
     @property
     def K(self):
@@ -359,6 +372,11 @@ class PipeElbow(AbstractElbow, Pipe): #MRO makes method K from Elbow class to ov
     def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(R_D, N, angle)
+        self._type = 'Pipe elbow'
+
+    def __str__(self):
+        return f'{self.N}x {self._type}, {self.D_nom}" SCH {self.SCH}, {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
+
 
 class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to override method from Pipe class
     """
@@ -367,6 +385,10 @@ class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to ov
     def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
         Tube.__init__(self, OD, wall)
         super().__init__(R_D, N, angle)
+        self._type = 'Tube elbow'
+
+    def __str__(self):
+        return f'{self.N}x {self._type}, {self.OD}"x{self.wall}", {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 class AbstractTee(ABC):
     """
@@ -399,6 +421,9 @@ class PipeTee(AbstractTee, Pipe): #MRO makes method K from Tee class to override
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(direction)
 
+    def __str__(self):
+        return f'{self.N}x {self._type}, {self.D_nom}" SCH {self.SCH}, {self.direction}'
+
 class TubeTee(AbstractTee, Tube):
     """
     Tee fitting based.
@@ -407,19 +432,28 @@ class TubeTee(AbstractTee, Tube):
         Tube.__init__(self, OD, wall)
         super().__init__(direction)
 
+    def __str__(self):
+        return f'{self._type}, {self.OD}"x{self.wall}", {self.direction}'
+
 class Valve(Pipe):
     """
     Generic valve with known Cv.
     """
-    def __init__(self, ID, Cv):
+    def __init__(self, D, Cv):
+        self.D = D
         self._Cv = Cv
-        self._ID = ID
+        self._OD = None
+        self._ID = self.D
+        self.L = None
         self._type = 'Valve'
-        self._K = Cv_to_K(self._Cv, self.ID)
+        self._K = Cv_to_K(self._Cv, self.D)
 
     @property
     def volume(self):
         return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f'{self._type}, {self.D}", Cv = {self._Cv:.3g}'
 
 class Globe_valve(Pipe):
     """
@@ -435,6 +469,9 @@ class Globe_valve(Pipe):
     @property
     def volume(self):
         return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f'{self._type}, {self.D_nom}"'
 
 class V_Cone(Pipe):
     """
@@ -458,24 +495,35 @@ class Contraction(Pipe):
         Pipe2: downstream pipe
         theta: contraction angle
         """
+        self._Pipe1 = Pipe1
+        self._Pipe2 = Pipe2
         ID1 = Pipe1.ID
         ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = 'Contraction'
+        self.L = None
+        self._OD = None
         self._ID = min(ID1, ID2)
-        if theta <= 45*ureg.deg:
-            self._K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
-        elif theta <= 180*ureg.deg:
-            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+
+    @property
+    def K(self):
+        if self._theta <= 45*ureg.deg:
+            self._K = 0.8 * sin(self._theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+        elif self._theta <= 180*ureg.deg:
+            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(self._theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
         else:
-            logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
+            logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {self._theta}')
+        return self._K
 
     @property
     def volume(self):
         return 0 * ureg.ft**3
 
-class Enlargement(Pipe):
+    def __str__(self):
+        return f'{self._type}, {self._theta.to(ureg.deg)} from {self._Pipe1} to {self._Pipe2}'
+
+class Enlargement(Contraction):
     """
     Sudden and gradual enlargement based on Crane TP-410.
     """
@@ -485,22 +533,18 @@ class Enlargement(Pipe):
         Pipe2: downstream pipe
         theta: contraction angle
         """
-        ID1 = Pipe1.ID
-        ID2 = Pipe2.ID
-        self._beta = beta(ID1, ID2)
-        self._theta = theta
+        super().__init__(Pipe1, Pipe2, theta)
         self._type = 'Enlargement'
-        self._ID = min(ID1, ID2)
-        if theta <= 45*ureg.deg:
-            self._K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
-        elif theta <= 180*ureg.deg:
-            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
-        else:
-            logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}')
 
     @property
-    def volume(self):
-        return 0 * ureg.ft**3
+    def K(self):
+        if self._theta <= 45*ureg.deg:
+            self._K = 2.6 * sin(self._theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
+        elif self._theta <= 180*ureg.deg:
+            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+        else:
+            logger.error(f'Theta cannot be greater than {180*ureg.deg} (sudden contraction): {self._theta}')
+        return self._K
 
 class Piping (list):
     '''
