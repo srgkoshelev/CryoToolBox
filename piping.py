@@ -55,31 +55,31 @@ class Pipe:
 
     @property
     def OD(self):
-        """:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
+        """:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
         """
         return self._OD
 
     @property
     def wall(self):
-        """:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
+        """:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
         """
         return self._wall
 
     @property
     def ID(self):
-        """:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
+        """:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
         """
         return self._ID
 
     @property
     def area(self):
-        """:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
+        """:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
         """
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
-        """:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+        """:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
         """
         return self.area * self.L
 
@@ -101,7 +101,7 @@ class Pipe:
 
     @property
     def K(self):
-        """:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
+        """:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
         """
         return self._K
 
@@ -112,9 +112,9 @@ class Pipe:
 
         Parameters
         ----------
-        P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             Internal pressure, absolute
-        P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             External pressure, absolute
 
         Returns
@@ -170,13 +170,13 @@ class Pipe:
         ----------
         BranchPipe : :obj:Pipe
             Branch pipe/tube instance with S, E, W, Y properties defined
-        P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             Design pressure
-        beta : :obj:`pint.Quantity` {dimensionless}
+        beta : :obj:`pint.Quantity {dimensionless}`
             Smaller angle between axes of branch and run
-        d_1 : :obj:`pint.Quantity` {length: 1}
+        d_1 : :obj:`pint.Quantity {length: 1}`
             Effective length removed from pipe at branch (opening for branch)
-        T_r : :obj:`pint.Quantity` {length: 1}
+        T_r : :obj:`pint.Quantity {length: 1}`
             Minimum thickness of reinforcing ring
 
         Returns
