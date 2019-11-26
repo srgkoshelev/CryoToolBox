@@ -57,15 +57,14 @@ class Pipe:
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity`
+        D_nom : int or :obj:`Quantity {length: 1}`
             Nominal diameter of piping; can be dimensionless or having a unit of length.
         SCH : int
             Pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity`
+        L : :obj:`Quantity {length: 1}`
             Pipe length
-        c : :obj:`Quantity`
+        c : :obj:`Quantity {length: 1}`
             Sum of the mechanical allowances plus corrosion and erosion allowances.
-            Should have unit of length.
         &#34;&#34;&#34;
         try:
             self.D = D_nom.magnitude # If united
@@ -84,31 +83,31 @@ class Pipe:
 
     @property
     def OD(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
         &#34;&#34;&#34;
         return self._OD
 
     @property
     def wall(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._wall
 
     @property
     def ID(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._ID
 
     @property
     def area(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
         &#34;&#34;&#34;
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
         &#34;&#34;&#34;
         return self.area * self.L
 
@@ -130,7 +129,7 @@ class Pipe:
 
     @property
     def K(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
         &#34;&#34;&#34;
         return self._K
 
@@ -141,9 +140,9 @@ class Pipe:
 
         Parameters
         ----------
-        P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             Internal pressure, absolute
-        P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             External pressure, absolute
 
         Returns
@@ -199,13 +198,13 @@ class Pipe:
         ----------
         BranchPipe : :obj:Pipe
             Branch pipe/tube instance with S, E, W, Y properties defined
-        P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             Design pressure
-        beta : :obj:`pint.Quantity` {dimensionless}
+        beta : :obj:`pint.Quantity {dimensionless}`
             Smaller angle between axes of branch and run
-        d_1 : :obj:`pint.Quantity` {length: 1}
+        d_1 : :obj:`pint.Quantity {length: 1}`
             Effective length removed from pipe at branch (opening for branch)
-        T_r : :obj:`pint.Quantity` {length: 1}
+        T_r : :obj:`pint.Quantity {length: 1}`
             Minimum thickness of reinforcing ring
 
         Returns
@@ -233,22 +232,42 @@ class Pipe:
         print(f&#39;Weld branch connection is safe: {A_avail&gt;A_1}&#39;)
 
     def __str__(self):
-        return f&#39;NPS {self.D}&#34; SCH {self.SCH}&#39;
+        return f&#39;{self._type} {self.D}&#34; SCH {self.SCH}, L={self.L:.3~g}&#39;
 
 #&#39; Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
 class VJ_Pipe(Pipe):
+    &#34;&#34;&#34;Vacuum jacketed pipe.
     &#34;&#34;&#34;
-    Vacuum jacketed pipe.
-    &#34;&#34;&#34;
-    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
+    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5, c=0*ureg.inch):
+        &#34;&#34;&#34;Generate Vacuum jacketed pipe object.
+
+        Parameters
+        ----------
+        D_nom : int or :obj:`Quantity {length: 1}`
+            Nominal diameter of the inner pipe.
+        SCH : int
+            Inner pipe schedule. Default value is SCH 40 (STD).
+        L : :obj:`Quantity {length: 1}`
+            Length of the inner pipe.
+        VJ_D : int or :obj:`Quantity {length: 1}`
+            Nominal diameter of the vacuum jacket.
+        VJ_SCH : int
+            Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
+        c : :obj:`Quantity {length: 1}`
+            Sum of the mechanical allowances plus corrosion and erosion allowances
+            of the inner pipe.
+        &#34;&#34;&#34;
         super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
         self._type = &#39;Vacuum jacketed pipe&#39;
 
+    def __str__(self):
+        return f&#39;NPS {self.D}&#34; SCH {self.SCH} with VJ {self.VJ_D}&#34; SCH,\
+        {self.VJ_SCH}, L={self.L:.3~g}&#39;
+
 class Corrugated_Pipe(Pipe):
-    &#39;&#39;&#39;
-    Corrugated pipe class.
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;Corrugated pipe class.
+    &#34;&#34;&#34;
     def __init__ (self, D, L=0*ureg.m):
         super().__init__(D, None, L)
         self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
@@ -269,8 +288,7 @@ class Corrugated_Pipe(Pipe):
         return 0*ureg.m
 
 class Entrance (Pipe):
-    &#34;&#34;&#34;
-    Pipe entrance, flush, sharp edged.
+    &#34;&#34;&#34;Pipe entrance, flush, sharp edged.
     &#34;&#34;&#34;
     def __init__ (self, ID):
         self._ID = ID
@@ -281,9 +299,11 @@ class Entrance (Pipe):
     def volume(self):
         return 0 * ureg.ft**3
 
-class Exit (Pipe):
-    &#34;&#34;&#34;
-    Pipe exit, projecting or sharp-edged, or rounded.
+    def __str__(self):
+        return f&#39;{self._type}, {ID:.3g~}&#39;
+
+class Exit (Entrance):
+    &#34;&#34;&#34;Pipe exit, projecting or sharp-edged, or rounded.
     &#34;&#34;&#34;
     def __init__ (self, ID):
         self._ID = ID
@@ -294,9 +314,11 @@ class Exit (Pipe):
     def volume(self):
         return 0 * ureg.ft**3
 
+    def __str__(self):
+        return f&#39;Exit opening, {ID:.3g~}&#39;
+
 class Orifice(Pipe):
-    &#34;&#34;&#34;
-    Square-edged orifice plate
+    &#34;&#34;&#34;Square-edged orifice plate
     &#34;&#34;&#34;
     def __init__(self, ID):
         self.Cd = 0.61 #Thin sharp edged orifice plate
@@ -312,8 +334,7 @@ class Orifice(Pipe):
         return 0 * ureg.ft**3
 
 class Conic_Orifice(Orifice):
-    &#34;&#34;&#34;
-    Conic orifice
+    &#34;&#34;&#34;Conic orifice
     &#34;&#34;&#34;
     def __init__(self, D, ID):
         super().__init__(ID)
@@ -341,6 +362,9 @@ class Tube(Pipe):
         self.c = c
         self._type = &#39;Tube&#39;
 
+    def __str__(self):
+        return f&#39;{self._type}, {self.OD:.3g~}&#34;x{self.wall:.3g~}&#34;, L={self.L:.3g~}&#39;
+
 class AbstractElbow(ABC):
     &#34;&#34;&#34;
     Abstract Elbow class. __init__ method is abstract to avoid instantiation of this class.
@@ -353,7 +377,7 @@ class AbstractElbow(ABC):
         self.N = N
         self.angle = angle
         self.L = R_D*self.ID*angle
-        self._type = &#39;Elbow&#39;
+        self._type = &#39;AbstractElbow&#39;
 
     @property
     def K(self):
@@ -387,6 +411,11 @@ class PipeElbow(AbstractElbow, Pipe): #MRO makes method K from Elbow class to ov
     def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(R_D, N, angle)
+        self._type = &#39;Pipe elbow&#39;
+
+    def __str__(self):
+        return f&#39;{self.N}x {self._type}, {self.D_nom}&#34; SCH {self.SCH}, {self.angle.to(ureg.deg)}, R_D = {self.R_D}&#39;
+
 
 class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to override method from Pipe class
     &#34;&#34;&#34;
@@ -395,6 +424,10 @@ class TubeElbow(AbstractElbow, Tube): #MRO makes method K from Elbow class to ov
     def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
         Tube.__init__(self, OD, wall)
         super().__init__(R_D, N, angle)
+        self._type = &#39;Tube elbow&#39;
+
+    def __str__(self):
+        return f&#39;{self.N}x {self._type}, {self.OD}&#34;x{self.wall}&#34;, {self.angle.to(ureg.deg)}, R_D = {self.R_D}&#39;
 
 class AbstractTee(ABC):
     &#34;&#34;&#34;
@@ -427,6 +460,9 @@ class PipeTee(AbstractTee, Pipe): #MRO makes method K from Tee class to override
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(direction)
 
+    def __str__(self):
+        return f&#39;{self.N}x {self._type}, {self.D_nom}&#34; SCH {self.SCH}, {self.direction}&#39;
+
 class TubeTee(AbstractTee, Tube):
     &#34;&#34;&#34;
     Tee fitting based.
@@ -435,19 +471,28 @@ class TubeTee(AbstractTee, Tube):
         Tube.__init__(self, OD, wall)
         super().__init__(direction)
 
+    def __str__(self):
+        return f&#39;{self._type}, {self.OD}&#34;x{self.wall}&#34;, {self.direction}&#39;
+
 class Valve(Pipe):
     &#34;&#34;&#34;
     Generic valve with known Cv.
     &#34;&#34;&#34;
-    def __init__(self, ID, Cv):
+    def __init__(self, D, Cv):
+        self.D = D
         self._Cv = Cv
-        self._ID = ID
+        self._OD = None
+        self._ID = self.D
+        self.L = None
         self._type = &#39;Valve&#39;
-        self._K = Cv_to_K(self._Cv, self.ID)
+        self._K = Cv_to_K(self._Cv, self.D)
 
     @property
     def volume(self):
         return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f&#39;{self._type}, {self.D}&#34;, Cv = {self._Cv:.3g}&#39;
 
 class Globe_valve(Pipe):
     &#34;&#34;&#34;
@@ -463,6 +508,9 @@ class Globe_valve(Pipe):
     @property
     def volume(self):
         return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f&#39;{self._type}, {self.D_nom}&#34;&#39;
 
 class V_Cone(Pipe):
     &#34;&#34;&#34;
@@ -486,24 +534,35 @@ class Contraction(Pipe):
         Pipe2: downstream pipe
         theta: contraction angle
         &#34;&#34;&#34;
+        self._Pipe1 = Pipe1
+        self._Pipe2 = Pipe2
         ID1 = Pipe1.ID
         ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = &#39;Contraction&#39;
+        self.L = None
+        self._OD = None
         self._ID = min(ID1, ID2)
-        if theta &lt;= 45*ureg.deg:
-            self._K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
-        elif theta &lt;= 180*ureg.deg:
-            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+
+    @property
+    def K(self):
+        if self._theta &lt;= 45*ureg.deg:
+            self._K = 0.8 * sin(self._theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+        elif self._theta &lt;= 180*ureg.deg:
+            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(self._theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
         else:
-            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {self._theta}&#39;)
+        return self._K
 
     @property
     def volume(self):
         return 0 * ureg.ft**3
 
-class Enlargement(Pipe):
+    def __str__(self):
+        return f&#39;{self._type}, {self._theta.to(ureg.deg)} from {self._Pipe1} to {self._Pipe2}&#39;
+
+class Enlargement(Contraction):
     &#34;&#34;&#34;
     Sudden and gradual enlargement based on Crane TP-410.
     &#34;&#34;&#34;
@@ -513,22 +572,18 @@ class Enlargement(Pipe):
         Pipe2: downstream pipe
         theta: contraction angle
         &#34;&#34;&#34;
-        ID1 = Pipe1.ID
-        ID2 = Pipe2.ID
-        self._beta = beta(ID1, ID2)
-        self._theta = theta
+        super().__init__(Pipe1, Pipe2, theta)
         self._type = &#39;Enlargement&#39;
-        self._ID = min(ID1, ID2)
-        if theta &lt;= 45*ureg.deg:
-            self._K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
-        elif theta &lt;= 180*ureg.deg:
-            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
-        else:
-            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
 
     @property
-    def volume(self):
-        return 0 * ureg.ft**3
+    def K(self):
+        if self._theta &lt;= 45*ureg.deg:
+            self._K = 2.6 * sin(self._theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
+        elif self._theta &lt;= 180*ureg.deg:
+            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+        else:
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {self._theta}&#39;)
+        return self._K
 
 class Piping (list):
     &#39;&#39;&#39;
@@ -1069,7 +1124,7 @@ N: number of elbows in the pipeline (to be used with lumped Darcy equation)</p><
         self.N = N
         self.angle = angle
         self.L = R_D*self.ID*angle
-        self._type = &#39;Elbow&#39;
+        self._type = &#39;AbstractElbow&#39;
 
     @property
     def K(self):
@@ -1214,23 +1269,21 @@ def K(self):
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Conic_Orifice(Orifice):
-    &#34;&#34;&#34;
-    Conic orifice
+    &#34;&#34;&#34;Conic orifice
     &#34;&#34;&#34;
     def __init__(self, D, ID):
         super().__init__(ID)
@@ -1291,26 +1344,41 @@ theta: contraction angle</p></section>
         Pipe2: downstream pipe
         theta: contraction angle
         &#34;&#34;&#34;
+        self._Pipe1 = Pipe1
+        self._Pipe2 = Pipe2
         ID1 = Pipe1.ID
         ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
         self._type = &#39;Contraction&#39;
+        self.L = None
+        self._OD = None
         self._ID = min(ID1, ID2)
-        if theta &lt;= 45*ureg.deg:
-            self._K = 0.8 * sin(theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
-        elif theta &lt;= 180*ureg.deg:
-            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+
+    @property
+    def K(self):
+        if self._theta &lt;= 45*ureg.deg:
+            self._K = 0.8 * sin(self._theta/2) * (1-self._beta**2) #Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+        elif self._theta &lt;= 180*ureg.deg:
+            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(self._theta/2)) #Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
         else:
-            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {self._theta}&#39;)
+        return self._K
 
     @property
     def volume(self):
-        return 0 * ureg.ft**3</code></pre>
+        return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f&#39;{self._type}, {self._theta.to(ureg.deg)} from {self._Pipe1} to {self._Pipe2}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Enlargement" href="#heat_transfer.piping.Enlargement">Enlargement</a></li>
 </ul>
 <h3>Inherited members</h3>
 <ul class="hlist">
@@ -1340,24 +1408,22 @@ theta: contraction angle</p></section>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Corrugated_Pipe(Pipe):
-    &#39;&#39;&#39;
-    Corrugated pipe class.
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;Corrugated pipe class.
+    &#34;&#34;&#34;
     def __init__ (self, D, L=0*ureg.m):
         super().__init__(D, None, L)
         self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
@@ -1413,7 +1479,7 @@ theta: contraction angle</p></section>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Enlargement(Pipe):
+<pre><code class="python">class Enlargement(Contraction):
     &#34;&#34;&#34;
     Sudden and gradual enlargement based on Crane TP-410.
     &#34;&#34;&#34;
@@ -1423,42 +1489,39 @@ theta: contraction angle</p></section>
         Pipe2: downstream pipe
         theta: contraction angle
         &#34;&#34;&#34;
-        ID1 = Pipe1.ID
-        ID2 = Pipe2.ID
-        self._beta = beta(ID1, ID2)
-        self._theta = theta
+        super().__init__(Pipe1, Pipe2, theta)
         self._type = &#39;Enlargement&#39;
-        self._ID = min(ID1, ID2)
-        if theta &lt;= 45*ureg.deg:
-            self._K = 2.6 * sin(theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
-        elif theta &lt;= 180*ureg.deg:
-            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
-        else:
-            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {theta}&#39;)
 
     @property
-    def volume(self):
-        return 0 * ureg.ft**3</code></pre>
+    def K(self):
+        if self._theta &lt;= 45*ureg.deg:
+            self._K = 2.6 * sin(self._theta/2) * (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
+        elif self._theta &lt;= 180*ureg.deg:
+            self._K = (1-self._beta**2)**2 #Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+        else:
+            logger.error(f&#39;Theta cannot be greater than {180*ureg.deg} (sudden contraction): {self._theta}&#39;)
+        return self._K</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="heat_transfer.piping.Contraction" href="#heat_transfer.piping.Contraction">Contraction</a></li>
 <li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
 </ul>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<li><code><b><a title="heat_transfer.piping.Contraction" href="#heat_transfer.piping.Contraction">Contraction</a></b></code>:
 <ul class="hlist">
-<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Contraction.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1472,23 +1535,21 @@ theta: contraction angle</p></section>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Entrance (Pipe):
-    &#34;&#34;&#34;
-    Pipe entrance, flush, sharp edged.
+    &#34;&#34;&#34;Pipe entrance, flush, sharp edged.
     &#34;&#34;&#34;
     def __init__ (self, ID):
         self._ID = ID
@@ -1497,11 +1558,18 @@ Should have unit of length.</dd>
 
     @property
     def volume(self):
-        return 0 * ureg.ft**3</code></pre>
+        return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f&#39;{self._type}, {ID:.3g~}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="heat_transfer.piping.Exit" href="#heat_transfer.piping.Exit">Exit</a></li>
 </ul>
 <h3>Inherited members</h3>
 <ul class="hlist">
@@ -1531,23 +1599,21 @@ Should have unit of length.</dd>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Exit (Pipe):
-    &#34;&#34;&#34;
-    Pipe exit, projecting or sharp-edged, or rounded.
+<pre><code class="python">class Exit (Entrance):
+    &#34;&#34;&#34;Pipe exit, projecting or sharp-edged, or rounded.
     &#34;&#34;&#34;
     def __init__ (self, ID):
         self._ID = ID
@@ -1556,27 +1622,31 @@ Should have unit of length.</dd>
 
     @property
     def volume(self):
-        return 0 * ureg.ft**3</code></pre>
+        return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f&#39;Exit opening, {ID:.3g~}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
+<li><a title="heat_transfer.piping.Entrance" href="#heat_transfer.piping.Entrance">Entrance</a></li>
 <li><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></li>
 </ul>
 <h3>Inherited members</h3>
 <ul class="hlist">
-<li><code><b><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></b></code>:
+<li><code><b><a title="heat_transfer.piping.Entrance" href="#heat_transfer.piping.Entrance">Entrance</a></b></code>:
 <ul class="hlist">
-<li><code><a title="heat_transfer.piping.Pipe.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
-<li><code><a title="heat_transfer.piping.Pipe.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.ID" href="#heat_transfer.piping.Pipe.ID">ID</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.K" href="#heat_transfer.piping.Pipe.K">K</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.OD" href="#heat_transfer.piping.Pipe.OD">OD</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.area" href="#heat_transfer.piping.Pipe.area">area</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.branch_reinforcement" href="#heat_transfer.piping.Pipe.branch_reinforcement">branch_reinforcement</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.check_material_defined" href="#heat_transfer.piping.Pipe.check_material_defined">check_material_defined</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.f_T" href="#heat_transfer.piping.Pipe.f_T">f_T</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.pressure_design_thick" href="#heat_transfer.piping.Pipe.pressure_design_thick">pressure_design_thick</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.update" href="#heat_transfer.piping.Pipe.update">update</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.volume" href="#heat_transfer.piping.Pipe.volume">volume</a></code></li>
+<li><code><a title="heat_transfer.piping.Entrance.wall" href="#heat_transfer.piping.Pipe.wall">wall</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1590,15 +1660,14 @@ Should have unit of length.</dd>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
@@ -1617,7 +1686,10 @@ Should have unit of length.</dd>
 
     @property
     def volume(self):
-        return 0 * ureg.ft**3</code></pre>
+        return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f&#39;{self._type}, {self.D_nom}&#34;&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1651,23 +1723,21 @@ Should have unit of length.</dd>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Orifice(Pipe):
-    &#34;&#34;&#34;
-    Square-edged orifice plate
+    &#34;&#34;&#34;Square-edged orifice plate
     &#34;&#34;&#34;
     def __init__(self, ID):
         self.Cd = 0.61 #Thin sharp edged orifice plate
@@ -1818,15 +1888,14 @@ used to calculate flow coefficient K that is used for flow calculations.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
@@ -1844,15 +1913,14 @@ Should have unit of length.</dd>
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity`
+        D_nom : int or :obj:`Quantity {length: 1}`
             Nominal diameter of piping; can be dimensionless or having a unit of length.
         SCH : int
             Pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity`
+        L : :obj:`Quantity {length: 1}`
             Pipe length
-        c : :obj:`Quantity`
+        c : :obj:`Quantity {length: 1}`
             Sum of the mechanical allowances plus corrosion and erosion allowances.
-            Should have unit of length.
         &#34;&#34;&#34;
         try:
             self.D = D_nom.magnitude # If united
@@ -1871,31 +1939,31 @@ Should have unit of length.</dd>
 
     @property
     def OD(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
         &#34;&#34;&#34;
         return self._OD
 
     @property
     def wall(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._wall
 
     @property
     def ID(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._ID
 
     @property
     def area(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
         &#34;&#34;&#34;
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
         &#34;&#34;&#34;
         return self.area * self.L
 
@@ -1917,7 +1985,7 @@ Should have unit of length.</dd>
 
     @property
     def K(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
+        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
         &#34;&#34;&#34;
         return self._K
 
@@ -1928,9 +1996,9 @@ Should have unit of length.</dd>
 
         Parameters
         ----------
-        P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             Internal pressure, absolute
-        P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             External pressure, absolute
 
         Returns
@@ -1986,13 +2054,13 @@ Should have unit of length.</dd>
         ----------
         BranchPipe : :obj:Pipe
             Branch pipe/tube instance with S, E, W, Y properties defined
-        P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+        P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
             Design pressure
-        beta : :obj:`pint.Quantity` {dimensionless}
+        beta : :obj:`pint.Quantity {dimensionless}`
             Smaller angle between axes of branch and run
-        d_1 : :obj:`pint.Quantity` {length: 1}
+        d_1 : :obj:`pint.Quantity {length: 1}`
             Effective length removed from pipe at branch (opening for branch)
-        T_r : :obj:`pint.Quantity` {length: 1}
+        T_r : :obj:`pint.Quantity {length: 1}`
             Minimum thickness of reinforcing ring
 
         Returns
@@ -2020,14 +2088,13 @@ Should have unit of length.</dd>
         print(f&#39;Weld branch connection is safe: {A_avail&gt;A_1}&#39;)
 
     def __str__(self):
-        return f&#39;NPS {self.D}&#34; SCH {self.SCH}&#39;</code></pre>
+        return f&#39;{self._type} {self.D}&#34; SCH {self.SCH}, L={self.L:.3~g}&#39;</code></pre>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="heat_transfer.piping.VJ_Pipe" href="#heat_transfer.piping.VJ_Pipe">VJ_Pipe</a></li>
 <li><a title="heat_transfer.piping.Corrugated_Pipe" href="#heat_transfer.piping.Corrugated_Pipe">Corrugated_Pipe</a></li>
 <li><a title="heat_transfer.piping.Entrance" href="#heat_transfer.piping.Entrance">Entrance</a></li>
-<li><a title="heat_transfer.piping.Exit" href="#heat_transfer.piping.Exit">Exit</a></li>
 <li><a title="heat_transfer.piping.Orifice" href="#heat_transfer.piping.Orifice">Orifice</a></li>
 <li><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></li>
 <li><a title="heat_transfer.piping.PipeElbow" href="#heat_transfer.piping.PipeElbow">PipeElbow</a></li>
@@ -2036,90 +2103,89 @@ Should have unit of length.</dd>
 <li><a title="heat_transfer.piping.Globe_valve" href="#heat_transfer.piping.Globe_valve">Globe_valve</a></li>
 <li><a title="heat_transfer.piping.V_Cone" href="#heat_transfer.piping.V_Cone">V_Cone</a></li>
 <li><a title="heat_transfer.piping.Contraction" href="#heat_transfer.piping.Contraction">Contraction</a></li>
-<li><a title="heat_transfer.piping.Enlargement" href="#heat_transfer.piping.Enlargement">Enlargement</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
 <dt id="heat_transfer.piping.Pipe.ID"><code class="name">var <span class="ident">ID</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: ID of the Pipe based on NPS table.</p></section>
+<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: ID of the Pipe based on NPS table.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def ID(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: ID of the Pipe based on NPS table.
+    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
     &#34;&#34;&#34;
     return self._ID</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.K"><code class="name">var <span class="ident">K</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: Resistance coefficient.</p></section>
+<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: Resistance coefficient.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def K(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Resistance coefficient.
+    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
     &#34;&#34;&#34;
     return self._K</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.OD"><code class="name">var <span class="ident">OD</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: Pipe OD based on NPS table.</p></section>
+<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: Pipe OD based on NPS table.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def OD(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Pipe OD based on NPS table.
+    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
     &#34;&#34;&#34;
     return self._OD</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.area"><code class="name">var <span class="ident">area</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 2}: Cross sectional area of pipe.</p></section>
+<section class="desc"><p>:obj:<code>pint.Quantity {length: 2}</code>: Cross sectional area of pipe.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def area(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 2}: Cross sectional area of pipe.
+    &#34;&#34;&#34;:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
     &#34;&#34;&#34;
     return pi * self.ID**2 / 4</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.volume"><code class="name">var <span class="ident">volume</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 3}: Pipe inner volume.</p></section>
+<section class="desc"><p>:obj:<code>pint.Quantity {length: 3}</code>: Pipe inner volume.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def volume(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 3}: Pipe inner volume.
+    &#34;&#34;&#34;:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
     &#34;&#34;&#34;
     return self.area * self.L</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.wall"><code class="name">var <span class="ident">wall</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity</code> {length: 1}: Wall thickness of Pipe based on NPS table.</p></section>
+<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: Wall thickness of Pipe based on NPS table.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def wall(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity` {length: 1}: Wall thickness of Pipe based on NPS table.
+    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
     &#34;&#34;&#34;
     return self._wall</code></pre>
 </details>
@@ -2136,13 +2202,13 @@ def wall(self):
 <dl>
 <dt><strong><code>BranchPipe</code></strong> :&ensp;:<code>obj</code>:<a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe"><code>Pipe</code></a></dt>
 <dd>Branch pipe/tube instance with S, E, W, Y properties defined</dd>
-<dt><strong><code>P</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}</dt>
+<dt><strong><code>P</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}`</dt>
 <dd>Design pressure</dd>
-<dt><strong><code>beta</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>dimensionless</code>}</dt>
+<dt><strong><code>beta</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>dimensionless</code>}`</dt>
 <dd>Smaller angle between axes of branch and run</dd>
-<dt><strong><code>d_1</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: <code>1</code>}</dt>
+<dt><strong><code>d_1</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Effective length removed from pipe at branch (opening for branch)</dd>
-<dt><strong><code>T_r</code></strong> :&ensp;:<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: <code>1</code>}</dt>
+<dt><strong><code>T_r</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Minimum thickness of reinforcing ring</dd>
 </dl>
 <h2 id="returns">Returns</h2>
@@ -2162,13 +2228,13 @@ def wall(self):
     ----------
     BranchPipe : :obj:Pipe
         Branch pipe/tube instance with S, E, W, Y properties defined
-    P : :obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+    P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
         Design pressure
-    beta : :obj:`pint.Quantity` {dimensionless}
+    beta : :obj:`pint.Quantity {dimensionless}`
         Smaller angle between axes of branch and run
-    d_1 : :obj:`pint.Quantity` {length: 1}
+    d_1 : :obj:`pint.Quantity {length: 1}`
         Effective length removed from pipe at branch (opening for branch)
-    T_r : :obj:`pint.Quantity` {length: 1}
+    T_r : :obj:`pint.Quantity {length: 1}`
         Minimum thickness of reinforcing ring
 
     Returns
@@ -2264,9 +2330,9 @@ Darcy friction factor.</p></section>
 <p>Based on B31.3 304.1.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>P_int</code></strong> :&ensp;<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}</dt>
+<dt><strong><code>P_int</code></strong> :&ensp;<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}`</dt>
 <dd>Internal pressure, absolute</dd>
-<dt><strong><code>P_ext</code></strong> :&ensp;<code>obj</code>:<code>pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}</dt>
+<dt><strong><code>P_ext</code></strong> :&ensp;<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}`</dt>
 <dd>External pressure, absolute</dd>
 </dl>
 <h2 id="returns">Returns</h2>
@@ -2283,9 +2349,9 @@ Minimum required wall thickness.</p></section>
 
     Parameters
     ----------
-    P_int : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+    P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
         Internal pressure, absolute
-    P_ext : obj:`pint.Quantity` {length: -1, mass: 1, time: -2}
+    P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
         External pressure, absolute
 
     Returns
@@ -2353,7 +2419,11 @@ Minimum required wall thickness.</p></section>
     &#34;&#34;&#34;
     def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
         Pipe.__init__(self, D_nom, SCH)
-        super().__init__(R_D, N, angle)</code></pre>
+        super().__init__(R_D, N, angle)
+        self._type = &#39;Pipe elbow&#39;
+
+    def __str__(self):
+        return f&#39;{self.N}x {self._type}, {self.D_nom}&#34; SCH {self.SCH}, {self.angle.to(ureg.deg)}, R_D = {self.R_D}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2400,7 +2470,10 @@ Minimum required wall thickness.</p></section>
     &#34;&#34;&#34;
     def __init__(self, D_nom, SCH=40, direction=&#39;thru&#39;):
         Pipe.__init__(self, D_nom, SCH)
-        super().__init__(direction)</code></pre>
+        super().__init__(direction)
+
+    def __str__(self):
+        return f&#39;{self.N}x {self._type}, {self.D_nom}&#34; SCH {self.SCH}, {self.direction}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2775,15 +2848,14 @@ Simple solution using Darcy equation is used.</p></section>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
@@ -2801,7 +2873,10 @@ Should have unit of length.</dd>
         self.L = L
         self._K = self.f_T()*self.L/self.ID
         self.c = c
-        self._type = &#39;Tube&#39;</code></pre>
+        self._type = &#39;Tube&#39;
+
+    def __str__(self):
+        return f&#39;{self._type}, {self.OD:.3g~}&#34;x{self.wall:.3g~}&#34;, L={self.L:.3g~}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2847,7 +2922,11 @@ Should have unit of length.</dd>
     &#34;&#34;&#34;
     def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
         Tube.__init__(self, OD, wall)
-        super().__init__(R_D, N, angle)</code></pre>
+        super().__init__(R_D, N, angle)
+        self._type = &#39;Tube elbow&#39;
+
+    def __str__(self):
+        return f&#39;{self.N}x {self._type}, {self.OD}&#34;x{self.wall}&#34;, {self.angle.to(ureg.deg)}, R_D = {self.R_D}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2895,7 +2974,10 @@ Should have unit of length.</dd>
     &#34;&#34;&#34;
     def __init__(self, OD, wall, direction=&#39;thru&#39;):
         Tube.__init__(self, OD, wall)
-        super().__init__(direction)</code></pre>
+        super().__init__(direction)
+
+    def __str__(self):
+        return f&#39;{self._type}, {self.OD}&#34;x{self.wall}&#34;, {self.direction}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2925,35 +3007,60 @@ Should have unit of length.</dd>
 </dd>
 <dt id="heat_transfer.piping.VJ_Pipe"><code class="flex name class">
 <span>class <span class="ident">VJ_Pipe</span></span>
-<span>(</span><span>D_nom, SCH, L, VJ_D, VJ_SCH=5)</span>
+<span>(</span><span>D_nom, SCH, L, VJ_D, VJ_SCH=5, c=&lt;Quantity(0, &#x27;inch&#x27;)&gt;)</span>
 </code></dt>
 <dd>
 <section class="desc"><p>Vacuum jacketed pipe.</p>
-<p>Generate Pipe object.</p>
+<p>Generate Vacuum jacketed pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
-<dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Nominal diameter of the inner pipe.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
-<dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dd>Inner pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Length of the inner pipe.</dd>
+<dt><strong><code>VJ_D</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Nominal diameter of the vacuum jacket.</dd>
+<dt><strong><code>VJ_SCH</code></strong> :&ensp;<code>int</code></dt>
+<dd>Vacuum jacket pipe schedule. Default value is SCH 40 (STD).</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances
+of the inner pipe.</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class VJ_Pipe(Pipe):
+    &#34;&#34;&#34;Vacuum jacketed pipe.
     &#34;&#34;&#34;
-    Vacuum jacketed pipe.
-    &#34;&#34;&#34;
-    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
+    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5, c=0*ureg.inch):
+        &#34;&#34;&#34;Generate Vacuum jacketed pipe object.
+
+        Parameters
+        ----------
+        D_nom : int or :obj:`Quantity {length: 1}`
+            Nominal diameter of the inner pipe.
+        SCH : int
+            Inner pipe schedule. Default value is SCH 40 (STD).
+        L : :obj:`Quantity {length: 1}`
+            Length of the inner pipe.
+        VJ_D : int or :obj:`Quantity {length: 1}`
+            Nominal diameter of the vacuum jacket.
+        VJ_SCH : int
+            Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
+        c : :obj:`Quantity {length: 1}`
+            Sum of the mechanical allowances plus corrosion and erosion allowances
+            of the inner pipe.
+        &#34;&#34;&#34;
         super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
-        self._type = &#39;Vacuum jacketed pipe&#39;</code></pre>
+        self._type = &#39;Vacuum jacketed pipe&#39;
+
+    def __str__(self):
+        return f&#39;NPS {self.D}&#34; SCH {self.SCH} with VJ {self.VJ_D}&#34; SCH,\
+        {self.VJ_SCH}, L={self.L:.3~g}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2987,15 +3094,14 @@ Should have unit of length.</dd>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
@@ -3038,22 +3144,21 @@ Should have unit of length.</dd>
 </dd>
 <dt id="heat_transfer.piping.Valve"><code class="flex name class">
 <span>class <span class="ident">Valve</span></span>
-<span>(</span><span>ID, Cv)</span>
+<span>(</span><span>D, Cv)</span>
 </code></dt>
 <dd>
 <section class="desc"><p>Generic valve with known Cv.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
+<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>Quantity</code></dt>
-<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.
-Should have unit of length.</dd>
+<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dd>Sum of the mechanical allowances plus corrosion and erosion allowances.</dd>
 </dl></section>
 <details class="source">
 <summary>
@@ -3063,15 +3168,21 @@ Should have unit of length.</dd>
     &#34;&#34;&#34;
     Generic valve with known Cv.
     &#34;&#34;&#34;
-    def __init__(self, ID, Cv):
+    def __init__(self, D, Cv):
+        self.D = D
         self._Cv = Cv
-        self._ID = ID
+        self._OD = None
+        self._ID = self.D
+        self.L = None
         self._type = &#39;Valve&#39;
-        self._K = Cv_to_K(self._Cv, self.ID)
+        self._K = Cv_to_K(self._Cv, self.D)
 
     @property
     def volume(self):
-        return 0 * ureg.ft**3</code></pre>
+        return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f&#39;{self._type}, {self.D}&#34;, Cv = {self._Cv:.3g}&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
