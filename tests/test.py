@@ -1,6 +1,8 @@
 import heat_transfer as ht
 from scipy.integrate import quad
+import pprint
 
+pp = pprint.PrettyPrinter()
 
 Test_State = ht.ThermState('helium')
 #Test_State.update('PT_INPUTS', ht.Q_('49.17 psi'), ht.Q_('11.029 degR'))
@@ -39,6 +41,8 @@ print(TestPipe.pressure_design_thick(ht.Q_('305 psig')).to(ht.ureg.inch))
 print(TestPipe.volume.to(ht.ureg.ft**3))
 TestPiping = ht.piping.Piping(Test_State, [TestPipe, TestPipe, TestPipe])
 print(TestPiping.volume)
+pp.pprint(ht.piping.NPS_table)
+
 #print(ht.Gr(Test_State, ht.Q_('300 K'), ht.Q_('1 m')))
 #Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))
 #print(Test_pipe)
@@ -76,7 +80,7 @@ print(TestPiping.volume)
 ##    print(Test_piping.init_cond['P'].to(ht.ureg.psig), Test_piping.init_cond['T'].to(ht.ureg.K))
 ##    print (Test_piping.dP(m_dot))
 ##
-##    
+##
 ##
 ##if __name__ == "__main__":
 ##        print (Ra().to_base_units())
