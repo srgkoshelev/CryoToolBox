@@ -29,15 +29,14 @@ class Pipe:
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity`
+        D_nom : int or :obj:`Quantity {length: 1}`
             Nominal diameter of piping; can be dimensionless or having a unit of length.
         SCH : int
             Pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity`
+        L : :obj:`Quantity {length: 1}`
             Pipe length
-        c : :obj:`Quantity`
+        c : :obj:`Quantity {length: 1}`
             Sum of the mechanical allowances plus corrosion and erosion allowances.
-            Should have unit of length.
         """
         try:
             self.D = D_nom.magnitude # If united
@@ -209,10 +208,27 @@ class Pipe:
 
 #' Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
 class VJ_Pipe(Pipe):
+    """Vacuum jacketed pipe.
     """
-    Vacuum jacketed pipe.
-    """
-    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5):
+    def __init__ (self, D_nom, SCH, L, VJ_D, VJ_SCH=5, c=0*ureg.inch):
+        """Generate Vacuum jacketed pipe object.
+
+        Parameters
+        ----------
+        D_nom : int or :obj:`Quantity {length: 1}`
+            Nominal diameter of the inner pipe.
+        SCH : int
+            Inner pipe schedule. Default value is SCH 40 (STD).
+        L : :obj:`Quantity {length: 1}`
+            Length of the inner pipe.
+        VJ_D : int or :obj:`Quantity {length: 1}`
+            Nominal diameter of the vacuum jacket.
+        VJ_SCH : int
+            Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
+        c : :obj:`Quantity {length: 1}`
+            Sum of the mechanical allowances plus corrosion and erosion allowances
+            of the inner pipe.
+        """
         super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
         self._type = 'Vacuum jacketed pipe'
@@ -222,9 +238,8 @@ class VJ_Pipe(Pipe):
         {self.VJ_SCH}, L={self.L:.3~g}'
 
 class Corrugated_Pipe(Pipe):
-    '''
-    Corrugated pipe class.
-    '''
+    """Corrugated pipe class.
+    """
     def __init__ (self, D, L=0*ureg.m):
         super().__init__(D, None, L)
         self._K = 4*super().K #Multiplier 4 is used for corrugated pipe
@@ -245,8 +260,7 @@ class Corrugated_Pipe(Pipe):
         return 0*ureg.m
 
 class Entrance (Pipe):
-    """
-    Pipe entrance, flush, sharp edged.
+    """Pipe entrance, flush, sharp edged.
     """
     def __init__ (self, ID):
         self._ID = ID
@@ -261,8 +275,7 @@ class Entrance (Pipe):
         return f'{self._type}, {ID:.3g~}'
 
 class Exit (Entrance):
-    """
-    Pipe exit, projecting or sharp-edged, or rounded.
+    """Pipe exit, projecting or sharp-edged, or rounded.
     """
     def __init__ (self, ID):
         self._ID = ID
@@ -277,8 +290,7 @@ class Exit (Entrance):
         return f'Exit opening, {ID:.3g~}'
 
 class Orifice(Pipe):
-    """
-    Square-edged orifice plate
+    """Square-edged orifice plate
     """
     def __init__(self, ID):
         self.Cd = 0.61 #Thin sharp edged orifice plate
@@ -294,8 +306,7 @@ class Orifice(Pipe):
         return 0 * ureg.ft**3
 
 class Conic_Orifice(Orifice):
-    """
-    Conic orifice
+    """Conic orifice
     """
     def __init__(self, D, ID):
         super().__init__(ID)
