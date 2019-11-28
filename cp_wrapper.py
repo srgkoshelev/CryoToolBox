@@ -7,7 +7,7 @@ CP_const_unit = {
     #'acentric_factor': (CP.iacentric_factor, ),
     #'Dmolar_reducing': (CP.irhomolar_reducing, ),
     'Dmolar_critical': (CP.irhomolar_critical, ureg.mol/ureg.m**3),
-    'T_reducing': (CP.iT_reducing, ureg.K), 
+    'T_reducing': (CP.iT_reducing, ureg.K),
     'T_critical': (CP.iT_critical, ureg.K),
     #'Dmass_reducing': (CP.irhomass_reducing, ),
     'Dmass_critical': (CP.irhomass_critical, ureg.kg/ureg.m**3),
@@ -116,14 +116,16 @@ CP_inputs = {
 }
 
 class ThermState:
-    def __init__(self, fluid, backend="HEOS"):
+    def __init__(self, fluid, backend="HEOS",**state_parameters):
         """
         Available backends: HEOS (opensource), REFPROP.
         See http://www.coolprop.org/coolprop/REFPROP.html for details.
         """
         self._AbstractState = CP.AbstractState(backend, fluid)
+        # TODO add one liner properties
 
     def update(self, input_name1, input_value1, input_name2, input_value2):
+        # TODO change to kwargs?
         if input_name1 < input_name2: #Sorting inputs alphabetically
             CP_input_str = input_name1 + input_name2
             CP_input_value1 = input_value1.to(
