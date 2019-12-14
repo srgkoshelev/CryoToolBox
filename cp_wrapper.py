@@ -4,12 +4,12 @@ from . import ureg, T_NTP, P_NTP
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
     'molar_mass': (CP.imolar_mass, ureg.kg/ureg.mol),
-    #'acentric_factor': (CP.iacentric_factor, ),
-    #'Dmolar_reducing': (CP.irhomolar_reducing, ),
+    # 'acentric_factor': (CP.iacentric_factor, ),
+    # 'Dmolar_reducing': (CP.irhomolar_reducing, ),
     'Dmolar_critical': (CP.irhomolar_critical, ureg.mol/ureg.m**3),
     'T_reducing': (CP.iT_reducing, ureg.K),
     'T_critical': (CP.iT_critical, ureg.K),
-    #'Dmass_reducing': (CP.irhomass_reducing, ),
+    # 'Dmass_reducing': (CP.irhomass_reducing, ),
     'Dmass_critical': (CP.irhomass_critical, ureg.kg/ureg.m**3),
     'P_critical': (CP.iP_critical, ureg.Pa),
     'P_reducing': (CP.iP_reducing, ureg.Pa),
@@ -19,62 +19,63 @@ CP_const_unit = {
     'T_max': (CP.iT_max, ureg.K),
     'P_max': (CP.iP_max, ureg.Pa),
     'P_min': (CP.iP_min, ureg.Pa),
-    #'dipole_moment': (CP.idipole_moment, ),
+    # 'dipole_moment': (CP.idipole_moment, ),
     'T': (CP.iT, ureg.K),
     'P': (CP.iP, ureg.Pa),
     'Q': (CP.iQ, ureg.mol/ureg.mol),
-    #'Tau': (CP.iTau, ),
-    #'Delta': (CP.iDelta, ),
+    # 'Tau': (CP.iTau, ),
+    # 'Delta': (CP.iDelta, ),
     'Dmolar': (CP.iDmolar, ureg.mol/ureg.m**3),
     'Hmolar': (CP.iHmolar, ureg.J/ureg.mol),
     'Smolar': (CP.iSmolar, ureg.J/ureg.mol/ureg.K),
     'Cpmolar': (CP.iCpmolar, ureg.J/ureg.mol/ureg.K),
-    #'Cp0molar': (CP.iCp0molar, ureg.J/ureg.mol/ureg.K),
+    # 'Cp0molar': (CP.iCp0molar, ureg.J/ureg.mol/ureg.K),
     'Cvmolar': (CP.iCvmolar, ureg.J/ureg.mol/ureg.K),
     'Umolar': (CP.iUmolar, ureg.J/ureg.mol),
-    #'Gmolar': (CP.iGmolar, ),
-    #'Helmholtzmolar': (CP.iHelmholtzmolar, ),
-    #'Smolar_residual': (CP.iSmolar_residual, ),
+    # 'Gmolar': (CP.iGmolar, ),
+    # 'Helmholtzmolar': (CP.iHelmholtzmolar, ),
+    # 'Smolar_residual': (CP.iSmolar_residual, ),
     'Dmass': (CP.iDmass, ureg.kg/ureg.m**3),
     'Hmass': (CP.iHmass, ureg.J/ureg.kg),
     'Smass': (CP.iSmass, ureg.J/ureg.kg/ureg.K),
     'Cpmass': (CP.iCpmass, ureg.J/ureg.kg/ureg.K),
-    #'Cp0mass': (CP.iCp0mass, ureg.J/ureg.kg/ureg.K),
+    # 'Cp0mass': (CP.iCp0mass, ureg.J/ureg.kg/ureg.K),
     'Cvmass': (CP.iCvmass, ureg.J/ureg.kg/ureg.K),
     'Umass': (CP.iUmass, ureg.J/ureg.kg),
-    #'Gmass': (CP.iGmass, ),
-    #'Helmholtzmass': (CP.iHelmholtzmass, ),
+    # 'Gmass': (CP.iGmass, ),
+    # 'Helmholtzmass': (CP.iHelmholtzmass, ),
     'viscosity': (CP.iviscosity, ureg.Pa*ureg.s),
     'conductivity': (CP.iconductivity, ureg.W/ureg.m/ureg.K),
-    #'surface_tension': (CP.isurface_tension, ),
+    # 'surface_tension': (CP.isurface_tension, ),
     'Prandtl': (CP.iPrandtl, ureg.dimensionless),
-    #'speed_sound': (CP.ispeed_sound, ),
-    'isothermal_compressibility': (CP.iisothermal_compressibility, ureg.Pa**-1),
+    # 'speed_sound': (CP.ispeed_sound, ),
+    'isothermal_compressibility': (CP.iisothermal_compressibility,
+                                   ureg.Pa**-1),
     'isobaric_expansion_coefficient':
     (CP.iisobaric_expansion_coefficient, ureg.K**-1),
     'isentropic_expansion_coefficient':
     (CP.iisentropic_expansion_coefficient, ureg.dimensionless),
-    #'fundamental_derivative_of_gas_dynamics':
-    #(CP.ifundamental_derivative_of_gas_dynamics, ),
-    #'alphar': (CP.ialphar, ),
-    #'alpha0': (CP.ialpha0, ),
-    #'Bvirial': (CP.iBvirial, ),
-    #'Cvirial': (CP.iCvirial, ),
-    #'dBvirial_dT': (CP.idBvirial_dT, ),
-    #'dCvirial_dT': (CP.idCvirial_dT, ),
+    # 'fundamental_derivative_of_gas_dynamics':
+    # (CP.ifundamental_derivative_of_gas_dynamics, ),
+    # 'alphar': (CP.ialphar, ),
+    # 'alpha0': (CP.ialpha0, ),
+    # 'Bvirial': (CP.iBvirial, ),
+    # 'Cvirial': (CP.iCvirial, ),
+    # 'dBvirial_dT': (CP.idBvirial_dT, ),
+    # 'dCvirial_dT': (CP.idCvirial_dT, ),
     'Z': (CP.iZ, ureg.dimensionless),
-    #'PIP': (CP.iPIP, ),
-    #'fraction_min': (CP.ifraction_min, ),
-    #'fraction_max': (CP.ifraction_max, ),
-    #'T_freeze': (CP.iT_freeze, ),
-    #'GWP20': (CP.iGWP20, ),
-    #'GWP100': (CP.iGWP100, ),
-    #'GWP500': (CP.iGWP500, ),
-    #'FH': (CP.iFH, ),
-    #'HH': (CP.iHH, ),
-    #'PH': (CP.iPH, ),
-    #'ODP': (CP.iODP, ),
-    #'Phase': (CP.iPhase, ),
+    # 'PIP': (CP.iPIP, ),
+    # 'fraction_min': (CP.ifraction_min, ),
+    # 'fraction_max': (CP.ifraction_max, ),
+    # 'T_freeze': (CP.iT_freeze, ),
+    # 'GWP20': (CP.iGWP20, ),
+    # 'GWP100': (CP.iGWP100, ),
+    # 'GWP500': (CP.iGWP500, ),
+    # 'FH': (CP.iFH, ),
+    # 'HH': (CP.iHH, ),
+    # 'PH': (CP.iPH, ),
+    # 'ODP': (CP.iODP, ),
+    # 'Phase': (CP.iPhase, ),
 }
 
 CP_inputs = {
@@ -115,18 +116,32 @@ CP_inputs = {
     'DmolarUmolar': CP.DmolarUmolar_INPUTS,
 }
 
+
 class ThermState:
-    def __init__(self, fluid, backend="HEOS",**state_parameters):
+    def __init__(self, fluid, backend="HEOS", **state_parameters):
         """
         Available backends: HEOS (opensource), REFPROP.
         See http://www.coolprop.org/coolprop/REFPROP.html for details.
         """
         self._AbstractState = CP.AbstractState(backend, fluid)
-        # TODO add one liner properties
+        if state_parameters:
+            self.update_kw(**state_parameters)
+
+    def update_kw(self, **state_parameters):
+        """Update thermodynamic state using keyword arguments."""
+        if len(state_parameters) != 2:
+            raise TypeError(f'update_kw() takes 2 arguments \
+            ({len(state_parameters)} given)')
+        input_names = []
+        input_values = []
+        for name, value in state_parameters.items():
+            input_names.append(name)
+            input_values.append(value)
+        self.update(input_names[0], input_values[0],
+                    input_names[1], input_values[1])
 
     def update(self, input_name1, input_value1, input_name2, input_value2):
-        # TODO change to kwargs?
-        if input_name1 < input_name2: #Sorting inputs alphabetically
+        if input_name1 < input_name2:  # Sorting inputs alphabetically
             CP_input_str = input_name1 + input_name2
             CP_input_value1 = input_value1.to(
                 CP_const_unit[input_name1][1]).magnitude
@@ -197,12 +212,12 @@ class ThermState:
         return self._AbstractState.gas_constant()
 
     @property
-    #@ureg.wraps(CP_const_unit['Z'][1], None)
+    # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
         Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
         return Z_.to(ureg.dimensionless)
-        #Temporarily unavailable function
-        #return self._AbstractState.compressibility_factor()
+        # Temporarily unavailable function
+        # return self._AbstractState.compressibility_factor()
 
     @property
     @ureg.wraps(CP_const_unit['Hmolar'][1], None)
@@ -324,8 +339,8 @@ class ThermState:
         Calculate Specific heat input, v * (dh/dv)|p.
         This function is not described in AbstractState class.
         """
-        # Because specific volume is not available as function of the AbstratState,
-        # density is used instead
+        # Because specific volume is not available as function of
+        # the AbstractState, density is used instead
         # The resulting function is: -Dmass*(dHmass/Dmass)|p
         return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
 
@@ -336,7 +351,8 @@ class ThermState:
 
         :returns: gamma = k = Cp/Cv
         """
-        #To avoid real gas effects influencing Cp and Cv, calculating at gamma at NTP
+        # To avoid real gas effects influencing Cp and Cv,
+        # calculating at gamma at NTP
         T_current = self.T
         S_current = self.Smass
         self.update('P', P_NTP, 'T', T_NTP)
@@ -370,12 +386,14 @@ class ThermState:
         return self._AbstractState.backend_name()
 
     def __str__(self):
-        return f'{self.name.capitalize()} at T = {self.T.to(ureg.K):.3~g~} and P = {self.P.to(ureg.psi):.3g~}.'
+        return f'{self.name.capitalize()} at T = {self.T.to(ureg.K):.3~g~} and \
+        P = {self.P.to(ureg.psi):.3g~}.'
 
     @property
     def MZT(self):
         """
-        Calculate sqrt(M/(ZT)) a commonly used square root group for discharge flow calculation.
+        Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
+        flow calculation.
         """
         MZT_ = (self.molar_mass / (self.compressibility_factor*self.T))**0.5
         return MZT_
