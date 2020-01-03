@@ -11,7 +11,7 @@ z_1 = Q_('200 ft')  # Scaled distance for debris and missile damage (PNNL)
 z_2 = Q_('15 ft')  # Scaled distance for eardrum rupture (PNNL)
 z_3 = Q_('6.7 ft')  # Scaled distance for lung damage (PNNL)
 
-sigma = ureg.stefan_bolzman_constant
+sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
 
 
