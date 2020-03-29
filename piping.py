@@ -15,7 +15,8 @@ import pickle
 from scipy.optimize import root_scalar
 from abc import ABC, abstractmethod
 
-set_application_registry(ureg)  # Should be used for both pickling and unpickling
+# Setting up default unit registry for both pickling and unpickling
+set_application_registry(ureg)
 NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb"))
 
 
@@ -204,17 +205,16 @@ class Pipe:
         d_2 = half_width(d_1, T_b, T_h, c, D_h)
         A_1 = t_h * d_1 * (2-sin(beta))
         A_2 = (2*d_2-d_1) * (T_h - t_h - c)
-        L_4 = min(2.5*(T_h-c), 2.5*(T_b-c))  # height of reinforcement zone outside of run pipe
+        # height of reinforcement zone outside of run pipe
+        L_4 = min(2.5*(T_h-c), 2.5*(T_b-c))
         A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * BranchPipe.S / self.S
         print(f'Required Reinforcement Area A_1: {A_1.to(ureg.inch**2):.3g~}')
-        A_avail = A_2 + A_3 # Ignoring welding reinforcement
+        A_avail = A_2 + A_3  # Ignoring welding reinforcement
         print(f'Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}')
         print(f'Weld branch connection is safe: {A_avail>A_1}')
 
     def __str__(self):
         return f'{self._type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
-
-# Other Pipe elements are based on Pipe class and only specify the difference in regards to parent class.
 
 
 class VJ_Pipe(Pipe):
@@ -396,9 +396,10 @@ class AbstractElbow(ABC):
         return (A1*B1*C1+super().K)*self.N
 
 
-class PipeElbow(AbstractElbow, Pipe):  # MRO makes method K from Elbow class to override method from Pipe class
+class PipeElbow(AbstractElbow, Pipe):
     """
     NPS Tee fitting.
+    MRO makes method K from Elbow class to override method from Pipe class.
     """
     def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
         Pipe.__init__(self, D_nom, SCH)
@@ -410,9 +411,10 @@ class PipeElbow(AbstractElbow, Pipe):  # MRO makes method K from Elbow class to 
         {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
-class TubeElbow(AbstractElbow, Tube):  # MRO makes method K from Elbow class to override method from Pipe class
+class TubeElbow(AbstractElbow, Tube):
     """
     NPS Tee fitting.
+    MRO makes method K from Elbow class to override method from Pipe class.
     """
     def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
         Tube.__init__(self, OD, wall)
@@ -449,9 +451,10 @@ class AbstractTee(ABC):
             return 60*self.f_T()  # Crane TP-410 p. A-29
 
 
-class PipeTee(AbstractTee, Pipe):  # MRO makes method K from Tee class to override method from Pipe class
+class PipeTee(AbstractTee, Pipe):
     """
     NPS Tee fitting.
+    MRO makes method K from Tee class to override method from Pipe class.
     """
     def __init__(self, D_nom, SCH=40, direction='thru'):
         Pipe.__init__(self, D_nom, SCH)
@@ -777,7 +780,8 @@ def K_to_Cv(K, ID):
     A = pi*ID**2/4
     rho_w = 999*ureg('kg/m**3')  # Water density at 60 F
     # TODO move density to global const (or use ThermState)
-    Cv = A*(2/(K*rho_w))**0.5  # Based on Crane TP-410 p. 2-10 and Darcy equation
+    # Based on Crane TP-410 p. 2-10 and Darcy equation:
+    Cv = A*(2/(K*rho_w))**0.5
     Cv.ito(ureg('gal/(min*(psi)**0.5)'))  # Convention accepted in the US
     return Cv
 
@@ -796,7 +800,8 @@ def Cv_to_K(Cv, ID):
         Cv = Cv*ureg('gal/(min*(psi)**0.5)')  # Convention accepted in the US
     A = pi*ID**2/4
     rho_w = 999*ureg('kg/m**3')  # Water density at 60 F
-    K = 2*A**2/(Cv**2*rho_w)  # Based on Crane TP-410 p. 2-10 and Darcy equation
+    # Based on Crane TP-410 p. 2-10 and Darcy equation:
+    K = 2*A**2/(Cv**2*rho_w)
     return K.to(ureg.dimensionless)
 
 
