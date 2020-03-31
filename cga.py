@@ -61,8 +61,8 @@ def F(Fluid_FR, Fluid_PRD):
     v_i = 1 / Fluid_PRD.Dmass  # Specific volume
     P = Fluid_FR.P
     v = 1 / Fluid_FR.v
-    _F = (P_i*v_i/(P*v))**0.5
-    return _F.to(ureg.dimensionless)
+    F_ = (P_i*v_i/(P*v))**0.5
+    return F_.to(ureg.dimensionless)
 
 
 def primary_insulated(T, U, A, F=1):
