@@ -428,7 +428,7 @@ class ThermState:
     def latent_heat(self):
         """Calculate latent heat of evaporation."""
         assert self.is_super_critical is False, (
-            'Latent heat is only defined'
+            'Latent heat is only defined '
             'for subcritical phase')
         TempState = self.copy()
         TempState.update_kw(P=self.P, Q=0*ureg.dimensionless)
