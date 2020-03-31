@@ -79,11 +79,19 @@ def G_i(Fluid_FR):
 
     Fluid_FR: Fluid at flow rating temperature and pressure
     """
-    C = Fluid_FR.C_gas_constant
-    TZM = 1 / Fluid_FR.MZT  # sqrt(T*Z/M)
     if Fluid_FR.P >= Fluid_FR.P_critical:
         L = Fluid_FR.specific_heat_input  # L is replaced by theta
     elif Fluid_FR.P >= 0.4*Fluid_FR.P_critical:
-        # L =
-        pass
-    G_i = 73.4 * (Q_('1660 degF')-T) / (C*L) * TZM
+        TempState = Fluid_FR.copy()
+        TempState.update_kw(P=TempState.P, Q=0*ureg.dimensionless)
+        v_l = 1/TempState.Dmass
+        TempState.update_kw(P=TempState.P, Q=1*ureg.dimensionless)
+        v_g = 1/TempState.Dmass
+        L = Fluid_FR.latent_heat * (v_g-v_l)/v_g
+    else:
+        L = Fluid_FR.latent_heat
+    C = Fluid_FR.C_gas_constant
+    TZM = 1 / Fluid_FR.MZT  # sqrt(T*Z/M)
+    T = Fluid_FR.T
+    G_i_ = 73.4 * (Q_('1660 degF')-T) / (C*L) * TZM
+    return G_i_
