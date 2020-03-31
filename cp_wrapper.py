@@ -422,3 +422,21 @@ class ThermState:
         """
         MZT_ = (self.molar_mass / (self.compressibility_factor*self.T))**0.5
         return MZT_
+
+    @property
+    def latent_heat(self):
+        """Calculate latent heat of evaporation."""
+        assert self.is_super_critical is False, 'Latent heat is only defined' + \
+            'for subcritical phase'
+        TempState = self.copy()
+        TempState.update_kw(P=self.P, Q=0*ureg.dimensionless)
+        h_liq = TempState.Hmass
+        TempState.update_kw(P=self.P, Q=1*ureg.dimensionless)
+        h_gas = TempState.Hmass
+        return h_gas - h_liq
+
+    def copy(self):
+        """Create a copy of current ThermState object."""
+        TempState = ThermState(self.name, backend=self.backend)
+        TempState.update_kw(P=self.P, T=self.T)
+        return TempState
