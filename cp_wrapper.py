@@ -345,9 +345,18 @@ class ThermState:
         5: Subcritical gas.
         6: Twophase.
         7: Unknown phase
-        8: Phase not imposed
         """
         return self._AbstractState.phase()
+
+    @property
+    def is_super_critical(self):
+        """Return True if state is supercritical."""
+        if self.phase in [1,2,3,4]:
+            return True
+        elif self.phase in [0, 5, 7]:
+            return False
+        else:
+            raise ValueError('Phase is unknown')
 
     @property
     def specific_heat_input(self):
