@@ -334,6 +334,22 @@ class ThermState:
         return result * output_unit
 
     @property
+    def phase(self):
+        """Calculate the phase of the fluid.
+
+        0: Subcritical liquid
+        1: Supercritical (p > pc, T > Tc)
+        2: Supercritical gas (p < pc, T > Tc)
+        3: Supercritical liquid (p > pc, T < Tc)
+        4: At the critical point.
+        5: Subcritical gas.
+        6: Twophase.
+        7: Unknown phase
+        8: Phase not imposed
+        """
+        return self._AbstractState.phase()
+
+    @property
     def specific_heat_input(self):
         """
         Calculate Specific heat input, v * (dh/dv)|p.
