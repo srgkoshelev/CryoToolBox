@@ -411,7 +411,8 @@ class ThermState:
         return self._AbstractState.backend_name()
 
     def __str__(self):
-        return f'{self.name.capitalize()} at T = {self.T.to(ureg.K):.3~g~} and ' + \
+        return f'{self.name.capitalize()} at ' + \
+            f'T = {self.T.to(ureg.K):.3~g~} and ' + \
             f'P = {self.P.to(ureg.psi):.3g~}.'
 
     @property
@@ -426,8 +427,9 @@ class ThermState:
     @property
     def latent_heat(self):
         """Calculate latent heat of evaporation."""
-        assert self.is_super_critical is False, 'Latent heat is only defined' + \
-            'for subcritical phase'
+        assert self.is_super_critical is False, (
+            'Latent heat is only defined'
+            'for subcritical phase')
         TempState = self.copy()
         TempState.update_kw(P=self.P, Q=0*ureg.dimensionless)
         h_liq = TempState.Hmass
