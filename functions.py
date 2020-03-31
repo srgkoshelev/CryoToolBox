@@ -1,9 +1,9 @@
 from math import log, log10, pi
-from . import logger
 from . import ureg, Q_
 from . import Air
 from . import P_NTP
-from .cp_wrapper import ThermState
+from . import cga
+from . import logger
 from scipy.interpolate import interp1d
 
 E_TNT = Q_('4850 J/g')  # TNT equivalent Energy of Explosion (PNNL)
@@ -57,44 +57,8 @@ def from_scfma(Q_air, Fluid):
 
 
 def theta_heat(Fluid, step=0.01):
-    """
-    Calculate latent heat/specific heat input and temperature for flow
-    capacity calculation per CGA S-1.3 2008 6.1.3.
-
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :step: temperature step
-    :returns: tuple (specific heat, temperature)
-    """
-    TempState = ThermState(Fluid.name, backend=Fluid.backend)
-    # Only working for pure fluids and pre-defined mixtures
-    if Fluid.P > Fluid.P_critical:
-        logger.warning(f'{Fluid.name} is supercritical at {Fluid.P:.3~g}. \
-        Specific heat input will be used')
-        TempState.update('P', Fluid.P, 'T', Fluid.T_min)
-        T_start = TempState.T
-        T_end = 300*ureg.K
-        cga_criterion = ureg('0 m/J * (m*kg)**0.5')
-        # CGA criterion for calculating temperature of specific heat input
-        T = T_start
-        while T <= T_end:
-            spec_vol = 1/TempState.Dmass  # specific volume
-            cga_criterion_new = (spec_vol**0.5)/TempState.specific_heat_input
-            if cga_criterion_new > cga_criterion:
-                cga_criterion = cga_criterion_new
-            else:
-                break  # Function has only one maximum
-            T += step*ureg.K
-            TempState.update('P', TempState.P, 'T', T)
-        return (TempState.specific_heat_input, T)
-    else:
-        logger.warning(f'{Fluid.name} is subcritical at {Fluid.P:.3~g}. \
-        Latent heat of evaporation will be used')
-        TempState.update('P', Fluid.P, 'Q', Q_('0'))
-        h_liquid = TempState.Hmass
-        TempState.update('P', Fluid.P, 'Q', Q_('1'))
-        h_vapor = TempState.Hmass
-        latent_heat = h_vapor - h_liquid
-        return (latent_heat, TempState.T)  # saturation temperature
+    logger.warning('Deprecated. Use ht.cga.theta() instead.')
+    return cga.theta(Fluid, step)
 
 
 def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
