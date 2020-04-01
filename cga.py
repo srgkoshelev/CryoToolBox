@@ -17,11 +17,11 @@ def theta(Fluid, step=0.01):
     :step: temperature step
     :returns: tuple (specific heat, temperature)
     """
-    TempState = ThermState(Fluid.name, backend=Fluid.backend)
+    TempState = Fluid.copy()
     # Only working for pure fluids and pre-defined mixtures
-    if Fluid.P > Fluid.P_critical:
-        logger.warning(f'{Fluid.name} is supercritical at {Fluid.P:.3~g}. \
-        Specific heat input will be used')
+    if Fluid.is_super_critical:
+        logger.warning(f'{Fluid.name} is supercritical at {Fluid.P:.3~g}'
+                       f' and {Fluid.T:.3g~}. Specific heat input will be used.')
         TempState.update('P', Fluid.P, 'T', Fluid.T_min)
         T_start = TempState.T
         T_end = 300*ureg.K
@@ -41,11 +41,7 @@ def theta(Fluid, step=0.01):
     else:
         logger.warning(f'{Fluid.name} is subcritical at {Fluid.P:.3~g}. \
         Latent heat of evaporation will be used')
-        TempState.update('P', Fluid.P, 'Q', Q_('0'))
-        h_liquid = TempState.Hmass
-        TempState.update('P', Fluid.P, 'Q', Q_('1'))
-        h_vapor = TempState.Hmass
-        latent_heat = h_vapor - h_liquid
+        latent_heat = Fluid.latent_heat
         return (latent_heat, TempState.T)  # saturation temperature
 
 
