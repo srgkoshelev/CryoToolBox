@@ -75,7 +75,8 @@ CP_const_unit = {
     # 'HH': (CP.iHH, ),
     # 'PH': (CP.iPH, ),
     # 'ODP': (CP.iODP, ),
-    # 'Phase': (CP.iPhase, ),
+    'Phase': (CP.iPhase, ureg.dimensionless),
+    'C_gas_constant': (None, ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5),
 }
 
 CP_inputs = {
@@ -334,6 +335,7 @@ class ThermState:
         return result * output_unit
 
     @property
+    @ureg.wraps(CP_const_unit['Phase'][1], None)
     def phase(self):
         """Calculate the phase of the fluid.
 
@@ -386,14 +388,14 @@ class ThermState:
         return _gamma
 
     @property
+    @ureg.wraps(CP_const_unit['C_gas_constant'][1], None)
     def C_gas_constant(self):
         """
         Constant for gas or vapor which is the function of the ratio of
         specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
         """
-        k_ = self.gamma
-        C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5*ureg(
-            'lb/(hr*lbf)*(mol*degR/g)^0.5')
+        k_ = self.gamma.magnitude
+        C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5
         return C
 
     @property
