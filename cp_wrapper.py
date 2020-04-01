@@ -416,12 +416,18 @@ class ThermState:
             f'P = {self.P.to(ureg.psi):.3g~}.'
 
     @property
+    def M(self):
+        """Calculate relative molecular mass."""
+        M_ = self.molar_mass / Q_('1 g/mol')
+        return M_.to(ureg.dimensionless)
+
+    @property
     def MZT(self):
         """
         Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
         flow calculation.
         """
-        MZT_ = (self.molar_mass / (self.compressibility_factor*self.T))**0.5
+        MZT_ = (self.M / (self.compressibility_factor*self.T))**0.5
         return MZT_
 
     @property
