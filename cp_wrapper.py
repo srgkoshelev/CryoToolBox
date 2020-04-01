@@ -1,5 +1,5 @@
 import CoolProp.CoolProp as CP
-from . import ureg, T_NTP, P_NTP
+from . import Q_, ureg, T_NTP, P_NTP
 
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),

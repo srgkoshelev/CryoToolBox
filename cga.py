@@ -5,7 +5,7 @@ Pressure relief calculations for CGA S-1.3.
 
 from . import ureg, Q_
 from . import logger
-from .cp_wrapper import ThermState
+from .cp_wrapper import CP_const_unit
 
 
 def theta(Fluid, step=0.01):
@@ -65,20 +65,26 @@ def F(Fluid_FR, Fluid_PRD):
     return F_.to(ureg.dimensionless)
 
 
-def primary_insulated(T, U, A, F=1):
+def primary_insulated(Fluid_FR, U, A, F=1, conservative=True):
     """Calculate minimum required flow capacity for primary PRD on insulated
     containers for liquefied compressed gases, refrigerated fluids, and
     refrigerated (cryogenic) fluids per 6.2.2.
     """
-    Q_a = (Q_('590 degF')-T) / (4*(Q_('1660 degF')-T)) * F * G_i * U * A
+    T = Fluid_FR.T.to(ureg.degR).magnitude
+    G_i_ = G_i(Fluid_FR, conservative=conservative)
+    U = U.to(ureg.BTU/(ureg.hr*ureg.ft**2*ureg.degR)).magnitude
+    A = A.to(ureg.ft**2).magnitude
+    Q_a = (590-T) / (4*(1660-T)) * F * G_i_ * U * A
+    return Q_a * ureg.ft**3 / ureg.min
 
 
-def G_i(Fluid_FR):
+def G_i(Fluid_FR, conservative=True):
     """Calculate gas factor for insulated containers per
     Notes to Table 1 and Table 2.
 
     Fluid_FR: Fluid at flow rating temperature and pressure
     """
+
     if Fluid_FR.P >= Fluid_FR.P_critical:
         L = Fluid_FR.specific_heat_input  # L is replaced by theta
     elif Fluid_FR.P >= 0.4*Fluid_FR.P_critical:
@@ -90,8 +96,21 @@ def G_i(Fluid_FR):
         L = Fluid_FR.latent_heat * (v_g-v_l)/v_g
     else:
         L = Fluid_FR.latent_heat
+    L, T = theta(Fluid_FR)
     C = Fluid_FR.C_gas_constant
     TZM = 1 / Fluid_FR.MZT  # sqrt(T*Z/M)
-    T = Fluid_FR.T
-    G_i_ = 73.4 * (Q_('1660 degF')-T) / (C*L) * TZM
-    return G_i_
+    # Conservative value for He is 52.5 for P <= 200 psig
+    if conservative and Fluid_FR.name.lower() == 'helium':
+        return 52.5
+    else:
+        return _G_i_us(T, C, L, TZM)
+
+@ureg.wraps(None, (ureg.degR,
+                   CP_const_unit['C_gas_constant'][1],
+                   ureg.BTU/ureg.lb,
+                   ureg.degR**0.5))
+def _G_i_us(T, C, L, TZM):
+    """Calculate G_i factor in US customary units.
+    While the actual value has units, the quantity returned as dimensionless.
+    """
+    return 73.4 * (1660-T) / (C*L) * TZM
