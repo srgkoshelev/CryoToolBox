@@ -366,7 +366,7 @@ class ThermState:
         """
         # Because specific volume is not available as function of
         # the AbstractState, density is used instead
-        # The resulting function is: -Dmass*(dHmass/Dmass)|p
+        # The resulting function is: -Dmass*(dHmass/dDmass)|p
         return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
 
     @property
