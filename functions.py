@@ -330,7 +330,7 @@ def nist_curve_fit(T, NIST_coefs):  # TODO make hidden
 
     :T: temperature, K
     :NIST_coefs: coefficients from NIST cryo properties database
-    :returns: specific heat capacity
+    :returns: thermal property (e.g. thermal conductivity)
     """
     y = 0
     for ind, coef in enumerate(NIST_coefs):
@@ -339,7 +339,7 @@ def nist_curve_fit(T, NIST_coefs):  # TODO make hidden
     return 10**y
 
 
-def nist_spec_heat(T, material='304ss'):
+def nist_property(T, material, prop):
     """
     Calculate specific heat capacity using NIST properties database.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
@@ -348,9 +348,36 @@ def nist_spec_heat(T, material='304ss'):
     :NIST_coefs: coefficients from NIST cryo properties database
     :returns: specific heat capacity
     """
+    if prop == 'TC':
+        output_unit = ureg.W / (ureg.m*ureg.K)
+    elif prop == 'HC':
+        output_unit = ureg.J / (ureg.kg*ureg.K)
+    else:
+        raise NotImplementedError('Only thermal conductivity (TC) and'
+                                  ' heat capacity (HC) currently implemented.')
     T = T.to(ureg.K).magnitude
-    # TODO add wrapper / coefficients / load from a file
-    pass
+    property_data = NIST_DATA[material][prop]
+    if T < property_data[1][0] or T > property_data[1][1]:
+        raise ValueError(f'Temperature is out of bounds: {T} for'
+        ' {property_data[1][0]}-{property_data[1][1] limits.}')
+    result = nist_curve_fit(T, property_data[0])
+    return result * output_unit
+
+
+# Temporary storage for NIST data
+NIST_DATA = {
+    '304SS':
+    {
+        'TC': ([-1.4087, 1.3982, 0.2543, -0.6260, 0.2334, 0.4256, -0.4658,
+                0.1650, -0.0199], (1, 300)),
+    },
+    'G10':
+    {
+        'TC': ([-4.1236, 13.788, -26.068, 26.272, -14.663, 4.4954, -0.6905,
+                0.0397, 0], (4, 300)),
+    }
+}
+
 
 
 def stored_energy(Piping):
