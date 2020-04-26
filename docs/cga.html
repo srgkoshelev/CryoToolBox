@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.7.2" />
+<title>heat_transfer.cga API documentation</title>
+<meta name="description" content="Pressure relief calculations for CGA S-1.3.
+2008 ed." />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>heat_transfer.cga</code></h1>
+</header>
+<section id="section-intro">
+<p>Pressure relief calculations for CGA S-1.3.
+2008 ed.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+Pressure relief calculations for CGA S-1.3.
+2008 ed.
+&#34;&#34;&#34;
+
+from . import ureg, Q_
+from . import logger
+from .cp_wrapper import CP_const_unit
+
+
+def theta(Fluid, step=0.01):
+    &#34;&#34;&#34;
+    Calculate latent heat/specific heat input and temperature for flow
+    capacity calculation per CGA S-1.3 2008 6.1.3.
+
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
+    :step: temperature step
+    :returns: tuple (specific heat, temperature)
+    &#34;&#34;&#34;
+    TempState = Fluid.copy()
+    # Only working for pure fluids and pre-defined mixtures
+    if Fluid.is_super_critical:
+        logger.warning(f&#39;{Fluid.name} is supercritical at {Fluid.P:.3~g}&#39;
+                       f&#39; and {Fluid.T:.3g~}. Specific heat input will be used.&#39;)
+        TempState.update(&#39;P&#39;, Fluid.P, &#39;T&#39;, Fluid.T_min)
+        T_start = TempState.T
+        T_end = 300*ureg.K
+        cga_criterion = ureg(&#39;0 m/J * (m*kg)**0.5&#39;)
+        # CGA criterion for calculating temperature of specific heat input
+        T = T_start
+        while T &lt;= T_end:
+            spec_vol = 1/TempState.Dmass  # specific volume
+            cga_criterion_new = (spec_vol**0.5)/TempState.specific_heat_input
+            if cga_criterion_new &gt; cga_criterion:
+                cga_criterion = cga_criterion_new
+            else:
+                break  # Function has only one maximum
+            T += step*ureg.K
+            TempState.update(&#39;P&#39;, TempState.P, &#39;T&#39;, T)
+        return (TempState.specific_heat_input, T)
+    else:
+        logger.warning(f&#39;{Fluid.name} is subcritical at {Fluid.P:.3~g}. \
+        Latent heat of evaporation will be used&#39;)
+        latent_heat = Fluid.latent_heat
+        return (latent_heat, TempState.T)  # saturation temperature
+
+
+def F(Fluid_FR, Fluid_PRD):
+    &#34;&#34;&#34;Calculate Correction factor F per 6.1.4.
+
+    Fluid_FR: Fluid at flow rating temperature and pressure
+    Fluid_PRD: Fluid at the inlet of PRD
+    &#34;&#34;&#34;
+    if Fluid_FR.name != Fluid_PRD.name:
+        raise TypeError(&#39;Both states have to be of the same fluid.&#39;)
+    P_i = Fluid_PRD.P
+    v_i = 1 / Fluid_PRD.Dmass  # Specific volume
+    P = Fluid_FR.P
+    v = 1 / Fluid_FR.v
+    F_ = (P_i*v_i/(P*v))**0.5
+    return F_.to(ureg.dimensionless)
+
+
+def primary_insulated(Fluid_FR, U, A, F=1, conservative=True):
+    &#34;&#34;&#34;Calculate minimum required flow capacity for primary PRD on insulated
+    containers for liquefied compressed gases, refrigerated fluids, and
+    refrigerated (cryogenic) fluids per 6.2.2.
+    &#34;&#34;&#34;
+    T = Fluid_FR.T.to(ureg.degR).magnitude
+    G_i_ = G_i(Fluid_FR, conservative=conservative)
+    U = U.to(ureg.BTU/(ureg.hr*ureg.ft**2*ureg.degR)).magnitude
+    A = A.to(ureg.ft**2).magnitude
+    Q_a = (590-T) / (4*(1660-T)) * F * G_i_ * U * A
+    return Q_a * ureg.ft**3 / ureg.min
+
+
+def G_i(Fluid_FR, conservative=True):
+    &#34;&#34;&#34;Calculate gas factor for insulated containers per
+    Notes to Table 1 and Table 2.
+
+    Fluid_FR: Fluid at flow rating temperature and pressure
+    &#34;&#34;&#34;
+
+    if Fluid_FR.P &gt;= Fluid_FR.P_critical:
+        L = Fluid_FR.specific_heat_input  # L is replaced by theta
+    elif Fluid_FR.P &gt;= 0.4*Fluid_FR.P_critical:
+        TempState = Fluid_FR.copy()
+        TempState.update_kw(P=TempState.P, Q=0*ureg.dimensionless)
+        v_l = 1/TempState.Dmass
+        TempState.update_kw(P=TempState.P, Q=1*ureg.dimensionless)
+        v_g = 1/TempState.Dmass
+        L = Fluid_FR.latent_heat * (v_g-v_l)/v_g
+    else:
+        L = Fluid_FR.latent_heat
+    L, T = theta(Fluid_FR)
+    C = Fluid_FR.C_gas_constant
+    TZM = 1 / Fluid_FR.MZT  # sqrt(T*Z/M)
+    # Conservative value for He is 52.5 for P &lt;= 200 psig
+    if conservative and Fluid_FR.name.lower() == &#39;helium&#39;:
+        return 52.5
+    else:
+        return _G_i_us(T, C, L, TZM)
+
+@ureg.wraps(None, (ureg.degR,
+                   CP_const_unit[&#39;C_gas_constant&#39;][1],
+                   ureg.BTU/ureg.lb,
+                   ureg.degR**0.5))
+def _G_i_us(T, C, L, TZM):
+    &#34;&#34;&#34;Calculate G_i factor in US customary units.
+    While the actual value has units, the quantity returned as dimensionless.
+    &#34;&#34;&#34;
+    return 73.4 * (1660-T) / (C*L) * TZM</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="heat_transfer.cga.F"><code class="name flex">
+<span>def <span class="ident">F</span></span>(<span>Fluid_FR, Fluid_PRD)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate Correction factor F per 6.1.4.</p>
+<p>Fluid_FR: Fluid at flow rating temperature and pressure
+Fluid_PRD: Fluid at the inlet of PRD</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def F(Fluid_FR, Fluid_PRD):
+    &#34;&#34;&#34;Calculate Correction factor F per 6.1.4.
+
+    Fluid_FR: Fluid at flow rating temperature and pressure
+    Fluid_PRD: Fluid at the inlet of PRD
+    &#34;&#34;&#34;
+    if Fluid_FR.name != Fluid_PRD.name:
+        raise TypeError(&#39;Both states have to be of the same fluid.&#39;)
+    P_i = Fluid_PRD.P
+    v_i = 1 / Fluid_PRD.Dmass  # Specific volume
+    P = Fluid_FR.P
+    v = 1 / Fluid_FR.v
+    F_ = (P_i*v_i/(P*v))**0.5
+    return F_.to(ureg.dimensionless)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.cga.G_i"><code class="name flex">
+<span>def <span class="ident">G_i</span></span>(<span>Fluid_FR, conservative=True)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate gas factor for insulated containers per
+Notes to Table 1 and Table 2.</p>
+<p>Fluid_FR: Fluid at flow rating temperature and pressure</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def G_i(Fluid_FR, conservative=True):
+    &#34;&#34;&#34;Calculate gas factor for insulated containers per
+    Notes to Table 1 and Table 2.
+
+    Fluid_FR: Fluid at flow rating temperature and pressure
+    &#34;&#34;&#34;
+
+    if Fluid_FR.P &gt;= Fluid_FR.P_critical:
+        L = Fluid_FR.specific_heat_input  # L is replaced by theta
+    elif Fluid_FR.P &gt;= 0.4*Fluid_FR.P_critical:
+        TempState = Fluid_FR.copy()
+        TempState.update_kw(P=TempState.P, Q=0*ureg.dimensionless)
+        v_l = 1/TempState.Dmass
+        TempState.update_kw(P=TempState.P, Q=1*ureg.dimensionless)
+        v_g = 1/TempState.Dmass
+        L = Fluid_FR.latent_heat * (v_g-v_l)/v_g
+    else:
+        L = Fluid_FR.latent_heat
+    L, T = theta(Fluid_FR)
+    C = Fluid_FR.C_gas_constant
+    TZM = 1 / Fluid_FR.MZT  # sqrt(T*Z/M)
+    # Conservative value for He is 52.5 for P &lt;= 200 psig
+    if conservative and Fluid_FR.name.lower() == &#39;helium&#39;:
+        return 52.5
+    else:
+        return _G_i_us(T, C, L, TZM)</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.cga.primary_insulated"><code class="name flex">
+<span>def <span class="ident">primary_insulated</span></span>(<span>Fluid_FR, U, A, F=1, conservative=True)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate minimum required flow capacity for primary PRD on insulated
+containers for liquefied compressed gases, refrigerated fluids, and
+refrigerated (cryogenic) fluids per 6.2.2.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def primary_insulated(Fluid_FR, U, A, F=1, conservative=True):
+    &#34;&#34;&#34;Calculate minimum required flow capacity for primary PRD on insulated
+    containers for liquefied compressed gases, refrigerated fluids, and
+    refrigerated (cryogenic) fluids per 6.2.2.
+    &#34;&#34;&#34;
+    T = Fluid_FR.T.to(ureg.degR).magnitude
+    G_i_ = G_i(Fluid_FR, conservative=conservative)
+    U = U.to(ureg.BTU/(ureg.hr*ureg.ft**2*ureg.degR)).magnitude
+    A = A.to(ureg.ft**2).magnitude
+    Q_a = (590-T) / (4*(1660-T)) * F * G_i_ * U * A
+    return Q_a * ureg.ft**3 / ureg.min</code></pre>
+</details>
+</dd>
+<dt id="heat_transfer.cga.theta"><code class="name flex">
+<span>def <span class="ident">theta</span></span>(<span>Fluid, step=0.01)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Calculate latent heat/specific heat input and temperature for flow
+capacity calculation per CGA S-1.3 2008 6.1.3.</p>
+<p>:Fluid: ThermState object describing thermodynamic state (fluid, T, P)
+:step: temperature step
+:returns: tuple (specific heat, temperature)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def theta(Fluid, step=0.01):
+    &#34;&#34;&#34;
+    Calculate latent heat/specific heat input and temperature for flow
+    capacity calculation per CGA S-1.3 2008 6.1.3.
+
+    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
+    :step: temperature step
+    :returns: tuple (specific heat, temperature)
+    &#34;&#34;&#34;
+    TempState = Fluid.copy()
+    # Only working for pure fluids and pre-defined mixtures
+    if Fluid.is_super_critical:
+        logger.warning(f&#39;{Fluid.name} is supercritical at {Fluid.P:.3~g}&#39;
+                       f&#39; and {Fluid.T:.3g~}. Specific heat input will be used.&#39;)
+        TempState.update(&#39;P&#39;, Fluid.P, &#39;T&#39;, Fluid.T_min)
+        T_start = TempState.T
+        T_end = 300*ureg.K
+        cga_criterion = ureg(&#39;0 m/J * (m*kg)**0.5&#39;)
+        # CGA criterion for calculating temperature of specific heat input
+        T = T_start
+        while T &lt;= T_end:
+            spec_vol = 1/TempState.Dmass  # specific volume
+            cga_criterion_new = (spec_vol**0.5)/TempState.specific_heat_input
+            if cga_criterion_new &gt; cga_criterion:
+                cga_criterion = cga_criterion_new
+            else:
+                break  # Function has only one maximum
+            T += step*ureg.K
+            TempState.update(&#39;P&#39;, TempState.P, &#39;T&#39;, T)
+        return (TempState.specific_heat_input, T)
+    else:
+        logger.warning(f&#39;{Fluid.name} is subcritical at {Fluid.P:.3~g}. \
+        Latent heat of evaporation will be used&#39;)
+        latent_heat = Fluid.latent_heat
+        return (latent_heat, TempState.T)  # saturation temperature</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="heat_transfer" href="index.html">heat_transfer</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="heat_transfer.cga.F" href="#heat_transfer.cga.F">F</a></code></li>
+<li><code><a title="heat_transfer.cga.G_i" href="#heat_transfer.cga.G_i">G_i</a></code></li>
+<li><code><a title="heat_transfer.cga.primary_insulated" href="#heat_transfer.cga.primary_insulated">primary_insulated</a></code></li>
+<li><code><a title="heat_transfer.cga.theta" href="#heat_transfer.cga.theta">theta</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
