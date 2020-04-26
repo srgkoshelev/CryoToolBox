@@ -1,3 +1,8 @@
+"""Wrapper module for CoolProp's AbstractState.
+1. Provides unit support
+2. Adds some small useful functions
+
+"""
 import CoolProp.CoolProp as CP
 from . import Q_, ureg, T_NTP, P_NTP
 
