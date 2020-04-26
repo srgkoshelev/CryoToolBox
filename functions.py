@@ -318,49 +318,49 @@ _zeta1_cyl_fin = interp1d(_Bi_data, _zeta1_cyl_data)
 # Linear interpolation for finite Biot numbers
 
 
-def C1_cyl(Bi):
+def C1_cyl(Bi_):
     """
     Calculate first term C1 coefficient for infinite cylinder.
 
     Parameters
     ----------
-    Bi : Biot number
+    Bi_ : Biot number
 
     Returns
     -------
     C1 for infinite cylinder
     """
-    if Bi > 100:
+    if Bi_ > 100:
         C1 = 1.6018
         # Table 5.1, Fundamentals of Heat and Mass Transfer,
         # F. Incropera, 2006.
     else:
-        C1 = _C1_cyl_fin(Bi)
+        C1 = _C1_cyl_fin(Bi_)
     return C1
 
 
-def zeta1_cyl(Bi):
+def zeta1_cyl(Bi_):
     """
     Calculate first term zeta1 coefficient for infinite cylinder.
 
     Parameters
     ----------
-    Bi : Biot number
+    Bi_ : Biot number
 
     Returns
     -------
     zeta1 for infinite cylinder
     """
-    if Bi > 100:
+    if Bi_ > 100:
         zeta1 = 2.4050
         # Table 5.1, Fundamentals of Heat and Mass Transfer,
         # F. Incropera, 2006.
     else:
-        zeta1 = _zeta1_cyl_fin(Bi)
+        zeta1 = _zeta1_cyl_fin(Bi_)
     return zeta1
 
 
-def Fo_cyl(theta, Bi):
+def Fo_cyl(theta, Bi_):
     """
     Calculate Fourier number for infinite cylinder using approximate solution.
     Approximate solution is applicable when the solid has uniform temperature.
@@ -368,14 +368,14 @@ def Fo_cyl(theta, Bi):
     Parameters
     ----------
     theta : dimensionless temperature difference
-    Bi : Biot number
+    Bi_ : Biot number
 
     Returns
     -------
     Fourier number, dimensionless
     """
-    zeta1 = zeta1_cyl(Bi)
-    C1 = C1_cyl(Bi)
+    zeta1 = zeta1_cyl(Bi_)
+    C1 = C1_cyl(Bi_)
     Fo_ = -1 / zeta1**2 * log(theta/C1)
     return Q_(Fo_, ureg.dimensionless)
 
