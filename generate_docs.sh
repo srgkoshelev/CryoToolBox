@@ -1,6 +1,7 @@
 # git -C wiki pull
 pdoc --html heat_transfer -o .
 # rm -v heat_transfer/index.md
+mkdir docs
 mv -v heat_transfer/*.html docs
 rm -rv heat_transfer
 # for filename in wiki/*.md; do
@@ -8,4 +9,4 @@ rm -rv heat_transfer
 # done
 git add -A
 git commit
-git -C wiki push
+git -C docs push
