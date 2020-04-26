@@ -26,12 +26,14 @@ def to_scfma(M_dot_fluid, Fluid):
 
     Parameters
     ----------
-    M_dot_fluid : mass flow rate
-    Fluid : thermodynamic state ThermState instance
+    M_dot_fluid : Quantitiy {mass: 1, time: -1}
+        mass flow rate
+    Fluid : ThermState
 
     Returns
     -------
-    volumetric air flow rate
+    ThermState
+        volumetric air flow rate
     """
     C_fluid = Fluid.C_gas_constant
     C_air = Air.C_gas_constant
@@ -52,12 +54,14 @@ def from_scfma(Q_air, Fluid):
 
     Parameters
     ----------
-    Q_air : volumetric air flow rate
-    Fluid : thermodynamic state ThermState instance
+    Q_air : Quantity {length: 3, time: -1}
+        volumetric air flow rate
+    Fluid : ThermState
 
     Returns
     -------
-    mass flow rate
+    Quantitiy {mass: 1, time: -1}
+        mass flow rate
     """
     C_fluid = Fluid.C_gas_constant
     C_air = Air.C_gas_constant
@@ -82,17 +86,24 @@ def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
 
     Parameters
     ----------
-    eps_cold : emissivity of the cold surface
-    eps_hot : emissivity of the hot surface
-    T_hot : temperature of the hot surface
-    T_cold : temperature of the cold surface
-    :F1_2: F1_2 = F_cold/F_hot
-    eps_baffle : emissivity of the baffle, assumed to be same on both sides
-    N_baffles : number of baffles
+    eps_cold : float
+        emissivity of the cold surface
+    eps_hot : float
+        emissivity of the hot surface
+    T_hot : Quality {temperature: 1}
+        temperature of the hot surface
+    T_cold : Quality {temperature: 1}
+        temperature of the cold surface
+    F1_2 : float
+        F1_2 = F_cold/F_hot
+    eps_baffle : float
+        emissivity of the baffle, assumed to be same on both sides
+    N_baffles : int
+        number of baffles
 
     Returns
     -------
-    dict:
+    dict
             :q0: heat load without any baffles
             q_baffle : heat load with the baffles
             eta : effectiveness of the baffles
