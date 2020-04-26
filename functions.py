@@ -359,7 +359,7 @@ def nist_property(T, material, prop):
     property_data = NIST_DATA[material][prop]
     if T < property_data[1][0] or T > property_data[1][1]:
         raise ValueError(f'Temperature is out of bounds: {T} for'
-        ' {property_data[1][0]}-{property_data[1][1] limits.}')
+        f' {property_data[1][0]}-{property_data[1][1]} limits.')
     result = nist_curve_fit(T, property_data[0])
     return result * output_unit
 
