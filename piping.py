@@ -32,14 +32,14 @@ class Pipe:
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity {length: 1}`
+        D_nom : int or Quantity {length: 1}
             Nominal diameter of piping; can be dimensionless or having a unit
             of length.
         SCH : int
             Pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity {length: 1}`
+        L : Quantity {length: 1}
             Pipe length
-        c : :obj:`Quantity {length: 1}`
+        c : Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         """
@@ -60,31 +60,31 @@ class Pipe:
 
     @property
     def OD(self):
-        """:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
+        """Quantity {length: 1}: Pipe OD based on NPS table.
         """
         return self._OD
 
     @property
     def wall(self):
-        """:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
+        """Quantity {length: 1}: Wall thickness of Pipe based on NPS table.
         """
         return self._wall
 
     @property
     def ID(self):
-        """:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
+        """Quantity {length: 1}: ID of the Pipe based on NPS table.
         """
         return self._ID
 
     @property
     def area(self):
-        """:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
+        """Quantity {length: 2}: Cross sectional area of pipe.
         """
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
-        """:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
+        """Quantity {length: 3}: Pipe inner volume.
         """
         return self.area * self.L
 
@@ -96,7 +96,7 @@ class Pipe:
 
         Returns
         -------
-        :obj:`pint.Quantity` {dimensionless}
+        Quantity {dimensionless}
             Darcy friction factor.
         """
         if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
@@ -107,7 +107,7 @@ class Pipe:
 
     @property
     def K(self):
-        """:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
+        """Quantity {length: 1}: Resistance coefficient.
         """
         return self._K
 
@@ -118,14 +118,14 @@ class Pipe:
 
         Parameters
         ----------
-        P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P_int : Quantity {length: -1, mass: 1, time: -2}
             Internal pressure, absolute
-        P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P_ext : Quantity {length: -1, mass: 1, time: -2}
             External pressure, absolute
 
         Returns
         -------
-        :obj:`pint.Quantity` {length: 1}
+        Quantity {length: 1}
             Minimum required wall thickness.
         """
         if self.check_material_defined():
@@ -179,13 +179,13 @@ class Pipe:
         ----------
         BranchPipe : `Pipe`
             Branch pipe/tube instance with S, E, W, Y properties defined
-        P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P : Quantity {length: -1, mass: 1, time: -2}
             Design pressure
-        beta : :obj:`pint.Quantity {dimensionless}`
+        beta : Quantity {dimensionless}
             Smaller angle between axes of branch and run
-        d_1 : :obj:`pint.Quantity {length: 1}`
+        d_1 : Quantity {length: 1}
             Effective length removed from pipe at branch (opening for branch)
-        T_r : :obj:`pint.Quantity {length: 1}`
+        T_r : Quantity {length: 1}
             Minimum thickness of reinforcing ring
 
         Returns
@@ -225,17 +225,17 @@ class VJ_Pipe(Pipe):
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity {length: 1}`
+        D_nom : int or Quantity {length: 1}
             Nominal diameter of the inner pipe.
         SCH : int
             Inner pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity {length: 1}`
+        L : Quantity {length: 1}
             Length of the inner pipe.
-        VJ_D : int or :obj:`Quantity {length: 1}`
+        VJ_D : int or Quantity {length: 1}
             Nominal diameter of the vacuum jacket.
         VJ_SCH : int
             Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
-        c : :obj:`Quantity {length: 1}`
+        c : Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances of the inner pipe.
         """
