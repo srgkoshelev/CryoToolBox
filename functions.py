@@ -1,3 +1,6 @@
+"""Helpful thermodynamic functions.
+"""
+
 from math import log, log10, pi
 from . import ureg, Q_
 from . import Air
@@ -21,9 +24,14 @@ def to_scfma(M_dot_fluid, Fluid):
     Flow through a relief device with invariant Area/discharge coefficient
     (KA).
 
-    :M_dot_fluid: mass flow rate
-    :Fluid: thermodynamic state ThermState instance
-    :returns: volumetric air flow rate
+    Parameters
+    ----------
+    M_dot_fluid : mass flow rate
+    Fluid : thermodynamic state ThermState instance
+
+    Returns
+    -------
+    volumetric air flow rate
     """
     C_fluid = Fluid.C_gas_constant
     C_air = Air.C_gas_constant
@@ -42,9 +50,14 @@ def from_scfma(Q_air, Fluid):
     coefficient (KA).
     Invert function to to_scfma().
 
-    :Q_air: volumetric air flow rate
-    :Fluid: thermodynamic state ThermState instance
-    :returns: mass flow rate
+    Parameters
+    ----------
+    Q_air : volumetric air flow rate
+    Fluid : thermodynamic state ThermState instance
+
+    Returns
+    -------
+    mass flow rate
     """
     C_fluid = Fluid.C_gas_constant
     C_air = Air.C_gas_constant
@@ -67,17 +80,22 @@ def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
     Calculate radiative heat load including reduction due to baffles.
     Based on Kaganer "Thermal insulation in cryogenic engineering", p. 42.
 
-    :eps_cold: emissivity of the cold surface
-    :eps_hot: emissivity of the hot surface
-    :T_hot: temperature of the hot surface
-    :T_cold: temperature of the cold surface
+    Parameters
+    ----------
+    eps_cold : emissivity of the cold surface
+    eps_hot : emissivity of the hot surface
+    T_hot : temperature of the hot surface
+    T_cold : temperature of the cold surface
     :F1_2: F1_2 = F_cold/F_hot
-    :eps_baffle: emissivity of the baffle, assumed to be same on both sides
-    :N_baffles: number of baffles
-    :returns: dict:
+    eps_baffle : emissivity of the baffle, assumed to be same on both sides
+    N_baffles : number of baffles
+
+    Returns
+    -------
+    dict:
             :q0: heat load without any baffles
-            :q_baffle: heat load with the baffles
-            :eta: effectiveness of the baffles
+            q_baffle : heat load with the baffles
+            eta : effectiveness of the baffles
     """
     # TODO This function will be refactored
     Eps_mut = 1/(1/eps_cold + F1_2*(1/eps_hot-1))  # Mutual emissivity
@@ -94,10 +112,15 @@ def Re(Fluid, m_dot, D):
     """
     Calculate Reynolds number.
 
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :m_dot: mass flow
-    :D: characteristic length/hydraulic diameter
-    :returns: Reynolds number, dimensionless
+    Parameters
+    ----------
+    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    m_dot : mass flow
+    D : characteristic length/hydraulic diameter
+
+    Returns
+    -------
+    Reynolds number, dimensionless
     """
     A = pi * D**2 / 4
     w_flow = m_dot / (Fluid.Dmass*A)
@@ -109,8 +132,13 @@ def Pr(Fluid):
     """
     Calculate Prandtl number.
 
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :returns: Prandtl number, dimensionless
+    Parameters
+    ----------
+    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+
+    Returns
+    -------
+    Prandtl number, dimensionless
     """
     return Fluid.Prandtl
 
@@ -119,10 +147,15 @@ def Gr(Fluid, T_surf, L_surf):
     """
     Calculate Grashof number.
 
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :T_surf: surface temperature
-    :L_surf: characteristic length
-    :returns: Grashof number, dimensionless
+    Parameters
+    ----------
+    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    T_surf : surface temperature
+    L_surf : characteristic length
+
+    Returns
+    -------
+    Grashof number, dimensionless
     """
     nu_fluid = Fluid.viscosity/Fluid.Dmass  # kinematic viscosity
     beta_exp = Fluid.isobaric_expansion_coefficient
@@ -134,10 +167,15 @@ def Ra(Fluid, T_surf, L_surf):
     """
     Calculate Rayleigh number.
 
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :T_surf: surface temperature
-    :L_surf: characteristic length
-    :returns: Rayleigh number, dimensionless
+    Parameters
+    ----------
+    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    T_surf : surface temperature
+    L_surf : characteristic length
+
+    Returns
+    -------
+    Rayleigh number, dimensionless
     """
     return Gr(Fluid, T_surf, L_surf)*Fluid.Prandtl
 
@@ -149,10 +187,15 @@ def Nu_cyl_hor(Fluid, T_cyl, D_cyl):
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
     Cho (HHT).
 
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :T_cyl: surface temperature
-    :D_cyl: cylinder diameter
-    :returns: Nusselt number, dimensionless
+    Parameters
+    ----------
+    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    T_cyl : surface temperature
+    D_cyl : cylinder diameter
+
+    Returns
+    -------
+    Nusselt number, dimensionless
     """
     Pr_ = Fluid.Prandtl
     Ra_ = Ra(Fluid, T_cyl, D_cyl)
@@ -173,11 +216,16 @@ def Nu_cyl_vert(Fluid, T_cyl, D_cyl, L_cyl):
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
     Cho (HHT).
 
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :T_cyl: surface temperature
-    :D_cyl: cylinder diameter
-    :L_cyl: cylinder length
-    :returns: Nusselt number, dimensionless
+    Parameters
+    ----------
+    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    T_cyl : surface temperature
+    D_cyl : cylinder diameter
+    L_cyl : cylinder length
+
+    Returns
+    -------
+    Nusselt number, dimensionless
     """
     Pr_ = Fluid.Prandtl
     Ra_ = Ra(Fluid, T_cyl, D_cyl)
@@ -196,12 +244,17 @@ def heat_trans_coef(Fluid, Nu, L_surf):
     """
     Calculate heat transfer coefficient.
 
-    :Fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :Nu: Nusselt number
-    :L_surf: characteristic length:
+    Parameters
+    ----------
+    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    Nu : Nusselt number
+    L_surf : characteristic length:
         :Horizontal cylinder: L_surf = D_cyl
         :Vertical cylinder: L_surf = L_cyl
-    :returns: heat transfer coefficient
+
+    Returns
+    -------
+    heat transfer coefficient
     """
     h = Fluid.conductivity * Nu / L_surf
     return h.to(ureg.W/(ureg.m**2*ureg.K))
@@ -211,12 +264,17 @@ def Bi(k, L_c, h):
     """
     Calculate Biot number for a solid.
 
-    :k: thermal conductivity of the solid
-    :L_c: characteristic length; L_c = V/A_s, where
-        :V: volume of the solid
-        :A_s: surface area of the solid
-    :h: heat transfer coefficient
-    :returns: Biot number, dimensionless
+    Parameters
+    ----------
+    k : thermal conductivity of the solid
+    L_c : characteristic length; L_c = V/A_s, where
+        V : volume of the solid
+        A_s : surface area of the solid
+    h : heat transfer coefficient
+
+    Returns
+    -------
+    Biot number, dimensionless
     """
     Bi_ = h * L_c / k
     return Bi_.to_base_units()
@@ -253,8 +311,13 @@ def C1_cyl(Bi):
     """
     Calculate first term C1 coefficient for infinite cylinder.
 
-    :Bi: Biot number
-    :returns: C1 for infinite cylinder
+    Parameters
+    ----------
+    Bi : Biot number
+
+    Returns
+    -------
+    C1 for infinite cylinder
     """
     if Bi > 100:
         C1 = 1.6018
@@ -269,8 +332,13 @@ def zeta1_cyl(Bi):
     """
     Calculate first term zeta1 coefficient for infinite cylinder.
 
-    :Bi: Biot number
-    :returns: zeta1 for infinite cylinder
+    Parameters
+    ----------
+    Bi : Biot number
+
+    Returns
+    -------
+    zeta1 for infinite cylinder
     """
     if Bi > 100:
         zeta1 = 2.4050
@@ -286,9 +354,14 @@ def Fo_cyl(theta, Bi):
     Calculate Fourier number for infinite cylinder using approximate solution.
     Approximate solution is applicable when the solid has uniform temperature.
 
-    :theta: dimensionless temperature difference
-    :Bi: Biot number
-    :returns: Fourier number, dimensionless
+    Parameters
+    ----------
+    theta : dimensionless temperature difference
+    Bi : Biot number
+
+    Returns
+    -------
+    Fourier number, dimensionless
     """
     zeta1 = zeta1_cyl(Bi)
     C1 = C1_cyl(Bi)
@@ -300,10 +373,15 @@ def alpha(k, rho, C):
     """
     Calculate thermal diffusivity.
 
-    :k: thermal conductivity of the solid
-    :rho: density of the solid
-    :C: specific heat capacity
-    :returns: thermal diffusivity
+    Parameters
+    ----------
+    k : thermal conductivity of the solid
+    rho : density of the solid
+    C : specific heat capacity
+
+    Returns
+    -------
+    thermal diffusivity
     """
     alpha_ = k / (rho*C)
     return alpha_.to(ureg.m**2/ureg.s)
@@ -314,10 +392,15 @@ def theta_temp(T, T_i, T_inf):
     Calculate dimensionless temperature difference. Used for transient
     conduction and convection.
 
-    :T: variable temperature of the solid
-    :T_i: initially uniform temperature of the solid
-    :T_inf: temperature of the medium
-    :returns: temperature difference, dimensionless
+    Parameters
+    ----------
+    T : variable temperature of the solid
+    T_i : initially uniform temperature of the solid
+    T_inf : temperature of the medium
+
+    Returns
+    -------
+    temperature difference, dimensionless
     """
     theta_temp_ = (T-T_inf) / (T_i-T_inf)
     return theta_temp_.to_base_units()
@@ -328,9 +411,14 @@ def nist_curve_fit(T, NIST_coefs):  # TODO make hidden
     Calculate specific heat capacity using NIST properties database.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
 
-    :T: temperature, K
-    :NIST_coefs: coefficients from NIST cryo properties database
-    :returns: thermal property (e.g. thermal conductivity)
+    Parameters
+    ----------
+    T : temperature, K
+    NIST_coefs : coefficients from NIST cryo properties database
+
+    Returns
+    -------
+    thermal property (e.g. thermal conductivity)
     """
     y = 0
     for ind, coef in enumerate(NIST_coefs):
@@ -344,9 +432,14 @@ def nist_property(T, material, prop):
     Calculate specific heat capacity using NIST properties database.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
 
-    :T: temperature
-    :NIST_coefs: coefficients from NIST cryo properties database
-    :returns: specific heat capacity
+    Parameters
+    ----------
+    T : temperature
+    NIST_coefs : coefficients from NIST cryo properties database
+
+    Returns
+    -------
+    specific heat capacity
     """
     if prop == 'TC':
         output_unit = ureg.W / (ureg.m*ureg.K)
