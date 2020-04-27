@@ -33,6 +33,9 @@ P_NTP = Q_(14.7, ureg.psi)  # Normal Pressure (NIST)
 T_MSC = Q_(15, ureg.degC)  # Metric Standard Conditions (used by Crane TP-410)
 P_MSC = Q_(101325, ureg.Pa)  # Metric Standard Conditions (used by Crane TP-410)
 
+T_STD = Q_(60, ureg.degF)  # Standard conditions (BPVC VIII UG-129 (c))
+P_STD = Q_(14.7, ureg.psi)  # Standard conditions (BPVC VIII UG-129 (c))
+
 from .cp_wrapper import ThermState
 # Default fluids
 Air = ThermState('air')
