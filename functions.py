@@ -8,6 +8,7 @@ from . import P_NTP
 from . import cga
 from . import logger
 from scipy.interpolate import interp1d
+from scipy.integrate import quad
 
 E_TNT = Q_('4850 J/g')  # TNT equivalent Energy of Explosion (PNNL)
 z_1 = Q_('200 ft')  # Scaled distance for debris and missile damage (PNNL)
@@ -419,7 +420,7 @@ def theta_temp(T, T_i, T_inf):
 
 def nist_curve_fit(T, NIST_coefs):  # TODO make hidden
     """
-    Calculate specific heat capacity using NIST properties database.
+    Calculate NIST curve fit for given coefficients.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
 
     Parameters
@@ -438,15 +439,33 @@ def nist_curve_fit(T, NIST_coefs):  # TODO make hidden
     return 10**y
 
 
-def nist_property(T, material, prop):
+def nist_quad(T1, T2, NIST_coefs):
+    """
+    Calculate average value of the property for given temperature range.
+    https://trc.nist.gov/cryogenics/materials/materialproperties.htm
+
+    Parameters
+    ----------
+    T : Quantity, temperature
+    NIST_coefs : coefficients from NIST cryo properties database
+
+    Returns
+    -------
+    thermal property (e.g. thermal conductivity)
+    """
+    return quad(nist_curve_fit, T1, T2, args=NIST_coefs)[0] / (T2-T1)
+
+
+def nist_property(material, prop, T1, T2=None):
     """
     Calculate specific heat capacity using NIST properties database.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
 
     Parameters
     ----------
-    T : temperature
-    NIST_coefs : coefficients from NIST cryo properties database
+    T1 : Quantity, temperature
+    T2 : Quantity, temperature
+        used for average value calculation
 
     Returns
     -------
@@ -459,12 +478,17 @@ def nist_property(T, material, prop):
     else:
         raise NotImplementedError('Only thermal conductivity (TC) and'
                                   ' heat capacity (HC) currently implemented.')
-    T = T.to(ureg.K).magnitude
+    T1 = T1.to(ureg.K).magnitude
     property_data = NIST_DATA[material][prop]
-    if T < property_data[1][0] or T > property_data[1][1]:
-        raise ValueError(f'Temperature is out of bounds: {T} for'
-        f' {property_data[1][0]}-{property_data[1][1]} limits.')
-    result = nist_curve_fit(T, property_data[0])
+    if T1 < property_data[1][0] or T1 > property_data[1][1]:
+        raise ValueError(f'Temperature is out of bounds: {T1} for'
+                         f' {property_data[1][0]}-{property_data[1][1]}'
+                         'limits.')
+    if T2 is None:
+        result = nist_curve_fit(T1, property_data[0])
+    else:
+        T2 = T2.to(ureg.K).magnitude
+        result = nist_quad(T1, T2, property_data[0])
     return result * output_unit
 
 
