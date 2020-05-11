@@ -454,5 +454,5 @@ class ThermState:
     def copy(self):
         """Create a copy of current ThermState object."""
         TempState = ThermState(self.name, backend=self.backend)
-        TempState.update_kw(P=self.P, T=self.T)
+        TempState.update_kw(T=self.T, Smass=self.Smass)
         return TempState
