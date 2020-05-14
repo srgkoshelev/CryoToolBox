@@ -418,7 +418,7 @@ def theta_temp(T, T_i, T_inf):
     return theta_temp_.to_base_units()
 
 
-def nist_curve_fit(T, NIST_coefs):  # TODO make hidden
+def _nist_log_fit(T, coefs):
     """
     Calculate NIST curve fit for given coefficients.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
@@ -426,20 +426,39 @@ def nist_curve_fit(T, NIST_coefs):  # TODO make hidden
     Parameters
     ----------
     T : temperature, K
-    NIST_coefs : coefficients from NIST cryo properties database
+    coefs : coefficients from NIST cryo properties database
 
     Returns
     -------
     thermal property (e.g. thermal conductivity)
     """
     y = 0
-    for ind, coef in enumerate(NIST_coefs):
-        # print('abcdefghi'[ind], coef) #TODO add DEBUG
+    for ind, coef in enumerate(coefs):
         y += coef*log10(T)**ind
     return 10**y
 
 
-def nist_quad(T1, T2, NIST_coefs):
+def _nist_pow_fit(T, coefs):
+    """
+    Calculate NIST curve fit for given coefficients.
+    https://trc.nist.gov/cryogenics/materials/materialproperties.htm
+
+    Parameters
+    ----------
+    T : temperature, K
+    coefs : coefficients from NIST cryo properties database
+
+    Returns
+    -------
+    thermal property (e.g. linear expansion)
+    """
+    y = 0
+    for ind, coef in enumerate(coefs):
+        y += coef*T**ind
+    return y
+
+
+def _nist_quad(T1, T2, fun, coefs):
     """
     Calculate average value of the property for given temperature range.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
@@ -447,13 +466,13 @@ def nist_quad(T1, T2, NIST_coefs):
     Parameters
     ----------
     T : Quantity, temperature
-    NIST_coefs : coefficients from NIST cryo properties database
+    coefs : coefficients from NIST cryo properties database
 
     Returns
     -------
     thermal property (e.g. thermal conductivity)
     """
-    return quad(nist_curve_fit, T1, T2, args=NIST_coefs)[0] / (T2-T1)
+    return quad(fun, T1, T2, args=coefs)[0] / (T2-T1)
 
 
 def nist_property(material, prop, T1, T2=None):
@@ -471,40 +490,77 @@ def nist_property(material, prop, T1, T2=None):
     -------
     specific heat capacity
     """
-    if prop == 'TC':
-        output_unit = ureg.W / (ureg.m*ureg.K)
-    elif prop == 'HC':
-        output_unit = ureg.J / (ureg.kg*ureg.K)
-    else:
-        raise NotImplementedError('Only thermal conductivity (TC) and'
-                                  ' heat capacity (HC) currently implemented.')
+    coefs = NIST_DATA[material][prop]['coefs']
+    fun = NIST_DATA[material][prop]['fun']
+    unit = NIST_DATA[material][prop]['unit']
+    eq_range = NIST_DATA[material][prop]['range']
     T1 = T1.to(ureg.K).magnitude
-    property_data = NIST_DATA[material][prop]
-    if T1 < property_data[1][0] or T1 > property_data[1][1]:
+    if prop == 'LE':
+        Tlow = NIST_DATA[material][prop]['Tlow']
+        if T1 < Tlow:
+            f = NIST_DATA[material][prop]['f'] * unit
+            return f * unit
+    if T1 < eq_range[0] or T1 > eq_range[1]:
         raise ValueError(f'Temperature is out of bounds: {T1} for'
-                         f' {property_data[1][0]}-{property_data[1][1]}'
+                         f' {eq_range[0]}-{eq_range[1]}'
                          'limits.')
     if T2 is None:
-        result = nist_curve_fit(T1, property_data[0])
+        result = fun(T1, coefs)
     else:
         T2 = T2.to(ureg.K).magnitude
-        result = nist_quad(T1, T2, property_data[0])
-    return result * output_unit
+        result = _nist_quad(T1, T2, fun, coefs)
+    return result * unit
 
 
 # Temporary storage for NIST data
+# Materials:
+# 304SS - AISI 304 Stainless Steel
+# G10 - G10
+# OFHC - Oxygen-free High thermal conductivity copper
+#
+# Properties
+# TC - thermal conductivity, W/(m*K)
+# SH - specific heat, W/(m*K)
+# EC - expansion coefficient, 1/K
+# LE - linear expansion
 NIST_DATA = {
+    # TODO Implement different TC, etc functions for the same material
     '304SS':
     {
-        'TC': ([-1.4087, 1.3982, 0.2543, -0.6260, 0.2334, 0.4256, -0.4658,
-                0.1650, -0.0199], (1, 300)),
+        'TC': {'coefs': [-1.4087, 1.3982, 0.2543, -0.6260, 0.2334, 0.4256,
+                         -0.4658, 0.1650, -0.0199],
+               'range': (1, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.W/(ureg.m*ureg.K)},
+        'LE': {'coefs': [-2.9554E2, -3.9811E-1, 9.2683E-3, -2.0261E-5,
+                         1.7127E-8],
+               'range': (4, 300),
+               'fun': _nist_pow_fit,
+               'Tlow': 23,
+               'f': -300.04,
+               'unit': 1e-5*ureg.m/ureg.m},
     },
     'G10':
     {
-        'TC': ([-4.1236, 13.788, -26.068, 26.272, -14.663, 4.4954, -0.6905,
-                0.0397, 0], (4, 300)),
-    }
+        'TC': {'coefs': [-4.1236, 13.788, -26.068, 26.272, -14.663, 4.4954,
+                         -0.6905, 0.0397, 0],
+               'range': (10, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.W/(ureg.m*ureg.K)},
+    },
+    'OFHC':
+    {
+        'EC': {'coefs': [-17.9081289, 67.131914, -118.809316, 109.9845997,
+                         -53.8696089, 13.30247491, -1.30843441],
+               'range': (4, 300),
+               'fun': _nist_log_fit,
+               'unit': 1e-6/ureg.K},
+    },
 }
+
+
+
+
 
 
 

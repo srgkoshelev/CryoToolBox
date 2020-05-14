@@ -1,3 +1,4 @@
+import math
 import heat_transfer as ht
 import pprint
 
@@ -47,12 +48,14 @@ TestPiping = ht.piping.Piping(Test_State, [TestPipe, TestPipe, TestPipe])
 # pp.pprint(ht.piping.NPS_table)
 
 print('Testing mean of nist curve fit')
-T1 = 100
-T2 = 200
-print(ht.nist_property( '304SS', 'TC', T1*ureg.K))
-print(ht.nist_quad(T1, T2, ht.NIST_DATA['304SS']['TC'][0]))
-print(ht.nist_property( '304SS', 'TC', T1*ureg.K, T2*ureg.K))
-
+T0 = 300 * ureg.K
+T1 = 100 * ureg.K
+T2 = 200 * ureg.K
+T4 = 5 * ureg.K
+print(ht.nist_property('304SS', 'TC', T1))  # Was 9
+print(ht.nist_property('304SS', 'TC', T1, T2))  # Was 11
+print(ht.nist_property('OFHC', 'EC', T0))  # 1.65e-5
+print(ht.nist_property('304SS', 'LE', 150*ureg.K))  # -2e-3
 
 
 
