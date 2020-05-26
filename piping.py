@@ -611,8 +611,8 @@ class Piping (list):
     added together to calculate single K value for the whole piping. This K
     value is used with Darcy equation to calculate pressure drop or mass flow.
     '''
-    def __init__(self, Fluid, Pipes=[]):
-        self.Fluid = Fluid
+    def __init__(self, fluid, Pipes=[]):
+        self.fluid = fluid
         self.extend(Pipes)
 
     def add(self, *Pipes):
@@ -645,22 +645,22 @@ class Piping (list):
         Lumped method using Darcy equation is used.
         The pressure dropped is checked for choked condition.
         '''
-        P_0 = self.Fluid.P
-        T_0 = self.Fluid.T
-        rho_0 = self.Fluid.Dmass
+        P_0 = self.fluid.P
+        T_0 = self.fluid.T
+        rho_0 = self.fluid.Dmass
         K, area = self.K()
         w = m_dot / (rho_0*area)
         dP = dP_darcy(K, rho_0, w)  # first iteration
         P_out = P_0 - dP
-        k = self.Fluid.gamma  # adiabatic coefficient
+        k = self.fluid.gamma  # adiabatic coefficient
         # Critical pressure drop;
         # Note: according to Crane TP-410 should be dependent on
         # the hydraulic resistance of the flow path
         rc = (2/(k+1))**(k/(k-1))
-        if self.Fluid.Q < 0 or dP/P_0 <= 0.1:  # if q<0 then fluid is a liquid
+        if self.fluid.Q < 0 or dP/P_0 <= 0.1:  # if q<0 then fluid is a liquid
             return dP
         elif dP/P_0 <= 0.4:
-            TempState = ThermState(self.Fluid.name, backend=self.Fluid.backend)
+            TempState = ThermState(self.fluid.name, backend=self.fluid.backend)
             # Only working for pure fluids and pre-defined mixtures
             TempState.update('T', T_0, 'P', P_out)
             rho_out = TempState.Dmass
@@ -684,14 +684,14 @@ class Piping (list):
         at the beginning of piping.
         Simple solution using Darcy equation is used.
         '''
-        P_0 = self.Fluid.P
+        P_0 = self.fluid.P
         if P_0 <= P_out:
             logger.warning('Input pressure less or equal to output: \
             {P_0:.3g}, {P_out:.3g}')
             return Q_('0 g/s')
-        rho = self.Fluid.Dmass
+        rho = self.fluid.Dmass
         K, area = self.K()
-        k = self.Fluid.gamma  # adiabatic coefficient
+        k = self.fluid.gamma  # adiabatic coefficient
         # Critical pressure drop
         # Note: according to Crane TP-410 should be dependent on
         # the hydraulic resistance of the flow path
@@ -718,7 +718,7 @@ class Piping (list):
             :P_out_act: actual downstream pressure
         """
         P_in = Q_(P_in_Pa, ureg.Pa)
-        self.Fluid.update('P', P_in, 'Smass', self.Fluid.Smass)
+        self.fluid.update('P', P_in, 'Smass', self.fluid.Smass)
         P_out_calc = P_in - self.dP(m_dot)
         P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
         P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
@@ -746,7 +746,7 @@ class Piping (list):
                                method='brentq')
         logger.setLevel(logger_level)
         P_in = Q_(solution.root, ureg.Pa)
-        self.Fluid.update('P', P_in, 'Smass', self.Fluid.Smass)
+        self.fluid.update('P', P_in, 'Smass', self.fluid.Smass)
         logger.debug(f'Comparing pressure drop:\n    dP method:\n        \
         {self.dP(m_dot).to(ureg.psi)}\n    \
         P_in - P_out:\n        \
@@ -812,22 +812,22 @@ def beta(d1, d2):
     return min(d1, d2)/max(d1, d2)
 
 
-def to_standard_flow(flow_rate, Fluid):
+def to_standard_flow(flow_rate, fluid):
     '''
     Converting volumetric flow at certain conditions or mass flow to
     flow at NTP.
     '''
-    Fluid_NTP = ThermState(Fluid.name)
-    Fluid_NTP.update('T', T_NTP, 'P', P_NTP)
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
     if flow_rate.dimensionality == ureg('kg/s').dimensionality:
         # mass flow, flow conditions are unnecessary
-        q_std = flow_rate / Fluid_NTP.Dmass
+        q_std = flow_rate / fluid_NTP.Dmass
     elif flow_rate.dimensionality == ureg('m^3/s').dimensionality:
         # volumetric flow given, converting to standard pressure and
         # temperature
-        if Fluid.Dmass != -float('Inf'):
+        if fluid.Dmass != -float('Inf'):
             # By default ThermState is initialized with all fields == -inf
-            q_std = flow_rate * Fluid.Dmass / Fluid_NTP.Dmass
+            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
         else:
             logger.warning('''Flow conditions for volumetric flow {:.3~}
                            are not set. Assuming standard flow at NTP.
@@ -840,24 +840,24 @@ def to_standard_flow(flow_rate, Fluid):
     return q_std
 
 
-def equivalent_orifice(m_dot, dP, Fluid=Air):
+def equivalent_orifice(m_dot, dP, fluid=Air):
     """
     Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
     flow and pressure drop.
     """
     Cd = 0.61
-    rho = Fluid.Dmass
+    rho = fluid.Dmass
     ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
     return ID.to(ureg.inch)
 
 
-def to_mass_flow(Q_std, Fluid=Air):
+def to_mass_flow(Q_std, fluid=Air):
     """
     Calculate mass flow for given volumetric flow at standard conditions.
     """
-    Fluid_NTP = ThermState(Fluid.name)
-    Fluid_NTP.update('T', T_NTP, 'P', P_NTP)
-    m_dot = Q_std * Fluid_NTP.Dmass
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
+    m_dot = Q_std * fluid_NTP.Dmass
     return m_dot.to(ureg.g/ureg.s)
 
 
@@ -914,14 +914,14 @@ def half_width(d_1, T_b, T_h, c, D_h):
     return min(max(d_1, d_2_a), D_h)
 
 
-def PRV_flow(ID, Kd, Fluid):
+def PRV_flow(ID, Kd, fluid):
     """
     Calculate mass flow through the relief valve based on
     BPVC VIII div. 1 UG-131 (e) (2).
     """
     A = pi * ID**2 / 4
-    C = Fluid.C_gas_constant
-    P = Fluid.P
-    W_T = C * A * P * Fluid.MZT  # Theoretical flow
+    C = fluid.C_gas_constant
+    P = fluid.P
+    W_T = C * A * P * fluid.MZT  # Theoretical flow
     W_a = W_T * Kd  # Actual flow
     return W_a.to(ureg.g/ureg.s)

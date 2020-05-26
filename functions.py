@@ -19,7 +19,7 @@ sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
 
 
-def to_scfma(M_dot_fluid, Fluid):
+def to_scfma(M_dot_fluid, fluid):
     """
     Convert mass flow rate into equivalent flow of air.
     Flow through a relief device with invariant Area/discharge coefficient
@@ -29,24 +29,24 @@ def to_scfma(M_dot_fluid, Fluid):
     ----------
     M_dot_fluid : Quantitiy {mass: 1, time: -1}
         mass flow rate
-    Fluid : ThermState
+    fluid : ThermState
 
     Returns
     -------
     ThermState
         volumetric air flow rate
     """
-    C_fluid = Fluid.C_gas_constant
+    C_fluid = fluid.C_gas_constant
     C_air = Air.C_gas_constant
 
     # Calculation
-    M_dot_air = M_dot_fluid * C_air / C_fluid * Air.MZT / Fluid.MZT
+    M_dot_air = M_dot_fluid * C_air / C_fluid * Air.MZT / fluid.MZT
     Q_air = M_dot_air / Air.Dmass
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air
 
 
-def from_scfma(Q_air, Fluid):
+def from_scfma(Q_air, fluid):
     """
     Convert volumetric air flow rate into equivalent mass flow of specified
     fluid. Flow through a relief device with invariant Area/discharge
@@ -57,26 +57,26 @@ def from_scfma(Q_air, Fluid):
     ----------
     Q_air : Quantity {length: 3, time: -1}
         volumetric air flow rate
-    Fluid : ThermState
+    fluid : ThermState
 
     Returns
     -------
     Quantitiy {mass: 1, time: -1}
         mass flow rate
     """
-    C_fluid = Fluid.C_gas_constant
+    C_fluid = fluid.C_gas_constant
     C_air = Air.C_gas_constant
 
     # Calculation
     M_dot_air = Q_air * Air.Dmass
-    M_dot_fluid = M_dot_air * C_fluid / C_air * Fluid.MZT / Air.MZT
+    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / Air.MZT
     M_dot_fluid.ito(ureg.g/ureg.s)
     return M_dot_fluid
 
 
-def theta_heat(Fluid, step=0.01):
+def theta_heat(fluid, step=0.01):
     logger.warning('Deprecated. Use ht.cga.theta() instead.')
-    return cga.theta(Fluid, step)
+    return cga.theta(fluid, step)
 
 
 def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
@@ -120,13 +120,13 @@ def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
             'eta': eta}
 
 
-def Re(Fluid, m_dot, D):
+def Re(fluid, m_dot, D):
     """
     Calculate Reynolds number.
 
     Parameters
     ----------
-    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
     m_dot : mass flow
     D : characteristic length/hydraulic diameter
 
@@ -135,33 +135,33 @@ def Re(Fluid, m_dot, D):
     Reynolds number, dimensionless
     """
     A = pi * D**2 / 4
-    w_flow = m_dot / (Fluid.Dmass*A)
-    Re_ = w_flow * D * Fluid.Dmass / Fluid.viscosity
+    w_flow = m_dot / (fluid.Dmass*A)
+    Re_ = w_flow * D * fluid.Dmass / fluid.viscosity
     return Re_.to_base_units()
 
 
-def Pr(Fluid):
+def Pr(fluid):
     """
     Calculate Prandtl number.
 
     Parameters
     ----------
-    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
 
     Returns
     -------
     Prandtl number, dimensionless
     """
-    return Fluid.Prandtl
+    return fluid.Prandtl
 
 
-def Gr(Fluid, T_surf, L_surf):
+def Gr(fluid, T_surf, L_surf):
     """
     Calculate Grashof number.
 
     Parameters
     ----------
-    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
     T_surf : surface temperature
     L_surf : characteristic length
 
@@ -169,19 +169,19 @@ def Gr(Fluid, T_surf, L_surf):
     -------
     Grashof number, dimensionless
     """
-    nu_fluid = Fluid.viscosity/Fluid.Dmass  # kinematic viscosity
-    beta_exp = Fluid.isobaric_expansion_coefficient
-    Gr_ = ureg.g_0 * L_surf**3 * beta_exp * abs(T_surf-Fluid.T) / nu_fluid**2
+    nu_fluid = fluid.viscosity/fluid.Dmass  # kinematic viscosity
+    beta_exp = fluid.isobaric_expansion_coefficient
+    Gr_ = ureg.g_0 * L_surf**3 * beta_exp * abs(T_surf-fluid.T) / nu_fluid**2
     return Gr_.to(ureg.dimensionless)
 
 
-def Ra(Fluid, T_surf, L_surf):
+def Ra(fluid, T_surf, L_surf):
     """
     Calculate Rayleigh number.
 
     Parameters
     ----------
-    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
     T_surf : surface temperature
     L_surf : characteristic length
 
@@ -189,10 +189,10 @@ def Ra(Fluid, T_surf, L_surf):
     -------
     Rayleigh number, dimensionless
     """
-    return Gr(Fluid, T_surf, L_surf)*Fluid.Prandtl
+    return Gr(fluid, T_surf, L_surf)*fluid.Prandtl
 
 
-def Nu_cyl_hor(Fluid, T_cyl, D_cyl):
+def Nu_cyl_hor(fluid, T_cyl, D_cyl):
     """
     Calculate Nusselt number for vertical cylinder.
     Only natural convection currently supported.
@@ -201,7 +201,7 @@ def Nu_cyl_hor(Fluid, T_cyl, D_cyl):
 
     Parameters
     ----------
-    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
     T_cyl : surface temperature
     D_cyl : cylinder diameter
 
@@ -209,8 +209,8 @@ def Nu_cyl_hor(Fluid, T_cyl, D_cyl):
     -------
     Nusselt number, dimensionless
     """
-    Pr_ = Fluid.Prandtl
-    Ra_ = Ra(Fluid, T_cyl, D_cyl)
+    Pr_ = fluid.Prandtl
+    Ra_ = Ra(fluid, T_cyl, D_cyl)
     C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
     Nu_T = 0.772*C_l*Ra_**(1/4)  # HHT (4.45)
     f = 1-0.13/Nu_T**0.16
@@ -221,7 +221,7 @@ def Nu_cyl_hor(Fluid, T_cyl, D_cyl):
     return Nu_.to(ureg.dimensionless)
 
 
-def Nu_cyl_vert(Fluid, T_cyl, D_cyl, L_cyl):
+def Nu_cyl_vert(fluid, T_cyl, D_cyl, L_cyl):
     """
     Calculate Nusselt number for vertical cylinder.
     Only natural convection currently supported.
@@ -230,7 +230,7 @@ def Nu_cyl_vert(Fluid, T_cyl, D_cyl, L_cyl):
 
     Parameters
     ----------
-    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
     T_cyl : surface temperature
     D_cyl : cylinder diameter
     L_cyl : cylinder length
@@ -239,8 +239,8 @@ def Nu_cyl_vert(Fluid, T_cyl, D_cyl, L_cyl):
     -------
     Nusselt number, dimensionless
     """
-    Pr_ = Fluid.Prandtl
-    Ra_ = Ra(Fluid, T_cyl, D_cyl)
+    Pr_ = fluid.Prandtl
+    Ra_ = Ra(fluid, T_cyl, D_cyl)
     C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
     C_t_vert = (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42  # HHT (4.24)
     Nu_T_plate = C_l * Ra_**0.25
@@ -252,13 +252,13 @@ def Nu_cyl_vert(Fluid, T_cyl, D_cyl, L_cyl):
     return Nu_.to(ureg.dimensionless)
 
 
-def heat_trans_coef(Fluid, Nu, L_surf):
+def heat_trans_coef(fluid, Nu, L_surf):
     """
     Calculate heat transfer coefficient.
 
     Parameters
     ----------
-    Fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
     Nu : Nusselt number
     L_surf : characteristic length:
         :Horizontal cylinder: L_surf = D_cyl
@@ -268,7 +268,7 @@ def heat_trans_coef(Fluid, Nu, L_surf):
     -------
     heat transfer coefficient
     """
-    h = Fluid.conductivity * Nu / L_surf
+    h = fluid.conductivity * Nu / L_surf
     return h.to(ureg.W/(ureg.m**2*ureg.K))
 
 
@@ -566,9 +566,9 @@ NIST_DATA = {
 
 def stored_energy(Piping):
     """Calculate stored energy in piping using Baker equation."""
-    P = Piping.Fluid.P
+    P = Piping.fluid.P
     V = Piping.volume
-    k = Piping.Fluid.gamma
+    k = Piping.fluid.gamma
     E_stored = P * V / (k-1) * (1-(P_NTP/P)**((k-1)/k))
     return E_stored.to(ureg.lbf*ureg.ft)
 
