@@ -1,12 +1,18 @@
-# git -C wiki pull
-pdoc --html heat_transfer -o .
-# rm -v heat_transfer/index.md
-mkdir docs
-mv -v heat_transfer/*.html docs
-rm -rv heat_transfer
-# for filename in wiki/*.md; do
-#     pandoc -f markdown -t gfm "$filename" -o "$filename"
-# done
-git add -A
-git commit
-git -C docs push
+echo 'Generating docs'
+pdoc --html heat_transfer -o docs
+mv docs/heat_transfer/*.html docs
+rm -rv docs/heat_transfer
+echo 'Docs generated'
+while true; do
+    read -p 'Commit and upload the docs? [y/n]' yn
+    case $yn in
+        [Yy]* )
+            git add -A
+            git commit -m 'Generated docs.'
+            git push
+            echo 'Committed and pushed upstream.'
+            ;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done

@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.7.2" />
+<meta name="generator" content="pdoc 0.8.1" />
 <title>heat_transfer.cp_wrapper API documentation</title>
 <meta name="description" content="Wrapper module for CoolProp&#39;s AbstractState …" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
-<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
 </head>
 <body>
@@ -485,7 +485,7 @@ class ThermState:
     def copy(self):
         &#34;&#34;&#34;Create a copy of current ThermState object.&#34;&#34;&#34;
         TempState = ThermState(self.name, backend=self.backend)
-        TempState.update_kw(P=self.P, T=self.T)
+        TempState.update_kw(T=self.T, Smass=self.Smass)
         return TempState</code></pre>
 </details>
 </section>
@@ -503,8 +503,8 @@ class ThermState:
 <span>(</span><span>fluid, backend='HEOS', **state_parameters)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Available backends: HEOS (opensource), REFPROP.
-See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.org/coolprop/REFPROP.html</a> for details.</p></section>
+<div class="desc"><p>Available backends: HEOS (opensource), REFPROP.
+See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.org/coolprop/REFPROP.html</a> for details.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -839,15 +839,15 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
     def copy(self):
         &#34;&#34;&#34;Create a copy of current ThermState object.&#34;&#34;&#34;
         TempState = ThermState(self.name, backend=self.backend)
-        TempState.update_kw(P=self.P, T=self.T)
+        TempState.update_kw(T=self.T, Smass=self.Smass)
         return TempState</code></pre>
 </details>
 <h3>Instance variables</h3>
 <dl>
 <dt id="heat_transfer.cp_wrapper.ThermState.C_gas_constant"><code class="name">var <span class="ident">C_gas_constant</span></code></dt>
 <dd>
-<section class="desc"><p>Constant for gas or vapor which is the function of the ratio of
-specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.</p></section>
+<div class="desc"><p>Constant for gas or vapor which is the function of the ratio of
+specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -866,7 +866,7 @@ def C_gas_constant(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Cpmass"><code class="name">var <span class="ident">Cpmass</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -879,7 +879,7 @@ def Cpmass(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Cpmolar"><code class="name">var <span class="ident">Cpmolar</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -892,7 +892,7 @@ def Cpmolar(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Cvmass"><code class="name">var <span class="ident">Cvmass</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -905,7 +905,7 @@ def Cvmass(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Cvmolar"><code class="name">var <span class="ident">Cvmolar</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -918,7 +918,7 @@ def Cvmolar(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Dmass"><code class="name">var <span class="ident">Dmass</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -931,7 +931,7 @@ def Dmass(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Dmass_critical"><code class="name">var <span class="ident">Dmass_critical</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -944,7 +944,7 @@ def Dmass_critical(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Dmolar"><code class="name">var <span class="ident">Dmolar</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -957,7 +957,7 @@ def Dmolar(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Dmolar_critical"><code class="name">var <span class="ident">Dmolar_critical</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -970,7 +970,7 @@ def Dmolar_critical(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Hmass"><code class="name">var <span class="ident">Hmass</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -983,7 +983,7 @@ def Hmass(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Hmolar"><code class="name">var <span class="ident">Hmolar</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -996,7 +996,7 @@ def Hmolar(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.M"><code class="name">var <span class="ident">M</span></code></dt>
 <dd>
-<section class="desc"><p>Calculate relative molecular mass.</p></section>
+<div class="desc"><p>Calculate relative molecular mass.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1010,8 +1010,8 @@ def M(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.MZT"><code class="name">var <span class="ident">MZT</span></code></dt>
 <dd>
-<section class="desc"><p>Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
-flow calculation.</p></section>
+<div class="desc"><p>Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
+flow calculation.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1028,7 +1028,7 @@ def MZT(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.P"><code class="name">var <span class="ident">P</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1041,7 +1041,7 @@ def P(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.P_critical"><code class="name">var <span class="ident">P_critical</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1054,7 +1054,7 @@ def P_critical(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.P_max"><code class="name">var <span class="ident">P_max</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1067,7 +1067,7 @@ def P_max(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.P_reducing"><code class="name">var <span class="ident">P_reducing</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1080,7 +1080,7 @@ def P_reducing(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.P_triple"><code class="name">var <span class="ident">P_triple</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1093,7 +1093,7 @@ def P_triple(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Prandtl"><code class="name">var <span class="ident">Prandtl</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1106,7 +1106,7 @@ def Prandtl(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Q"><code class="name">var <span class="ident">Q</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1119,7 +1119,7 @@ def Q(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Smass"><code class="name">var <span class="ident">Smass</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1132,7 +1132,7 @@ def Smass(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.Smolar"><code class="name">var <span class="ident">Smolar</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1145,7 +1145,7 @@ def Smolar(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.T"><code class="name">var <span class="ident">T</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1158,7 +1158,7 @@ def T(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.T_critical"><code class="name">var <span class="ident">T_critical</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1171,7 +1171,7 @@ def T_critical(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.T_max"><code class="name">var <span class="ident">T_max</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1184,7 +1184,7 @@ def T_max(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.T_min"><code class="name">var <span class="ident">T_min</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1197,7 +1197,7 @@ def T_min(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.T_reducing"><code class="name">var <span class="ident">T_reducing</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1210,7 +1210,7 @@ def T_reducing(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.T_triple"><code class="name">var <span class="ident">T_triple</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1223,7 +1223,7 @@ def T_triple(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.backend"><code class="name">var <span class="ident">backend</span></code></dt>
 <dd>
-<section class="desc"><p>Return backend name</p></section>
+<div class="desc"><p>Return backend name</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1238,7 +1238,7 @@ def backend(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.compressibility_factor"><code class="name">var <span class="ident">compressibility_factor</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1252,7 +1252,7 @@ def compressibility_factor(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.conductivity"><code class="name">var <span class="ident">conductivity</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1265,8 +1265,8 @@ def conductivity(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.gamma"><code class="name">var <span class="ident">gamma</span></code></dt>
 <dd>
-<section class="desc"><p>Calculate gamma (k) coefficient.</p>
-<p>:returns: gamma = k = Cp/Cv</p></section>
+<div class="desc"><p>Calculate gamma (k) coefficient.</p>
+<p>:returns: gamma = k = Cp/Cv</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1290,7 +1290,7 @@ def gamma(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.gas_constant"><code class="name">var <span class="ident">gas_constant</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1303,7 +1303,7 @@ def gas_constant(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.is_super_critical"><code class="name">var <span class="ident">is_super_critical</span></code></dt>
 <dd>
-<section class="desc"><p>Return True if state is supercritical.</p></section>
+<div class="desc"><p>Return True if state is supercritical.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1321,7 +1321,7 @@ def is_super_critical(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.isentropic_expansion_coefficient"><code class="name">var <span class="ident">isentropic_expansion_coefficient</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1334,7 +1334,7 @@ def isentropic_expansion_coefficient(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.isobaric_expansion_coefficient"><code class="name">var <span class="ident">isobaric_expansion_coefficient</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1347,7 +1347,7 @@ def isobaric_expansion_coefficient(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.isothermal_compressibility"><code class="name">var <span class="ident">isothermal_compressibility</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1360,7 +1360,7 @@ def isothermal_compressibility(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.latent_heat"><code class="name">var <span class="ident">latent_heat</span></code></dt>
 <dd>
-<section class="desc"><p>Calculate latent heat of evaporation.</p></section>
+<div class="desc"><p>Calculate latent heat of evaporation.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1381,7 +1381,7 @@ def latent_heat(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.molar_mass"><code class="name">var <span class="ident">molar_mass</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1394,7 +1394,7 @@ def molar_mass(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.name"><code class="name">var <span class="ident">name</span></code></dt>
 <dd>
-<section class="desc"><p>Return fluid name (backend dependent)</p></section>
+<div class="desc"><p>Return fluid name (backend dependent)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1409,7 +1409,7 @@ def name(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.phase"><code class="name">var <span class="ident">phase</span></code></dt>
 <dd>
-<section class="desc"><p>Calculate the phase of the fluid.</p>
+<div class="desc"><p>Calculate the phase of the fluid.</p>
 <p>0: Subcritical liquid
 1: Supercritical (p &gt; pc, T &gt; Tc)
 2: Supercritical gas (p &lt; pc, T &gt; Tc)
@@ -1417,7 +1417,7 @@ def name(self):
 4: At the critical point.
 5: Subcritical gas.
 6: Twophase.
-7: Unknown phase</p></section>
+7: Unknown phase</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1441,8 +1441,8 @@ def phase(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.specific_heat_input"><code class="name">var <span class="ident">specific_heat_input</span></code></dt>
 <dd>
-<section class="desc"><p>Calculate Specific heat input, v * (dh/dv)|p.
-This function is not described in AbstractState class.</p></section>
+<div class="desc"><p>Calculate Specific heat input, v * (dh/dv)|p.
+This function is not described in AbstractState class.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1461,7 +1461,7 @@ def specific_heat_input(self):
 </dd>
 <dt id="heat_transfer.cp_wrapper.ThermState.viscosity"><code class="name">var <span class="ident">viscosity</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1479,7 +1479,7 @@ def viscosity(self):
 <span>def <span class="ident">copy</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Create a copy of current ThermState object.</p></section>
+<div class="desc"><p>Create a copy of current ThermState object.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1487,7 +1487,7 @@ def viscosity(self):
 <pre><code class="python">def copy(self):
     &#34;&#34;&#34;Create a copy of current ThermState object.&#34;&#34;&#34;
     TempState = ThermState(self.name, backend=self.backend)
-    TempState.update_kw(P=self.P, T=self.T)
+    TempState.update_kw(T=self.T, Smass=self.Smass)
     return TempState</code></pre>
 </details>
 </dd>
@@ -1495,7 +1495,7 @@ def viscosity(self):
 <span>def <span class="ident">first_partial_deriv</span></span>(<span>self, Of, Wrt, Constant)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1514,7 +1514,7 @@ def viscosity(self):
 <span>def <span class="ident">update</span></span>(<span>self, input_name1, input_value1, input_name2, input_value2)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1540,7 +1540,7 @@ def viscosity(self):
 <span>def <span class="ident">update_kw</span></span>(<span>self, **state_parameters)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Update thermodynamic state using keyword arguments.</p></section>
+<div class="desc"><p>Update thermodynamic state using keyword arguments.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1635,7 +1635,7 @@ def viscosity(self):
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
 </footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad()</script>

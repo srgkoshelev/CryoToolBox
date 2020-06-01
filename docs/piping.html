@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.7.2" />
+<meta name="generator" content="pdoc 0.8.1" />
 <title>heat_transfer.piping API documentation</title>
 <meta name="description" content="Utilities for hydraulics calculations …" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
-<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
 </head>
 <body>
@@ -61,14 +61,14 @@ class Pipe:
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity {length: 1}`
+        D_nom : int or Quantity {length: 1}
             Nominal diameter of piping; can be dimensionless or having a unit
             of length.
         SCH : int
             Pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity {length: 1}`
+        L : Quantity {length: 1}
             Pipe length
-        c : :obj:`Quantity {length: 1}`
+        c : Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         &#34;&#34;&#34;
@@ -89,31 +89,31 @@ class Pipe:
 
     @property
     def OD(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
+        &#34;&#34;&#34;Quantity {length: 1}: Pipe OD based on NPS table.
         &#34;&#34;&#34;
         return self._OD
 
     @property
     def wall(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
+        &#34;&#34;&#34;Quantity {length: 1}: Wall thickness of Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._wall
 
     @property
     def ID(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
+        &#34;&#34;&#34;Quantity {length: 1}: ID of the Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._ID
 
     @property
     def area(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
+        &#34;&#34;&#34;Quantity {length: 2}: Cross sectional area of pipe.
         &#34;&#34;&#34;
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
+        &#34;&#34;&#34;Quantity {length: 3}: Pipe inner volume.
         &#34;&#34;&#34;
         return self.area * self.L
 
@@ -125,7 +125,7 @@ class Pipe:
 
         Returns
         -------
-        :obj:`pint.Quantity` {dimensionless}
+        Quantity {dimensionless}
             Darcy friction factor.
         &#34;&#34;&#34;
         if self.ID &lt; 0.2*ureg.inch or self.ID &gt; 48*ureg.inch:
@@ -136,7 +136,7 @@ class Pipe:
 
     @property
     def K(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
+        &#34;&#34;&#34;Quantity {length: 1}: Resistance coefficient.
         &#34;&#34;&#34;
         return self._K
 
@@ -147,14 +147,14 @@ class Pipe:
 
         Parameters
         ----------
-        P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P_int : Quantity {length: -1, mass: 1, time: -2}
             Internal pressure, absolute
-        P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P_ext : Quantity {length: -1, mass: 1, time: -2}
             External pressure, absolute
 
         Returns
         -------
-        :obj:`pint.Quantity` {length: 1}
+        Quantity {length: 1}
             Minimum required wall thickness.
         &#34;&#34;&#34;
         if self.check_material_defined():
@@ -208,13 +208,13 @@ class Pipe:
         ----------
         BranchPipe : `Pipe`
             Branch pipe/tube instance with S, E, W, Y properties defined
-        P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P : Quantity {length: -1, mass: 1, time: -2}
             Design pressure
-        beta : :obj:`pint.Quantity {dimensionless}`
+        beta : Quantity {dimensionless}
             Smaller angle between axes of branch and run
-        d_1 : :obj:`pint.Quantity {length: 1}`
+        d_1 : Quantity {length: 1}
             Effective length removed from pipe at branch (opening for branch)
-        T_r : :obj:`pint.Quantity {length: 1}`
+        T_r : Quantity {length: 1}
             Minimum thickness of reinforcing ring
 
         Returns
@@ -254,17 +254,17 @@ class VJ_Pipe(Pipe):
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity {length: 1}`
+        D_nom : int or Quantity {length: 1}
             Nominal diameter of the inner pipe.
         SCH : int
             Inner pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity {length: 1}`
+        L : Quantity {length: 1}
             Length of the inner pipe.
-        VJ_D : int or :obj:`Quantity {length: 1}`
+        VJ_D : int or Quantity {length: 1}
             Nominal diameter of the vacuum jacket.
         VJ_SCH : int
             Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
-        c : :obj:`Quantity {length: 1}`
+        c : Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances of the inner pipe.
         &#34;&#34;&#34;
@@ -640,8 +640,8 @@ class Piping (list):
     added together to calculate single K value for the whole piping. This K
     value is used with Darcy equation to calculate pressure drop or mass flow.
     &#39;&#39;&#39;
-    def __init__(self, Fluid, Pipes=[]):
-        self.Fluid = Fluid
+    def __init__(self, fluid, Pipes=[]):
+        self.fluid = fluid
         self.extend(Pipes)
 
     def add(self, *Pipes):
@@ -674,22 +674,22 @@ class Piping (list):
         Lumped method using Darcy equation is used.
         The pressure dropped is checked for choked condition.
         &#39;&#39;&#39;
-        P_0 = self.Fluid.P
-        T_0 = self.Fluid.T
-        rho_0 = self.Fluid.Dmass
+        P_0 = self.fluid.P
+        T_0 = self.fluid.T
+        rho_0 = self.fluid.Dmass
         K, area = self.K()
         w = m_dot / (rho_0*area)
         dP = dP_darcy(K, rho_0, w)  # first iteration
         P_out = P_0 - dP
-        k = self.Fluid.gamma  # adiabatic coefficient
+        k = self.fluid.gamma  # adiabatic coefficient
         # Critical pressure drop;
         # Note: according to Crane TP-410 should be dependent on
         # the hydraulic resistance of the flow path
         rc = (2/(k+1))**(k/(k-1))
-        if self.Fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1:  # if q&lt;0 then fluid is a liquid
+        if self.fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1:  # if q&lt;0 then fluid is a liquid
             return dP
         elif dP/P_0 &lt;= 0.4:
-            TempState = ThermState(self.Fluid.name, backend=self.Fluid.backend)
+            TempState = ThermState(self.fluid.name, backend=self.fluid.backend)
             # Only working for pure fluids and pre-defined mixtures
             TempState.update(&#39;T&#39;, T_0, &#39;P&#39;, P_out)
             rho_out = TempState.Dmass
@@ -713,14 +713,14 @@ class Piping (list):
         at the beginning of piping.
         Simple solution using Darcy equation is used.
         &#39;&#39;&#39;
-        P_0 = self.Fluid.P
+        P_0 = self.fluid.P
         if P_0 &lt;= P_out:
             logger.warning(&#39;Input pressure less or equal to output: \
             {P_0:.3g}, {P_out:.3g}&#39;)
             return Q_(&#39;0 g/s&#39;)
-        rho = self.Fluid.Dmass
+        rho = self.fluid.Dmass
         K, area = self.K()
-        k = self.Fluid.gamma  # adiabatic coefficient
+        k = self.fluid.gamma  # adiabatic coefficient
         # Critical pressure drop
         # Note: according to Crane TP-410 should be dependent on
         # the hydraulic resistance of the flow path
@@ -747,7 +747,7 @@ class Piping (list):
             :P_out_act: actual downstream pressure
         &#34;&#34;&#34;
         P_in = Q_(P_in_Pa, ureg.Pa)
-        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        self.fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.fluid.Smass)
         P_out_calc = P_in - self.dP(m_dot)
         P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
         P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
@@ -775,7 +775,7 @@ class Piping (list):
                                method=&#39;brentq&#39;)
         logger.setLevel(logger_level)
         P_in = Q_(solution.root, ureg.Pa)
-        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        self.fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.fluid.Smass)
         logger.debug(f&#39;Comparing pressure drop:\n    dP method:\n        \
         {self.dP(m_dot).to(ureg.psi)}\n    \
         P_in - P_out:\n        \
@@ -841,22 +841,22 @@ def beta(d1, d2):
     return min(d1, d2)/max(d1, d2)
 
 
-def to_standard_flow(flow_rate, Fluid):
+def to_standard_flow(flow_rate, fluid):
     &#39;&#39;&#39;
     Converting volumetric flow at certain conditions or mass flow to
     flow at NTP.
     &#39;&#39;&#39;
-    Fluid_NTP = ThermState(Fluid.name)
-    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
     if flow_rate.dimensionality == ureg(&#39;kg/s&#39;).dimensionality:
         # mass flow, flow conditions are unnecessary
-        q_std = flow_rate / Fluid_NTP.Dmass
+        q_std = flow_rate / fluid_NTP.Dmass
     elif flow_rate.dimensionality == ureg(&#39;m^3/s&#39;).dimensionality:
         # volumetric flow given, converting to standard pressure and
         # temperature
-        if Fluid.Dmass != -float(&#39;Inf&#39;):
+        if fluid.Dmass != -float(&#39;Inf&#39;):
             # By default ThermState is initialized with all fields == -inf
-            q_std = flow_rate * Fluid.Dmass / Fluid_NTP.Dmass
+            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
         else:
             logger.warning(&#39;&#39;&#39;Flow conditions for volumetric flow {:.3~}
                            are not set. Assuming standard flow at NTP.
@@ -869,24 +869,24 @@ def to_standard_flow(flow_rate, Fluid):
     return q_std
 
 
-def equivalent_orifice(m_dot, dP, Fluid=Air):
+def equivalent_orifice(m_dot, dP, fluid=Air):
     &#34;&#34;&#34;
     Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
     flow and pressure drop.
     &#34;&#34;&#34;
     Cd = 0.61
-    rho = Fluid.Dmass
+    rho = fluid.Dmass
     ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
     return ID.to(ureg.inch)
 
 
-def to_mass_flow(Q_std, Fluid=Air):
+def to_mass_flow(Q_std, fluid=Air):
     &#34;&#34;&#34;
     Calculate mass flow for given volumetric flow at standard conditions.
     &#34;&#34;&#34;
-    Fluid_NTP = ThermState(Fluid.name)
-    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
-    m_dot = Q_std * Fluid_NTP.Dmass
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    m_dot = Q_std * fluid_NTP.Dmass
     return m_dot.to(ureg.g/ureg.s)
 
 
@@ -943,15 +943,15 @@ def half_width(d_1, T_b, T_h, c, D_h):
     return min(max(d_1, d_2_a), D_h)
 
 
-def PRV_flow(ID, Kd, Fluid):
+def PRV_flow(ID, Kd, fluid):
     &#34;&#34;&#34;
     Calculate mass flow through the relief valve based on
     BPVC VIII div. 1 UG-131 (e) (2).
     &#34;&#34;&#34;
     A = pi * ID**2 / 4
-    C = Fluid.C_gas_constant
-    P = Fluid.P
-    W_T = C * A * P * Fluid.MZT  # Theoretical flow
+    C = fluid.C_gas_constant
+    P = fluid.P
+    W_T = C * A * P * fluid.MZT  # Theoretical flow
     W_a = W_T * Kd  # Actual flow
     return W_a.to(ureg.g/ureg.s)</code></pre>
 </details>
@@ -967,13 +967,13 @@ def PRV_flow(ID, Kd, Fluid):
 <span>def <span class="ident">Cv_to_K</span></span>(<span>Cv, ID)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate resistance coefficient K based on flow coefficient value Cv.
+<div class="desc"><p>Calculate resistance coefficient K based on flow coefficient value Cv.
 Based on definition:
 Cv = Q<em>sqrt(rho/(d_P</em>rho_w))
 where Q - volumetric flow, rho - flow density
 rho_w - water density at 60 F
 d_P - pressure drop through the valve.
-[Cv] = gal/(min<em>(psi)</em>*0.5)</p></section>
+[Cv] = gal/(min<em>(psi)</em>*0.5)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1001,13 +1001,13 @@ d_P - pressure drop through the valve.
 <span>def <span class="ident">K_to_Cv</span></span>(<span>K, ID)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate flow coefficient Cv based on resistance coefficient value K.
+<div class="desc"><p>Calculate flow coefficient Cv based on resistance coefficient value K.
 Based on definition:
 Cv = Q<em>sqrt(rho/(d_P</em>rho_w))
 where Q - volumetric flow, rho - flow density
 rho_w - water density at 60 F
 d_P - pressure drop through the valve.
-[Cv] = gal/(min<em>(psi)</em>*0.5)</p></section>
+[Cv] = gal/(min<em>(psi)</em>*0.5)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1032,24 +1032,24 @@ d_P - pressure drop through the valve.
 </details>
 </dd>
 <dt id="heat_transfer.piping.PRV_flow"><code class="name flex">
-<span>def <span class="ident">PRV_flow</span></span>(<span>ID, Kd, Fluid)</span>
+<span>def <span class="ident">PRV_flow</span></span>(<span>ID, Kd, fluid)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate mass flow through the relief valve based on
-BPVC VIII div. 1 UG-131 (e) (2).</p></section>
+<div class="desc"><p>Calculate mass flow through the relief valve based on
+BPVC VIII div. 1 UG-131 (e) (2).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def PRV_flow(ID, Kd, Fluid):
+<pre><code class="python">def PRV_flow(ID, Kd, fluid):
     &#34;&#34;&#34;
     Calculate mass flow through the relief valve based on
     BPVC VIII div. 1 UG-131 (e) (2).
     &#34;&#34;&#34;
     A = pi * ID**2 / 4
-    C = Fluid.C_gas_constant
-    P = Fluid.P
-    W_T = C * A * P * Fluid.MZT  # Theoretical flow
+    C = fluid.C_gas_constant
+    P = fluid.P
+    W_T = C * A * P * fluid.MZT  # Theoretical flow
     W_a = W_T * Kd  # Actual flow
     return W_a.to(ureg.g/ureg.s)</code></pre>
 </details>
@@ -1058,7 +1058,7 @@ BPVC VIII div. 1 UG-131 (e) (2).</p></section>
 <span>def <span class="ident">beta</span></span>(<span>d1, d2)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate beta = d/D for contraction or enlargement.</p></section>
+<div class="desc"><p>Calculate beta = d/D for contraction or enlargement.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1074,10 +1074,10 @@ BPVC VIII div. 1 UG-131 (e) (2).</p></section>
 <span>def <span class="ident">dP_darcy</span></span>(<span>K, rho, w)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Darcy equation for pressure drop.
+<div class="desc"><p>Darcy equation for pressure drop.
 K - resistance coefficient
 rho - density of flow at entrance
-w - flow speed</p></section>
+w - flow speed</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1094,22 +1094,22 @@ w - flow speed</p></section>
 </details>
 </dd>
 <dt id="heat_transfer.piping.equivalent_orifice"><code class="name flex">
-<span>def <span class="ident">equivalent_orifice</span></span>(<span>m_dot, dP, Fluid=&lt;heat_transfer.cp_wrapper.ThermState object&gt;)</span>
+<span>def <span class="ident">equivalent_orifice</span></span>(<span>m_dot, dP, fluid=&lt;heat_transfer.cp_wrapper.ThermState object&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
-flow and pressure drop.</p></section>
+<div class="desc"><p>Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
+flow and pressure drop.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def equivalent_orifice(m_dot, dP, Fluid=Air):
+<pre><code class="python">def equivalent_orifice(m_dot, dP, fluid=Air):
     &#34;&#34;&#34;
     Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
     flow and pressure drop.
     &#34;&#34;&#34;
     Cd = 0.61
-    rho = Fluid.Dmass
+    rho = fluid.Dmass
     ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
     return ID.to(ureg.inch)</code></pre>
 </details>
@@ -1118,7 +1118,7 @@ flow and pressure drop.</p></section>
 <span>def <span class="ident">half_width</span></span>(<span>d_1, T_b, T_h, c, D_h)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate 'half width' of reinforcement zone per B31.3 304.3.3.</p></section>
+<div class="desc"><p>Calculate 'half width' of reinforcement zone per B31.3 304.3.3.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1132,50 +1132,50 @@ flow and pressure drop.</p></section>
 </details>
 </dd>
 <dt id="heat_transfer.piping.to_mass_flow"><code class="name flex">
-<span>def <span class="ident">to_mass_flow</span></span>(<span>Q_std, Fluid=&lt;heat_transfer.cp_wrapper.ThermState object&gt;)</span>
+<span>def <span class="ident">to_mass_flow</span></span>(<span>Q_std, fluid=&lt;heat_transfer.cp_wrapper.ThermState object&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate mass flow for given volumetric flow at standard conditions.</p></section>
+<div class="desc"><p>Calculate mass flow for given volumetric flow at standard conditions.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def to_mass_flow(Q_std, Fluid=Air):
+<pre><code class="python">def to_mass_flow(Q_std, fluid=Air):
     &#34;&#34;&#34;
     Calculate mass flow for given volumetric flow at standard conditions.
     &#34;&#34;&#34;
-    Fluid_NTP = ThermState(Fluid.name)
-    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
-    m_dot = Q_std * Fluid_NTP.Dmass
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    m_dot = Q_std * fluid_NTP.Dmass
     return m_dot.to(ureg.g/ureg.s)</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.to_standard_flow"><code class="name flex">
-<span>def <span class="ident">to_standard_flow</span></span>(<span>flow_rate, Fluid)</span>
+<span>def <span class="ident">to_standard_flow</span></span>(<span>flow_rate, fluid)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Converting volumetric flow at certain conditions or mass flow to
-flow at NTP.</p></section>
+<div class="desc"><p>Converting volumetric flow at certain conditions or mass flow to
+flow at NTP.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def to_standard_flow(flow_rate, Fluid):
+<pre><code class="python">def to_standard_flow(flow_rate, fluid):
     &#39;&#39;&#39;
     Converting volumetric flow at certain conditions or mass flow to
     flow at NTP.
     &#39;&#39;&#39;
-    Fluid_NTP = ThermState(Fluid.name)
-    Fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
     if flow_rate.dimensionality == ureg(&#39;kg/s&#39;).dimensionality:
         # mass flow, flow conditions are unnecessary
-        q_std = flow_rate / Fluid_NTP.Dmass
+        q_std = flow_rate / fluid_NTP.Dmass
     elif flow_rate.dimensionality == ureg(&#39;m^3/s&#39;).dimensionality:
         # volumetric flow given, converting to standard pressure and
         # temperature
-        if Fluid.Dmass != -float(&#39;Inf&#39;):
+        if fluid.Dmass != -float(&#39;Inf&#39;):
             # By default ThermState is initialized with all fields == -inf
-            q_std = flow_rate * Fluid.Dmass / Fluid_NTP.Dmass
+            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
         else:
             logger.warning(&#39;&#39;&#39;Flow conditions for volumetric flow {:.3~}
                            are not set. Assuming standard flow at NTP.
@@ -1198,10 +1198,10 @@ flow at NTP.</p></section>
 <span>(</span><span>R_D, N, angle)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Abstract Elbow class. <strong>init</strong> method is abstract to avoid instantiation
+<div class="desc"><p>Abstract Elbow class. <strong>init</strong> method is abstract to avoid instantiation
 of this class. method K defines flow resistance calculation.
 R_D: elbow radius/diameter ratio
-N: number of elbows in the pipeline (to be used with lumped Darcy equation)</p></section>
+N: number of elbows in the pipeline (to be used with lumped Darcy equation)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1258,8 +1258,8 @@ N: number of elbows in the pipeline (to be used with lumped Darcy equation)</p><
 <dl>
 <dt id="heat_transfer.piping.AbstractElbow.K"><code class="name">var <span class="ident">K</span></code></dt>
 <dd>
-<section class="desc"><p>Pressure drop in an elbow fitting.
-Based on Handbook of Hydraulic Resistance by I.E. Idelchik.</p></section>
+<div class="desc"><p>Pressure drop in an elbow fitting.
+Based on Handbook of Hydraulic Resistance by I.E. Idelchik.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1297,9 +1297,9 @@ def K(self):
 <span>(</span><span>direction)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Abstract Tee class. <strong>init</strong> method is abstract to avoid instantiation of
+<div class="desc"><p>Abstract Tee class. <strong>init</strong> method is abstract to avoid instantiation of
 this class.
-method K defines flow resistance calculation.</p></section>
+method K defines flow resistance calculation.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1341,7 +1341,7 @@ method K defines flow resistance calculation.</p></section>
 <dl>
 <dt id="heat_transfer.piping.AbstractTee.K"><code class="name">var <span class="ident">K</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1361,21 +1361,21 @@ def K(self):
 <span>(</span><span>D, ID)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Conic orifice</p>
+<div class="desc"><p>Conic orifice</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1425,10 +1425,10 @@ allowances.</dd>
 <span>(</span><span>Pipe1, Pipe2, theta=&lt;Quantity(180, &#x27;degree&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Sudden and gradual contraction based on Crane TP-410.</p>
+<div class="desc"><p>Sudden and gradual contraction based on Crane TP-410.</p>
 <p>Pipe1: upstream pipe
 Pipe2: downstream pipe
-theta: contraction angle</p></section>
+theta: contraction angle</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1507,21 +1507,21 @@ theta: contraction angle</p></section>
 <span>(</span><span>D, L=&lt;Quantity(0, &#x27;meter&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Corrugated pipe class.</p>
+<div class="desc"><p>Corrugated pipe class.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1576,10 +1576,10 @@ allowances.</dd>
 <span>(</span><span>Pipe1, Pipe2, theta=&lt;Quantity(180, &#x27;degree&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Sudden and gradual enlargement based on Crane TP-410.</p>
+<div class="desc"><p>Sudden and gradual enlargement based on Crane TP-410.</p>
 <p>Pipe1: upstream pipe
 Pipe2: downstream pipe
-theta: contraction angle</p></section>
+theta: contraction angle</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1639,21 +1639,21 @@ theta: contraction angle</p></section>
 <span>(</span><span>ID)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Pipe entrance, flush, sharp edged.</p>
+<div class="desc"><p>Pipe entrance, flush, sharp edged.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1705,21 +1705,21 @@ allowances.</dd>
 <span>(</span><span>ID)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Pipe exit, projecting or sharp-edged, or rounded.</p>
+<div class="desc"><p>Pipe exit, projecting or sharp-edged, or rounded.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1768,21 +1768,21 @@ allowances.</dd>
 <span>(</span><span>D)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Globe valve.</p>
+<div class="desc"><p>Globe valve.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1833,21 +1833,21 @@ allowances.</dd>
 <span>(</span><span>ID)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Square-edged orifice plate</p>
+<div class="desc"><p>Square-edged orifice plate</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1900,11 +1900,11 @@ allowances.</dd>
 <span>(</span><span>Springs, Plate, Supply_pipe)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Initiate Parallel Plate instance.
+<div class="desc"><p>Initiate Parallel Plate instance.
 Parallel Plate relief valve designed by Fermilab</p>
 <p>Springs: dictionary containing 'N' - number of springs, 'k' - spring rate, and 'dx_precomp' - pre-compression length
 Plate: dictionary containing 'OD_plate' - OD of the plate, 'OD_O_ring' - OD of the O-Ring installed, and 'W_plate' - plate weight
-Supply_pipe: Pipe/Tube object of upstream pipe</p></section>
+Supply_pipe: Pipe/Tube object of upstream pipe</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1959,7 +1959,7 @@ Supply_pipe: Pipe/Tube object of upstream pipe</p></section>
 <span>def <span class="ident">P_open</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate pressure required to fully open Parallel Plate relief</p></section>
+<div class="desc"><p>Calculate pressure required to fully open Parallel Plate relief</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1985,8 +1985,8 @@ Supply_pipe: Pipe/Tube object of upstream pipe</p></section>
 <span>def <span class="ident">P_set</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>"
-Calculate set (lift) pressure of the Parallel Plate relief</p></section>
+<div class="desc"><p>"
+Calculate set (lift) pressure of the Parallel Plate relief</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2013,24 +2013,24 @@ Calculate set (lift) pressure of the Parallel Plate relief</p></section>
 <span>(</span><span>D_nom, SCH=40, L=&lt;Quantity(0, &#x27;meter&#x27;)&gt;, c=&lt;Quantity(0, &#x27;millimeter&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>NPS pipe class.</p>
+<div class="desc"><p>NPS pipe class.</p>
 <p>Pipe objects represent actual parts of the pipeline. The Pipe object
 will contain information such as OD, ID, wall thickness, and can be
 used to calculate flow coefficient K that is used for flow calculations.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2047,14 +2047,14 @@ allowances.</dd>
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity {length: 1}`
+        D_nom : int or Quantity {length: 1}
             Nominal diameter of piping; can be dimensionless or having a unit
             of length.
         SCH : int
             Pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity {length: 1}`
+        L : Quantity {length: 1}
             Pipe length
-        c : :obj:`Quantity {length: 1}`
+        c : Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         &#34;&#34;&#34;
@@ -2075,31 +2075,31 @@ allowances.</dd>
 
     @property
     def OD(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
+        &#34;&#34;&#34;Quantity {length: 1}: Pipe OD based on NPS table.
         &#34;&#34;&#34;
         return self._OD
 
     @property
     def wall(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
+        &#34;&#34;&#34;Quantity {length: 1}: Wall thickness of Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._wall
 
     @property
     def ID(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
+        &#34;&#34;&#34;Quantity {length: 1}: ID of the Pipe based on NPS table.
         &#34;&#34;&#34;
         return self._ID
 
     @property
     def area(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
+        &#34;&#34;&#34;Quantity {length: 2}: Cross sectional area of pipe.
         &#34;&#34;&#34;
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
+        &#34;&#34;&#34;Quantity {length: 3}: Pipe inner volume.
         &#34;&#34;&#34;
         return self.area * self.L
 
@@ -2111,7 +2111,7 @@ allowances.</dd>
 
         Returns
         -------
-        :obj:`pint.Quantity` {dimensionless}
+        Quantity {dimensionless}
             Darcy friction factor.
         &#34;&#34;&#34;
         if self.ID &lt; 0.2*ureg.inch or self.ID &gt; 48*ureg.inch:
@@ -2122,7 +2122,7 @@ allowances.</dd>
 
     @property
     def K(self):
-        &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
+        &#34;&#34;&#34;Quantity {length: 1}: Resistance coefficient.
         &#34;&#34;&#34;
         return self._K
 
@@ -2133,14 +2133,14 @@ allowances.</dd>
 
         Parameters
         ----------
-        P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P_int : Quantity {length: -1, mass: 1, time: -2}
             Internal pressure, absolute
-        P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P_ext : Quantity {length: -1, mass: 1, time: -2}
             External pressure, absolute
 
         Returns
         -------
-        :obj:`pint.Quantity` {length: 1}
+        Quantity {length: 1}
             Minimum required wall thickness.
         &#34;&#34;&#34;
         if self.check_material_defined():
@@ -2194,13 +2194,13 @@ allowances.</dd>
         ----------
         BranchPipe : `Pipe`
             Branch pipe/tube instance with S, E, W, Y properties defined
-        P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+        P : Quantity {length: -1, mass: 1, time: -2}
             Design pressure
-        beta : :obj:`pint.Quantity {dimensionless}`
+        beta : Quantity {dimensionless}
             Smaller angle between axes of branch and run
-        d_1 : :obj:`pint.Quantity {length: 1}`
+        d_1 : Quantity {length: 1}
             Effective length removed from pipe at branch (opening for branch)
-        T_r : :obj:`pint.Quantity {length: 1}`
+        T_r : Quantity {length: 1}
             Minimum thickness of reinforcing ring
 
         Returns
@@ -2233,100 +2233,100 @@ allowances.</dd>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="heat_transfer.piping.VJ_Pipe" href="#heat_transfer.piping.VJ_Pipe">VJ_Pipe</a></li>
+<li><a title="heat_transfer.piping.Contraction" href="#heat_transfer.piping.Contraction">Contraction</a></li>
 <li><a title="heat_transfer.piping.Corrugated_Pipe" href="#heat_transfer.piping.Corrugated_Pipe">Corrugated_Pipe</a></li>
 <li><a title="heat_transfer.piping.Entrance" href="#heat_transfer.piping.Entrance">Entrance</a></li>
+<li><a title="heat_transfer.piping.Globe_valve" href="#heat_transfer.piping.Globe_valve">Globe_valve</a></li>
 <li><a title="heat_transfer.piping.Orifice" href="#heat_transfer.piping.Orifice">Orifice</a></li>
-<li><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></li>
 <li><a title="heat_transfer.piping.PipeElbow" href="#heat_transfer.piping.PipeElbow">PipeElbow</a></li>
 <li><a title="heat_transfer.piping.PipeTee" href="#heat_transfer.piping.PipeTee">PipeTee</a></li>
-<li><a title="heat_transfer.piping.Valve" href="#heat_transfer.piping.Valve">Valve</a></li>
-<li><a title="heat_transfer.piping.Globe_valve" href="#heat_transfer.piping.Globe_valve">Globe_valve</a></li>
+<li><a title="heat_transfer.piping.Tube" href="#heat_transfer.piping.Tube">Tube</a></li>
+<li><a title="heat_transfer.piping.VJ_Pipe" href="#heat_transfer.piping.VJ_Pipe">VJ_Pipe</a></li>
 <li><a title="heat_transfer.piping.V_Cone" href="#heat_transfer.piping.V_Cone">V_Cone</a></li>
-<li><a title="heat_transfer.piping.Contraction" href="#heat_transfer.piping.Contraction">Contraction</a></li>
+<li><a title="heat_transfer.piping.Valve" href="#heat_transfer.piping.Valve">Valve</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
 <dt id="heat_transfer.piping.Pipe.ID"><code class="name">var <span class="ident">ID</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: ID of the Pipe based on NPS table.</p></section>
+<div class="desc"><p>Quantity {length: 1}: ID of the Pipe based on NPS table.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def ID(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: ID of the Pipe based on NPS table.
+    &#34;&#34;&#34;Quantity {length: 1}: ID of the Pipe based on NPS table.
     &#34;&#34;&#34;
     return self._ID</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.K"><code class="name">var <span class="ident">K</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: Resistance coefficient.</p></section>
+<div class="desc"><p>Quantity {length: 1}: Resistance coefficient.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def K(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Resistance coefficient.
+    &#34;&#34;&#34;Quantity {length: 1}: Resistance coefficient.
     &#34;&#34;&#34;
     return self._K</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.OD"><code class="name">var <span class="ident">OD</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: Pipe OD based on NPS table.</p></section>
+<div class="desc"><p>Quantity {length: 1}: Pipe OD based on NPS table.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def OD(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Pipe OD based on NPS table.
+    &#34;&#34;&#34;Quantity {length: 1}: Pipe OD based on NPS table.
     &#34;&#34;&#34;
     return self._OD</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.area"><code class="name">var <span class="ident">area</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity {length: 2}</code>: Cross sectional area of pipe.</p></section>
+<div class="desc"><p>Quantity {length: 2}: Cross sectional area of pipe.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def area(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity {length: 2}`: Cross sectional area of pipe.
+    &#34;&#34;&#34;Quantity {length: 2}: Cross sectional area of pipe.
     &#34;&#34;&#34;
     return pi * self.ID**2 / 4</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.volume"><code class="name">var <span class="ident">volume</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity {length: 3}</code>: Pipe inner volume.</p></section>
+<div class="desc"><p>Quantity {length: 3}: Pipe inner volume.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def volume(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity {length: 3}`: Pipe inner volume.
+    &#34;&#34;&#34;Quantity {length: 3}: Pipe inner volume.
     &#34;&#34;&#34;
     return self.area * self.L</code></pre>
 </details>
 </dd>
 <dt id="heat_transfer.piping.Pipe.wall"><code class="name">var <span class="ident">wall</span></code></dt>
 <dd>
-<section class="desc"><p>:obj:<code>pint.Quantity {length: 1}</code>: Wall thickness of Pipe based on NPS table.</p></section>
+<div class="desc"><p>Quantity {length: 1}: Wall thickness of Pipe based on NPS table.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def wall(self):
-    &#34;&#34;&#34;:obj:`pint.Quantity {length: 1}`: Wall thickness of Pipe based on NPS table.
+    &#34;&#34;&#34;Quantity {length: 1}: Wall thickness of Pipe based on NPS table.
     &#34;&#34;&#34;
     return self._wall</code></pre>
 </details>
@@ -2338,26 +2338,26 @@ def wall(self):
 <span>def <span class="ident">branch_reinforcement</span></span>(<span>self, BranchPipe, P, beta=&lt;Quantity(90, &#x27;degree&#x27;)&gt;, d_1=None, T_r=&lt;Quantity(0, &#x27;inch&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate branch reinforcement status for given BranchPipe and
+<div class="desc"><p>Calculate branch reinforcement status for given BranchPipe and
 reinforcing ring thickness, Tr.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>BranchPipe</code></strong> :&ensp;<code>&lt;a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe"&gt;</code>Pipe<code>&lt;/a&gt;</code></dt>
+<dt><strong><code>BranchPipe</code></strong> :&ensp;<code><a title="heat_transfer.piping.Pipe" href="#heat_transfer.piping.Pipe">Pipe</a></code></dt>
 <dd>Branch pipe/tube instance with S, E, W, Y properties defined</dd>
-<dt><strong><code>P</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}`</dt>
+<dt><strong><code>P</code></strong> :&ensp;<code>Quantity {length: -1, mass: 1, time: -2}</code></dt>
 <dd>Design pressure</dd>
-<dt><strong><code>beta</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>dimensionless</code>}`</dt>
+<dt><strong><code>beta</code></strong> :&ensp;<code>Quantity {dimensionless}</code></dt>
 <dd>Smaller angle between axes of branch and run</dd>
-<dt><strong><code>d_1</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>d_1</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Effective length removed from pipe at branch (opening for branch)</dd>
-<dt><strong><code>T_r</code></strong> :&ensp;:<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>T_r</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Minimum thickness of reinforcing ring</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>None</code></dt>
 <dd>&nbsp;</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2371,13 +2371,13 @@ reinforcing ring thickness, Tr.</p>
     ----------
     BranchPipe : `Pipe`
         Branch pipe/tube instance with S, E, W, Y properties defined
-    P : :obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+    P : Quantity {length: -1, mass: 1, time: -2}
         Design pressure
-    beta : :obj:`pint.Quantity {dimensionless}`
+    beta : Quantity {dimensionless}
         Smaller angle between axes of branch and run
-    d_1 : :obj:`pint.Quantity {length: 1}`
+    d_1 : Quantity {length: 1}
         Effective length removed from pipe at branch (opening for branch)
-    T_r : :obj:`pint.Quantity {length: 1}`
+    T_r : Quantity {length: 1}
         Minimum thickness of reinforcing ring
 
     Returns
@@ -2410,14 +2410,14 @@ reinforcing ring thickness, Tr.</p>
 <span>def <span class="ident">check_material_defined</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Check whether following properties S, E, W, Y for stress
+<div class="desc"><p>Check whether following properties S, E, W, Y for stress
 calculations are defined.</p>
 <ul>
 <li>S: Stress value for pipe material</li>
 <li>E: Quality factor from Table A-1A or A-1B</li>
 <li>W: Weld joint strength reduction factor in accordance with 302.3.5 (e)</li>
 <li>Y: coefficient from Table 304.1.1</li>
-</ul></section>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2442,12 +2442,14 @@ calculations are defined.</p>
 <span>def <span class="ident">f_T</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate Darcy friction factor for complete turbulence for clean
+<div class="desc"><p>Calculate Darcy friction factor for complete turbulence for clean
 steel pipe.</p>
 <p>Fitted logarithmic function to data from A-25.</p>
 <h2 id="returns">Returns</h2>
-<p>:obj:<code>pint.Quantity</code> {dimensionless}
-Darcy friction factor.</p></section>
+<dl>
+<dt><code>Quantity {dimensionless}</code></dt>
+<dd>Darcy friction factor.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2460,7 +2462,7 @@ Darcy friction factor.</p></section>
 
     Returns
     -------
-    :obj:`pint.Quantity` {dimensionless}
+    Quantity {dimensionless}
         Darcy friction factor.
     &#34;&#34;&#34;
     if self.ID &lt; 0.2*ureg.inch or self.ID &gt; 48*ureg.inch:
@@ -2474,18 +2476,20 @@ Darcy friction factor.</p></section>
 <span>def <span class="ident">pressure_design_thick</span></span>(<span>self, P_int, P_ext=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate pressure design thickness for given pressure and pipe material.</p>
+<div class="desc"><p>Calculate pressure design thickness for given pressure and pipe material.</p>
 <p>Based on B31.3 304.1.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>P_int</code></strong> :&ensp;<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}`</dt>
+<dt><strong><code>P_int</code></strong> :&ensp;<code>Quantity {length: -1, mass: 1, time: -2}</code></dt>
 <dd>Internal pressure, absolute</dd>
-<dt><strong><code>P_ext</code></strong> :&ensp;<code>obj</code>:<code>`pint.Quantity</code> {<code>length</code>: -<code>1</code>, <code>mass</code>: <code>1</code>, <code>time</code>: -<code>2</code>}`</dt>
+<dt><strong><code>P_ext</code></strong> :&ensp;<code>Quantity {length: -1, mass: 1, time: -2}</code></dt>
 <dd>External pressure, absolute</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>:obj:<code>pint.Quantity</code> {length: 1}
-Minimum required wall thickness.</p></section>
+<dl>
+<dt><code>Quantity {length: 1}</code></dt>
+<dd>Minimum required wall thickness.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2497,14 +2501,14 @@ Minimum required wall thickness.</p></section>
 
     Parameters
     ----------
-    P_int : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+    P_int : Quantity {length: -1, mass: 1, time: -2}
         Internal pressure, absolute
-    P_ext : obj:`pint.Quantity {length: -1, mass: 1, time: -2}`
+    P_ext : Quantity {length: -1, mass: 1, time: -2}
         External pressure, absolute
 
     Returns
     -------
-    :obj:`pint.Quantity` {length: 1}
+    Quantity {length: 1}
         Minimum required wall thickness.
     &#34;&#34;&#34;
     if self.check_material_defined():
@@ -2529,12 +2533,12 @@ Minimum required wall thickness.</p></section>
 <span>def <span class="ident">update</span></span>(<span>self, **kwargs)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Add attributes, e.g. material stress or weld joint strength to the pipe.</p>
+<div class="desc"><p>Add attributes, e.g. material stress or weld joint strength to the pipe.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>**kwargs</code></strong></dt>
 <dd>Parameters of the pipe, e.g. S=Q_('16700 psi'), Y=0.4.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2557,8 +2561,8 @@ Minimum required wall thickness.</p></section>
 <span>(</span><span>D_nom, SCH=40, R_D=1.5, N=1, angle=&lt;Quantity(90, &#x27;degree&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>NPS Tee fitting.
-MRO makes method K from Elbow class to override method from Pipe class.</p></section>
+<div class="desc"><p>NPS Tee fitting.
+MRO makes method K from Elbow class to override method from Pipe class.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2611,8 +2615,8 @@ MRO makes method K from Elbow class to override method from Pipe class.</p></sec
 <span>(</span><span>D_nom, SCH=40, direction='thru')</span>
 </code></dt>
 <dd>
-<section class="desc"><p>NPS Tee fitting.
-MRO makes method K from Tee class to override method from Pipe class.</p></section>
+<div class="desc"><p>NPS Tee fitting.
+MRO makes method K from Tee class to override method from Pipe class.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2657,17 +2661,17 @@ MRO makes method K from Tee class to override method from Pipe class.</p></secti
 </dd>
 <dt id="heat_transfer.piping.Piping"><code class="flex name class">
 <span>class <span class="ident">Piping</span></span>
-<span>(</span><span>Fluid, Pipes=[])</span>
+<span>(</span><span>fluid, Pipes=[])</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Piping system defined by initial conditions and structure of
+<div class="desc"><p>Piping system defined by initial conditions and structure of
 pipe elements.
 Piping is modeled as a list of Pipe objects with given conditions at the
 beginning. Implemented methods allow to calculate pressure drop for given
 mass flow rate or mass flow rate for given pressure drop using lumped
 Darcy equation. All flow coefficients K are converted to the same base and
 added together to calculate single K value for the whole piping. This K
-value is used with Darcy equation to calculate pressure drop or mass flow.</p></section>
+value is used with Darcy equation to calculate pressure drop or mass flow.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2683,8 +2687,8 @@ value is used with Darcy equation to calculate pressure drop or mass flow.</p></
     added together to calculate single K value for the whole piping. This K
     value is used with Darcy equation to calculate pressure drop or mass flow.
     &#39;&#39;&#39;
-    def __init__(self, Fluid, Pipes=[]):
-        self.Fluid = Fluid
+    def __init__(self, fluid, Pipes=[]):
+        self.fluid = fluid
         self.extend(Pipes)
 
     def add(self, *Pipes):
@@ -2717,22 +2721,22 @@ value is used with Darcy equation to calculate pressure drop or mass flow.</p></
         Lumped method using Darcy equation is used.
         The pressure dropped is checked for choked condition.
         &#39;&#39;&#39;
-        P_0 = self.Fluid.P
-        T_0 = self.Fluid.T
-        rho_0 = self.Fluid.Dmass
+        P_0 = self.fluid.P
+        T_0 = self.fluid.T
+        rho_0 = self.fluid.Dmass
         K, area = self.K()
         w = m_dot / (rho_0*area)
         dP = dP_darcy(K, rho_0, w)  # first iteration
         P_out = P_0 - dP
-        k = self.Fluid.gamma  # adiabatic coefficient
+        k = self.fluid.gamma  # adiabatic coefficient
         # Critical pressure drop;
         # Note: according to Crane TP-410 should be dependent on
         # the hydraulic resistance of the flow path
         rc = (2/(k+1))**(k/(k-1))
-        if self.Fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1:  # if q&lt;0 then fluid is a liquid
+        if self.fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1:  # if q&lt;0 then fluid is a liquid
             return dP
         elif dP/P_0 &lt;= 0.4:
-            TempState = ThermState(self.Fluid.name, backend=self.Fluid.backend)
+            TempState = ThermState(self.fluid.name, backend=self.fluid.backend)
             # Only working for pure fluids and pre-defined mixtures
             TempState.update(&#39;T&#39;, T_0, &#39;P&#39;, P_out)
             rho_out = TempState.Dmass
@@ -2756,14 +2760,14 @@ value is used with Darcy equation to calculate pressure drop or mass flow.</p></
         at the beginning of piping.
         Simple solution using Darcy equation is used.
         &#39;&#39;&#39;
-        P_0 = self.Fluid.P
+        P_0 = self.fluid.P
         if P_0 &lt;= P_out:
             logger.warning(&#39;Input pressure less or equal to output: \
             {P_0:.3g}, {P_out:.3g}&#39;)
             return Q_(&#39;0 g/s&#39;)
-        rho = self.Fluid.Dmass
+        rho = self.fluid.Dmass
         K, area = self.K()
-        k = self.Fluid.gamma  # adiabatic coefficient
+        k = self.fluid.gamma  # adiabatic coefficient
         # Critical pressure drop
         # Note: according to Crane TP-410 should be dependent on
         # the hydraulic resistance of the flow path
@@ -2790,7 +2794,7 @@ value is used with Darcy equation to calculate pressure drop or mass flow.</p></
             :P_out_act: actual downstream pressure
         &#34;&#34;&#34;
         P_in = Q_(P_in_Pa, ureg.Pa)
-        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        self.fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.fluid.Smass)
         P_out_calc = P_in - self.dP(m_dot)
         P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
         P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
@@ -2818,7 +2822,7 @@ value is used with Darcy equation to calculate pressure drop or mass flow.</p></
                                method=&#39;brentq&#39;)
         logger.setLevel(logger_level)
         P_in = Q_(solution.root, ureg.Pa)
-        self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+        self.fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.fluid.Smass)
         logger.debug(f&#39;Comparing pressure drop:\n    dP method:\n        \
         {self.dP(m_dot).to(ureg.psi)}\n    \
         P_in - P_out:\n        \
@@ -2833,7 +2837,7 @@ value is used with Darcy equation to calculate pressure drop or mass flow.</p></
 <dl>
 <dt id="heat_transfer.piping.Piping.volume"><code class="name">var <span class="ident">volume</span></code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2853,7 +2857,7 @@ def volume(self):
 <span>def <span class="ident">K</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Converting and adding flow coefficients K to same area.</p></section>
+<div class="desc"><p>Converting and adding flow coefficients K to same area.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2877,11 +2881,11 @@ def volume(self):
 <span>def <span class="ident">P_in</span></span>(<span>self, m_dot, P_out=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;, P_min=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;, P_max=&lt;Quantity(200, &#x27;bar&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate upstream pressure given mass flow and downstream pressure.</p>
+<div class="desc"><p>Calculate upstream pressure given mass flow and downstream pressure.</p>
 <p>:m_dot: mass flow
 :P_out: downstream pressure
 :P_min: min expected pressure; should be lower than actual value
-:P_max: max expected pressure; should be higher than actual value</p></section>
+:P_max: max expected pressure; should be higher than actual value</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2908,7 +2912,7 @@ def volume(self):
                            method=&#39;brentq&#39;)
     logger.setLevel(logger_level)
     P_in = Q_(solution.root, ureg.Pa)
-    self.Fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.Fluid.Smass)
+    self.fluid.update(&#39;P&#39;, P_in, &#39;Smass&#39;, self.fluid.Smass)
     logger.debug(f&#39;Comparing pressure drop:\n    dP method:\n        \
     {self.dP(m_dot).to(ureg.psi)}\n    \
     P_in - P_out:\n        \
@@ -2920,7 +2924,7 @@ def volume(self):
 <span>def <span class="ident">add</span></span>(<span>self, *Pipes)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2933,9 +2937,9 @@ def volume(self):
 <span>def <span class="ident">dP</span></span>(<span>self, m_dot)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate pressure drop through piping.
+<div class="desc"><p>Calculate pressure drop through piping.
 Lumped method using Darcy equation is used.
-The pressure dropped is checked for choked condition.</p></section>
+The pressure dropped is checked for choked condition.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2946,22 +2950,22 @@ The pressure dropped is checked for choked condition.</p></section>
     Lumped method using Darcy equation is used.
     The pressure dropped is checked for choked condition.
     &#39;&#39;&#39;
-    P_0 = self.Fluid.P
-    T_0 = self.Fluid.T
-    rho_0 = self.Fluid.Dmass
+    P_0 = self.fluid.P
+    T_0 = self.fluid.T
+    rho_0 = self.fluid.Dmass
     K, area = self.K()
     w = m_dot / (rho_0*area)
     dP = dP_darcy(K, rho_0, w)  # first iteration
     P_out = P_0 - dP
-    k = self.Fluid.gamma  # adiabatic coefficient
+    k = self.fluid.gamma  # adiabatic coefficient
     # Critical pressure drop;
     # Note: according to Crane TP-410 should be dependent on
     # the hydraulic resistance of the flow path
     rc = (2/(k+1))**(k/(k-1))
-    if self.Fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1:  # if q&lt;0 then fluid is a liquid
+    if self.fluid.Q &lt; 0 or dP/P_0 &lt;= 0.1:  # if q&lt;0 then fluid is a liquid
         return dP
     elif dP/P_0 &lt;= 0.4:
-        TempState = ThermState(self.Fluid.name, backend=self.Fluid.backend)
+        TempState = ThermState(self.fluid.name, backend=self.fluid.backend)
         # Only working for pure fluids and pre-defined mixtures
         TempState.update(&#39;T&#39;, T_0, &#39;P&#39;, P_out)
         rho_out = TempState.Dmass
@@ -2984,9 +2988,9 @@ The pressure dropped is checked for choked condition.</p></section>
 <span>def <span class="ident">m_dot</span></span>(<span>self, P_out=&lt;Quantity(0, &#x27;pound_force_per_square_inch_gauge&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Calculate mass flow through the piping using initial conditions
+<div class="desc"><p>Calculate mass flow through the piping using initial conditions
 at the beginning of piping.
-Simple solution using Darcy equation is used.</p></section>
+Simple solution using Darcy equation is used.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2997,14 +3001,14 @@ Simple solution using Darcy equation is used.</p></section>
     at the beginning of piping.
     Simple solution using Darcy equation is used.
     &#39;&#39;&#39;
-    P_0 = self.Fluid.P
+    P_0 = self.fluid.P
     if P_0 &lt;= P_out:
         logger.warning(&#39;Input pressure less or equal to output: \
         {P_0:.3g}, {P_out:.3g}&#39;)
         return Q_(&#39;0 g/s&#39;)
-    rho = self.Fluid.Dmass
+    rho = self.fluid.Dmass
     K, area = self.K()
-    k = self.Fluid.gamma  # adiabatic coefficient
+    k = self.fluid.gamma  # adiabatic coefficient
     # Critical pressure drop
     # Note: according to Crane TP-410 should be dependent on
     # the hydraulic resistance of the flow path
@@ -3028,21 +3032,21 @@ Simple solution using Darcy equation is used.</p></section>
 <span>(</span><span>OD, wall=&lt;Quantity(0, &#x27;meter&#x27;)&gt;, L=&lt;Quantity(0, &#x27;meter&#x27;)&gt;, c=&lt;Quantity(0, &#x27;meter&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Tube, requires OD and wall thickness specified</p>
+<div class="desc"><p>Tube, requires OD and wall thickness specified</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3098,8 +3102,8 @@ allowances.</dd>
 <span>(</span><span>OD, wall, R_D=1.5, N=1, angle=&lt;Quantity(90, &#x27;degree&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>NPS Tee fitting.
-MRO makes method K from Elbow class to override method from Pipe class.</p></section>
+<div class="desc"><p>NPS Tee fitting.
+MRO makes method K from Elbow class to override method from Pipe class.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3153,7 +3157,7 @@ MRO makes method K from Elbow class to override method from Pipe class.</p></sec
 <span>(</span><span>OD, wall, direction='thru')</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Tee fitting based.</p></section>
+<div class="desc"><p>Tee fitting based.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3200,24 +3204,24 @@ MRO makes method K from Elbow class to override method from Pipe class.</p></sec
 <span>(</span><span>D_nom, SCH, L, VJ_D, VJ_SCH=5, c=&lt;Quantity(0, &#x27;inch&#x27;)&gt;)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Vacuum jacketed pipe.</p>
+<div class="desc"><p>Vacuum jacketed pipe.</p>
 <p>Generate Vacuum jacketed pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of the inner pipe.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Inner pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Length of the inner pipe.</dd>
-<dt><strong><code>VJ_D</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>VJ_D</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of the vacuum jacket.</dd>
 <dt><strong><code>VJ_SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Vacuum jacket pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances of the inner pipe.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3230,17 +3234,17 @@ allowances of the inner pipe.</dd>
 
         Parameters
         ----------
-        D_nom : int or :obj:`Quantity {length: 1}`
+        D_nom : int or Quantity {length: 1}
             Nominal diameter of the inner pipe.
         SCH : int
             Inner pipe schedule. Default value is SCH 40 (STD).
-        L : :obj:`Quantity {length: 1}`
+        L : Quantity {length: 1}
             Length of the inner pipe.
-        VJ_D : int or :obj:`Quantity {length: 1}`
+        VJ_D : int or Quantity {length: 1}
             Nominal diameter of the vacuum jacket.
         VJ_SCH : int
             Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
-        c : :obj:`Quantity {length: 1}`
+        c : Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances of the inner pipe.
         &#34;&#34;&#34;
@@ -3280,21 +3284,21 @@ allowances of the inner pipe.</dd>
 <span>(</span><span>D, beta, Cf, SCH=40)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>McCrometer V-Cone flowmeter.</p>
+<div class="desc"><p>McCrometer V-Cone flowmeter.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3339,21 +3343,21 @@ allowances.</dd>
 <span>(</span><span>D, Cv)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>Generic valve with known Cv.</p>
+<div class="desc"><p>Generic valve with known Cv.</p>
 <p>Generate Pipe object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or :<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>D_nom</code></strong> :&ensp;<code>int</code> or <code>Quantity {length: 1}</code></dt>
 <dd>Nominal diameter of piping; can be dimensionless or having a unit
 of length.</dd>
 <dt><strong><code>SCH</code></strong> :&ensp;<code>int</code></dt>
 <dd>Pipe schedule. Default value is SCH 40 (STD).</dd>
-<dt><strong><code>L</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Pipe length</dd>
-<dt><strong><code>c</code></strong> :&ensp;:<code>obj</code>:<code>`Quantity</code> {<code>length</code>: <code>1</code>}`</dt>
+<dt><strong><code>c</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
 <dd>Sum of the mechanical allowances plus corrosion and erosion
 allowances.</dd>
-</dl></section>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3530,7 +3534,7 @@ allowances.</dd>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
 </footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 <script>hljs.initHighlightingOnLoad()</script>
