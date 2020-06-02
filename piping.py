@@ -28,18 +28,18 @@ class Pipe:
     used to calculate flow coefficient K that is used for flow calculations.
     """
     def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm')):
-        """Generate Pipe object.
+        """Generate `Pipe` object.
 
         Parameters
         ----------
-        D_nom : int or Quantity {length: 1}
+        D_nom : float or ureg.Quantity {length: 1}
             Nominal diameter of piping; can be dimensionless or having a unit
             of length.
         SCH : int
             Pipe schedule. Default value is SCH 40 (STD).
-        L : Quantity {length: 1}
+        L : ureg.Quantity {length: 1}
             Pipe length
-        c : Quantity {length: 1}
+        c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         """
@@ -60,31 +60,31 @@ class Pipe:
 
     @property
     def OD(self):
-        """Quantity {length: 1}: Pipe OD based on NPS table.
+        """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
         """
         return self._OD
 
     @property
     def wall(self):
-        """Quantity {length: 1}: Wall thickness of Pipe based on NPS table.
+        """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
         """
         return self._wall
 
     @property
     def ID(self):
-        """Quantity {length: 1}: ID of the Pipe based on NPS table.
+        """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
         """
         return self._ID
 
     @property
     def area(self):
-        """Quantity {length: 2}: Cross sectional area of pipe.
+        """ureg.Quantity {length: 2} : Cross sectional area of pipe.
         """
         return pi * self.ID**2 / 4
 
     @property
     def volume(self):
-        """Quantity {length: 3}: Pipe inner volume.
+        """ureg.Quantity {length: 3} : Pipe inner volume.
         """
         return self.area * self.L
 
@@ -96,10 +96,9 @@ class Pipe:
 
         Returns
         -------
-        Quantity {dimensionless}
+        ureg.Quantity {dimensionless}
             Darcy friction factor.
         """
-        # TODO Move outside class
         if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
             logger.debug('''Tabulated friction data is given for
                            ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
@@ -108,7 +107,7 @@ class Pipe:
 
     @property
     def K(self):
-        """Quantity {length: 1}: Resistance coefficient.
+        """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         return self._K
 
@@ -119,14 +118,14 @@ class Pipe:
 
         Parameters
         ----------
-        P_int : Quantity {length: -1, mass: 1, time: -2}
+        P_int : ureg.Quantity {length: -1, mass: 1, time: -2}
             Internal pressure, absolute
-        P_ext : Quantity {length: -1, mass: 1, time: -2}
+        P_ext : ureg.Quantity {length: -1, mass: 1, time: -2}
             External pressure, absolute
 
         Returns
         -------
-        Quantity {length: 1}
+        ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
         if self.check_material_defined():
@@ -153,6 +152,10 @@ class Pipe:
         ----------
         **kwargs
             Parameters of the pipe, e.g. S=Q_('16700 psi'), Y=0.4.
+
+        Returns
+        -------
+        None
         """
         self.__dict__.update(kwargs)
 
@@ -160,10 +163,16 @@ class Pipe:
         """Check whether following properties S, E, W, Y for stress
         calculations are defined.
 
+        Parameters
+        ----------
         * S: Stress value for pipe material
         * E: Quality factor from Table A-1A or A-1B
         * W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
         * Y: coefficient from Table 304.1.1
+
+        Returns
+        -------
+        None
         """
         try:
             self.S; self.E; self.W; self.Y
@@ -178,15 +187,15 @@ class Pipe:
 
         Parameters
         ----------
-        BranchPipe : `Pipe`
+        BranchPipe : Pipe
             Branch pipe/tube instance with S, E, W, Y properties defined
-        P : Quantity {length: -1, mass: 1, time: -2}
+        P : ureg.Quantity {length: -1, mass: 1, time: -2}
             Design pressure
-        beta : Quantity {dimensionless}
+        beta : ureg.Quantity {dimensionless}
             Smaller angle between axes of branch and run
-        d_1 : Quantity {length: 1}
+        d_1 : ureg.Quantity {length: 1}
             Effective length removed from pipe at branch (opening for branch)
-        T_r : Quantity {length: 1}
+        T_r : ureg.Quantity {length: 1}
             Minimum thickness of reinforcing ring
 
         Returns
@@ -226,17 +235,17 @@ class VJ_Pipe(Pipe):
 
         Parameters
         ----------
-        D_nom : int or Quantity {length: 1}
+        D_nom : float or ureg.Quantity {length: 1}
             Nominal diameter of the inner pipe.
         SCH : int
             Inner pipe schedule. Default value is SCH 40 (STD).
-        L : Quantity {length: 1}
+        L : ureg.Quantity {length: 1}
             Length of the inner pipe.
-        VJ_D : int or Quantity {length: 1}
+        VJ_D : float or ureg.Quantity {length: 1}
             Nominal diameter of the vacuum jacket.
         VJ_SCH : int
             Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
-        c : Quantity {length: 1}
+        c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances of the inner pipe.
         """
@@ -253,6 +262,15 @@ class Corrugated_Pipe(Pipe):
     """Corrugated pipe class.
     """
     def __init__(self, D, L=0*ureg.m):
+        """Generate corrugated pipe object.
+
+        Parameters
+        ----------
+        D : float
+            Nominal diameter
+        L : ureg.Quantity {length: 1}
+            Length of the pipe.
+        """
         super().__init__(D, None, L)
         self._K = 4*super().K  # Multiplier 4 is used for corrugated pipe
         self._type = 'Corrugated pipe'
@@ -276,6 +294,13 @@ class Entrance (Pipe):
     """Pipe entrance, flush, sharp edged.
     """
     def __init__(self, ID):
+        """Generate an pipe entrance.
+
+        Parameters
+        ----------
+        ID : ureg.Quantity {length: 1}
+            Inside diameter of the entrance.
+        """
         self._ID = ID
         self._type = 'Entrance'
         self._K = 0.5  # Crane TP-410, A-29
@@ -292,6 +317,13 @@ class Exit (Entrance):
     """Pipe exit, projecting or sharp-edged, or rounded.
     """
     def __init__(self, ID):
+        """Generate pipe exit.
+
+        Parameters
+        ----------
+        ID : ureg.Quantity {length: 1}
+            Inside diameter of the exit.
+        """
         self._ID = ID
         self._type = 'Exit'
         self._K = 1  # Crane TP-410, A-29
@@ -308,6 +340,13 @@ class Orifice(Pipe):
     """Square-edged orifice plate
     """
     def __init__(self, ID):
+        """Generate orifice.
+
+        Parameters
+        ----------
+        ID : ureg.Quantity {length: 1}
+            Inside diameter of the orifice.
+        """
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self._ID = ID
         self._type = 'Orifice'
@@ -325,6 +364,13 @@ class Conic_Orifice(Orifice):
     """Conic orifice
     """
     def __init__(self, D, ID):
+        """Generate conic orifice.
+
+        Parameters
+        ----------
+        ID : ureg.Quantity {length: 1}
+            Inside diameter of the orifice.
+        """
         super().__init__(ID)
         if NPS_table[D]['OD'] >= 1*ureg.inch:
             # For a smaller diameter using value for
@@ -343,6 +389,20 @@ class Tube(Pipe):
     Tube, requires OD and wall thickness specified
     """
     def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
+        """Generate tube object.
+
+        Parameters
+        ----------
+        OD : ureg.Quantity {length: 1}
+            Outer diameter of the tube.
+        wall : ureg.Quantity {length: 1}
+            Wall thickness of the tube.
+        L : ureg.Quantity {length: 1}
+            Length of the tube.
+        c : ureg.Quantity {length: 1}
+            Sum of the mechanical allowances plus corrosion and erosion
+            allowances.
+        """
         self._OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
@@ -387,8 +447,17 @@ class AbstractElbow(ABC):
     """
     Abstract Elbow class. __init__ method is abstract to avoid instantiation
     of this class. method K defines flow resistance calculation.
-    R_D: elbow radius/diameter ratio
-    N: number of elbows in the pipeline (to be used with lumped Darcy equation)
+
+    Attributes
+    ----------
+    R_D : ureg.Quantity {length: 1}
+        Elbow radius/diameter ratio
+    N : int
+        Number of elbows in the pipeline (to be used with lumped Darcy equation)
+    angle : ureg.Quantity {dimensionless}
+        Number of elbows in the pipeline (to be used with lumped Darcy equation)
+    L : ureg.Quantity {length: }
+        Length of the elbow
     """
     def __init__(self, R_D, N, angle):
         self.R_D = R_D
@@ -429,6 +498,22 @@ class PipeElbow(AbstractElbow, Pipe):
     MRO makes method K from Elbow class to override method from Pipe class.
     """
     def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
+        """Generate a pipe elbow object.
+
+        Parameters
+        ----------
+        D_nom : float or ureg.Quantity {length: 1}
+            Nominal diameter of piping; can be dimensionless or having a unit
+            of length.
+        SCH : int
+            Pipe schedule. Default value is SCH 40 (STD).
+        R_D : ureg.Quantity {length: 1}
+            Elbow radius/diameter ratio
+        N : int
+            Number of elbows in the pipeline
+        angle : ureg.Quantity {dimensionless}
+            Number of elbows in the pipeline
+        """
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(R_D, N, angle)
         self._type = 'Pipe elbow'
@@ -444,6 +529,21 @@ class TubeElbow(AbstractElbow, Tube):
     MRO makes method K from Elbow class to override method from Pipe class.
     """
     def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
+        """Generate a tube elbow object.
+
+        Parameters
+        ----------
+        OD : ureg.Quantity {length: 1}
+            Outer diameter of the tube.
+        wall : ureg.Quantity {length: 1}
+            Wall thickness of the tube.
+        R_D : ureg.Quantity {length: 1}
+            Elbow radius/diameter ratio
+        N : int
+            Number of elbows in the pipeline
+        angle : ureg.Quantity {dimensionless}
+            Number of elbows in the pipeline
+        """
         Tube.__init__(self, OD, wall)
         super().__init__(R_D, N, angle)
         self._type = 'Tube elbow'

@@ -7,43 +7,48 @@ pp = pprint.PrettyPrinter()
 ht.logger.setLevel(ht.logging.DEBUG)
 
 ureg = ht.ureg
+Q_ = ht.Q_
 
 Test_State = ht.ThermState('helium')
-#Test_State.update('PT_INPUTS', ht.Q_('49.17 psi'), ht.Q_('11.029 degR'))
-P_SHI = ht.Q_('200 psi')
+#Test_State.update('PT_INPUTS', Q_('49.17 psi'), Q_('11.029 degR'))
+P_SHI = Q_('200 psi')
 T_SHI = 2.6579 * P_SHI.to(ht.ureg.psi).magnitude**0.3653 * ht.ureg.degR #Bruce S. formula
 Test_State.update('P', P_SHI, 'T', T_SHI)
-#Test_State.update('T', ht.Q_('4.2 K'), 'Q', ht.Q_('1'))
-print(ht.to_scfma(ht.Q_('1 g/s'), Test_State))
-print(ht.from_scfma(ht.Q_('0.443 ft**3/min'), Test_State))
+#Test_State.update('T', Q_('4.2 K'), 'Q', Q_('1'))
+print(ht.to_scfma(Q_('1 g/s'), Test_State))
+print(ht.from_scfma(Q_('0.443 ft**3/min'), Test_State))
 print(Test_State.Prandtl)
 @ht.ureg.wraps(ht.ureg.BTU/ht.ureg.lb, ht.ureg.psi)
 def theta_bruce(P):
     return 0.5724 * P**0.6813
 print(theta_bruce(P_SHI))
 print('\nCalculating evaporation heat')
-Test_State.update('T', ht.Q_('4.2 K'), 'Q', ht.Q_('0'))
+Test_State.update('T', Q_('4.2 K'), 'Q', Q_('0'))
 Hmass_liq = Test_State.Hmass
 print(Hmass_liq)
 print(Test_State.specific_heat_input)
-Test_State.update('T', ht.Q_('4.2 K'), 'Q', ht.Q_('1'))
+Test_State.update('T', Q_('4.2 K'), 'Q', Q_('1'))
 Hmass_vap = Test_State.Hmass
 print(Hmass_vap)
 Hmass_evap = Hmass_vap - Hmass_liq
 print(Hmass_evap)
 print(Test_State.specific_heat_input)
-Test_State.update('P', P_SHI, 'T', ht.Q_('200 K'))
+Test_State.update('P', P_SHI, 'T', Q_('200 K'))
 print(theta_bruce(Test_State.P).to(ht.ureg.J/ht.ureg.kg), T_SHI.to(ht.ureg.K))
 print(ht.theta_heat(Test_State))
-TestPipe = ht.piping.Pipe(1, SCH=10, L=ht.Q_('1 m'))
-print(TestPipe.update(S=ht.Q_('16700 psi'), E=0.8, W=1, Y=0.4))
+TestPipe = ht.piping.Pipe(1, SCH=10, L=Q_('1 m'))
+print(TestPipe.update(S=Q_('16700 psi'), E=0.8, W=1, Y=0.4))
 print(TestPipe.pressure_design_thick(ht.P_NTP))
 TestPipe2 = ht.piping.Pipe(0.25)
-print(TestPipe2.update(S=ht.Q_('1000 psi'), E=1, W=1, Y=0.4))
+print(TestPipe2.update(S=Q_('1000 psi'), E=1, W=1, Y=0.4))
 TestPipe.branch_reinforcement(TestPipe2, 10*ht.P_NTP)
-print(TestPipe.pressure_design_thick(ht.Q_('305 psig')).to(ht.ureg.inch))
+print(TestPipe.pressure_design_thick(Q_('305 psig')).to(ht.ureg.inch))
 print(TestPipe.volume.to(ht.ureg.ft**3))
-TestPiping = ht.piping.Piping(Test_State, [TestPipe, TestPipe, TestPipe])
+tube = ht.piping.Tube(Q_('1 inch'))
+TestPiping = ht.piping.Piping(Test_State, [TestPipe, tube, TestPipe])
+print('\n\nPipe flow test')
+print(TestPiping.dP(Q_('100 g/s')))
+print()
 # print(TestPiping.volume)
 # pp.pprint(ht.piping.NPS_table)
 
@@ -59,7 +64,7 @@ print(ht.nist_property('304SS', 'LE', 150*ureg.K))  # -2e-3
 
 
 
-#print(ht.Gr(Test_State, ht.Q_('300 K'), ht.Q_('1 m')))
+#print(ht.Gr(Test_State, Q_('300 K'), Q_('1 m')))
 #Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))
 #print(Test_pipe)
 #Test_piping = ht.piping.Piping(ht.Air, [Test_pipe])
@@ -88,7 +93,7 @@ print(ht.nist_property('304SS', 'LE', 150*ureg.K))  # -2e-3
 #print(Test_piping.Fluid.P.to(ht.ureg.psig))
 ##for p in range(1,100,10):
 ##    m_dot = ht.ureg('1 g/s')
-##    P_test = ht.Q_(p, ht.ureg.psig)
+##    P_test = Q_(p, ht.ureg.psig)
 ##    Test_piping.init_cond['fluid'] = 'helium'
 ##    Test_piping.init_cond['P'] = P_test
 ##    T_test = ht.max_theta(Test_piping.init_cond)
