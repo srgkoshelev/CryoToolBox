@@ -251,7 +251,7 @@ class VJPipe(Pipe):
             f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
 
 
-class Corrugated_Pipe():
+class CorrugatedPipe():
     """Corrugated pipe class.
     """
     def __init__(self, D_nom, L=0*ureg.m):
