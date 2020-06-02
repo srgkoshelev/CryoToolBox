@@ -50,7 +50,7 @@ class Pipe:
             self.D = D_nom
         self.OD = NPS_table[self.D]['OD']
         self.SCH = SCH
-        self._wall = NPS_table[self.D].get(self.SCH)
+        self.wall = NPS_table[self.D].get(self.SCH)
         self.ID = self.OD - 2*self.wall
         self.L = L
         self._K = self.f_T()*self.L/self.ID
@@ -62,11 +62,8 @@ class Pipe:
         # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
         # """
 
-    @property
-    def wall(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
         """
-        return self._wall
 
         """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
         """
@@ -406,7 +403,7 @@ class Tube(Pipe):
         """
         self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
-        self._wall = wall
+        self.wall = wall
         self.ID = self.OD - 2*self.wall
         self.L = L
         self._K = self.f_T()*self.L/self.ID
