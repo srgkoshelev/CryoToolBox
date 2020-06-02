@@ -609,7 +609,7 @@ class TubeTee(AbstractTee, Tube):
         return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
 
 
-class Valve(Pipe):
+class Valve():
     """
     Generic valve with known Cv.
     """
@@ -621,11 +621,8 @@ class Valve(Pipe):
         self.area = Pipe._area(self)
         self.L = None
         self.type = 'Valve'
-        self._K = Cv_to_K(self._Cv, self.D)
-
-    @property
-    def volume(self):
-        return 0 * ureg.ft**3
+        self.K = Cv_to_K(self._Cv, self.D)
+        self.volume = 0 * ureg.ft**3
 
     def __str__(self):
         return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
