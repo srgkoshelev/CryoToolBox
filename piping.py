@@ -720,8 +720,7 @@ class Piping (list):
         except IndexError:
             raise IndexError('Piping has no elements! '
                              'Use Piping.add to add sections to piping.')
-        for section in self:
-            K0 += section.K*(A0/section.area)**2
+        K0 = sum([section.K*(A0/section.area)**2 for section in self])
         return (K0, A0)
 
     @property
