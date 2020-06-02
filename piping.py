@@ -51,7 +51,7 @@ class Pipe:
         self.OD = NPS_table[self.D]['OD']
         self.SCH = SCH
         self._wall = NPS_table[self.D].get(self.SCH)
-        self._ID = self.OD - 2*self.wall
+        self.ID = self.OD - 2*self.wall
         self.L = L
         self._K = self.f_T()*self.L/self.ID
         self.c = c
@@ -68,11 +68,8 @@ class Pipe:
         """
         return self._wall
 
-    @property
-    def ID(self):
         """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
         """
-        return self._ID
 
     @property
     def area(self):
@@ -272,7 +269,7 @@ class Corrugated_Pipe(Pipe):
         """
         self.OD = D_nom
         self.D = D_nom.magnitude
-        self._ID = self.OD
+        self.ID = self.OD
         self.L = L
         logger.debug('For corrugated piping assumed OD = D')
         self._K = 4*self.f_T()*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
@@ -298,7 +295,7 @@ class Entrance (Pipe):
         ID : ureg.Quantity {length: 1}
             Inside diameter of the entrance.
         """
-        self._ID = ID
+        self.ID = ID
         self._type = 'Entrance'
         self._K = 0.5  # Crane TP-410, A-29
 
@@ -321,7 +318,7 @@ class Exit (Entrance):
         ID : ureg.Quantity {length: 1}
             Inside diameter of the exit.
         """
-        self._ID = ID
+        self.ID = ID
         self._type = 'Exit'
         self._K = 1  # Crane TP-410, A-29
 
@@ -345,7 +342,7 @@ class Orifice(Pipe):
             Inside diameter of the orifice.
         """
         self.Cd = 0.61  # Thin sharp edged orifice plate
-        self._ID = ID
+        self.ID = ID
         self._type = 'Orifice'
 
     @property
@@ -410,7 +407,7 @@ class Tube(Pipe):
         self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
-        self._ID = self.OD - 2*self.wall
+        self.ID = self.OD - 2*self.wall
         self.L = L
         self._K = self.f_T()*self.L/self.ID
         self.c = c
@@ -617,7 +614,7 @@ class Valve(Pipe):
         self.D = D
         self._Cv = Cv
         self.OD = None
-        self._ID = self.D
+        self.ID = self.D
         self.L = None
         self._type = 'Valve'
         self._K = Cv_to_K(self._Cv, self.D)
@@ -637,7 +634,7 @@ class Valve(Pipe):
 #     def __init__(self, D):
 #         super().__init__(D, None, None)
 #         # ID for the valve is assumed equal to SCH40 ID:
-#         self._ID = self.OD - 2*NPS_table[D].get(40)
+#         self.ID = self.OD - 2*NPS_table[D].get(40)
 #         self._type = 'Globe valve'
 #         self._K = 340*self.f_T()  # Horizontal ball valve with beta = 1
 
@@ -681,7 +678,7 @@ class Contraction(Pipe):
         self._type = 'Contraction'
         self.L = None
         self.OD = None
-        self._ID = min(ID1, ID2)
+        self.ID = min(ID1, ID2)
 
     @property
     def K(self):
