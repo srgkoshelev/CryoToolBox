@@ -99,6 +99,7 @@ class Pipe:
         Quantity {dimensionless}
             Darcy friction factor.
         """
+        # TODO Move outside class
         if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
             logger.debug('''Tabulated friction data is given for
                            ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
@@ -860,7 +861,7 @@ def to_standard_flow(flow_rate, fluid):
                            '''.format(flow_rate))
             q_std = flow_rate
     else:
-        logger.warning('''Flow dimensionality is not supported: {:.3~}.
+        logger.error('''Flow dimensionality is not supported: {:.3~}.
                        '''.format(flow_rate.dimensionality))
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std
