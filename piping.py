@@ -361,7 +361,6 @@ class ConicOrifice(Orifice):
             # square-edged plate (unfounded assumption)
             self.Cd = 0.73
             # Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
-        self.area = Pipe._area(self)
         self.type = 'Conic orifice'
 
     def __str__(self):
