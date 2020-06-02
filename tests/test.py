@@ -91,6 +91,7 @@ print(f'Created piping with volume {piping.volume}')
 print('\n\nPipe flow test')
 print(piping.dP(Q_('10 g/s')))
 print()
+# TODO Check m_dot and P_in methods
 # print(TestPiping.volume)
 # pp.pprint(ht.piping.NPS_table)
 

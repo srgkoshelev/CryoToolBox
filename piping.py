@@ -53,12 +53,12 @@ class Pipe:
         self.wall = NPS_table[self.D].get(self.SCH)
         self.ID = self.OD - 2*self.wall
         self.L = L
-        self._K = self.f_T()*self.L/self.ID
         self.area = self.calculate_area()
         self.volume = self.calculate_volume()
         self.c = c
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
+        self.K = self.calculate_K()
         self.type = 'NPS Pipe'
 
         # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
@@ -97,11 +97,10 @@ class Pipe:
         ln_ID = log(self.ID.to(ureg.inch).magnitude)
         return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2  # Fitting by S. Koshelev
 
-    @property
-    def K(self):
+    def calculate_K(self):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
-        return self._K
+        return self.f_T()*self.L/self.ID
 
     def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
         """Calculate pressure design thickness for given pressure and pipe material.
@@ -394,7 +393,7 @@ class Tube(Pipe):
         self.L = L
         self.area = Pipe.calculate_area(self)
         self.volume = Pipe.calculate_volume(self)
-        self._K = self.f_T()*self.L/self.ID
+        self.K = Pipe.calculate_K(self)
         self.c = c
         self.type = 'Tube'
 
@@ -424,63 +423,14 @@ class Annulus():
         self.area = pi / 4 * (D1**2 - D2**2)
         self.volume = Pipe.calculate_volume(self)
         self.ID = D1 - D2  # Hydraulic diameter
-        f_T = Pipe.f_T(self)
-        self.K = f_T*self.L/self.ID
+        self.f_T = lambda: Pipe.f_T(self)
+        self.K = Pipe.calculate_K(self)
 
     def __str__(self):
         return f'Annulus D1={self.D1:.3g~}, D2={self.D2:.3g~}, L={self.L:.3g~}'
 
 
-class AbstractElbow(ABC):
-    """
-    Abstract Elbow class. __init__ method is abstract to avoid instantiation
-    of this class. method K defines flow resistance calculation.
-
-    Attributes
-    ----------
-    R_D : ureg.Quantity {length: 1}
-        Elbow radius/diameter ratio
-    N : int
-        Number of elbows in the pipeline (to be used with lumped Darcy equation)
-    angle : ureg.Quantity {dimensionless}
-        Number of elbows in the pipeline (to be used with lumped Darcy equation)
-    L : ureg.Quantity {length: }
-        Length of the elbow
-    """
-    def __init__(self, R_D, N, angle):
-        self.R_D = R_D
-        self.N = N
-        self.angle = angle
-        self.L = R_D*self.ID*angle
-        self.type = 'AbstractElbow'
-
-    @property
-    def K(self):
-        """
-        Pressure drop in an elbow fitting.
-        Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
-        """
-        if self.angle <= 70*ureg.deg:
-            A1 = 0.9*sin(self.angle)
-        elif self.angle == 90*ureg.deg:
-            A1 = 1
-        elif self.angle >= 100*ureg.deg:
-            A1 = 0.7+0.35*self.angle/(90*ureg.deg)
-        else:
-            logger.error('''Improper bend angle for elbow.
-            90 degrees used instead: {}'''.format(self.angle))
-            A1 = 1
-
-        if self.R_D < 1:
-            B1 = 0.21*(self.R_D)**(-0.25)
-        else:
-            B1 = 0.21*(self.R_D)**(-0.5)
-
-        C1 = 1  # use different value for non-axis symmetric
-        return (A1*B1*C1+super().K)*self.N
-
-
-class PipeElbow(AbstractElbow, Pipe):
+class PipeElbow(Pipe):
     """
     NPS Tee fitting.
     MRO makes method K from Elbow class to override method from Pipe class.
@@ -502,19 +452,49 @@ class PipeElbow(AbstractElbow, Pipe):
         angle : ureg.Quantity {dimensionless}
             Number of elbows in the pipeline
         """
-        Pipe.__init__(self, D_nom, SCH)
-        super().__init__(R_D, N, angle)
+        self.R_D = R_D
+        self.N = N
+        self.angle = angle
+        super().__init__(D_nom, SCH)
         self.type = 'Pipe elbow'
+
+    def calculate_K(self):
+        """
+        Pressure drop in an elbow fitting.
+        Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
+        """
+        if self.angle <= 70*ureg.deg:
+            A1 = 0.9*sin(self.angle)
+        elif self.angle == 90*ureg.deg:
+            A1 = 1
+        elif self.angle >= 100*ureg.deg:
+            A1 = 0.7+0.35*self.angle/(90*ureg.deg)
+        else:
+            logger.error('''Improper bend angle for elbow.
+            90 degrees used instead: {}'''.format(self.angle))
+            A1 = 1
+
+        if self.R_D < 1:
+            B1 = 0.21*(self.R_D)**(-0.25)
+        else:
+            B1 = 0.21*(self.R_D)**(-0.5)
+
+        C1 = 1  # use different value for non-axis symmetric
+        # Calculate the length of the elbow
+        self.L = self.R_D*self.ID*self.angle
+        # Friction losses in the elbow
+        K_pipe = Pipe.calculate_K(self)
+        return (A1*B1*C1+K_pipe)*self.N
 
     def __str__(self):
         return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, \
         {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
-class TubeElbow(AbstractElbow, Tube):
+class TubeElbow(PipeElbow, Tube):
     """
     NPS Tee fitting.
-    MRO makes method K from Elbow class to override method from Pipe class.
+    MRO makes method K from PipeElbow class to override method from Pipe class.
     """
     def __init__(self, OD, wall=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
         """Generate a tube elbow object.
@@ -532,8 +512,10 @@ class TubeElbow(AbstractElbow, Tube):
         angle : ureg.Quantity {dimensionless}
             Number of elbows in the pipeline
         """
+        self.R_D = R_D
+        self.N = N
+        self.angle = angle
         Tube.__init__(self, OD, wall)
-        super().__init__(R_D, N, angle)
         self.type = 'Tube elbow'
 
     def __str__(self):
@@ -558,8 +540,7 @@ class AbstractTee(ABC):
                          try "thru" or "branch": {}'''.format(direction))
         self.type = 'Tee'
 
-    @property
-    def K(self):
+    def calculate_K(self):
         if self.direction == 'run':
             return 20*self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
@@ -572,8 +553,8 @@ class PipeTee(AbstractTee, Pipe):
     MRO makes method K from Tee class to override method from Pipe class.
     """
     def __init__(self, D_nom, SCH=40, direction='thru'):
-        Pipe.__init__(self, D_nom, SCH)
         super().__init__(direction)
+        Pipe.__init__(self, D_nom, SCH)
 
     def __str__(self):
         return f'{self.type}, {self.D}" SCH {self.SCH}, \
@@ -585,8 +566,8 @@ class TubeTee(AbstractTee, Tube):
     Tee fitting based.
     """
     def __init__(self, OD, wall=0*ureg.inch, direction='thru'):
-        Tube.__init__(self, OD, wall)
         super().__init__(direction)
+        Tube.__init__(self, OD, wall)
 
     def __str__(self):
         return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
@@ -666,19 +647,19 @@ class Contraction():
         self.area = Pipe.calculate_area(self)
         self.L = abs(ID1 - ID2) / tan(theta/2)
         self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
+        self.K = self.calculate_K()
 
-    @property
-    def K(self):
+    def calculate_K(self):
         if self.theta <= 45*ureg.deg:
-            self._K = 0.8 * sin(self.theta/2) * (1-self.beta**2)
+            K_ = 0.8 * sin(self.theta/2) * (1-self.beta**2)
             # Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
         elif self.theta <= 180*ureg.deg:
-            self._K = 0.5 * (1-self.beta**2) * sqrt(sin(self.theta/2))
+            K_ = 0.5 * (1-self.beta**2) * sqrt(sin(self.theta/2))
             # Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} \
             (sudden contraction): {self.theta}')
-        return self._K
+        return K_
 
     def __str__(self):
         return f'{self.type}, {self.theta.to(ureg.deg)} from {self._Pipe1} \
@@ -698,18 +679,17 @@ class Enlargement(Contraction):
         super().__init__(Pipe1, Pipe2, theta)
         self.type = 'Enlargement'
 
-    @property
-    def K(self):
+    def calculate_K(self):
         if self.theta <= 45*ureg.deg:
-            self._K = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
+            K_ = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
         elif self.theta <= 180*ureg.deg:
-            self._K = (1-self.beta**2)**2
+            K_ = (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} \
             (sudden enlargement): {self.theta}')
-        return self._K
+        return K_
 
 
 class Piping (list):
@@ -738,8 +718,8 @@ class Piping (list):
         try:
             A0 = self[0].area  # using area of the first element as base
         except IndexError:
-            raise IndexError('''Piping has no elements!
-                                Use Piping.add to add sections to piping.''')
+            raise IndexError('Piping has no elements! '
+                             'Use Piping.add to add sections to piping.')
         for section in self:
             K0 += section.K*(A0/section.area)**2
         return (K0, A0)
