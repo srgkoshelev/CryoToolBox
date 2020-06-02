@@ -660,7 +660,7 @@ class Valve():
 #         self._K = 1/(self.beta**2/(1-self.beta**4)**0.5*self._Cf)**2
 
 
-class Contraction(Pipe):
+class Contraction():
     """
     Sudden and gradual contraction based on Crane TP-410.
     """
