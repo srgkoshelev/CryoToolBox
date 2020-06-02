@@ -247,11 +247,11 @@ class VJPipe(Pipe):
         self.type = 'Vacuum jacketed pipe'
 
     def __str__(self):
-        return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}" SCH,\
-        {self.VJ.SCH}, L={self.L:.3~g}'
+        return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}", ' + \
+            f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
 
 
-class Corrugated_Pipe(Pipe):
+class Corrugated_Pipe():
     """Corrugated pipe class.
     """
     def __init__(self, D_nom, L=0*ureg.m):
@@ -270,13 +270,10 @@ class Corrugated_Pipe(Pipe):
         self.L = L
         self.area = Pipe._area(self)
         logger.debug('For corrugated piping assumed OD = D')
-        self._K = 4*self.f_T()*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
+        self.K = 4*Pipe.f_T(self)*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
         self.type = 'Corrugated pipe'
-
-    @property
-    def wall(self):
         logger.debug('For corrugated piping assumed wall = 0')
-        return 0*ureg.m
+        self.wall = 0*ureg.m
 
     def __str__(self):
         return ('To be implemented')
