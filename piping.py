@@ -330,7 +330,7 @@ class Exit (Entrance):
         return f'Exit opening, {self.ID:.3g~}'
 
 
-class Orifice(Pipe):
+class Orifice():
     """Square-edged orifice plate
     """
     def __init__(self, ID):
@@ -345,14 +345,8 @@ class Orifice(Pipe):
         self.ID = ID
         self.area = Pipe._area(self)
         self.type = 'Orifice'
-
-    @property
-    def K(self):
-        return 1/self.Cd**2
-
-    @property
-    def volume(self):
-        return 0 * ureg.ft**3
+        self.K = 1/self.Cd**2
+        self.volume = 0 * ureg.ft**3
 
     def __str__(self):
         return f'Orifice, {self.ID:.3g~}'
@@ -378,10 +372,6 @@ class ConicOrifice(Orifice):
             # Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
         self.area = Pipe._area(self)
         self.type = 'Conic orifice'
-
-    @property
-    def volume(self):
-        return 0 * ureg.ft**3
 
     def __str__(self):
         return f'Conic orifice, {self.ID:.3g~}'
