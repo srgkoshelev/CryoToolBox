@@ -653,11 +653,11 @@ class Valve():
 #     """
 #     def __init__(self, D, beta, Cf, SCH=40):
 #         super().__init__(D, SCH, None)
-#         self._beta = beta
+#         self.beta = beta
 #         self._Cf = Cf
 #         self.type = 'V-cone flow meter'
 #         # Equation is reverse-engineered from McCrometer V-Cone equations
-#         self._K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2
+#         self._K = 1/(self.beta**2/(1-self.beta**4)**0.5*self._Cf)**2
 
 
 class Contraction(Pipe):
@@ -674,8 +674,8 @@ class Contraction(Pipe):
         self._Pipe2 = Pipe2
         ID1 = Pipe1.ID
         ID2 = Pipe2.ID
-        self._beta = beta(ID1, ID2)
-        self._theta = theta
+        self.beta = beta(ID1, ID2)
+        self.theta = theta
         self.type = 'Contraction'
         self.L = None
         self.OD = None
@@ -684,15 +684,15 @@ class Contraction(Pipe):
 
     @property
     def K(self):
-        if self._theta <= 45*ureg.deg:
-            self._K = 0.8 * sin(self._theta/2) * (1-self._beta**2)
+        if self.theta <= 45*ureg.deg:
+            self._K = 0.8 * sin(self.theta/2) * (1-self.beta**2)
             # Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
-        elif self._theta <= 180*ureg.deg:
-            self._K = 0.5 * (1-self._beta**2) * sqrt(sin(self._theta/2))
+        elif self.theta <= 180*ureg.deg:
+            self._K = 0.5 * (1-self.beta**2) * sqrt(sin(self.theta/2))
             # Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} \
-            (sudden contraction): {self._theta}')
+            (sudden contraction): {self.theta}')
         return self._K
 
     @property
@@ -700,7 +700,7 @@ class Contraction(Pipe):
         return 0 * ureg.ft**3
 
     def __str__(self):
-        return f'{self.type}, {self._theta.to(ureg.deg)} from {self._Pipe1} \
+        return f'{self.type}, {self.theta.to(ureg.deg)} from {self._Pipe1} \
         to {self._Pipe2}'
 
 
@@ -719,15 +719,15 @@ class Enlargement(Contraction):
 
     @property
     def K(self):
-        if self._theta <= 45*ureg.deg:
-            self._K = 2.6 * sin(self._theta/2) * (1-self._beta**2)**2
+        if self.theta <= 45*ureg.deg:
+            self._K = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
-        elif self._theta <= 180*ureg.deg:
-            self._K = (1-self._beta**2)**2
+        elif self.theta <= 180*ureg.deg:
+            self._K = (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
         else:
             logger.error(f'Theta cannot be greater than {180*ureg.deg} \
-            (sudden enlargement): {self._theta}')
+            (sudden enlargement): {self.theta}')
         return self._K
 
 
