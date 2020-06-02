@@ -59,7 +59,7 @@ class Pipe:
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         self.K = self.calculate_K()
-        self.type = 'NPS Pipe'
+        self.type = 'NPS pipe'
 
         # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
         # """
@@ -214,8 +214,11 @@ class Pipe:
         print(f'Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}')
         print(f'Weld branch connection is safe: {A_avail>A_1}')
 
-    def __str__(self):
+    def info(self):
         return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
+
+    def __str__(self):
+        return f'{self.D} in NPS pipe'
 
 
 class VJPipe(Pipe):
@@ -245,9 +248,12 @@ class VJPipe(Pipe):
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
         self.type = 'Vacuum jacketed pipe'
 
-    def __str__(self):
+    def info(self):
         return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}", ' + \
             f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
+
+    def __str__(self):
+        return f'{self.D} in VJ pipe'
 
 
 class CorrugatedPipe():
@@ -275,8 +281,11 @@ class CorrugatedPipe():
         logger.debug('For corrugated piping assumed wall = 0')
         self.wall = 0*ureg.m
 
-    def __str__(self):
+    def info(self):
         return f'Corrugated pipe D={self.OD:.3g~}, L={self.L:.3g~}'
+
+    def __str__(self):
+        return f'{self.OD:.3g~} corr pipe'
 
 
 class Entrance ():
@@ -296,8 +305,11 @@ class Entrance ():
         self.K = 0.5  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
 
-    def __str__(self):
+    def info(self):
         return f'{self.type}, {self.ID:.3g~}'
+
+    def __str__(self):
+        return str(self.type)
 
 
 class Exit (Entrance):
@@ -317,7 +329,7 @@ class Exit (Entrance):
         self.K = 1  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
 
-    def __str__(self):
+    def info(self):
         return f'Exit opening, {self.ID:.3g~}'
 
 
@@ -339,8 +351,11 @@ class Orifice():
         self.K = 1/self.Cd**2
         self.volume = 0 * ureg.ft**3
 
-    def __str__(self):
+    def info(self):
         return f'Orifice, {self.ID:.3g~}'
+
+    def __str__(self):
+        return f'{self.ID:.3g~} orifice'
 
 
 class ConicOrifice(Orifice):
@@ -363,8 +378,11 @@ class ConicOrifice(Orifice):
             # Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
         self.type = 'Conic orifice'
 
-    def __str__(self):
+    def info(self):
         return f'Conic orifice, {self.ID:.3g~}'
+
+    def __str__(self):
+        return f'{self.ID:.3g~} conic orifice'
 
 
 class Tube(Pipe):
@@ -397,9 +415,12 @@ class Tube(Pipe):
         self.c = c
         self.type = 'Tube'
 
-    def __str__(self):
-        return f'{self.type}, {self.OD:.3g~}"x{self.wall:.3g~}", ' + \
+    def info(self):
+        return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
             f'L={self.L:.3g~}'
+
+    def __str__(self):
+        return f'{self.OD:.3g~} tube'
 
 
 class Annulus():
@@ -426,8 +447,11 @@ class Annulus():
         self.f_T = lambda: Pipe.f_T(self)
         self.K = Pipe.calculate_K(self)
 
-    def __str__(self):
+    def info(self):
         return f'Annulus D1={self.D1:.3g~}, D2={self.D2:.3g~}, L={self.L:.3g~}'
+
+    def __str__(self):
+        return f'{self.D1:.3g~} x {self.D2:.3g~} annulus'
 
 
 class PipeElbow(Pipe):
@@ -486,9 +510,12 @@ class PipeElbow(Pipe):
         K_pipe = Pipe.calculate_K(self)
         return (A1*B1*C1+K_pipe)*self.N
 
-    def __str__(self):
+    def info(self):
         return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
+
+    def __str__(self):
+        return f'{self.D} in NPS elbow'
 
 
 class TubeElbow(PipeElbow, Tube):
@@ -518,9 +545,12 @@ class TubeElbow(PipeElbow, Tube):
         Tube.__init__(self, OD, wall)
         self.type = 'Tube elbow'
 
-    def __str__(self):
+    def info(self):
         return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
+
+    def __str__(self):
+        return f'{self.OD:.3g~} tube elbow'
 
 
 class AbstractTee(ABC):
@@ -556,9 +586,12 @@ class PipeTee(AbstractTee, Pipe):
         super().__init__(direction)
         Pipe.__init__(self, D_nom, SCH)
 
-    def __str__(self):
+    def info(self):
         return f'{self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.direction}'
+
+    def __str__(self):
+        return f'{self.D} in NPS tee'
 
 
 class TubeTee(AbstractTee, Tube):
@@ -569,8 +602,11 @@ class TubeTee(AbstractTee, Tube):
         super().__init__(direction)
         Tube.__init__(self, OD, wall)
 
-    def __str__(self):
+    def info(self):
         return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
+
+    def __str__(self):
+        return f'{self.OD:.3g~} tube tee'
 
 
 class Valve():
@@ -588,8 +624,11 @@ class Valve():
         self.K = Cv_to_K(self._Cv, self.D)
         self.volume = 0 * ureg.ft**3
 
-    def __str__(self):
+    def info(self):
         return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
+
+    def __str__(self):
+        return f'{self.D:.3g~} valve'
 
 
 # class GlobeValve(Pipe):
@@ -661,9 +700,12 @@ class Contraction():
                          f'(sudden contraction): {self.theta}')
         return K_
 
-    def __str__(self):
+    def info(self):
         return f'{self.type}, {self.theta.to(ureg.deg)} from {self._Pipe1} ' + \
             f'to {self._Pipe2}'
+
+    def __str__(self):
+        return f'{self.type}'
 
 
 class Enlargement(Contraction):
