@@ -43,11 +43,12 @@ class Pipe:
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         """
+        # Make lookup in the table a static method
         try:
             self.D = D_nom.magnitude  # If united
         except AttributeError:
             self.D = D_nom
-        self._OD = NPS_table[self.D]['OD']
+        self.OD = NPS_table[self.D]['OD']
         self.SCH = SCH
         self._wall = NPS_table[self.D].get(self.SCH)
         self._ID = self.OD - 2*self.wall
@@ -58,11 +59,8 @@ class Pipe:
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         self._type = 'NPS Pipe'
 
-    @property
-    def OD(self):
-        """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
-        """
-        return self._OD
+        # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
+        # """
 
     @property
     def wall(self):
@@ -227,10 +225,11 @@ class Pipe:
         return f'{self._type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
 
 
-class VJ_Pipe(Pipe):
+class VJPipe(Pipe):
     """Vacuum jacketed pipe.
     """
-    def __init__(self, D_nom, SCH, L, VJ_D, VJ_SCH=5, c=0*ureg.inch):
+    def __init__(self, D_nom, *, SCH=5, L=0*ureg.m,
+                 VJ_D, VJ_SCH=5, c=0*ureg.inch):
         """Generate Vacuum jacketed pipe object.
 
         Parameters
@@ -254,40 +253,38 @@ class VJ_Pipe(Pipe):
         self._type = 'Vacuum jacketed pipe'
 
     def __str__(self):
-        return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ_D}" SCH,\
-        {self.VJ_SCH}, L={self.L:.3~g}'
+        return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}" SCH,\
+        {self.VJ.SCH}, L={self.L:.3~g}'
 
 
 class Corrugated_Pipe(Pipe):
     """Corrugated pipe class.
     """
-    def __init__(self, D, L=0*ureg.m):
+    def __init__(self, D_nom, L=0*ureg.m):
         """Generate corrugated pipe object.
 
         Parameters
         ----------
-        D : float
-            Nominal diameter
+        D_nom : ureg.Quantity {length: 1}
+            Nominal diameter of the inner pipe.
         L : ureg.Quantity {length: 1}
             Length of the pipe.
         """
-        super().__init__(D, None, L)
-        self._K = 4*super().K  # Multiplier 4 is used for corrugated pipe
-        self._type = 'Corrugated pipe'
-
-    @property
-    def K(self):
-        return self._K
-
-    @property
-    def OD(self):
+        self.OD = D_nom
+        self.D = D_nom.magnitude
+        self._ID = self.OD
+        self.L = L
         logger.debug('For corrugated piping assumed OD = D')
-        return Q_(self.D*ureg.inch)
+        self._K = 4*self.f_T()*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
+        self._type = 'Corrugated pipe'
 
     @property
     def wall(self):
         logger.debug('For corrugated piping assumed wall = 0')
         return 0*ureg.m
+
+    def __str__(self):
+        return ('To be implemented')
 
 
 class Entrance (Pipe):
@@ -359,8 +356,11 @@ class Orifice(Pipe):
     def volume(self):
         return 0 * ureg.ft**3
 
+    def __str__(self):
+        return f'Orifice, {self.ID:.3g~}'
 
-class Conic_Orifice(Orifice):
+
+class ConicOrifice(Orifice):
     """Conic orifice
     """
     def __init__(self, D, ID):
@@ -368,6 +368,7 @@ class Conic_Orifice(Orifice):
 
         Parameters
         ----------
+        D :
         ID : ureg.Quantity {length: 1}
             Inside diameter of the orifice.
         """
@@ -382,6 +383,9 @@ class Conic_Orifice(Orifice):
     @property
     def volume(self):
         return 0 * ureg.ft**3
+
+    def __str__(self):
+        return f'Conic orifice, {self.ID:.3g~}'
 
 
 class Tube(Pipe):
@@ -403,7 +407,7 @@ class Tube(Pipe):
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         """
-        self._OD = OD
+        self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self._wall = wall
         self._ID = self.OD - 2*self.wall
@@ -433,6 +437,7 @@ class Annulus():
         self.D1 = D1
         self.D2 = D2
         self.L = L
+        assert D1 > D2
         self.D_h = D1 - D2  # Hydraulic diameter
         self.area = pi * self.D_h**2 / 4
         self.ID = self.D_h
@@ -519,7 +524,7 @@ class PipeElbow(AbstractElbow, Pipe):
         self._type = 'Pipe elbow'
 
     def __str__(self):
-        return f'{self.N}x {self._type}, {self.D_nom}" SCH {self.SCH}, \
+        return f'{self.N}x {self._type}, {self.D}" SCH {self.SCH}, \
         {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
@@ -528,7 +533,7 @@ class TubeElbow(AbstractElbow, Tube):
     NPS Tee fitting.
     MRO makes method K from Elbow class to override method from Pipe class.
     """
-    def __init__(self, OD, wall, R_D=1.5, N=1, angle=90*ureg.deg):
+    def __init__(self, OD, wall=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
         """Generate a tube elbow object.
 
         Parameters
@@ -588,7 +593,7 @@ class PipeTee(AbstractTee, Pipe):
         super().__init__(direction)
 
     def __str__(self):
-        return f'{self.N}x {self._type}, {self.D_nom}" SCH {self.SCH}, \
+        return f'{self._type}, {self.D}" SCH {self.SCH}, \
         {self.direction}'
 
 
@@ -596,12 +601,12 @@ class TubeTee(AbstractTee, Tube):
     """
     Tee fitting based.
     """
-    def __init__(self, OD, wall, direction='thru'):
+    def __init__(self, OD, wall=0*ureg.inch, direction='thru'):
         Tube.__init__(self, OD, wall)
         super().__init__(direction)
 
     def __str__(self):
-        return f'{self._type}, {self.OD}"x{self.wall}", {self.direction}'
+        return f'{self._type}, {self.OD}x{self.wall}, {self.direction}'
 
 
 class Valve(Pipe):
@@ -611,7 +616,7 @@ class Valve(Pipe):
     def __init__(self, D, Cv):
         self.D = D
         self._Cv = Cv
-        self._OD = None
+        self.OD = None
         self._ID = self.D
         self.L = None
         self._type = 'Valve'
@@ -625,36 +630,36 @@ class Valve(Pipe):
         return f'{self._type}, {self.D}", Cv = {self._Cv:.3g}'
 
 
-class Globe_valve(Pipe):
-    """
-    Globe valve.
-    """
-    def __init__(self, D):
-        super().__init__(D, None, None)
-        # ID for the valve is assumed equal to SCH40 ID:
-        self._ID = self.OD - 2*NPS_table[D].get(40)
-        self._type = 'Globe valve'
-        self._K = 340*self.f_T()  # Horizontal ball valve with beta = 1
+# class GlobeValve(Pipe):
+#     """
+#     Globe valve.
+#     """
+#     def __init__(self, D):
+#         super().__init__(D, None, None)
+#         # ID for the valve is assumed equal to SCH40 ID:
+#         self._ID = self.OD - 2*NPS_table[D].get(40)
+#         self._type = 'Globe valve'
+#         self._K = 340*self.f_T()  # Horizontal ball valve with beta = 1
 
-    @property
-    def volume(self):
-        return 0 * ureg.ft**3
+#     @property
+#     def volume(self):
+#         return 0 * ureg.ft**3
 
-    def __str__(self):
-        return f'{self._type}, {self.D_nom}"'
+#     def __str__(self):
+#         return f'{self._type}, {self.D}"'
 
 
-class V_Cone(Pipe):
-    """
-    McCrometer V-Cone flowmeter.
-    """
-    def __init__(self, D, beta, Cf, SCH=40):
-        super().__init__(D, SCH, None)
-        self._beta = beta
-        self._Cf = Cf
-        self._type = 'V-cone flow meter'
-        # Equation is reverse-engineered from McCrometer V-Cone equations
-        self._K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2
+# class VCone(Pipe):
+#     """
+#     McCrometer V-Cone flowmeter.
+#     """
+#     def __init__(self, D, beta, Cf, SCH=40):
+#         super().__init__(D, SCH, None)
+#         self._beta = beta
+#         self._Cf = Cf
+#         self._type = 'V-cone flow meter'
+#         # Equation is reverse-engineered from McCrometer V-Cone equations
+#         self._K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2
 
 
 class Contraction(Pipe):
@@ -675,7 +680,7 @@ class Contraction(Pipe):
         self._theta = theta
         self._type = 'Contraction'
         self.L = None
-        self._OD = None
+        self.OD = None
         self._ID = min(ID1, ID2)
 
     @property
