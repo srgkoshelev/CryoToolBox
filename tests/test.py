@@ -87,6 +87,7 @@ piping = ht.piping.Piping(Test_State, [pipe, vj_pipe, corr_pipe, entrance,
                                        pipe_tee, tube_tee, valve,
                                        # g_valve, v_cone,
                                        cont, enl])
+print(f'Created piping with volume {piping.volume}')
 print('\n\nPipe flow test')
 print(piping.dP(Q_('10 g/s')))
 print()

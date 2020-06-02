@@ -3,7 +3,7 @@
 Contains functions for hydrodynamic calculations. The main source of the
 equations is Crane TP-410.
 """
-from math import pi, sin, log, sqrt
+from math import pi, sin, log, sqrt, tan
 from . import logger
 from . import ureg, Q_
 from .cp_wrapper import ThermState
@@ -55,6 +55,7 @@ class Pipe:
         self.L = L
         self._K = self.f_T()*self.L/self.ID
         self.area = self.calculate_area()
+        self.volume = self.calculate_volume()
         self.c = c
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
@@ -74,8 +75,7 @@ class Pipe:
         """
         return pi * self.ID**2 / 4
 
-    @property
-    def volume(self):
+    def calculate_volume(self):
         """ureg.Quantity {length: 3} : Pipe inner volume.
         """
         return self.area * self.L
@@ -269,6 +269,7 @@ class CorrugatedPipe():
         self.ID = self.OD
         self.L = L
         self.area = Pipe.calculate_area(self)
+        self.volume = Pipe.calculate_volume(self)  # First approximation
         logger.debug('For corrugated piping assumed OD = D')
         self.K = 4*Pipe.f_T(self)*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
         self.type = 'Corrugated pipe'
@@ -392,6 +393,7 @@ class Tube(Pipe):
         self.ID = self.OD - 2*self.wall
         self.L = L
         self.area = Pipe.calculate_area(self)
+        self.volume = Pipe.calculate_volume(self)
         self._K = self.f_T()*self.L/self.ID
         self.c = c
         self.type = 'Tube'
@@ -420,6 +422,7 @@ class Annulus():
         self.L = L
         assert D1 > D2
         self.area = pi / 4 * (D1**2 - D2**2)
+        self.volume = Pipe.calculate_volume(self)
         self.ID = D1 - D2  # Hydraulic diameter
         f_T = Pipe.f_T(self)
         self.K = f_T*self.L/self.ID
@@ -661,6 +664,8 @@ class Contraction():
         self.OD = None
         self.ID = min(ID1, ID2)
         self.area = Pipe.calculate_area(self)
+        self.L = abs(ID1 - ID2) / tan(theta/2)
+        self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
 
     @property
     def K(self):
@@ -674,10 +679,6 @@ class Contraction():
             logger.error(f'Theta cannot be greater than {180*ureg.deg} \
             (sudden contraction): {self.theta}')
         return self._K
-
-    @property
-    def volume(self):
-        return 0 * ureg.ft**3
 
     def __str__(self):
         return f'{self.type}, {self.theta.to(ureg.deg)} from {self._Pipe1} \
