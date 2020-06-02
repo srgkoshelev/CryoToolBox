@@ -436,11 +436,11 @@ class Annulus():
     def __init__(self, D1, D2, L=Q_('0m')):
         self.D1 = D1
         self.D2 = D2
+        assert D1 > D2, 'D1 should be larger than D2'
         self.L = L
         assert D1 > D2
-        self.D_h = D1 - D2  # Hydraulic diameter
-        self.area = pi * self.D_h**2 / 4
-        self.ID = self.D_h
+        self.area = pi / 4 * (D1**2 - D2**2)
+        self.ID = D1 - D2  # Hydraulic diameter
         f_T = Pipe.f_T(self)
         self.K = f_T*self.L/self.ID
 
