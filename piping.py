@@ -58,7 +58,7 @@ class Pipe:
         self.c = c
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
-        self._type = 'NPS Pipe'
+        self.type = 'NPS Pipe'
 
         # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
         # """
@@ -216,7 +216,7 @@ class Pipe:
         print(f'Weld branch connection is safe: {A_avail>A_1}')
 
     def __str__(self):
-        return f'{self._type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
+        return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
 
 
 class VJPipe(Pipe):
@@ -244,7 +244,7 @@ class VJPipe(Pipe):
         """
         super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
-        self._type = 'Vacuum jacketed pipe'
+        self.type = 'Vacuum jacketed pipe'
 
     def __str__(self):
         return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}" SCH,\
@@ -271,7 +271,7 @@ class Corrugated_Pipe(Pipe):
         self.area = Pipe._area(self)
         logger.debug('For corrugated piping assumed OD = D')
         self._K = 4*self.f_T()*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
-        self._type = 'Corrugated pipe'
+        self.type = 'Corrugated pipe'
 
     @property
     def wall(self):
@@ -295,7 +295,7 @@ class Entrance (Pipe):
         """
         self.ID = ID
         self.area = Pipe._area(self)
-        self._type = 'Entrance'
+        self.type = 'Entrance'
         self._K = 0.5  # Crane TP-410, A-29
 
     @property
@@ -303,7 +303,7 @@ class Entrance (Pipe):
         return 0 * ureg.ft**3
 
     def __str__(self):
-        return f'{self._type}, {self.ID:.3g~}'
+        return f'{self.type}, {self.ID:.3g~}'
 
 
 class Exit (Entrance):
@@ -319,7 +319,7 @@ class Exit (Entrance):
         """
         self.ID = ID
         self.area = Pipe._area(self)
-        self._type = 'Exit'
+        self.type = 'Exit'
         self._K = 1  # Crane TP-410, A-29
 
     @property
@@ -344,7 +344,7 @@ class Orifice(Pipe):
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self.ID = ID
         self.area = Pipe._area(self)
-        self._type = 'Orifice'
+        self.type = 'Orifice'
 
     @property
     def K(self):
@@ -377,7 +377,7 @@ class ConicOrifice(Orifice):
             self.Cd = 0.73
             # Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
         self.area = Pipe._area(self)
-        self._type = 'Conic orifice'
+        self.type = 'Conic orifice'
 
     @property
     def volume(self):
@@ -414,10 +414,10 @@ class Tube(Pipe):
         self.area = Pipe._area(self)
         self._K = self.f_T()*self.L/self.ID
         self.c = c
-        self._type = 'Tube'
+        self.type = 'Tube'
 
     def __str__(self):
-        return f'{self._type}, {self.OD:.3g~}"x{self.wall:.3g~}",\
+        return f'{self.type}, {self.OD:.3g~}"x{self.wall:.3g~}",\
         L={self.L:.3g~}'
 
 
@@ -469,7 +469,7 @@ class AbstractElbow(ABC):
         self.N = N
         self.angle = angle
         self.L = R_D*self.ID*angle
-        self._type = 'AbstractElbow'
+        self.type = 'AbstractElbow'
 
     @property
     def K(self):
@@ -521,10 +521,10 @@ class PipeElbow(AbstractElbow, Pipe):
         """
         Pipe.__init__(self, D_nom, SCH)
         super().__init__(R_D, N, angle)
-        self._type = 'Pipe elbow'
+        self.type = 'Pipe elbow'
 
     def __str__(self):
-        return f'{self.N}x {self._type}, {self.D}" SCH {self.SCH}, \
+        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, \
         {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
@@ -551,10 +551,10 @@ class TubeElbow(AbstractElbow, Tube):
         """
         Tube.__init__(self, OD, wall)
         super().__init__(R_D, N, angle)
-        self._type = 'Tube elbow'
+        self.type = 'Tube elbow'
 
     def __str__(self):
-        return f'{self.N}x {self._type}, {self.OD}"x{self.wall}", \
+        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", \
         {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
@@ -573,7 +573,7 @@ class AbstractTee(ABC):
         else:
             logger.error('''Tee direction is not recognized,
                          try "thru" or "branch": {}'''.format(direction))
-        self._type = 'Tee'
+        self.type = 'Tee'
 
     @property
     def K(self):
@@ -593,7 +593,7 @@ class PipeTee(AbstractTee, Pipe):
         super().__init__(direction)
 
     def __str__(self):
-        return f'{self._type}, {self.D}" SCH {self.SCH}, \
+        return f'{self.type}, {self.D}" SCH {self.SCH}, \
         {self.direction}'
 
 
@@ -606,7 +606,7 @@ class TubeTee(AbstractTee, Tube):
         super().__init__(direction)
 
     def __str__(self):
-        return f'{self._type}, {self.OD}x{self.wall}, {self.direction}'
+        return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
 
 
 class Valve(Pipe):
@@ -620,7 +620,7 @@ class Valve(Pipe):
         self.ID = self.D
         self.area = Pipe._area(self)
         self.L = None
-        self._type = 'Valve'
+        self.type = 'Valve'
         self._K = Cv_to_K(self._Cv, self.D)
 
     @property
@@ -628,7 +628,7 @@ class Valve(Pipe):
         return 0 * ureg.ft**3
 
     def __str__(self):
-        return f'{self._type}, {self.D}", Cv = {self._Cv:.3g}'
+        return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
 
 
 # class GlobeValve(Pipe):
@@ -639,7 +639,7 @@ class Valve(Pipe):
 #         super().__init__(D, None, None)
 #         # ID for the valve is assumed equal to SCH40 ID:
 #         self.ID = self.OD - 2*NPS_table[D].get(40)
-#         self._type = 'Globe valve'
+#         self.type = 'Globe valve'
 #         self._K = 340*self.f_T()  # Horizontal ball valve with beta = 1
 
 #     @property
@@ -647,7 +647,7 @@ class Valve(Pipe):
 #         return 0 * ureg.ft**3
 
 #     def __str__(self):
-#         return f'{self._type}, {self.D}"'
+#         return f'{self.type}, {self.D}"'
 
 
 # class VCone(Pipe):
@@ -658,7 +658,7 @@ class Valve(Pipe):
 #         super().__init__(D, SCH, None)
 #         self._beta = beta
 #         self._Cf = Cf
-#         self._type = 'V-cone flow meter'
+#         self.type = 'V-cone flow meter'
 #         # Equation is reverse-engineered from McCrometer V-Cone equations
 #         self._K = 1/(self._beta**2/(1-self._beta**4)**0.5*self._Cf)**2
 
@@ -679,7 +679,7 @@ class Contraction(Pipe):
         ID2 = Pipe2.ID
         self._beta = beta(ID1, ID2)
         self._theta = theta
-        self._type = 'Contraction'
+        self.type = 'Contraction'
         self.L = None
         self.OD = None
         self.ID = min(ID1, ID2)
@@ -703,7 +703,7 @@ class Contraction(Pipe):
         return 0 * ureg.ft**3
 
     def __str__(self):
-        return f'{self._type}, {self._theta.to(ureg.deg)} from {self._Pipe1} \
+        return f'{self.type}, {self._theta.to(ureg.deg)} from {self._Pipe1} \
         to {self._Pipe2}'
 
 
@@ -718,7 +718,7 @@ class Enlargement(Contraction):
         theta: contraction angle
         """
         super().__init__(Pipe1, Pipe2, theta)
-        self._type = 'Enlargement'
+        self.type = 'Enlargement'
 
     @property
     def K(self):
