@@ -54,6 +54,7 @@ class Pipe:
         self.ID = self.OD - 2*self.wall
         self.L = L
         self._K = self.f_T()*self.L/self.ID
+        self.area = self._area()
         self.c = c
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
@@ -68,8 +69,7 @@ class Pipe:
         """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
         """
 
-    @property
-    def area(self):
+    def _area(self):
         """ureg.Quantity {length: 2} : Cross sectional area of pipe.
         """
         return pi * self.ID**2 / 4
@@ -268,6 +268,7 @@ class Corrugated_Pipe(Pipe):
         self.D = D_nom.magnitude
         self.ID = self.OD
         self.L = L
+        self.area = Pipe._area(self)
         logger.debug('For corrugated piping assumed OD = D')
         self._K = 4*self.f_T()*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
         self._type = 'Corrugated pipe'
@@ -293,6 +294,7 @@ class Entrance (Pipe):
             Inside diameter of the entrance.
         """
         self.ID = ID
+        self.area = Pipe._area(self)
         self._type = 'Entrance'
         self._K = 0.5  # Crane TP-410, A-29
 
@@ -316,6 +318,7 @@ class Exit (Entrance):
             Inside diameter of the exit.
         """
         self.ID = ID
+        self.area = Pipe._area(self)
         self._type = 'Exit'
         self._K = 1  # Crane TP-410, A-29
 
@@ -340,6 +343,7 @@ class Orifice(Pipe):
         """
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self.ID = ID
+        self.area = Pipe._area(self)
         self._type = 'Orifice'
 
     @property
@@ -372,6 +376,7 @@ class ConicOrifice(Orifice):
             # square-edged plate (unfounded assumption)
             self.Cd = 0.73
             # Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
+        self.area = Pipe._area(self)
         self._type = 'Conic orifice'
 
     @property
@@ -406,6 +411,7 @@ class Tube(Pipe):
         self.wall = wall
         self.ID = self.OD - 2*self.wall
         self.L = L
+        self.area = Pipe._area(self)
         self._K = self.f_T()*self.L/self.ID
         self.c = c
         self._type = 'Tube'
@@ -612,6 +618,7 @@ class Valve(Pipe):
         self._Cv = Cv
         self.OD = None
         self.ID = self.D
+        self.area = Pipe._area(self)
         self.L = None
         self._type = 'Valve'
         self._K = Cv_to_K(self._Cv, self.D)
@@ -676,6 +683,7 @@ class Contraction(Pipe):
         self.L = None
         self.OD = None
         self.ID = min(ID1, ID2)
+        self.area = Pipe._area(self)
 
     @property
     def K(self):
