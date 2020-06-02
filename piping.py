@@ -276,7 +276,7 @@ class CorrugatedPipe():
         self.wall = 0*ureg.m
 
     def __str__(self):
-        return ('To be implemented')
+        return f'Corrugated pipe D={self.OD:.3g~}, L={self.L:.3g~}'
 
 
 class Entrance ():
@@ -398,8 +398,8 @@ class Tube(Pipe):
         self.type = 'Tube'
 
     def __str__(self):
-        return f'{self.type}, {self.OD:.3g~}"x{self.wall:.3g~}",\
-        L={self.L:.3g~}'
+        return f'{self.type}, {self.OD:.3g~}"x{self.wall:.3g~}", ' + \
+            f'L={self.L:.3g~}'
 
 
 class Annulus():
@@ -487,8 +487,8 @@ class PipeElbow(Pipe):
         return (A1*B1*C1+K_pipe)*self.N
 
     def __str__(self):
-        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, \
-        {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
+        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
+            f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
 class TubeElbow(PipeElbow, Tube):
@@ -519,8 +519,8 @@ class TubeElbow(PipeElbow, Tube):
         self.type = 'Tube elbow'
 
     def __str__(self):
-        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", \
-        {self.angle.to(ureg.deg)}, R_D = {self.R_D}'
+        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
+            f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
 class AbstractTee(ABC):
@@ -557,8 +557,8 @@ class PipeTee(AbstractTee, Pipe):
         Pipe.__init__(self, D_nom, SCH)
 
     def __str__(self):
-        return f'{self.type}, {self.D}" SCH {self.SCH}, \
-        {self.direction}'
+        return f'{self.type}, {self.D}" SCH {self.SCH}, ' + \
+            f'{self.direction}'
 
 
 class TubeTee(AbstractTee, Tube):
@@ -657,13 +657,13 @@ class Contraction():
             K_ = 0.5 * (1-self.beta**2) * sqrt(sin(self.theta/2))
             # Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
         else:
-            logger.error(f'Theta cannot be greater than {180*ureg.deg} \
-            (sudden contraction): {self.theta}')
+            logger.error(f'Theta cannot be greater than {180*ureg.deg} '
+                         f'(sudden contraction): {self.theta}')
         return K_
 
     def __str__(self):
-        return f'{self.type}, {self.theta.to(ureg.deg)} from {self._Pipe1} \
-        to {self._Pipe2}'
+        return f'{self.type}, {self.theta.to(ureg.deg)} from {self._Pipe1} ' + \
+            f'to {self._Pipe2}'
 
 
 class Enlargement(Contraction):
@@ -762,7 +762,7 @@ class Piping (list):
             return dP_darcy(K, rho_0, w)
         else:
             logger.warning('''Sonic flow developed. Calculated value ignores
-                           density changes. Consider reducing mass flow:
+            density changes. Consider reducing mass flow:
                            {:.3~}'''.format(m_dot))
             return dP_darcy(K, rho_0, w)
 
