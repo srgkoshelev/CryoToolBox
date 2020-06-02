@@ -282,7 +282,7 @@ class Corrugated_Pipe(Pipe):
         return ('To be implemented')
 
 
-class Entrance (Pipe):
+class Entrance ():
     """Pipe entrance, flush, sharp edged.
     """
     def __init__(self, ID):
@@ -296,11 +296,8 @@ class Entrance (Pipe):
         self.ID = ID
         self.area = Pipe._area(self)
         self.type = 'Entrance'
-        self._K = 0.5  # Crane TP-410, A-29
-
-    @property
-    def volume(self):
-        return 0 * ureg.ft**3
+        self.K = 0.5  # Crane TP-410, A-29
+        self.volume = 0 * ureg.ft**3
 
     def __str__(self):
         return f'{self.type}, {self.ID:.3g~}'
@@ -320,11 +317,8 @@ class Exit (Entrance):
         self.ID = ID
         self.area = Pipe._area(self)
         self.type = 'Exit'
-        self._K = 1  # Crane TP-410, A-29
-
-    @property
-    def volume(self):
-        return 0 * ureg.ft**3
+        self.K = 1  # Crane TP-410, A-29
+        self.volume = 0 * ureg.ft**3
 
     def __str__(self):
         return f'Exit opening, {self.ID:.3g~}'
