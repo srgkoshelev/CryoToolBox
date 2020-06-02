@@ -746,10 +746,7 @@ class Piping (list):
 
     @property
     def volume(self):
-        self._volume = 0 * ureg.ft**3
-        for pipe in self:
-            self._volume += pipe.volume
-        return self._volume
+        return sum([pipe.volume for pipe in self])
 
     def dP(self, m_dot):
         '''
