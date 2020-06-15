@@ -148,18 +148,14 @@ class ThermState:
                     input_names[1], input_values[1])
 
     def update(self, input_name1, input_value1, input_name2, input_value2):
-        if input_name1 < input_name2:  # Sorting inputs alphabetically
-            CP_input_str = input_name1 + input_name2
-            CP_input_value1 = input_value1.to(
-                CP_const_unit[input_name1][1]).magnitude
-            CP_input_value2 = input_value2.to(
-                CP_const_unit[input_name2][1]).magnitude
-        else:
-            CP_input_str = input_name2 + input_name1
-            CP_input_value1 = input_value2.to(
-                CP_const_unit[input_name2][1]).magnitude
-            CP_input_value2 = input_value1.to(
-                CP_const_unit[input_name1][1]).magnitude
+        if input_name1 > input_name2:  # Sorting inputs alphabetically
+            input_name1, input_name2 = input_name2, input_name1
+            input_value1, input_value2 = input_value2, input_value1
+        CP_input_str = input_name1 + input_name2
+        CP_input_value1 = input_value1.to(
+            CP_const_unit[input_name1][1]).magnitude
+        CP_input_value2 = input_value2.to(
+            CP_const_unit[input_name2][1]).magnitude
         self._AbstractState.update(
             CP_inputs[CP_input_str], CP_input_value1, CP_input_value2)
 
