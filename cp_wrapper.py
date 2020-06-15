@@ -139,6 +139,7 @@ class ThermState:
         if len(state_parameters) != 2:
             raise TypeError(f'update_kw() takes 2 arguments \
             ({len(state_parameters)} given)')
+        # TODO Code below can be simplified
         names = []
         values = []
         for name, value in state_parameters.items():
@@ -152,12 +153,34 @@ class ThermState:
             name1, name2 = name2, name1
             value1, value2 = value2, value1
         CP_input_str = name1 + name2
-        CP_value1 = value1.to(
-            CP_const_unit[name1][1]).magnitude
-        CP_value2 = value2.to(
-            CP_const_unit[name2][1]).magnitude
+        CP_value1 = self.prepare_input(name1, value1)
+        CP_value2 = self.prepare_input(name2, value2)
         self._AbstractState.update(
             CP_inputs[CP_input_str], CP_value1, CP_value2)
+
+    @staticmethod
+    def prepare_input(name, value):
+        """Prepare value to input to CoolProp.
+
+        Converts the value to units expected by CoolProp
+        (see `CP_const_unit`).
+
+        Parameters
+        ----------
+        name : str
+            Parameter name.
+        value : ureg.Quantity
+            Parameter value.
+
+        Returns
+        -------
+        float
+        """
+        if isinstance(value, (int, float)):
+            return value  # Dimensionless
+        else:
+            unit = CP_const_unit[name][1]
+            return value.to(unit).magnitude
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
