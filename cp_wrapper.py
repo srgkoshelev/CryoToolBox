@@ -139,25 +139,25 @@ class ThermState:
         if len(state_parameters) != 2:
             raise TypeError(f'update_kw() takes 2 arguments \
             ({len(state_parameters)} given)')
-        input_names = []
-        input_values = []
+        names = []
+        values = []
         for name, value in state_parameters.items():
-            input_names.append(name)
-            input_values.append(value)
-        self.update(input_names[0], input_values[0],
-                    input_names[1], input_values[1])
+            names.append(name)
+            values.append(value)
+        self.update(names[0], values[0],
+                    names[1], values[1])
 
-    def update(self, input_name1, input_value1, input_name2, input_value2):
-        if input_name1 > input_name2:  # Sorting inputs alphabetically
-            input_name1, input_name2 = input_name2, input_name1
-            input_value1, input_value2 = input_value2, input_value1
-        CP_input_str = input_name1 + input_name2
-        CP_input_value1 = input_value1.to(
-            CP_const_unit[input_name1][1]).magnitude
-        CP_input_value2 = input_value2.to(
-            CP_const_unit[input_name2][1]).magnitude
+    def update(self, name1, value1, name2, value2):
+        if name1 > name2:  # Sorting inputs alphabetically
+            name1, name2 = name2, name1
+            value1, value2 = value2, value1
+        CP_input_str = name1 + name2
+        CP_value1 = value1.to(
+            CP_const_unit[name1][1]).magnitude
+        CP_value2 = value2.to(
+            CP_const_unit[name2][1]).magnitude
         self._AbstractState.update(
-            CP_inputs[CP_input_str], CP_input_value1, CP_input_value2)
+            CP_inputs[CP_input_str], CP_value1, CP_value2)
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
