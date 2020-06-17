@@ -375,6 +375,28 @@ class ThermState:
         """
         return self._AbstractState.phase()
 
+    def set_mole_fractions(self, *fractions):
+        """Set mole fractions for a mixture."""
+        self._AbstractState.set_mole_fractions(fractions)
+
+    def set_mass_fractions(self, *fractions):
+        """Set mass fractions for a mixture."""
+        self._AbstractState.set_mass_fractions(fractions)
+
+    def set_volu_fractions(self, *fractions):
+        """Set volume fractions for a mixture."""
+        self._AbstractState.set_volu_fractions(fractions)
+
+    @property
+    def mole_fractions(self, *fractions):
+        """Mole fractions of a mixture."""
+        return self._AbstractState.get_mole_fractions()
+
+    @property
+    def mass_fractions(self, *fractions):
+        """Mass fractions of a mixture."""
+        return self._AbstractState.get_mass_fractions()
+
     @property
     def is_super_critical(self):
         """Return True if state is supercritical."""
