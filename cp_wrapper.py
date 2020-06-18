@@ -54,7 +54,7 @@ CP_const_unit = {
     'conductivity': (CP.iconductivity, ureg.W/ureg.m/ureg.K),
     # 'surface_tension': (CP.isurface_tension, ),
     'Prandtl': (CP.iPrandtl, ureg.dimensionless),
-    # 'speed_sound': (CP.ispeed_sound, ),
+    'speed_sound': (CP.ispeed_sound, ureg.m/ureg.s),
     'isothermal_compressibility': (CP.iisothermal_compressibility,
                                    ureg.Pa**-1),
     'isobaric_expansion_coefficient':
@@ -388,14 +388,19 @@ class ThermState:
         self._AbstractState.set_volu_fractions(fractions)
 
     @property
-    def mole_fractions(self, *fractions):
+    def mole_fractions(self):
         """Mole fractions of a mixture."""
         return self._AbstractState.get_mole_fractions()
 
     @property
-    def mass_fractions(self, *fractions):
+    def mass_fractions(self):
         """Mass fractions of a mixture."""
         return self._AbstractState.get_mass_fractions()
+
+    @property
+    def speed_sound(self):
+        """Mass fractions of a mixture."""
+        return self._AbstractState.speed_sound()
 
     @property
     def is_super_critical(self):
