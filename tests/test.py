@@ -72,6 +72,25 @@ class RefPropTest(unittest.TestCase):
     #                     fluid.Hmolar.to(ureg.J/ureg.mol).magnitude)
     # TODO Figure out the issue with mixtures (possibly refprop_setref/ixflag thing)
 
+    # def test_ethane_butane(self):
+    #     fluid = ht.ThermState('ethane&butane', backend='REFPROP')
+    #     fluid.set_mole_fractions(0.5, 0.5)
+    #     Dmolar = 30 * 0.45359237 / 0.028316846592 / fluid.M * ureg.mol / ureg.L
+    #     Hmolar = 283 * 1.05435026448889 / 0.45359237 * fluid.M * ureg.J / ureg.mol
+    #     fluid.update_kw(Dmolar=Dmolar, Hmolar=Hmolar)
+    #     self.assertNIST(298.431320311048,
+    #                     fluid.T.to(ureg.degF).magnitude)
+    # TODO Figure out the issue with mixtures (possibly refprop_setref/ixflag thing)
+
+    def test_ammonia_water(self):
+        fluid = ht.ThermState('ammonia&water', backend='REFPROP')
+        fluid.set_mole_fractions(0.4, 0.6)
+        T = (((300 - 32) * 5 / 9) + 273.15) * ureg.K
+        P = 10000 / 14.50377377 * (10**5) / 1000 * ureg.kPa
+        fluid.update_kw(T=T, P=P)
+        self.assertNIST(5536.79144924071,
+                        fluid.speed_sound.to(ureg.m/ureg.s).magnitude * 1000 / 25.4 / 12)
+
     def test_octane(self):
         fluid = ht.ThermState('octane', backend='REFPROP')
         T = (100+273.15) * ureg.K
