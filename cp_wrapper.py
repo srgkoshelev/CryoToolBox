@@ -350,6 +350,12 @@ class ThermState:
     def Prandtl(self):
         return self._AbstractState.Prandtl()
 
+    @property
+    @ureg.wraps(CP_const_unit['speed_sound'][1], None)
+    def speed_sound(self):
+        """Mass fractions of a mixture."""
+        return self._AbstractState.speed_sound()
+
     def first_partial_deriv(self, Of, Wrt, Constant):
         output_unit = CP_const_unit[Of][1] / CP_const_unit[Wrt][1]
         Of_CP_const = CP_const_unit[Of][0]
@@ -397,10 +403,6 @@ class ThermState:
         """Mass fractions of a mixture."""
         return self._AbstractState.get_mass_fractions()
 
-    @property
-    def speed_sound(self):
-        """Mass fractions of a mixture."""
-        return self._AbstractState.speed_sound()
 
     @property
     def is_super_critical(self):
