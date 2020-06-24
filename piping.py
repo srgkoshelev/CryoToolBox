@@ -51,7 +51,7 @@ class Pipe:
         self.OD = NPS_table[self.D]['OD']
         self.SCH = SCH
         self.wall = NPS_table[self.D].get(self.SCH)
-        self.ID = self.OD - 2*self.wall
+        self.ID = self.calculate_ID()
         self.L = L
         self.area = self.calculate_area()
         self.volume = self.calculate_volume()
@@ -64,11 +64,14 @@ class Pipe:
         # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
         # """
 
-        """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
-        """
 
         """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
         """
+
+    def calculate_ID(self):
+        """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
+        """
+        return self.OD - 2*self.wall
 
     def calculate_area(self):
         """ureg.Quantity {length: 2} : Cross sectional area of pipe.
@@ -148,6 +151,7 @@ class Pipe:
         -------
         None
         """
+        # TODO Change to set material for predefined materials; check_material_defined will no longer be needed
         self.__dict__.update(kwargs)
 
     def check_material_defined(self):
