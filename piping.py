@@ -14,10 +14,12 @@ from pint import set_application_registry
 import pickle
 from scipy.optimize import root_scalar
 from abc import ABC, abstractmethod
+from .copper_table import COPPER_TABLE
 
 # Setting up default unit registry for both pickling and unpickling
 set_application_registry(ureg)
 NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb"))
+
 
 
 class Pipe:
@@ -224,6 +226,32 @@ class Pipe:
     def __str__(self):
         return f'{self.D} in NPS pipe'
 
+class CopperTube(Pipe):
+    """Copper tube.
+
+    Parameters
+    ----------
+    OD : ureg.Quantity {length: 1}
+        Outer diameter of the tube.
+    wall : ureg.Quantity {length: 1}
+        Wall thickness of the tube.
+    L : ureg.Quantity {length: 1}
+        Length of the tube.
+    """
+    def __init__(self, D_nom, type_='Type K', L=0*ureg.m):
+        if isinstance(D_nom, ureg.Quantity):
+            D = D_nom.magnitude
+        else:
+            D = D_nom
+        self.D = D
+        self.OD = COPPER_TABLE[D]['OD']
+        self.wall = COPPER_TABLE[D][type_]
+        self.ID = self.calculate_ID()
+        self.L = L
+        self.area = self.calculate_area()
+        self.volume = self.calculate_volume()
+        self.K = self.calculate_K()
+        self.type = 'Copeer tube ' + type_
 
 class VJPipe(Pipe):
     """Vacuum jacketed pipe.
