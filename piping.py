@@ -260,7 +260,8 @@ class Pipe(Tube):
     def __str__(self):
         return f'{self.D} in NPS pipe'
 
-class CopperTube(Pipe):
+
+class CopperTube(Tube):
     """Copper tube.
 
     Parameters
@@ -278,15 +279,12 @@ class CopperTube(Pipe):
         else:
             D = D_nom
         self.D = D
-        self.OD = COPPER_TABLE[D]['OD']
-        self.wall = COPPER_TABLE[D][type_]
-        self.ID = self.calculate_ID()
-        self.L = L
-        self.area = self.calculate_area()
-        self.volume = self.calculate_volume()
-        self.K = self.calculate_K()
-        self.c = 0*ureg.m
+        OD = COPPER_TABLE[D]['OD']
+        wall = COPPER_TABLE[D][type_]
+        c = 0 * ureg.inch  # Not affected by corrosion
+        super().__init__(OD, wall, L, c)
         self.type = 'Copper tube ' + type_
+
 
 class VJPipe(Pipe):
     """Vacuum jacketed pipe.

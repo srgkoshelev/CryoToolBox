@@ -134,6 +134,8 @@ class PipingTest(unittest.TestCase):
         print(f'Generated {c_orifice}')
         tube = ht.piping.Tube(Q_('1 inch'))
         print(f'Generated {tube}')
+        c_tube = ht.piping.CopperTube(Q_('1 inch'))
+        print(f'Generated {c_tube}')
         annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
         print(f'Generated {annulus}')
         pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'))
@@ -156,11 +158,12 @@ class PipingTest(unittest.TestCase):
         print(f'Generated {enl}')
         test_state = ht.ThermState('air', P=ht.P_NTP, T=ht.T_NTP)
         piping = ht.piping.Piping(test_state, [pipe, vj_pipe, corr_pipe, entrance,
-                                        pipe_exit, orifice, c_orifice, tube,
-                                        annulus, pipe_elbow, tube_elbow,
-                                        pipe_tee, tube_tee, valve,
-                                        # g_valve, v_cone,
-                                        cont, enl])
+                                               pipe_exit, orifice, c_orifice, tube,
+                                               c_tube,
+                                               annulus, pipe_elbow, tube_elbow,
+                                               pipe_tee, tube_tee, valve,
+                                               # g_valve, v_cone,
+                                               cont, enl])
         print(f'Created piping with volume {piping.volume}')
         print('\n\nPipe flow test')
         print(piping.dP(Q_('10 g/s')))
