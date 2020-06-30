@@ -21,54 +21,35 @@ set_application_registry(ureg)
 NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb"))
 
 
-
-class Pipe:
-    """NPS pipe class.
-
-    Pipe objects represent actual parts of the pipeline. The Pipe object
-    will contain information such as OD, ID, wall thickness, and can be
-    used to calculate flow coefficient K that is used for flow calculations.
+class Tube:
     """
-    def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm')):
-        """Generate `Pipe` object.
+    Tube, requires OD and wall thickness specified
+    """
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
+        """Generate tube object.
 
         Parameters
         ----------
-        D_nom : float or ureg.Quantity {length: 1}
-            Nominal diameter of piping; can be dimensionless or having a unit
-            of length.
-        SCH : int
-            Pipe schedule. Default value is SCH 40 (STD).
+        OD : ureg.Quantity {length: 1}
+            Outer diameter of the tube.
+        wall : ureg.Quantity {length: 1}
+            Wall thickness of the tube.
         L : ureg.Quantity {length: 1}
-            Pipe length
+            Length of the tube.
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         """
-        # Make lookup in the table a static method
-        try:
-            self.D = D_nom.magnitude  # If united
-        except AttributeError:
-            self.D = D_nom
-        self.OD = NPS_table[self.D]['OD']
-        self.SCH = SCH
-        self.wall = NPS_table[self.D].get(self.SCH)
-        self.ID = self.calculate_ID()
+        self.OD = OD
+        self.D = OD.to(ureg.inch).magnitude
+        self.wall = wall
+        self.ID = self.OD - 2*self.wall
         self.L = L
         self.area = self.calculate_area()
         self.volume = self.calculate_volume()
-        self.c = c
-        # c = Q_('0.5 mm') for unspecified machined surfaces
-        # TODO add calculation for c based on thread depth c = h of B1.20.1
         self.K = self.calculate_K()
-        self.type = 'NPS pipe'
-
-        # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
-        # """
-
-
-        """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
-        """
+        self.c = c
+        self.type = 'Tube'
 
     def calculate_ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
@@ -85,27 +66,13 @@ class Pipe:
         """
         return self.area * self.L
 
-    def f_T(self):
-        """Calculate Darcy friction factor for complete turbulence for clean
-        steel pipe.
-
-        Fitted logarithmic function to data from A-25.
-
-        Returns
-        -------
-        ureg.Quantity {dimensionless}
-            Darcy friction factor.
-        """
-        if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
-            logger.debug('''Tabulated friction data is given for
-                           ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
-        ln_ID = log(self.ID.to(ureg.inch).magnitude)
-        return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2  # Fitting by S. Koshelev
-
     def calculate_K(self):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         return self.f_T()*self.L/self.ID
+
+    def f_T(self):
+        return Pipe.f_T(self)
 
     def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
         """Calculate pressure design thickness for given pressure and pipe material.
@@ -219,6 +186,79 @@ class Pipe:
         A_avail = A_2 + A_3  # Ignoring welding reinforcement
         print(f'Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}')
         print(f'Weld branch connection is safe: {A_avail>A_1}')
+
+    def info(self):
+        return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
+            f'L={self.L:.3g~}'
+
+    def __str__(self):
+        return f'{self.OD:.3g~} tube'
+
+
+class Pipe(Tube):
+    """NPS pipe class.
+
+    Pipe objects represent actual parts of the pipeline. The Pipe object
+    will contain information such as OD, ID, wall thickness, and can be
+    used to calculate flow coefficient K that is used for flow calculations.
+    """
+    def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm')):
+        """Generate `Pipe` object.
+
+        Parameters
+        ----------
+        D_nom : float or ureg.Quantity {length: 1}
+            Nominal diameter of piping; can be dimensionless or having a unit
+            of length.
+        SCH : int
+            Pipe schedule. Default value is SCH 40 (STD).
+        L : ureg.Quantity {length: 1}
+            Pipe length
+        c : ureg.Quantity {length: 1}
+            Sum of the mechanical allowances plus corrosion and erosion
+            allowances.
+        """
+        # Make lookup in the table a static method
+        try:
+            self.D = D_nom.magnitude  # If united
+        except AttributeError:
+            self.D = D_nom
+        self.OD = NPS_table[self.D]['OD']
+        self.SCH = SCH
+        self.wall = NPS_table[self.D].get(self.SCH)
+        self.ID = self.calculate_ID()
+        self.L = L
+        self.area = self.calculate_area()
+        self.volume = self.calculate_volume()
+        self.c = c
+        # c = Q_('0.5 mm') for unspecified machined surfaces
+        # TODO add calculation for c based on thread depth c = h of B1.20.1
+        self.K = self.calculate_K()
+        self.type = 'NPS pipe'
+
+        # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
+        # """
+
+
+        """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
+        """
+
+    def f_T(self):
+        """Calculate Darcy friction factor for complete turbulence for clean
+        steel pipe.
+
+        Fitted logarithmic function to data from A-25.
+
+        Returns
+        -------
+        ureg.Quantity {dimensionless}
+            Darcy friction factor.
+        """
+        if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
+            logger.debug('''Tabulated friction data is given for
+                           ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
+        ln_ID = log(self.ID.to(ureg.inch).magnitude)
+        return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2  # Fitting by S. Koshelev
 
     def info(self):
         return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
@@ -416,44 +456,6 @@ class ConicOrifice(Orifice):
 
     def __str__(self):
         return f'{self.ID:.3g~} conic orifice'
-
-
-class Tube(Pipe):
-    """
-    Tube, requires OD and wall thickness specified
-    """
-    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
-        """Generate tube object.
-
-        Parameters
-        ----------
-        OD : ureg.Quantity {length: 1}
-            Outer diameter of the tube.
-        wall : ureg.Quantity {length: 1}
-            Wall thickness of the tube.
-        L : ureg.Quantity {length: 1}
-            Length of the tube.
-        c : ureg.Quantity {length: 1}
-            Sum of the mechanical allowances plus corrosion and erosion
-            allowances.
-        """
-        self.OD = OD
-        self.D = OD.to(ureg.inch).magnitude
-        self.wall = wall
-        self.ID = self.OD - 2*self.wall
-        self.L = L
-        self.area = Pipe.calculate_area(self)
-        self.volume = Pipe.calculate_volume(self)
-        self.K = Pipe.calculate_K(self)
-        self.c = c
-        self.type = 'Tube'
-
-    def info(self):
-        return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
-            f'L={self.L:.3g~}'
-
-    def __str__(self):
-        return f'{self.OD:.3g~} tube'
 
 
 class Annulus():
