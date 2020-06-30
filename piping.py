@@ -364,7 +364,7 @@ class Entrance ():
             Inside diameter of the entrance.
         """
         self.ID = ID
-        self.area = Pipe.calculate_area(self)
+        self.area = Tube.calculate_area(self)
         self.type = 'Entrance'
         self.K = 0.5  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
@@ -373,7 +373,7 @@ class Entrance ():
         return f'{self.type}, {self.ID:.3g~}'
 
     def __str__(self):
-        return str(self.type)
+        return self.type
 
 
 class Exit (Entrance):
@@ -480,21 +480,21 @@ class Annulus():
         return f'{self.D1:.3g~} x {self.D2:.3g~} annulus'
 
 
-class PipeElbow(Pipe):
+class Elbow(Tube):
     """
     NPS Tee fitting.
-    MRO makes method K from Elbow class to override method from Pipe class.
+    MRO makes method K from PipeElbow class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
-        """Generate a pipe elbow object.
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5, N=1,
+                 angle=90*ureg.deg):
+        """Generate a tube elbow object.
 
         Parameters
         ----------
-        D_nom : float or ureg.Quantity {length: 1}
-            Nominal diameter of piping; can be dimensionless or having a unit
-            of length.
-        SCH : int
-            Pipe schedule. Default value is SCH 40 (STD).
+        OD : ureg.Quantity {length: 1}
+            Outer diameter of the tube.
+        wall : ureg.Quantity {length: 1}
+            Wall thickness of the tube.
         R_D : ureg.Quantity {length: 1}
             Elbow radius/diameter ratio
         N : int
@@ -505,8 +505,9 @@ class PipeElbow(Pipe):
         self.R_D = R_D
         self.N = N
         self.angle = angle
-        super().__init__(D_nom, SCH)
-        self.type = 'NPS elbow'
+        super().__init__(OD, wall, L=0*ureg.m, c=c)
+        self.L = R_D*self.ID*angle
+        self.type = 'Tube elbow'
 
     def calculate_K(self):
         """
@@ -530,31 +531,30 @@ class PipeElbow(Pipe):
             B1 = 0.21*(self.R_D)**(-0.5)
 
         C1 = 1  # use different value for non-axis symmetric
-        # Calculate the length of the elbow
-        self.L = self.R_D*self.ID*self.angle
         # Friction losses in the elbow
-        K_pipe = Pipe.calculate_K(self)
-        return (A1*B1*C1+K_pipe)*self.N
+        K_frict = super().calculate_K()
+        return (A1*B1*C1+K_frict)*self.N
 
     def info(self):
-        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
+        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
-class TubeElbow(PipeElbow, Tube):
+class PipeElbow(Elbow, Pipe):
     """
     NPS Tee fitting.
-    MRO makes method K from PipeElbow class to override method from Pipe class.
+    MRO makes method K from Elbow class to override method from Pipe class.
     """
-    def __init__(self, OD, wall=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
-        """Generate a tube elbow object.
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
+        """Generate a pipe elbow object.
 
         Parameters
         ----------
-        OD : ureg.Quantity {length: 1}
-            Outer diameter of the tube.
-        wall : ureg.Quantity {length: 1}
-            Wall thickness of the tube.
+        D_nom : float or ureg.Quantity {length: 1}
+            Nominal diameter of piping; can be dimensionless or having a unit
+            of length.
+        SCH : int
+            Pipe schedule. Default value is SCH 40 (STD).
         R_D : ureg.Quantity {length: 1}
             Elbow radius/diameter ratio
         N : int
@@ -562,14 +562,11 @@ class TubeElbow(PipeElbow, Tube):
         angle : ureg.Quantity {dimensionless}
             Number of elbows in the pipeline
         """
-        self.R_D = R_D
-        self.N = N
-        self.angle = angle
-        Tube.__init__(self, OD, wall)
-        self.type = 'Tube elbow'
+        super().__init__(D_nom, SCH, c=c, R_D=R_D, N=N, angle=angle)
+        self.type = 'NPS elbow'
 
     def info(self):
-        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
+        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
