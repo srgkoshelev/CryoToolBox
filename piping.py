@@ -317,7 +317,7 @@ class VJPipe(Pipe):
             f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
 
 
-class CorrugatedPipe():
+class CorrugatedPipe(Tube):
     """Corrugated pipe class.
     """
     def __init__(self, D_nom, L=0*ureg.m):
@@ -331,24 +331,25 @@ class CorrugatedPipe():
             Length of the pipe.
         """
         # TODO DRY
-        self.OD = D_nom
-        self.D = D_nom.magnitude
-        self.ID = self.OD
-        self.L = L
-        self.area = Pipe.calculate_area(self)
-        self.volume = Pipe.calculate_volume(self)  # First approximation
+        OD = D_nom
         logger.debug('For corrugated piping assumed OD = D')
-        self.K = 4*Pipe.f_T(self)*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
+        wall = 0 * ureg.m
+        c = 0 * ureg.inch
+        super().__init__(OD, wall, L, c)
+        self.K = 4*self.K  # Multiplier 4 is used for corrugated pipe
         self.type = 'Corrugated pipe'
         logger.debug('For corrugated piping assumed wall = 0')
-        self.wall = 0*ureg.m
+
+    def branch_reinforcement(self):
+        raise NotImplementedError('Branch reinforcement not implemented for'
+                                  ' corrugated pipe')
+
+    def pressure_design_thick(self):
+        raise NotImplementedError('Pressure design thickness not implemented'
+                                  ' for corrugated pipe')
 
     def info(self):
         return f'Corrugated pipe D={self.OD:.3g~}, L={self.L:.3g~}'
-
-    def __str__(self):
-        # TODO remove once __init__ is updated
-        return f'{self.OD:.3g~} corr pipe'
 
 
 class Entrance ():
