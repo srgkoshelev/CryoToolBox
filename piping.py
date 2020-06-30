@@ -277,11 +277,11 @@ class CopperTube(Tube):
             D = D_nom.magnitude
         else:
             D = D_nom
-        self.D = D
         OD = COPPER_TABLE[D]['OD']
         wall = COPPER_TABLE[D][type_]
         c = 0 * ureg.inch  # Not affected by corrosion
         super().__init__(OD, wall, L, c)
+        self.D = D
         self.type = 'Copper tube ' + type_
 
 
