@@ -108,26 +108,12 @@ class RefPropTest(unittest.TestCase):
         self.assertNIST(0.5,
                         fluid.mass_fractions[0])
 
+# TODO Add Crane examples: 4-23, 4-22 (may need Y implementation), 4.21 (may need mock ThermState)
+# 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
 if __name__ == '__main__':
     unittest.main()
 
-
-
-
-# Test_State = ht.ThermState('helium')
-# #Test_State.update('PT_INPUTS', Q_('49.17 psi'), Q_('11.029 degR'))
-# P_SHI = Q_('200 psi')
-# T_SHI = 2.6579 * P_SHI.to(ht.ureg.psi).magnitude**0.3653 * ht.ureg.degR #Bruce S. formula
-# Test_State.update('P', P_SHI, 'T', T_SHI)
-# #Test_State.update('T', Q_('4.2 K'), 'Q', Q_('1'))
-# print(ht.to_scfma(Q_('1 g/s'), Test_State))
-# print(ht.from_scfma(Q_('0.443 ft**3/min'), Test_State))
-# print(Test_State.Prandtl)
-# @ht.ureg.wraps(ht.ureg.BTU/ht.ureg.lb, ht.ureg.psi)
-# def theta_bruce(P):
-#     return 0.5724 * P**0.6813
-# print(theta_bruce(P_SHI))
 # print('\nCalculating evaporation heat')
 # Test_State.update('T', Q_('4.2 K'), 'Q', Q_('0'))
 # Hmass_liq = Test_State.Hmass
