@@ -194,7 +194,7 @@ class Tube:
             f'L={self.L:.3g~}'
 
     def __str__(self):
-        return f'{self.OD:.3g~} tube'
+        return f'{self.D:.3g}" {self.type}'
 
 
 class Pipe(Tube):
@@ -221,13 +221,15 @@ class Pipe(Tube):
             allowances.
         """
         if isinstance(D_nom, ureg.Quantity):
-            self.D = D_nom.magnitude
+            D = D_nom.magnitude
         else:
-            self.D = D_nom
-        OD = NPS_table[self.D]['OD']
+            D = D_nom
+        OD = NPS_table[D]['OD']
         self.SCH = SCH
-        wall = NPS_table[self.D].get(self.SCH)
+        # TODO Should I be using get here?
+        wall = NPS_table[D].get(SCH)
         super().__init__(OD, wall, L, c)
+        self.D = D
         self.type = 'NPS pipe'
 
         # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
@@ -256,9 +258,6 @@ class Pipe(Tube):
 
     def info(self):
         return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
-
-    def __str__(self):
-        return f'{self.D} in NPS pipe'
 
 
 class CopperTube(Tube):
@@ -311,14 +310,11 @@ class VJPipe(Pipe):
         """
         super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
-        self.type = 'Vacuum jacketed pipe'
+        self.type = 'VJ pipe'
 
     def info(self):
         return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}", ' + \
             f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
-
-    def __str__(self):
-        return f'{self.D} in VJ pipe'
 
 
 class CorrugatedPipe():
@@ -334,6 +330,7 @@ class CorrugatedPipe():
         L : ureg.Quantity {length: 1}
             Length of the pipe.
         """
+        # TODO DRY
         self.OD = D_nom
         self.D = D_nom.magnitude
         self.ID = self.OD
@@ -350,6 +347,7 @@ class CorrugatedPipe():
         return f'Corrugated pipe D={self.OD:.3g~}, L={self.L:.3g~}'
 
     def __str__(self):
+        # TODO remove once __init__ is updated
         return f'{self.OD:.3g~} corr pipe'
 
 
@@ -507,7 +505,7 @@ class PipeElbow(Pipe):
         self.N = N
         self.angle = angle
         super().__init__(D_nom, SCH)
-        self.type = 'Pipe elbow'
+        self.type = 'NPS elbow'
 
     def calculate_K(self):
         """
@@ -541,9 +539,6 @@ class PipeElbow(Pipe):
         return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
-    def __str__(self):
-        return f'{self.D} in NPS elbow'
-
 
 class TubeElbow(PipeElbow, Tube):
     """
@@ -575,9 +570,6 @@ class TubeElbow(PipeElbow, Tube):
     def info(self):
         return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
-
-    def __str__(self):
-        return f'{self.OD:.3g~} tube elbow'
 
 
 class AbstractTee(ABC):
@@ -612,13 +604,11 @@ class PipeTee(AbstractTee, Pipe):
     def __init__(self, D_nom, SCH=40, direction='thru'):
         super().__init__(direction)
         Pipe.__init__(self, D_nom, SCH)
+        self.type = 'NPS tee'
 
     def info(self):
         return f'{self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.direction}'
-
-    def __str__(self):
-        return f'{self.D} in NPS tee'
 
 
 class TubeTee(AbstractTee, Tube):
@@ -628,12 +618,10 @@ class TubeTee(AbstractTee, Tube):
     def __init__(self, OD, wall=0*ureg.inch, direction='thru'):
         super().__init__(direction)
         Tube.__init__(self, OD, wall)
+        self.type = 'Tube tee'
 
     def info(self):
         return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
-
-    def __str__(self):
-        return f'{self.OD:.3g~} tube tee'
 
 
 class Valve():
@@ -641,6 +629,7 @@ class Valve():
     Generic valve with known Cv.
     """
     def __init__(self, D, Cv):
+        # TODO DRY
         self.D = D
         self._Cv = Cv
         self.OD = None
@@ -655,6 +644,7 @@ class Valve():
         return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
 
     def __str__(self):
+        # TODO remove after init updated
         return f'{self.D:.3g~} valve'
 
 

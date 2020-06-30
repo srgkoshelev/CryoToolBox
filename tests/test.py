@@ -118,8 +118,12 @@ class PipingTest(unittest.TestCase):
 
     def test_create_pipes(self):
         print('\n\nStarting piping testing')
+        tube = ht.piping.Tube(Q_('1 inch'))
+        print(f'Generated {tube}')
         pipe = ht.piping.Pipe(Q_('1 inch'))
         print(f'Generated {pipe}')
+        c_tube = ht.piping.CopperTube(Q_('1 inch'))
+        print(f'Generated {c_tube}')
         vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
         print(f'Generated {vj_pipe}')
         corr_pipe = ht.piping.CorrugatedPipe(Q_('1 inch'))
@@ -132,10 +136,6 @@ class PipingTest(unittest.TestCase):
         print(f'Generated {orifice}')
         c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
         print(f'Generated {c_orifice}')
-        tube = ht.piping.Tube(Q_('1 inch'))
-        print(f'Generated {tube}')
-        c_tube = ht.piping.CopperTube(Q_('1 inch'))
-        print(f'Generated {c_tube}')
         annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
         print(f'Generated {annulus}')
         pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'))
