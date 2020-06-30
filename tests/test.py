@@ -117,7 +117,6 @@ class PipingTest(unittest.TestCase):
     Doesn't check for correctness yet."""
 
     def test_create_pipes(self):
-        print(ht.piping.PipeElbow.mro())
         print('\n\nStarting piping testing')
         tube = ht.piping.Tube(Q_('1 inch'))
         print(f'Generated {tube}')
@@ -145,8 +144,8 @@ class PipingTest(unittest.TestCase):
         print(f'Generated {elbow}')
         pipe_tee = ht.piping.PipeTee(Q_('1 inch'))
         print(f'Generated {pipe_tee}')
-        tube_tee = ht.piping.TubeTee(Q_('1 inch'))
-        print(f'Generated {tube_tee}')
+        tee = ht.piping.Tee(Q_('1 inch'))
+        print(f'Generated {tee}')
         valve = ht.piping.Valve(Q_('1 inch'), 1)
         print(f'Generated {valve}')
         # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
@@ -162,13 +161,12 @@ class PipingTest(unittest.TestCase):
                                                pipe_exit, orifice, c_orifice, tube,
                                                c_tube,
                                                annulus, pipe_elbow, elbow,
-                                               pipe_tee, tube_tee, valve,
+                                               pipe_tee, tee, valve,
                                                # g_valve, v_cone,
                                                cont, enl])
         print(f'Created piping with volume {piping.volume}')
         print('\n\nPipe flow test')
         print(piping.dP(Q_('10 g/s')))
-        print(pipe_elbow.wall)
 
 if __name__ == '__main__':
     unittest.main()

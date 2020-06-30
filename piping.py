@@ -13,7 +13,6 @@ from . import os, __location__
 from pint import set_application_registry
 import pickle
 from scipy.optimize import root_scalar
-from abc import ABC, abstractmethod
 from .copper_table import COPPER_TABLE
 
 # Setting up default unit registry for both pickling and unpickling
@@ -562,6 +561,7 @@ class PipeElbow(Elbow, Pipe):
         angle : ureg.Quantity {dimensionless}
             Number of elbows in the pipeline
         """
+        # D_nom and SCH go as positional arguments to Pipe __init__
         super().__init__(D_nom, SCH, c=c, R_D=R_D, N=N, angle=angle)
         self.type = 'NPS elbow'
 
@@ -570,14 +570,11 @@ class PipeElbow(Elbow, Pipe):
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
-class AbstractTee(ABC):
+class Tee(Tube):
     """
-    Abstract Tee class. __init__ method is abstract to avoid instantiation of
-    this class.
-    method K defines flow resistance calculation.
+    Tee fitting based.
     """
-    @abstractmethod
-    def __init__(self, direction):
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru'):
         if direction in ['thru', 'through', 'run']:
             self.direction = 'run'
         elif direction in ['branch', 'side']:
@@ -585,7 +582,9 @@ class AbstractTee(ABC):
         else:
             logger.error('''Tee direction is not recognized,
                          try "thru" or "branch": {}'''.format(direction))
-        self.type = 'Tee'
+        L = 0*ureg.m
+        super().__init__(OD, wall, L, c)
+        self.type = 'Tube tee'
 
     def calculate_K(self):
         if self.direction == 'run':
@@ -593,33 +592,23 @@ class AbstractTee(ABC):
         elif self.direction == 'branch':
             return 60*self.f_T()  # Crane TP-410 p. A-29
 
+    def info(self):
+        return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
 
-class PipeTee(AbstractTee, Pipe):
+
+class PipeTee(Tee, Pipe):
     """
     NPS Tee fitting.
     MRO makes method K from Tee class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, direction='thru'):
-        super().__init__(direction)
-        Pipe.__init__(self, D_nom, SCH)
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru'):
+        # D_nom and SCH go as positional arguments to Pipe __init__
+        super().__init__(D_nom, SCH, c, direction)
         self.type = 'NPS tee'
 
     def info(self):
         return f'{self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.direction}'
-
-
-class TubeTee(AbstractTee, Tube):
-    """
-    Tee fitting based.
-    """
-    def __init__(self, OD, wall=0*ureg.inch, direction='thru'):
-        super().__init__(direction)
-        Tube.__init__(self, OD, wall)
-        self.type = 'Tube tee'
-
-    def info(self):
-        return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
 
 
 class Valve():
