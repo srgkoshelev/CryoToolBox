@@ -48,6 +48,8 @@ class Tube:
         self.area = self.calculate_area()
         self.volume = self.calculate_volume()
         self.K = self.calculate_K()
+        # c = Q_('0.5 mm') for unspecified machined surfaces
+        # TODO add calculation for c based on thread depth c = h of B1.20.1
         self.c = c
         self.type = 'Tube'
 
@@ -218,22 +220,14 @@ class Pipe(Tube):
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         """
-        # Make lookup in the table a static method
-        try:
-            self.D = D_nom.magnitude  # If united
-        except AttributeError:
+        if isinstance(D_nom, ureg.Quantity):
+            self.D = D_nom.magnitude
+        else:
             self.D = D_nom
-        self.OD = NPS_table[self.D]['OD']
+        OD = NPS_table[self.D]['OD']
         self.SCH = SCH
-        self.wall = NPS_table[self.D].get(self.SCH)
-        self.ID = self.calculate_ID()
-        self.L = L
-        self.area = self.calculate_area()
-        self.volume = self.calculate_volume()
-        self.c = c
-        # c = Q_('0.5 mm') for unspecified machined surfaces
-        # TODO add calculation for c based on thread depth c = h of B1.20.1
-        self.K = self.calculate_K()
+        wall = NPS_table[self.D].get(self.SCH)
+        super().__init__(OD, wall, L, c)
         self.type = 'NPS pipe'
 
         # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
