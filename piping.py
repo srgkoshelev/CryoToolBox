@@ -251,7 +251,8 @@ class CopperTube(Pipe):
         self.area = self.calculate_area()
         self.volume = self.calculate_volume()
         self.K = self.calculate_K()
-        self.type = 'Copeer tube ' + type_
+        self.c = 0*ureg.m
+        self.type = 'Copper tube ' + type_
 
 class VJPipe(Pipe):
     """Vacuum jacketed pipe.
