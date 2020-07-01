@@ -453,7 +453,7 @@ class Tube(Pipe):
             f'L={self.L:.3g~}'
 
     def __str__(self):
-        return f'{self.OD:.3g~} tube'
+        return f'{self.OD:.3g~} x {self.wall:.3g~} tube'
 
 
 class Annulus():
