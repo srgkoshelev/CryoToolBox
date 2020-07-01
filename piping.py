@@ -798,9 +798,16 @@ class Piping (list):
         K0 = sum([section.K*(A0/section.area)**2 for section in self])
         return (K0, A0)
 
-    @property
     def volume(self):
-        return sum([pipe.volume for pipe in self])
+        result = []
+        pipes = (Pipe, VJPipe, CorrugatedPipe, Tube, Annulus)
+        # TODO remove elbows and tees after merge
+        for pipe in self:
+            if isinstance(pipe, pipes):
+                result.append((str(pipe),
+                               f'{pipe.L.to(ureg.ft).magnitude:.3g}',
+                               f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
+        return result
 
     def dP(self, m_dot):
         '''
