@@ -7,22 +7,23 @@ pp = pprint.PrettyPrinter()
 ureg = ht.ureg
 Q_ = ht.Q_
 
+CRITERIA = 0.00001  # NIST acceptance criteria
+
+
+def assertNIST(nist, calc, criteria=None):
+    criteria = criteria or CRITERIA
+    assert abs(nist-calc) / nist < criteria, \
+        f'Calculated value {calc} is not within {criteria:%} of NIST value {nist}'
+
 class RefPropTest(unittest.TestCase):
     """Verify fluid properties are calculated accurately.
 
     Tests borrowed from pyrefprop package.
     """
 
-    criteria = 0.00001  # NIST acceptance criteria
-
-    def assertNIST(self, nist, calc, criteria=None):
-        criteria = criteria or self.criteria
-        assert abs(nist-calc) / nist < criteria, \
-            f'Calculated value {calc} is not within {criteria:%} of NIST value {nist}'
-
     def test_air(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
-        self.assertNIST(fluid.M.magnitude, 28.958600656)
+        assertNIST(fluid.M.magnitude, 28.958600656)
         # TODO Open an issue with CoolProp
 
     def test_argon(self):
@@ -30,28 +31,28 @@ class RefPropTest(unittest.TestCase):
         P = 2 * 1000 * ureg.kPa
         D = 15 / fluid.M * ureg.mol/ureg.L
         fluid.update_kw(P=P, Dmolar=D)
-        self.assertNIST(637.377588657857, fluid.T.to(ureg.K).magnitude)
+        assertNIST(637.377588657857, fluid.T.to(ureg.K).magnitude)
 
     def test_r134a(self):
         fluid = ht.ThermState('r134a', backend='REFPROP')
         T = 400 * ureg.K
         D = 50 / fluid.M * ureg.mol/ureg.L
         fluid.update_kw(T=T, Dmolar=D)
-        self.assertNIST(1.45691892789737, fluid.P.to(ureg.kPa).magnitude/1000)
+        assertNIST(1.45691892789737, fluid.P.to(ureg.kPa).magnitude/1000)
 
     def test_oxygen(self):
         fluid = ht.ThermState('oxygen', backend='REFPROP')
         T = 100 * ureg.K
         P = 1000 * ureg.kPa
         fluid.update_kw(T=T, P=P)
-        self.assertNIST(153.886680663753,
+        assertNIST(153.886680663753,
                         fluid.viscosity.to(ureg.uPa*ureg.s).magnitude)
 
     def test_nitrogen(self):
         fluid = ht.ThermState('nitrogen', backend='REFPROP')
         T = 100 * ureg.K
         fluid.update_kw(T=T, Q=0)
-        self.assertNIST(100.111748964945,
+        assertNIST(100.111748964945,
                         fluid.conductivity.to(ureg.W/(ureg.m*ureg.K)).magnitude*1000)
 
     def test_air_density(self):
@@ -59,7 +60,7 @@ class RefPropTest(unittest.TestCase):
         T = (((70 - 32) * 5 / 9) + 273.15) * ureg.K
         P = 14.7 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(P=P, T=T)
-        self.assertNIST(0.0749156384666842,
+        assertNIST(0.0749156384666842,
                         fluid.Dmolar.to(ureg.mol/ureg.L).magnitude*fluid.M*0.062427974)
 
     # def test_freon_mixture(self):
@@ -68,7 +69,7 @@ class RefPropTest(unittest.TestCase):
     #     P = 10 * 1000 * ureg.kPa
     #     Smolar = 110 * ureg.J / (ureg.mol * ureg.K)
     #     fluid.update_kw(P=P, Smolar=Smolar)
-    #     self.assertNIST(23643.993624382,
+    #     assertNIST(23643.993624382,
     #                     fluid.Hmolar.to(ureg.J/ureg.mol).magnitude)
     # TODO Figure out the issue with mixtures (possibly refprop_setref/ixflag thing)
 
@@ -78,7 +79,7 @@ class RefPropTest(unittest.TestCase):
     #     Dmolar = 30 * 0.45359237 / 0.028316846592 / fluid.M * ureg.mol / ureg.L
     #     Hmolar = 283 * 1.05435026448889 / 0.45359237 * fluid.M * ureg.J / ureg.mol
     #     fluid.update_kw(Dmolar=Dmolar, Hmolar=Hmolar)
-    #     self.assertNIST(298.431320311048,
+    #     assertNIST(298.431320311048,
     #                     fluid.T.to(ureg.degF).magnitude)
     # TODO Figure out the issue with mixtures (possibly refprop_setref/ixflag thing)
 
@@ -88,24 +89,24 @@ class RefPropTest(unittest.TestCase):
         T = (((300 - 32) * 5 / 9) + 273.15) * ureg.K
         P = 10000 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(T=T, P=P)
-        self.assertNIST(5536.79144924071,
+        assertNIST(5536.79144924071,
                         fluid.speed_sound.to(ureg.m/ureg.s).magnitude * 1000 / 25.4 / 12)
 
     def test_octane(self):
         fluid = ht.ThermState('octane', backend='REFPROP')
         T = (100+273.15) * ureg.K
         fluid.update_kw(T=T, Q=0)
-        self.assertNIST(319.167499870568,
+        assertNIST(319.167499870568,
                         fluid.latent_heat.to(ureg.J/ureg.g).magnitude)
 
     def test_R410A_mole_fraction(self):
         fluid = ht.ThermState('R410A.MIX', backend='REFPROP')
-        self.assertNIST(0.697614699375863,
+        assertNIST(0.697614699375863,
                         fluid.mole_fractions[0])
 
     def test_R410A_mass_fraction(self):
         fluid = ht.ThermState('R410A.MIX', backend='REFPROP')
-        self.assertNIST(0.5,
+        assertNIST(0.5,
                         fluid.mass_fractions[0])
 
 # TODO Add Crane examples: 4-23, 4-22 (may need Y implementation), 4.21 (may need mock ThermState)
