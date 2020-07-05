@@ -7,23 +7,22 @@ pp = pprint.PrettyPrinter()
 ureg = ht.ureg
 Q_ = ht.Q_
 
-CRITERIA = 0.00001  # NIST acceptance criteria
-
-
-def assertNIST(nist, calc, criteria=None):
-    criteria = criteria or CRITERIA
-    assert abs(nist-calc) / nist < criteria, \
-        f'Calculated value {calc} is not within {criteria:%} of NIST value {nist}'
-
 class RefPropTest(unittest.TestCase):
     """Verify fluid properties are calculated accurately.
 
     Tests borrowed from pyrefprop package.
     """
 
+    criteria = 0.00001  # NIST acceptance criteria
+
+    def assertNIST(self, nist, calc, criteria=None):
+        criteria = criteria or self.criteria
+        assert abs(nist-calc) / nist < criteria, \
+            f'Calculated value {calc} is not within {criteria:%} of NIST value {nist}'
+
     def test_air(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
-        assertNIST(fluid.M.magnitude, 28.958600656)
+        self.assertNIST(fluid.M.magnitude, 28.958600656)
         # TODO Open an issue with CoolProp
 
     def test_argon(self):
@@ -31,28 +30,28 @@ class RefPropTest(unittest.TestCase):
         P = 2 * 1000 * ureg.kPa
         D = 15 / fluid.M * ureg.mol/ureg.L
         fluid.update_kw(P=P, Dmolar=D)
-        assertNIST(637.377588657857, fluid.T.to(ureg.K).magnitude)
+        self.assertNIST(637.377588657857, fluid.T.to(ureg.K).magnitude)
 
     def test_r134a(self):
         fluid = ht.ThermState('r134a', backend='REFPROP')
         T = 400 * ureg.K
         D = 50 / fluid.M * ureg.mol/ureg.L
         fluid.update_kw(T=T, Dmolar=D)
-        assertNIST(1.45691892789737, fluid.P.to(ureg.kPa).magnitude/1000)
+        self.assertNIST(1.45691892789737, fluid.P.to(ureg.kPa).magnitude/1000)
 
     def test_oxygen(self):
         fluid = ht.ThermState('oxygen', backend='REFPROP')
         T = 100 * ureg.K
         P = 1000 * ureg.kPa
         fluid.update_kw(T=T, P=P)
-        assertNIST(153.886680663753,
+        self.assertNIST(153.886680663753,
                         fluid.viscosity.to(ureg.uPa*ureg.s).magnitude)
 
     def test_nitrogen(self):
         fluid = ht.ThermState('nitrogen', backend='REFPROP')
         T = 100 * ureg.K
         fluid.update_kw(T=T, Q=0)
-        assertNIST(100.111748964945,
+        self.assertNIST(100.111748964945,
                         fluid.conductivity.to(ureg.W/(ureg.m*ureg.K)).magnitude*1000)
 
     def test_air_density(self):
@@ -60,7 +59,7 @@ class RefPropTest(unittest.TestCase):
         T = (((70 - 32) * 5 / 9) + 273.15) * ureg.K
         P = 14.7 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(P=P, T=T)
-        assertNIST(0.0749156384666842,
+        self.assertNIST(0.0749156384666842,
                         fluid.Dmolar.to(ureg.mol/ureg.L).magnitude*fluid.M*0.062427974)
 
     # def test_freon_mixture(self):
@@ -69,7 +68,7 @@ class RefPropTest(unittest.TestCase):
     #     P = 10 * 1000 * ureg.kPa
     #     Smolar = 110 * ureg.J / (ureg.mol * ureg.K)
     #     fluid.update_kw(P=P, Smolar=Smolar)
-    #     assertNIST(23643.993624382,
+    #     self.assertNIST(23643.993624382,
     #                     fluid.Hmolar.to(ureg.J/ureg.mol).magnitude)
     # TODO Figure out the issue with mixtures (possibly refprop_setref/ixflag thing)
 
@@ -79,7 +78,7 @@ class RefPropTest(unittest.TestCase):
     #     Dmolar = 30 * 0.45359237 / 0.028316846592 / fluid.M * ureg.mol / ureg.L
     #     Hmolar = 283 * 1.05435026448889 / 0.45359237 * fluid.M * ureg.J / ureg.mol
     #     fluid.update_kw(Dmolar=Dmolar, Hmolar=Hmolar)
-    #     assertNIST(298.431320311048,
+    #     self.assertNIST(298.431320311048,
     #                     fluid.T.to(ureg.degF).magnitude)
     # TODO Figure out the issue with mixtures (possibly refprop_setref/ixflag thing)
 
@@ -89,79 +88,118 @@ class RefPropTest(unittest.TestCase):
         T = (((300 - 32) * 5 / 9) + 273.15) * ureg.K
         P = 10000 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(T=T, P=P)
-        assertNIST(5536.79144924071,
+        self.assertNIST(5536.79144924071,
                         fluid.speed_sound.to(ureg.m/ureg.s).magnitude * 1000 / 25.4 / 12)
 
     def test_octane(self):
         fluid = ht.ThermState('octane', backend='REFPROP')
         T = (100+273.15) * ureg.K
         fluid.update_kw(T=T, Q=0)
-        assertNIST(319.167499870568,
+        self.assertNIST(319.167499870568,
                         fluid.latent_heat.to(ureg.J/ureg.g).magnitude)
 
     def test_R410A_mole_fraction(self):
         fluid = ht.ThermState('R410A.MIX', backend='REFPROP')
-        assertNIST(0.697614699375863,
+        self.assertNIST(0.697614699375863,
                         fluid.mole_fractions[0])
 
     def test_R410A_mass_fraction(self):
         fluid = ht.ThermState('R410A.MIX', backend='REFPROP')
-        assertNIST(0.5,
+        self.assertNIST(0.5,
                         fluid.mass_fractions[0])
 
 # TODO Add Crane examples: 4-23, 4-22 (may need Y implementation), 4.21 (may need mock ThermState)
 # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
 
+class FunctionsTest(unittest.TestCase):
+    def test_rad_hl_1(self):
+        eps = 0.02
+        T1 = 27 * ureg.degC
+        T2 = -183 * ureg.degC
+        A = 0.05 * ureg.m**2
+        heat_flow = abs(ht.rad_hl(T1, eps, T2, eps)) * A
+        self.assertAlmostEqual(0.23054, heat_flow.to(ureg.W).magnitude, 5)
+
+    def test_rad_hl_2(self):
+        eps = 0.55
+        T1 = 27 * ureg.degC
+        T2 = -183 * ureg.degC
+        A = 0.05 * ureg.m**2
+        heat_flow = abs(ht.rad_hl(T1, eps, T2, eps)) * A
+        self.assertAlmostEqual(8.65727, heat_flow.to(ureg.W).magnitude, 5)
+
+    def test_rad_hl_3(self):
+        eps = 0.8
+        T1 = 327 * ureg.degC
+        T2 = 127 * ureg.degC
+        eps_b = 0.05
+        heat_flow = abs(ht.rad_hl(T1, eps, T2, eps,
+                                  baffles={'N': 1, 'eps': eps_b}))
+        self.assertAlmostEqual(145.7373,
+                               heat_flow.to(ureg.W/ureg.m**2).magnitude, 5)
+
+    def test_rad_hl_4(self):
+        T1 = 327 * ureg.degC
+        eps_1 = 0.8
+        T2 = 127 * ureg.degC
+        eps_2 = 0.4
+        eps_b = 0.05
+        heat_flow = abs(ht.rad_hl(T1, eps_1, T2, eps_2,
+                                  baffles={'N': 1, 'eps': eps_b}))
+        self.assertAlmostEqual(141.37391,
+                               heat_flow.to(ureg.W/ureg.m**2).magnitude, 5)
+
 class PipingTest(unittest.TestCase):
-    def test_piping(self):
-        test_state = ht.ThermState('helium', P=ht.P_NTP, T=ht.T_NTP)
-        print('\n\nStarting proper testing')
-        pipe = ht.piping.Pipe(Q_('1 inch'))
-        print(f'Generated {pipe}')
-        vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
-        print(f'Generated {vj_pipe}')
-        corr_pipe = ht.piping.CorrugatedPipe(Q_('1 inch'))
-        print(f'Generated {corr_pipe}')
-        entrance = ht.piping.Entrance(Q_('1 inch'))
-        print(f'Generated {entrance}')
-        pipe_exit = ht.piping.Exit(Q_('1 inch'))
-        print(f'Generated {pipe_exit}')
-        orifice = ht.piping.Orifice(Q_('1 inch'))
-        print(f'Generated {orifice}')
-        c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
-        print(f'Generated {c_orifice}')
-        tube = ht.piping.Tube(Q_('1 inch'))
-        print(f'Generated {tube}')
-        annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
-        print(f'Generated {annulus}')
-        pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'))
-        print(f'Generated {pipe_elbow}')
-        tube_elbow = ht.piping.TubeElbow(Q_('1 inch'))
-        print(f'Generated {tube_elbow}')
-        pipe_tee = ht.piping.PipeTee(Q_('1 inch'))
-        print(f'Generated {pipe_tee}')
-        tube_tee = ht.piping.TubeTee(Q_('1 inch'))
-        print(f'Generated {tube_tee}')
-        valve = ht.piping.Valve(Q_('1 inch'), 1)
-        print(f'Generated {valve}')
-        # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
-        # print(f'Generated {g_valve}')
-        # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
-        # print(f'Generated {v_cone}')
-        cont = ht.piping.Contraction(pipe, tube)
-        print(f'Generated {cont}')
-        enl = ht.piping.Enlargement(tube, pipe)
-        print(f'Generated {enl}')
-        piping = ht.piping.Piping(test_state, [pipe, vj_pipe, corr_pipe, entrance,
-                                            pipe_exit, orifice, c_orifice, tube,
-                                            annulus, pipe_elbow, tube_elbow,
-                                            pipe_tee, tube_tee, valve,
-                                            # g_valve, v_cone,
-                                            cont, enl])
-        print(piping.volume())
-        print('\n\nPipe flow test')
-        print(piping.dP(Q_('10 g/s')))
+    pass
+    # def test_piping(self):
+    #     test_state = ht.ThermState('helium', P=ht.P_NTP, T=ht.T_NTP)
+    #     print('\n\nStarting proper testing')
+    #     pipe = ht.piping.Pipe(Q_('1 inch'))
+    #     print(f'Generated {pipe}')
+    #     vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
+    #     print(f'Generated {vj_pipe}')
+    #     corr_pipe = ht.piping.CorrugatedPipe(Q_('1 inch'))
+    #     print(f'Generated {corr_pipe}')
+    #     entrance = ht.piping.Entrance(Q_('1 inch'))
+    #     print(f'Generated {entrance}')
+    #     pipe_exit = ht.piping.Exit(Q_('1 inch'))
+    #     print(f'Generated {pipe_exit}')
+    #     orifice = ht.piping.Orifice(Q_('1 inch'))
+    #     print(f'Generated {orifice}')
+    #     c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
+    #     print(f'Generated {c_orifice}')
+    #     tube = ht.piping.Tube(Q_('1 inch'))
+    #     print(f'Generated {tube}')
+    #     annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
+    #     print(f'Generated {annulus}')
+    #     pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'))
+    #     print(f'Generated {pipe_elbow}')
+    #     tube_elbow = ht.piping.TubeElbow(Q_('1 inch'))
+    #     print(f'Generated {tube_elbow}')
+    #     pipe_tee = ht.piping.PipeTee(Q_('1 inch'))
+    #     print(f'Generated {pipe_tee}')
+    #     tube_tee = ht.piping.TubeTee(Q_('1 inch'))
+    #     print(f'Generated {tube_tee}')
+    #     valve = ht.piping.Valve(Q_('1 inch'), 1)
+    #     print(f'Generated {valve}')
+    #     # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
+    #     # print(f'Generated {g_valve}')
+    #     # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
+    #     # print(f'Generated {v_cone}')
+    #     cont = ht.piping.Contraction(pipe, tube)
+    #     print(f'Generated {cont}')
+    #     enl = ht.piping.Enlargement(tube, pipe)
+    #     print(f'Generated {enl}')
+    #     piping = ht.piping.Piping(test_state, [pipe, vj_pipe, corr_pipe, entrance,
+    #                                         pipe_exit, orifice, c_orifice, tube,
+    #                                         annulus, pipe_elbow, tube_elbow,
+    #                                         pipe_tee, tube_tee, valve,
+    #                                         # g_valve, v_cone,
+    #                                         cont, enl])
+    #     print(piping.volume())
+    #     print('\n\nPipe flow test')
+    #     print(piping.dP(Q_('10 g/s')))
 
 
 
