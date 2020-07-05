@@ -79,28 +79,26 @@ def theta_heat(fluid, step=0.01):
     return cga.theta(fluid, step)
 
 
-def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
-           F1_2=1, eps_baffle=0.02, N_baffles=5):
+def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02}):
     """
     Calculate radiative heat load including reduction due to baffles.
     Based on Kaganer "Thermal insulation in cryogenic engineering", p. 42.
 
     Parameters
     ----------
-    eps_cold : float
-        emissivity of the cold surface
-    eps_hot : float
-        emissivity of the hot surface
-    T_hot : Quality {temperature: 1}
-        temperature of the hot surface
-    T_cold : Quality {temperature: 1}
-        temperature of the cold surface
+    eps_1 : float
+        emissivity of the first surface
+    eps_2 : float
+        emissivity of the second surface
+    T_1 : Quality {temperature: 1}
+        temperature of the first surface
+    T_2 : Quality {temperature: 1}
+        temperature of the second surface
     F1_2 : float
         F1_2 = F_cold/F_hot
-    eps_baffle : float
-        emissivity of the baffle, assumed to be same on both sides
-    N_baffles : int
-        number of baffles
+    baffles : dict
+        N - number of baffles
+        eps - emissivity of the baffle, assumed to be same on both sides
 
     Returns
     -------
@@ -110,14 +108,15 @@ def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
             eta : effectiveness of the baffles
     """
     # TODO This function will be refactored
-    Eps_mut = 1/(1/eps_cold + F1_2*(1/eps_hot-1))  # Mutual emissivity
-    q0 = Eps_mut*sigma*(T_hot**4 - T_cold**4)*F1_2
-    Eps_baffle_mut = eps_baffle/(2-eps_baffle)
-    eta = (1+N_baffles*Eps_mut/Eps_baffle_mut)**(-1)
+    N_baffles = baffles['N']
+    eps_baffle = baffles['eps']
+
+    eps_mut = 1/(1/eps_1 + F1_2*(1/eps_2-1))  # Mutual emissivity
+    q0 = eps_mut*sigma*(T_2**4 - T_1**4)*F1_2
+    eps_baffle_mut = eps_baffle/(2-eps_baffle)
+    eta = (1+N_baffles*eps_mut/eps_baffle_mut)**(-1)
     q_baffle = eta*q0
-    return {'q0': q0.to(ureg.W/ureg.m**2),
-            'q_baffle': q_baffle.to(ureg.W/ureg.m**2),
-            'eta': eta}
+    return q_baffle.to(ureg.W/ureg.m**2)
 
 
 def Re(fluid, m_dot, D):
@@ -557,11 +556,6 @@ NIST_DATA = {
                'unit': 1e-6/ureg.K},
     },
 }
-
-
-
-
-
 
 
 def stored_energy(Piping):
