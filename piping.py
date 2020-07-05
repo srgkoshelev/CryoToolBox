@@ -109,6 +109,25 @@ class Tube:
         tm = t + self.c
         return tm
 
+    def pressure_rating(self):
+        """Calculate internal pressure rating.
+
+        Based on B31.3 304.1.
+
+        Returns
+        -------
+        ureg.Quantity {length: 1}
+            Minimum required wall thickness.
+        """
+        if self.check_material_defined():
+            # Check whether S, E, W, and Y are defined
+            pass
+        D = self.OD
+        S, E, W, Y = self.S, self.E, self.W, self.Y
+        t = self.wall - self.c
+        P = 2 * t * S * E * W / (D-2*Y*t)
+        return P
+
     def update(self, **kwargs):
         """ Add attributes, e.g. material stress or weld joint strength to the pipe.
 
@@ -168,6 +187,7 @@ class Tube:
         None
 
         """
+        # TODO Rename to reinforcement area?
         t_h = self.pressure_design_thick(P)
         if d_1 is None:
             d_1 = BranchPipe.OD
