@@ -217,7 +217,7 @@ class Pipe:
         A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * BranchPipe.S / self.S
         print(f'Required Reinforcement Area A_1: {A_1.to(ureg.inch**2):.3g~}')
         A_avail = A_2 + A_3  # Ignoring welding reinforcement
-        print(f'Available Area A_3+A_3: {A_avail.to(ureg.inch**2):.3g~}')
+        print(f'Available Area A_2+A_3: {A_avail.to(ureg.inch**2):.3g~}')
         print(f'Weld branch connection is safe: {A_avail>A_1}')
 
     def info(self):
