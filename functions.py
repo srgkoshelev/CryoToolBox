@@ -564,11 +564,11 @@ NIST_DATA = {
 
 
 
-def stored_energy(Piping):
+def stored_energy(piping):
     """Calculate stored energy in piping using Baker equation."""
-    P = Piping.fluid.P
-    V = Piping.volume
-    k = Piping.fluid.gamma
+    P = piping.fluid.P
+    V = piping.volume
+    k = piping.fluid.gamma
     E_stored = P * V / (k-1) * (1-(P_NTP/P)**((k-1)/k))
     return E_stored.to(ureg.lbf*ureg.ft)
 
