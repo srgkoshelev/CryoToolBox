@@ -13,7 +13,6 @@ from . import os, __location__
 from pint import set_application_registry
 import pickle
 from scipy.optimize import root_scalar
-from abc import ABC, abstractmethod
 from .copper_table import COPPER_TABLE
 
 # Setting up default unit registry for both pickling and unpickling
@@ -21,54 +20,37 @@ set_application_registry(ureg)
 NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb"))
 
 
-
-class Pipe:
-    """NPS pipe class.
-
-    Pipe objects represent actual parts of the pipeline. The Pipe object
-    will contain information such as OD, ID, wall thickness, and can be
-    used to calculate flow coefficient K that is used for flow calculations.
+class Tube:
     """
-    def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm')):
-        """Generate `Pipe` object.
+    Tube, requires OD and wall thickness specified
+    """
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
+        """Generate tube object.
 
         Parameters
         ----------
-        D_nom : float or ureg.Quantity {length: 1}
-            Nominal diameter of piping; can be dimensionless or having a unit
-            of length.
-        SCH : int
-            Pipe schedule. Default value is SCH 40 (STD).
+        OD : ureg.Quantity {length: 1}
+            Outer diameter of the tube.
+        wall : ureg.Quantity {length: 1}
+            Wall thickness of the tube.
         L : ureg.Quantity {length: 1}
-            Pipe length
+            Length of the tube.
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
         """
-        # Make lookup in the table a static method
-        try:
-            self.D = D_nom.magnitude  # If united
-        except AttributeError:
-            self.D = D_nom
-        self.OD = NPS_table[self.D]['OD']
-        self.SCH = SCH
-        self.wall = NPS_table[self.D].get(self.SCH)
-        self.ID = self.calculate_ID()
+        self.OD = OD
+        self.D = OD.to(ureg.inch).magnitude
+        self.wall = wall
+        self.ID = self.OD - 2*self.wall
         self.L = L
         self.area = self.calculate_area()
         self.volume = self.calculate_volume()
-        self.c = c
+        self.K = self.calculate_K()
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
-        self.K = self.calculate_K()
-        self.type = 'NPS pipe'
-
-        # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
-        # """
-
-
-        """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
-        """
+        self.c = c
+        self.type = 'Tube'
 
     def calculate_ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
@@ -85,27 +67,13 @@ class Pipe:
         """
         return self.area * self.L
 
-    def f_T(self):
-        """Calculate Darcy friction factor for complete turbulence for clean
-        steel pipe.
-
-        Fitted logarithmic function to data from A-25.
-
-        Returns
-        -------
-        ureg.Quantity {dimensionless}
-            Darcy friction factor.
-        """
-        if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
-            logger.debug('''Tabulated friction data is given for
-                           ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
-        ln_ID = log(self.ID.to(ureg.inch).magnitude)
-        return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2  # Fitting by S. Koshelev
-
     def calculate_K(self):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         return self.f_T()*self.L/self.ID
+
+    def f_T(self):
+        return Pipe.f_T(self)
 
     def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
         """Calculate pressure design thickness for given pressure and pipe material.
@@ -140,6 +108,25 @@ class Pipe:
             return None
         tm = t + self.c
         return tm
+
+    def pressure_rating(self):
+        """Calculate internal pressure rating.
+
+        Based on B31.3 304.1.
+
+        Returns
+        -------
+        ureg.Quantity {length: 1}
+            Minimum required wall thickness.
+        """
+        if self.check_material_defined():
+            # Check whether S, E, W, and Y are defined
+            pass
+        D = self.OD
+        S, E, W, Y = self.S, self.E, self.W, self.Y
+        t = self.wall - self.c
+        P = 2 * t * S * E * W / (D-2*Y*t)
+        return P
 
     def update(self, **kwargs):
         """ Add attributes, e.g. material stress or weld joint strength to the pipe.
@@ -200,6 +187,7 @@ class Pipe:
         None
 
         """
+        # TODO Rename to reinforcement area?
         t_h = self.pressure_design_thick(P)
         if d_1 is None:
             d_1 = BranchPipe.OD
@@ -221,12 +209,77 @@ class Pipe:
         print(f'Weld branch connection is safe: {A_avail>A_1}')
 
     def info(self):
-        return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
+        return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
+            f'L={self.L:.3g~}'
 
     def __str__(self):
-        return f'{self.D} in NPS pipe'
+        return f'{self.D:.3g}" {self.type}'
 
-class CopperTube(Pipe):
+
+class Pipe(Tube):
+    """NPS pipe class.
+
+    Pipe objects represent actual parts of the pipeline. The Pipe object
+    will contain information such as OD, ID, wall thickness, and can be
+    used to calculate flow coefficient K that is used for flow calculations.
+    """
+    def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm')):
+        """Generate `Pipe` object.
+
+        Parameters
+        ----------
+        D_nom : float or ureg.Quantity {length: 1}
+            Nominal diameter of piping; can be dimensionless or having a unit
+            of length.
+        SCH : int
+            Pipe schedule. Default value is SCH 40 (STD).
+        L : ureg.Quantity {length: 1}
+            Pipe length
+        c : ureg.Quantity {length: 1}
+            Sum of the mechanical allowances plus corrosion and erosion
+            allowances.
+        """
+        if isinstance(D_nom, ureg.Quantity):
+            D = D_nom.magnitude
+        else:
+            D = D_nom
+        OD = NPS_table[D]['OD']
+        self.SCH = SCH
+        # TODO Should I be using get here?
+        wall = NPS_table[D].get(SCH)
+        super().__init__(OD, wall, L, c)
+        self.D = D
+        self.type = 'NPS pipe'
+
+        # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
+        # """
+
+
+        """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
+        """
+
+    def f_T(self):
+        """Calculate Darcy friction factor for complete turbulence for clean
+        steel pipe.
+
+        Fitted logarithmic function to data from A-25.
+
+        Returns
+        -------
+        ureg.Quantity {dimensionless}
+            Darcy friction factor.
+        """
+        if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
+            logger.debug('''Tabulated friction data is given for
+                           ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
+        ln_ID = log(self.ID.to(ureg.inch).magnitude)
+        return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2  # Fitting by S. Koshelev
+
+    def info(self):
+        return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
+
+
+class CopperTube(Tube):
     """Copper tube.
 
     Parameters
@@ -243,16 +296,13 @@ class CopperTube(Pipe):
             D = D_nom.magnitude
         else:
             D = D_nom
+        OD = COPPER_TABLE[D]['OD']
+        wall = COPPER_TABLE[D][type_]
+        c = 0 * ureg.inch  # Not affected by corrosion
+        super().__init__(OD, wall, L, c)
         self.D = D
-        self.OD = COPPER_TABLE[D]['OD']
-        self.wall = COPPER_TABLE[D][type_]
-        self.ID = self.calculate_ID()
-        self.L = L
-        self.area = self.calculate_area()
-        self.volume = self.calculate_volume()
-        self.K = self.calculate_K()
-        self.c = 0*ureg.m
         self.type = 'Copper tube ' + type_
+
 
 class VJPipe(Pipe):
     """Vacuum jacketed pipe.
@@ -279,17 +329,14 @@ class VJPipe(Pipe):
         """
         super().__init__(D_nom, SCH, L)
         self.VJ = Pipe(VJ_D, VJ_SCH, L)
-        self.type = 'Vacuum jacketed pipe'
+        self.type = 'VJ pipe'
 
     def info(self):
         return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}", ' + \
             f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
 
-    def __str__(self):
-        return f'{self.D} in VJ pipe'
 
-
-class CorrugatedPipe():
+class CorrugatedPipe(Tube):
     """Corrugated pipe class.
     """
     def __init__(self, D_nom, L=0*ureg.m):
@@ -302,23 +349,26 @@ class CorrugatedPipe():
         L : ureg.Quantity {length: 1}
             Length of the pipe.
         """
-        self.OD = D_nom
-        self.D = D_nom.magnitude
-        self.ID = self.OD
-        self.L = L
-        self.area = Pipe.calculate_area(self)
-        self.volume = Pipe.calculate_volume(self)  # First approximation
+        # TODO DRY
+        OD = D_nom
         logger.debug('For corrugated piping assumed OD = D')
-        self.K = 4*Pipe.f_T(self)*self.L/self.ID  # Multiplier 4 is used for corrugated pipe
+        wall = 0 * ureg.m
+        c = 0 * ureg.inch
+        super().__init__(OD, wall, L, c)
+        self.K = 4*self.K  # Multiplier 4 is used for corrugated pipe
         self.type = 'Corrugated pipe'
         logger.debug('For corrugated piping assumed wall = 0')
-        self.wall = 0*ureg.m
+
+    def branch_reinforcement(self):
+        raise NotImplementedError('Branch reinforcement not implemented for'
+                                  ' corrugated pipe')
+
+    def pressure_design_thick(self):
+        raise NotImplementedError('Pressure design thickness not implemented'
+                                  ' for corrugated pipe')
 
     def info(self):
         return f'Corrugated pipe D={self.OD:.3g~}, L={self.L:.3g~}'
-
-    def __str__(self):
-        return f'{self.OD:.3g~} corr pipe'
 
 
 class Entrance ():
@@ -333,7 +383,7 @@ class Entrance ():
             Inside diameter of the entrance.
         """
         self.ID = ID
-        self.area = Pipe.calculate_area(self)
+        self.area = Tube.calculate_area(self)
         self.type = 'Entrance'
         self.K = 0.5  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
@@ -342,7 +392,7 @@ class Entrance ():
         return f'{self.type}, {self.ID:.3g~}'
 
     def __str__(self):
-        return str(self.type)
+        return self.type
 
 
 class Exit (Entrance):
@@ -418,44 +468,6 @@ class ConicOrifice(Orifice):
         return f'{self.ID:.3g~} conic orifice'
 
 
-class Tube(Pipe):
-    """
-    Tube, requires OD and wall thickness specified
-    """
-    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
-        """Generate tube object.
-
-        Parameters
-        ----------
-        OD : ureg.Quantity {length: 1}
-            Outer diameter of the tube.
-        wall : ureg.Quantity {length: 1}
-            Wall thickness of the tube.
-        L : ureg.Quantity {length: 1}
-            Length of the tube.
-        c : ureg.Quantity {length: 1}
-            Sum of the mechanical allowances plus corrosion and erosion
-            allowances.
-        """
-        self.OD = OD
-        self.D = OD.to(ureg.inch).magnitude
-        self.wall = wall
-        self.ID = self.OD - 2*self.wall
-        self.L = L
-        self.area = Pipe.calculate_area(self)
-        self.volume = Pipe.calculate_volume(self)
-        self.K = Pipe.calculate_K(self)
-        self.c = c
-        self.type = 'Tube'
-
-    def info(self):
-        return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
-            f'L={self.L:.3g~}'
-
-    def __str__(self):
-        return f'{self.OD:.3g~} x {self.wall:.3g~} tube'
-
-
 class Annulus():
     """"Annulus or tube in tube.
 
@@ -487,21 +499,21 @@ class Annulus():
         return f'{self.D1:.3g~} x {self.D2:.3g~} annulus'
 
 
-class PipeElbow(Pipe):
+class Elbow(Tube):
     """
     NPS Tee fitting.
-    MRO makes method K from Elbow class to override method from Pipe class.
+    MRO makes method K from PipeElbow class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, R_D=1.5, N=1, angle=90*ureg.deg):
-        """Generate a pipe elbow object.
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5, N=1,
+                 angle=90*ureg.deg):
+        """Generate a tube elbow object.
 
         Parameters
         ----------
-        D_nom : float or ureg.Quantity {length: 1}
-            Nominal diameter of piping; can be dimensionless or having a unit
-            of length.
-        SCH : int
-            Pipe schedule. Default value is SCH 40 (STD).
+        OD : ureg.Quantity {length: 1}
+            Outer diameter of the tube.
+        wall : ureg.Quantity {length: 1}
+            Wall thickness of the tube.
         R_D : ureg.Quantity {length: 1}
             Elbow radius/diameter ratio
         N : int
@@ -512,8 +524,9 @@ class PipeElbow(Pipe):
         self.R_D = R_D
         self.N = N
         self.angle = angle
-        super().__init__(D_nom, SCH)
-        self.type = 'Pipe elbow'
+        super().__init__(OD, wall, L=0*ureg.m, c=c)
+        self.L = R_D*self.ID*angle
+        self.type = 'Tube elbow'
 
     def calculate_K(self):
         """
@@ -537,34 +550,30 @@ class PipeElbow(Pipe):
             B1 = 0.21*(self.R_D)**(-0.5)
 
         C1 = 1  # use different value for non-axis symmetric
-        # Calculate the length of the elbow
-        self.L = self.R_D*self.ID*self.angle
         # Friction losses in the elbow
-        K_pipe = Pipe.calculate_K(self)
-        return (A1*B1*C1+K_pipe)*self.N
+        K_frict = super().calculate_K()
+        return (A1*B1*C1+K_frict)*self.N
 
     def info(self):
-        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
+        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
-    def __str__(self):
-        return f'{self.D} in NPS elbow'
 
-
-class TubeElbow(PipeElbow, Tube):
+class PipeElbow(Elbow, Pipe):
     """
     NPS Tee fitting.
-    MRO makes method K from PipeElbow class to override method from Pipe class.
+    MRO makes method K from Elbow class to override method from Pipe class.
     """
-    def __init__(self, OD, wall=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
-        """Generate a tube elbow object.
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
+        """Generate a pipe elbow object.
 
         Parameters
         ----------
-        OD : ureg.Quantity {length: 1}
-            Outer diameter of the tube.
-        wall : ureg.Quantity {length: 1}
-            Wall thickness of the tube.
+        D_nom : float or ureg.Quantity {length: 1}
+            Nominal diameter of piping; can be dimensionless or having a unit
+            of length.
+        SCH : int
+            Pipe schedule. Default value is SCH 40 (STD).
         R_D : ureg.Quantity {length: 1}
             Elbow radius/diameter ratio
         N : int
@@ -572,28 +581,20 @@ class TubeElbow(PipeElbow, Tube):
         angle : ureg.Quantity {dimensionless}
             Number of elbows in the pipeline
         """
-        self.R_D = R_D
-        self.N = N
-        self.angle = angle
-        Tube.__init__(self, OD, wall)
-        self.type = 'Tube elbow'
+        # D_nom and SCH go as positional arguments to Pipe __init__
+        super().__init__(D_nom, SCH, c=c, R_D=R_D, N=N, angle=angle)
+        self.type = 'NPS elbow'
 
     def info(self):
-        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
+        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
-    def __str__(self):
-        return f'{self.OD:.3g~} tube elbow'
 
-
-class AbstractTee(ABC):
+class Tee(Tube):
     """
-    Abstract Tee class. __init__ method is abstract to avoid instantiation of
-    this class.
-    method K defines flow resistance calculation.
+    Tee fitting based.
     """
-    @abstractmethod
-    def __init__(self, direction):
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru'):
         if direction in ['thru', 'through', 'run']:
             self.direction = 'run'
         elif direction in ['branch', 'side']:
@@ -601,7 +602,9 @@ class AbstractTee(ABC):
         else:
             logger.error('''Tee direction is not recognized,
                          try "thru" or "branch": {}'''.format(direction))
-        self.type = 'Tee'
+        L = 0*ureg.m
+        super().__init__(OD, wall, L, c)
+        self.type = 'Tube tee'
 
     def calculate_K(self):
         if self.direction == 'run':
@@ -609,37 +612,23 @@ class AbstractTee(ABC):
         elif self.direction == 'branch':
             return 60*self.f_T()  # Crane TP-410 p. A-29
 
+    def info(self):
+        return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
 
-class PipeTee(AbstractTee, Pipe):
+
+class PipeTee(Tee, Pipe):
     """
     NPS Tee fitting.
     MRO makes method K from Tee class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, direction='thru'):
-        super().__init__(direction)
-        Pipe.__init__(self, D_nom, SCH)
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru'):
+        # D_nom and SCH go as positional arguments to Pipe __init__
+        super().__init__(D_nom, SCH, c, direction)
+        self.type = 'NPS tee'
 
     def info(self):
         return f'{self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.direction}'
-
-    def __str__(self):
-        return f'{self.D} in NPS tee'
-
-
-class TubeTee(AbstractTee, Tube):
-    """
-    Tee fitting based.
-    """
-    def __init__(self, OD, wall=0*ureg.inch, direction='thru'):
-        super().__init__(direction)
-        Tube.__init__(self, OD, wall)
-
-    def info(self):
-        return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
-
-    def __str__(self):
-        return f'{self.OD:.3g~} tube tee'
 
 
 class Valve():
@@ -647,6 +636,7 @@ class Valve():
     Generic valve with known Cv.
     """
     def __init__(self, D, Cv):
+        # TODO DRY
         self.D = D
         self._Cv = Cv
         self.OD = None
@@ -661,6 +651,7 @@ class Valve():
         return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
 
     def __str__(self):
+        # TODO remove after init updated
         return f'{self.D:.3g~} valve'
 
 

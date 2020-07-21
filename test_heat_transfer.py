@@ -7,6 +7,7 @@ pp = pprint.PrettyPrinter()
 ureg = ht.ureg
 Q_ = ht.Q_
 
+
 class RefPropTest(unittest.TestCase):
     """Verify fluid properties are calculated accurately.
 
@@ -111,7 +112,6 @@ class RefPropTest(unittest.TestCase):
 # TODO Add Crane examples: 4-23, 4-22 (may need Y implementation), 4.21 (may need mock ThermState)
 # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
-
 class FunctionsTest(unittest.TestCase):
     def test_rad_hl_1(self):
         eps = 0.02
@@ -150,83 +150,89 @@ class FunctionsTest(unittest.TestCase):
         self.assertAlmostEqual(141.37391,
                                heat_flow.to(ureg.W/ureg.m**2).magnitude, 5)
 
-class PipingTest(unittest.TestCase):
-    pass
-    # def test_piping(self):
-    #     test_state = ht.ThermState('helium', P=ht.P_NTP, T=ht.T_NTP)
-    #     print('\n\nStarting proper testing')
-    #     pipe = ht.piping.Pipe(Q_('1 inch'))
-    #     print(f'Generated {pipe}')
-    #     vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
-    #     print(f'Generated {vj_pipe}')
-    #     corr_pipe = ht.piping.CorrugatedPipe(Q_('1 inch'))
-    #     print(f'Generated {corr_pipe}')
-    #     entrance = ht.piping.Entrance(Q_('1 inch'))
-    #     print(f'Generated {entrance}')
-    #     pipe_exit = ht.piping.Exit(Q_('1 inch'))
-    #     print(f'Generated {pipe_exit}')
-    #     orifice = ht.piping.Orifice(Q_('1 inch'))
-    #     print(f'Generated {orifice}')
-    #     c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
-    #     print(f'Generated {c_orifice}')
-    #     tube = ht.piping.Tube(Q_('1 inch'))
-    #     print(f'Generated {tube}')
-    #     annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
-    #     print(f'Generated {annulus}')
-    #     pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'))
-    #     print(f'Generated {pipe_elbow}')
-    #     tube_elbow = ht.piping.TubeElbow(Q_('1 inch'))
-    #     print(f'Generated {tube_elbow}')
-    #     pipe_tee = ht.piping.PipeTee(Q_('1 inch'))
-    #     print(f'Generated {pipe_tee}')
-    #     tube_tee = ht.piping.TubeTee(Q_('1 inch'))
-    #     print(f'Generated {tube_tee}')
-    #     valve = ht.piping.Valve(Q_('1 inch'), 1)
-    #     print(f'Generated {valve}')
-    #     # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
-    #     # print(f'Generated {g_valve}')
-    #     # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
-    #     # print(f'Generated {v_cone}')
-    #     cont = ht.piping.Contraction(pipe, tube)
-    #     print(f'Generated {cont}')
-    #     enl = ht.piping.Enlargement(tube, pipe)
-    #     print(f'Generated {enl}')
-    #     piping = ht.piping.Piping(test_state, [pipe, vj_pipe, corr_pipe, entrance,
-    #                                         pipe_exit, orifice, c_orifice, tube,
-    #                                         annulus, pipe_elbow, tube_elbow,
-    #                                         pipe_tee, tube_tee, valve,
-    #                                         # g_valve, v_cone,
-    #                                         cont, enl])
-    #     print(piping.volume())
-    #     print('\n\nPipe flow test')
-    #     print(piping.dP(Q_('10 g/s')))
 
+class PipingTest(unittest.TestCase):
+    """Simple piping check to see if basic functionality works.
+
+    Doesn't check for correctness yet."""
+
+    def test_create_pipes(self):
+        print('\n\nStarting piping testing')
+        tube = ht.piping.Tube(Q_('1 inch'))
+        print(f'Generated {tube}')
+        pipe = ht.piping.Pipe(Q_('1 inch'))
+        print(f'Generated {pipe}')
+        c_tube = ht.piping.CopperTube(Q_('1 inch'))
+        print(f'Generated {c_tube}')
+        vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
+        print(f'Generated {vj_pipe}')
+        corr_pipe = ht.piping.CorrugatedPipe(Q_('1 inch'))
+        print(f'Generated {corr_pipe}')
+        entrance = ht.piping.Entrance(Q_('1 inch'))
+        print(f'Generated {entrance}')
+        pipe_exit = ht.piping.Exit(Q_('1 inch'))
+        print(f'Generated {pipe_exit}')
+        orifice = ht.piping.Orifice(Q_('1 inch'))
+        print(f'Generated {orifice}')
+        c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
+        print(f'Generated {c_orifice}')
+        annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
+        print(f'Generated {annulus}')
+        pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'))
+        print(f'Generated {pipe_elbow}')
+        elbow = ht.piping.Elbow(Q_('1 inch'))
+        print(f'Generated {elbow}')
+        pipe_tee = ht.piping.PipeTee(Q_('1 inch'))
+        print(f'Generated {pipe_tee}')
+        tee = ht.piping.Tee(Q_('1 inch'))
+        print(f'Generated {tee}')
+        valve = ht.piping.Valve(Q_('1 inch'), 1)
+        print(f'Generated {valve}')
+        # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
+        # print(f'Generated {g_valve}')
+        # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
+        # print(f'Generated {v_cone}')
+        cont = ht.piping.Contraction(pipe, tube)
+        print(f'Generated {cont}')
+        enl = ht.piping.Enlargement(tube, pipe)
+        print(f'Generated {enl}')
+        test_state = ht.ThermState('air', P=ht.P_NTP, T=ht.T_NTP)
+        piping = ht.piping.Piping(
+            test_state,
+            [pipe, vj_pipe, corr_pipe, entrance, pipe_exit, orifice, c_orifice,
+             tube, c_tube, annulus, pipe_elbow, elbow, pipe_tee, tee, valve,
+             # g_valve, v_cone,
+             cont, enl])
+        print(f'Created piping with volume {piping.volume}')
+        print('\n\nPipe flow test')
+        print(piping.dP(Q_('10 g/s')))
 
 
 if __name__ == '__main__':
     unittest.main()
-# print('\nCalculating evaporation heat')
-# Test_State.update('T', Q_('4.2 K'), 'Q', Q_('0'))
-# Hmass_liq = Test_State.Hmass
-# print(Hmass_liq)
-# print(Test_State.specific_heat_input)
-# Test_State.update('T', Q_('4.2 K'), 'Q', Q_('1'))
-# Hmass_vap = Test_State.Hmass
-# print(Hmass_vap)
-# Hmass_evap = Hmass_vap - Hmass_liq
-# print(Hmass_evap)
-# print(Test_State.specific_heat_input)
-# Test_State.update('P', P_SHI, 'T', Q_('200 K'))
-# print(theta_bruce(Test_State.P).to(ht.ureg.J/ht.ureg.kg), T_SHI.to(ht.ureg.K))
-# print(ht.theta_heat(Test_State))
-# TestPipe = ht.piping.Pipe(1, SCH=10, L=Q_('1 m'))
-# print(TestPipe.update(S=Q_('16700 psi'), E=0.8, W=1, Y=0.4))
-# print(TestPipe.pressure_design_thick(ht.P_NTP))
-# TestPipe2 = ht.piping.Pipe(0.25)
-# print(TestPipe2.update(S=Q_('1000 psi'), E=1, W=1, Y=0.4))
-# TestPipe.branch_reinforcement(TestPipe2, 10*ht.P_NTP)
-# print(TestPipe.pressure_design_thick(Q_('305 psig')).to(ht.ureg.inch))
-# print(TestPipe.volume.to(ht.ureg.ft**3))
+
+    # print('\nCalculating evaporation heat')
+    # Test_State.update('T', Q_('4.2 K'), 'Q', Q_('0'))
+    # Hmass_liq = Test_State.Hmass
+    # print(Hmass_liq)
+    # print(Test_State.specific_heat_input)
+    # Test_State.update('T', Q_('4.2 K'), 'Q', Q_('1'))
+    # Hmass_vap = Test_State.Hmass
+    # print(Hmass_vap)
+    # Hmass_evap = Hmass_vap - Hmass_liq
+    # print(Hmass_evap)
+    # print(Test_State.specific_heat_input)
+    # Test_State.update('P', P_SHI, 'T', Q_('200 K'))
+    # print(theta_bruce(Test_State.P).to(ht.ureg.J/ht.ureg.kg), T_SHI.to(ht.ureg.K))
+    # print(ht.theta_heat(Test_State))
+    # TestPipe = ht.piping.Pipe(1, SCH=10, L=Q_('1 m'))
+    # print(TestPipe.update(S=Q_('16700 psi'), E=0.8, W=1, Y=0.4))
+    # print(TestPipe.pressure_design_thick(ht.P_NTP))
+    # TestPipe2 = ht.piping.Pipe(0.25)
+    # print(TestPipe2.update(S=Q_('1000 psi'), E=1, W=1, Y=0.4))
+    # TestPipe.branch_reinforcement(TestPipe2, 10*ht.P_NTP)
+    # print(TestPipe.pressure_design_thick(Q_('305 psig')).to(ht.ureg.inch))
+    # print(TestPipe.volume.to(ht.ureg.ft**3))
 # print()
 # # TODO Check m_dot and P_in methods
 # # print(TestPiping.volume)

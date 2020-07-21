@@ -560,6 +560,7 @@ NIST_DATA = {
 
 def stored_energy(piping):
     """Calculate stored energy in piping using Baker equation."""
+    # TODO Should accept fluid and volume instead
     P = piping.fluid.P
     V = sum((pipe.volume for pipe in piping))
     k = piping.fluid.gamma
