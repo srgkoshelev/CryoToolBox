@@ -563,7 +563,6 @@ def stored_energy(piping):
     P = piping.fluid.P
     V = sum((pipe.volume for pipe in piping))
     k = piping.fluid.gamma
-    print(P, V, k)
     E_stored = P * V / (k-1) * (1-(P_NTP/P)**((k-1)/k))
     return E_stored.to(ureg.lbf*ureg.ft)
 
