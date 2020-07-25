@@ -11,13 +11,15 @@ from .functions import Air
 from . import T_NTP, P_NTP
 from . import os, __location__
 from pint import set_application_registry
-import pickle
+from serialize import load
 from scipy.optimize import root_scalar
 from .copper_table import COPPER_TABLE
 
-# Setting up default unit registry for both pickling and unpickling
 set_application_registry(ureg)
-NPS_table = pickle.load(open(os.path.join(__location__, "NPS.pkl"), "rb"))
+NPS_yaml = load((os.path.join(__location__, "NPS_table.yaml")))
+NPS_table = {}
+for D, sub_table in NPS_yaml.items():
+    NPS_table.update({D: {k: v*ureg.inch for k, v in sub_table.items()}})
 
 
 class Tube:
