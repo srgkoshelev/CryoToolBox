@@ -203,7 +203,8 @@ class PipingTest(unittest.TestCase):
              tube, c_tube, annulus, pipe_elbow, elbow, pipe_tee, tee, valve,
              # g_valve, v_cone,
              cont, enl])
-        print(f'Created piping with volume {piping.volume}')
+        print(f'Created piping with elements:')
+        print(piping.volume())
         print('\n\nPipe flow test')
         print(piping.dP(Q_('10 g/s')))
 
