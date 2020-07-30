@@ -13,7 +13,6 @@ from . import os, __location__
 from pint import set_application_registry
 from serialize import load
 from scipy.optimize import root_scalar
-from .copper_table import COPPER_TABLE
 
 set_application_registry(ureg)
 
@@ -27,6 +26,7 @@ def _load_table(table_name):
 
 
 NPS_table = _load_table('NPS_table.yaml')
+COPPER_TABLE = _load_table('copper_table.yaml')
 
 
 class Tube:

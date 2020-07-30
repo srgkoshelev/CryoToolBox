@@ -162,7 +162,7 @@ class PipingTest(unittest.TestCase):
         print(f'Generated {tube}')
         pipe = ht.piping.Pipe(Q_('1 inch'))
         print(f'Generated {pipe}')
-        c_tube = ht.piping.CopperTube(Q_('1 inch'))
+        c_tube = ht.piping.CopperTube(Q_('3/4 inch'))
         print(f'Generated {c_tube}')
         vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
         print(f'Generated {vj_pipe}')
