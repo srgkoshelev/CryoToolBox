@@ -498,8 +498,8 @@ class Annulus():
         self.area = pi / 4 * (D1**2 - D2**2)
         self.volume = Pipe.calculate_volume(self)
         self.ID = D1 - D2  # Hydraulic diameter
-        self.f_T = lambda: Pipe.f_T(self)
-        self.K = Pipe.calculate_K(self)
+        self.f_T = lambda: Tube.f_T(self)
+        self.K = Tube.calculate_K(self)
 
     def info(self):
         return f'Annulus D1={self.D1:.3g~}, D2={self.D2:.3g~}, L={self.L:.3g~}'
