@@ -16,10 +16,17 @@ from scipy.optimize import root_scalar
 from .copper_table import COPPER_TABLE
 
 set_application_registry(ureg)
-NPS_yaml = load((os.path.join(__location__, "NPS_table.yaml")))
-NPS_table = {}
-for D, sub_table in NPS_yaml.items():
-    NPS_table.update({D: {k: v*ureg.inch for k, v in sub_table.items()}})
+
+
+def _load_table(table_name):
+    yaml_table = load((os.path.join(__location__, table_name)))
+    result = {}
+    for D, sub_table in yaml_table.items():
+        result.update({D: {k: v*ureg.inch for k, v in sub_table.items()}})
+    return result
+
+
+NPS_table = _load_table('NPS_table.yaml')
 
 
 class Tube:
