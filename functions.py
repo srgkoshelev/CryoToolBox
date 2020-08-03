@@ -497,7 +497,7 @@ def nist_property(material, prop, T1, T2=None):
     if prop == 'LE':
         Tlow = NIST_DATA[material][prop]['Tlow']
         if T1 < Tlow:
-            f = NIST_DATA[material][prop]['f'] * unit
+            f = NIST_DATA[material][prop]['f']
             return f * unit
     if T1 < eq_range[0] or T1 > eq_range[1]:
         raise ValueError(f'Temperature is out of bounds: {T1} for'
@@ -521,7 +521,7 @@ def nist_property(material, prop, T1, T2=None):
 # TC - thermal conductivity, W/(m*K)
 # SH - specific heat, W/(m*K)
 # EC - expansion coefficient, 1/K
-# LE - linear expansion
+# LE - linear expansion, dimensionless
 NIST_DATA = {
     # TODO Implement different TC, etc functions for the same material
     '304SS':
