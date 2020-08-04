@@ -767,7 +767,7 @@ class Enlargement(Contraction):
         return K_
 
 
-class Piping (list):
+class Piping(list):
     '''
     Piping system defined by initial conditions and structure of
     pipe elements.
@@ -778,12 +778,12 @@ class Piping (list):
     added together to calculate single K value for the whole piping. This K
     value is used with Darcy equation to calculate pressure drop or mass flow.
     '''
-    def __init__(self, fluid, Pipes=[]):
+    def __init__(self, fluid, pipes=[]):
         self.fluid = fluid
-        self.extend(Pipes)
+        self.extend(pipes)
 
-    def add(self, *Pipes):
-        self.extend(Pipes)
+    def add(self, *pipes):
+        self.extend(pipes)
 
     def K(self):
         """
