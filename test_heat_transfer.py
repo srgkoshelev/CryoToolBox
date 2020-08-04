@@ -109,8 +109,6 @@ class RefPropTest(unittest.TestCase):
         self.assertNIST(0.5,
                         fluid.mass_fractions[0])
 
-# TODO Add Crane examples: 4-23, 4-22 (may need Y implementation), 4.21 (may need mock ThermState)
-# 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
 class FunctionsTest(unittest.TestCase):
     def test_rad_hl_1(self):
@@ -157,45 +155,27 @@ class PipingTest(unittest.TestCase):
     Doesn't check for correctness yet."""
 
     def test_create_pipes(self):
-        print('\n\nStarting piping testing')
         tube = ht.piping.Tube(Q_('1 inch'))
-        print(f'Generated {tube}')
         pipe = ht.piping.Pipe(Q_('1 inch'))
-        print(f'Generated {pipe}')
         c_tube = ht.piping.CopperTube(Q_('3/4 inch'))
-        print(f'Generated {c_tube}')
         vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
-        print(f'Generated {vj_pipe}')
         corr_pipe = ht.piping.CorrugatedPipe(Q_('1 inch'))
-        print(f'Generated {corr_pipe}')
         entrance = ht.piping.Entrance(Q_('1 inch'))
-        print(f'Generated {entrance}')
         pipe_exit = ht.piping.Exit(Q_('1 inch'))
-        print(f'Generated {pipe_exit}')
         orifice = ht.piping.Orifice(Q_('1 inch'))
-        print(f'Generated {orifice}')
         c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
-        print(f'Generated {c_orifice}')
         annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
-        print(f'Generated {annulus}')
         pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'))
-        print(f'Generated {pipe_elbow}')
         elbow = ht.piping.Elbow(Q_('1 inch'))
-        print(f'Generated {elbow}')
         pipe_tee = ht.piping.PipeTee(Q_('1 inch'))
-        print(f'Generated {pipe_tee}')
         tee = ht.piping.Tee(Q_('1 inch'))
-        print(f'Generated {tee}')
         valve = ht.piping.Valve(Q_('1 inch'), 1)
-        print(f'Generated {valve}')
         # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
         # print(f'Generated {g_valve}')
         # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
         # print(f'Generated {v_cone}')
         cont = ht.piping.Contraction(pipe, tube)
-        print(f'Generated {cont}')
         enl = ht.piping.Enlargement(tube, pipe)
-        print(f'Generated {enl}')
         test_state = ht.ThermState('air', P=ht.P_NTP, T=ht.T_NTP)
         piping = ht.piping.Piping(
             test_state,
@@ -203,10 +183,24 @@ class PipingTest(unittest.TestCase):
              tube, c_tube, annulus, pipe_elbow, elbow, pipe_tee, tee, valve,
              # g_valve, v_cone,
              cont, enl])
-        print(f'Created piping with elements:')
-        print(piping.volume())
-        print('\n\nPipe flow test')
-        print(piping.dP(Q_('10 g/s')))
+        piping.volume()
+        piping.dP(Q_('10 g/s'))
+
+    # def test_Crane_4_22(self):
+    #     test_air = ht.ThermState('air', P=2.343*ureg.bar, T=40*ureg.degC)
+    #     pipe = ht.piping.Pipe(1/2, SCH=80, L=3*ureg.m)
+    #     piping = ht.piping.Piping(
+    #         test_air,
+    #         [pipe,
+    #          ht.piping.Exit(pipe.ID)])
+    #     Y = 0.76  # Taken from Crane; temporary stub
+    #     flow = ht.piping.to_standard_flow(piping.m_dot(), test_air) * Y
+        # TODO Check this test (might have to do with subsonic flow)
+        # self.assertAlmostEqual(1.76, flow.to(ureg.m**3/ureg.min).magnitude)
+
+
+# TODO Add Crane examples: 4-22 (may need Y implementation),
+# 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
 
 if __name__ == '__main__':
