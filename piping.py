@@ -997,7 +997,7 @@ def to_standard_flow(flow_rate, fluid):
     elif flow_rate.dimensionality == ureg('m^3/s').dimensionality:
         # volumetric flow given, converting to standard pressure and
         # temperature
-        if fluid.Dmass != -float('Inf'):
+        if fluid.Dmass != -float('Inf')*ureg.kg/ureg.m**3:
             # By default ThermState is initialized with all fields == -inf
             q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
         else:
