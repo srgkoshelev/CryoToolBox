@@ -4,7 +4,8 @@
 from math import log, log10, pi
 from . import ureg, Q_
 from . import Air
-from . import P_NTP
+from .cp_wrapper import ThermState
+from . import T_NTP, P_NTP
 from . import cga
 from . import logger
 from scipy.interpolate import interp1d
@@ -72,6 +73,64 @@ def from_scfma(Q_air, fluid):
     M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / Air.MZT
     M_dot_fluid.ito(ureg.g/ureg.s)
     return M_dot_fluid
+
+
+def to_standard_flow(flow_rate, fluid):
+    '''
+    Converting volumetric flow at certain conditions or mass flow to
+    flow at NTP.
+    '''
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
+    if flow_rate.dimensionality == ureg('kg/s').dimensionality:
+        # mass flow, flow conditions are unnecessary
+        q_std = flow_rate / fluid_NTP.Dmass
+    elif flow_rate.dimensionality == ureg('m^3/s').dimensionality:
+        # volumetric flow given, converting to standard pressure and
+        # temperature
+        if fluid.Dmass != -float('Inf')*ureg.kg/ureg.m**3:
+            # By default ThermState is initialized with all fields == -inf
+            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
+        else:
+            logger.warning('''Flow conditions for volumetric flow {:.3~}
+                           are not set. Assuming standard flow at NTP.
+                           '''.format(flow_rate))
+            q_std = flow_rate
+    else:
+        logger.error('''Flow dimensionality is not supported: {:.3~}.
+                       '''.format(flow_rate.dimensionality))
+    q_std.ito(ureg.ft**3/ureg.min)
+    return q_std
+
+
+def to_mass_flow(Q_std, fluid):
+    """
+    Calculate mass flow for given volumetric flow at standard conditions.
+    """
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
+    m_dot = Q_std * fluid_NTP.Dmass
+    return m_dot.to(ureg.g/ureg.s)
+
+
+def m_max(fluid, A):
+    """Calculate max isentropic flow at sonic condition
+    (9.46a, Fluid Mechanics, F. White, 2015)
+    """
+    C = fluid.C_gas_const
+    P = fluid.P
+    m_max_ = C * A * P * fluid.MZT
+    return m_max_.to_base_units()
+
+
+def PRV_flow(ID, Kd, fluid):
+    """Calculate mass flow through the relief valve based on
+    BPVC VIII div. 1 UG-131 (e) (2).
+    """
+    A = pi * ID**2 / 4
+    W_T = m_max(fluid, A)  # Theoretical flow
+    W_a = W_T * Kd  # Actual flow
+    return W_a.to(ureg.g/ureg.s)
 
 
 def theta_heat(fluid, step=0.01):
