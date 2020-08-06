@@ -871,8 +871,8 @@ class Piping(list):
         if P_out/P_0 > rc:  # Subsonic flow
             delta_P = P_0-P_out
         else:  # Sonic flow
-            logger.warning('''End pressure creates sonic flow.
-                           Max possible dP will be used''')
+            # logger.warning('''End pressure creates sonic flow.
+            #                Max possible dP will be used''')
             delta_P = P_0*(1-rc)  # Crane TP-410, p 2-15
         # Net expansion factor for discharge is assumed to be 1
         # (conservative value):
