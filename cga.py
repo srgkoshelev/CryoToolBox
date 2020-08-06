@@ -93,7 +93,7 @@ def G_i(fluid_FR, conservative=True):
     else:
         L = fluid_FR.latent_heat
     L, T = theta(fluid_FR)
-    C = fluid_FR.C_gas_constant
+    C = fluid_FR.C_gas_const
     TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
     # Conservative value for He is 52.5 for P <= 200 psig
     if conservative and fluid_FR.name.lower() == 'helium':

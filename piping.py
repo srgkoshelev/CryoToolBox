@@ -1092,7 +1092,7 @@ def PRV_flow(ID, Kd, fluid):
     BPVC VIII div. 1 UG-131 (e) (2).
     """
     A = pi * ID**2 / 4
-    C = fluid.C_gas_constant
+    C = fluid.C_gas_const
     P = fluid.P
     W_T = C * A * P * fluid.MZT  # Theoretical flow
     W_a = W_T * Kd  # Actual flow

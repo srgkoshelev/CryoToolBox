@@ -36,8 +36,8 @@ def to_scfma(M_dot_fluid, fluid):
     ThermState
         volumetric air flow rate
     """
-    C_fluid = fluid.C_gas_constant
-    C_air = Air.C_gas_constant
+    C_fluid = fluid.C_gas_const
+    C_air = Air.C_gas_const
 
     # Calculation
     M_dot_air = M_dot_fluid * C_air / C_fluid * Air.MZT / fluid.MZT
@@ -64,8 +64,8 @@ def from_scfma(Q_air, fluid):
     Quantitiy {mass: 1, time: -1}
         mass flow rate
     """
-    C_fluid = fluid.C_gas_constant
-    C_air = Air.C_gas_constant
+    C_fluid = fluid.C_gas_const
+    C_air = Air.C_gas_const
 
     # Calculation
     M_dot_air = Q_air * Air.Dmass

@@ -82,7 +82,10 @@ CP_const_unit = {
     # 'PH': (CP.iPH, ),
     # 'ODP': (CP.iODP, ),
     'Phase': (CP.iPhase, ureg.dimensionless),
-    'C_gas_constant': (None, ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5),
+    'C_us': (None,  # unit defined for external use
+             ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5),
+    'C_m': (None,  # unit defined for external use
+            ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5)
 }
 
 CP_inputs = {
@@ -442,15 +445,33 @@ class ThermState:
         return _gamma
 
     @property
-    @ureg.wraps(CP_const_unit['C_gas_constant'][1], None)
-    def C_gas_constant(self):
+    def C_gas_const(self):
         """
         Constant for gas or vapor which is the function of the ratio of
         specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
         """
         k_ = self.gamma.magnitude
-        C = 520*(k_*(2/(k_+1))**((k_+1)/(k_-1)))**0.5
-        return C
+        root = (k_ * (2/(k_+1))**((k_+1)/(k_-1)))**0.5
+        R = ureg.R  # Universal gas constant
+        C_ = root / R**0.5 * (ureg.g/ureg.mol)**0.5
+        return C_
+
+    @property
+    def C(self):
+        """A shortcut to C_gas_const"""
+        return self.C_gas_const
+
+    @property
+    def C_us(self):
+        """A shortcut to C_gas_const for US customary units"""
+        us_unit = ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5
+        return self.C_gas_const.to(us_unit)
+
+    @property
+    def C_m(self):
+        """A shortcut to C_gas_const for SI units"""
+        si_unit = ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5
+        return self.C_gas_const.to(si_unit)
 
     @property
     def name(self):
