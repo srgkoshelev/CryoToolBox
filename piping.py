@@ -1086,14 +1086,21 @@ def half_width(d_1, T_b, T_h, c, D_h):
     return min(max(d_1, d_2_a), D_h)
 
 
-def PRV_flow(ID, Kd, fluid):
+def m_max(fluid, A):
+    """Calculate max isentropic flow at sonic condition
+    (9.46a, Fluid Mechanics, F. White, 2015)
     """
-    Calculate mass flow through the relief valve based on
+    C = fluid.C_gas_const
+    P = fluid.P
+    m_max_ = C * A * P * fluid.MZT
+    return m_max_.to_base_units()
+
+
+def PRV_flow(ID, Kd, fluid):
+    """Calculate mass flow through the relief valve based on
     BPVC VIII div. 1 UG-131 (e) (2).
     """
     A = pi * ID**2 / 4
-    C = fluid.C_gas_const
-    P = fluid.P
-    W_T = C * A * P * fluid.MZT  # Theoretical flow
+    W_T = m_max(fluid, A)  # Theoretical flow
     W_a = W_T * Kd  # Actual flow
     return W_a.to(ureg.g/ureg.s)
