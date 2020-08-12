@@ -51,11 +51,11 @@ class Tube:
         self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self.wall = wall
-        self.ID = self.OD - 2*self.wall
+        self.ID = self._calculate_ID()
         self.L = L
-        self.area = self.calculate_area()
-        self.volume = self.calculate_volume()
-        self.K = self.calculate_K()
+        self.area = self._calculate_area()
+        self.volume = self._calculate_volume()
+        self.K = self._calculate_K()
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         # Wall thickness under tolerance is 12.5% as per ASTM A999
@@ -63,22 +63,22 @@ class Tube:
         self.c = c + wall_tol
         self.type = 'Tube'
 
-    def calculate_ID(self):
+    def _calculate_ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
         """
         return self.OD - 2*self.wall
 
-    def calculate_area(self):
+    def _calculate_area(self):
         """ureg.Quantity {length: 2} : Cross sectional area of pipe.
         """
         return pi * self.ID**2 / 4
 
-    def calculate_volume(self):
+    def _calculate_volume(self):
         """ureg.Quantity {length: 3} : Pipe inner volume.
         """
         return self.area * self.L
 
-    def calculate_K(self):
+    def _calculate_K(self):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         return self.f_T()*self.L/self.ID
@@ -394,7 +394,7 @@ class Entrance ():
             Inside diameter of the entrance.
         """
         self.ID = ID
-        self.area = Tube.calculate_area(self)
+        self.area = Tube._calculate_area(self)
         self.type = 'Entrance'
         self.K = 0.5  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
@@ -418,7 +418,7 @@ class Exit (Entrance):
             Inside diameter of the exit.
         """
         self.ID = ID
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.type = 'Exit'
         self.K = 1  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
@@ -440,7 +440,7 @@ class Orifice():
         """
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self.ID = ID
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.type = 'Orifice'
         self.K = 1/self.Cd**2
         self.volume = 0 * ureg.ft**3
@@ -498,10 +498,10 @@ class Annulus():
         self.L = L
         assert D1 > D2
         self.area = pi / 4 * (D1**2 - D2**2)
-        self.volume = Pipe.calculate_volume(self)
+        self.volume = Pipe._calculate_volume(self)
         self.ID = D1 - D2  # Hydraulic diameter
         self.f_T = lambda: Tube.f_T(self)
-        self.K = Tube.calculate_K(self)
+        self.K = Tube._calculate_K(self)
 
     def info(self):
         return f'Annulus D1={self.D1:.3g~}, D2={self.D2:.3g~}, L={self.L:.3g~}'
@@ -539,7 +539,7 @@ class Elbow(Tube):
         self.L = R_D*self.ID*angle
         self.type = 'Tube elbow'
 
-    def calculate_K(self):
+    def _calculate_K(self):
         """
         Pressure drop in an elbow fitting.
         Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
@@ -562,7 +562,7 @@ class Elbow(Tube):
 
         C1 = 1  # use different value for non-axis symmetric
         # Friction losses in the elbow
-        K_frict = super().calculate_K()
+        K_frict = super()._calculate_K()
         return (A1*B1*C1+K_frict)*self.N
 
     def info(self):
@@ -617,7 +617,7 @@ class Tee(Tube):
         super().__init__(OD, wall, L, c)
         self.type = 'Tube tee'
 
-    def calculate_K(self):
+    def _calculate_K(self):
         if self.direction == 'run':
             return 20*self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
@@ -652,7 +652,7 @@ class Valve():
         self._Cv = Cv
         self.OD = None
         self.ID = self.D
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.L = None
         self.type = 'Valve'
         self.K = Cv_to_K(self._Cv, self.D)
@@ -718,12 +718,12 @@ class Contraction():
         self.L = None
         self.OD = None
         self.ID = min(ID1, ID2)
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.L = abs(ID1 - ID2) / tan(theta/2)
         self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
-        self.K = self.calculate_K()
+        self.K = self._calculate_K()
 
-    def calculate_K(self):
+    def _calculate_K(self):
         if self.theta <= 45*ureg.deg:
             K_ = 0.8 * sin(self.theta/2) * (1-self.beta**2)
             # Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
@@ -756,7 +756,7 @@ class Enlargement(Contraction):
         super().__init__(Pipe1, Pipe2, theta)
         self.type = 'Enlargement'
 
-    def calculate_K(self):
+    def _calculate_K(self):
         if self.theta <= 45*ureg.deg:
             K_ = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
