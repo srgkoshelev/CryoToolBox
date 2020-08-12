@@ -62,6 +62,10 @@ class Tube:
         wall_tol = 0.125 * self.wall
         self.c = c + wall_tol
         self.type = 'Tube'
+        self.S = None
+        self.E = None
+        self.W = None
+        self.Y = None
 
     def _calculate_ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
@@ -103,9 +107,8 @@ class Tube:
         ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
-        if self.check_material_defined():
-            # Check whether S, E, W, and Y are defined
-            pass
+        # Check whether S, E, W, and Y are defined
+        self._check_SEWY()
         D = self.OD
         # d = self.ID
         S, E, W, Y = self.S, self.E, self.W, self.Y
@@ -130,50 +133,75 @@ class Tube:
         ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
-        if self.check_material_defined():
-            # Check whether S, E, W, and Y are defined
-            pass
+        # Check whether S, E, W, and Y are defined
+        self._check_SEWY()
         D = self.OD
         S, E, W, Y = self.S, self.E, self.W, self.Y
         t = self.wall - self.c
         P = 2 * t * S * E * W / (D-2*Y*t)
         return P
 
-    def update(self, **kwargs):
-        """ Add attributes, e.g. material stress or weld joint strength to the pipe.
+    def add_SEWY(self, *, S=None, E=None, W=None, Y=None):
+        """ Add properties for pressure design calculations.
 
         Parameters
         ----------
-        **kwargs
-            Parameters of the pipe, e.g. S=Q_('16700 psi'), Y=0.4.
+        S : Stress value for pipe material
+        E : Quality factor from Table A-1A or A-1B
+        W : Weld joint strength reduction factor in accordance
+            with 302.3.5 (e)
+        Y : coefficient from Table 304.1.1
 
         Returns
         -------
         None
         """
-        # TODO Change to set material for predefined materials; check_material_defined will no longer be needed
-        self.__dict__.update(kwargs)
+        self.S, self.E, self.W, self.Y = S, E, W, Y
 
-    def check_material_defined(self):
+    def _check_SEWY(self):
         """Check whether following properties S, E, W, Y for stress
         calculations are defined.
 
         Parameters
         ----------
-        * S: Stress value for pipe material
-        * E: Quality factor from Table A-1A or A-1B
-        * W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
-        * Y: coefficient from Table 304.1.1
+         S: Stress value for pipe material
+         E: Quality factor from Table A-1A or A-1B
+         W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
+         Y: coefficient from Table 304.1.1
 
         Returns
         -------
         None
         """
-        try:
-            self.S; self.E; self.W; self.Y
-        except AttributeError:
-            raise AttributeError('S, E, W, Y properties of the piping need to be \
-            defined')
+        if self.S is None:
+            try:
+                self.S = self.material.S
+            except AttributeError:
+                raise AttributeError(
+                    'Stress value S from B31.3 Table A-1  needs to be defined')
+        elif self.E is None:
+            try:
+                self.E
+            except AttributeError:
+                raise AttributeError('Quality factor E from B31.3 Table '
+                                     'A-1A/A-1B needs to be defined')
+        elif self.W is None:
+            try:
+                self.W
+            except AttributeError:
+                raise AttributeError(
+                    'Weld joint stress reduction factor W from B31.3 '
+                    '302.3.5(e) needs to be defined')
+        elif self.Y is None:
+            try:
+                self.Y
+            except AttributeError:
+                raise AttributeError('Coefficient Y from B31.3 Table '
+                                     '304.1.1 needs to be defined')
+        else:
+            if self.S != self.material.S:
+                raise AttributeError('Stress value S is different than stress'
+                                     'value for material. Check the inputs.')
 
     def branch_reinforcement(self, BranchPipe, P, beta=Q_('90 deg'), d_1=None,
                              T_r=Q_('0 in')):
