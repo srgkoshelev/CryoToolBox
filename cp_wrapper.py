@@ -373,14 +373,14 @@ class ThermState:
     def phase(self):
         """Calculate the phase of the fluid.
 
-        0: Subcritical liquid
-        1: Supercritical (p > pc, T > Tc)
-        2: Supercritical gas (p < pc, T > Tc)
-        3: Supercritical liquid (p > pc, T < Tc)
-        4: At the critical point.
-        5: Subcritical gas.
-        6: Twophase.
-        7: Unknown phase
+        * 0: Subcritical liquid
+        * 1: Supercritical (p > pc, T > Tc)
+        * 2: Supercritical gas (p < pc, T > Tc)
+        * 3: Supercritical liquid (p > pc, T < Tc)
+        * 4: At the critical point.
+        * 5: Subcritical gas.
+        * 6: Twophase.
+        * 7: Unknown phase
         """
         return self._AbstractState.phase()
 
@@ -430,10 +430,7 @@ class ThermState:
 
     @property
     def gamma(self):
-        """
-        Calculate gamma (k) coefficient.
-
-        :returns: gamma = k = Cp/Cv
+        """Calculate gamma = k = Cp/Cv coefficient.
         """
         # To avoid real gas effects influencing Cp and Cv,
         # calculating at gamma at NTP
