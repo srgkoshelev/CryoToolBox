@@ -8,6 +8,7 @@ from . import logger
 from . import ureg, Q_
 from .cp_wrapper import ThermState
 from .functions import Air
+from .functions import stored_energy
 from . import T_NTP, P_NTP
 from . import os, __location__
 from pint import set_application_registry
@@ -838,6 +839,15 @@ class Piping(list):
                                f'{pipe.L.to(ureg.ft).magnitude:.3g}',
                                f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
         return result
+
+    def stored_energy(self):
+        """Calculate stored energy of the piping.
+
+        Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
+        fluid = self.fluid
+        largest_tube = max(self, key=lambda tube: tube.ID)
+        volume = pi * largest_tube.ID**2 / 4 * 8 * largest_tube.L
+        return stored_energy(fluid, volume)
 
     def dP(self, m_dot):
         '''
