@@ -571,7 +571,7 @@ def blast_radius(E_stored):
     """Calculate maximum distance for debris, eardrum rupture and
     lung damage based on PNNL paper."""
     W_TNT = E_stored / E_TNT  # Energy equivalent in TNT
-    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**0.5
-    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**0.5
-    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**0.5
+    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
+    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
+    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
     return (D_1, D_2, D_3)
