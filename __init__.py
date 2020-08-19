@@ -28,7 +28,7 @@ ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
 
 # Setting units for "standard" flow
 T_NTP = Q_(68, ureg.degF)  # Normal Temperature (NIST)
-P_NTP = Q_(14.7, ureg.psi)  # Normal Pressure (NIST)
+P_NTP = Q_(14.696, ureg.psi)  # Normal Pressure (NIST)
 
 T_MSC = Q_(15, ureg.degC)  # Metric Standard Conditions (used by Crane TP-410)
 P_MSC = Q_(101325, ureg.Pa)  # Metric Standard Conditions (used by Crane TP-410)
