@@ -817,8 +817,13 @@ class Piping(list):
         self.extend(pipes)
 
     def K(self):
-        """
-        Converting and adding flow coefficients K to same area.
+        """Calculate resistance coefficient converted to the area of the first element.
+
+        Returns
+        -------
+        tuple
+            K0 : converted resistance coefficient of the piping
+            A0 : area of the first element, basis for conversion
         """
         K0 = 0*ureg.dimensionless
         try:
@@ -889,10 +894,21 @@ class Piping(list):
             return dP_darcy(K, rho_0, w)
 
     def m_dot(self, P_out=0*ureg.psig):
-        '''
-        Calculate mass flow through the piping using initial conditions
+        '''Calculate mass flow through the piping using initial conditions
         at the beginning of piping.
-        Simple solution using Darcy equation is used.
+
+        Calculation is based on Crane TP-410, p. 1.9.
+        Net expansion factor Y is conservatively assumed as 1.
+        Mass flow is calculated using Darcy equation.
+
+        Parameters
+        ----------
+        P_out : ureg.Quantity {length: -1, mass: 1, time: -1}
+            Exit pressure of the piping.
+
+        Returns
+        -------
+        ureg.Quantity : {mass: 1, time: -2}
         '''
         P_0 = self.fluid.P
         if P_0 <= P_out:
