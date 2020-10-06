@@ -5,7 +5,7 @@ calculation using [CoolProp](https://github.com/CoolProp/CoolProp) and
 
 Provides:
     1. Thermal properties via open source HEOS or REFPROP back-end
-    2. Convinient calculation using a thermodynamic state `cp_wrapper.ThermState`
+    2. Convenient calculation using a thermodynamic state `cp_wrapper.ThermState`
     3. Seemless use of units for all calculations
     4. Useful thermodynamic and hydraulic functions
     3. Relief valve sizing for CGA
@@ -28,7 +28,7 @@ ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
 
 # Setting units for "standard" flow
 T_NTP = Q_(68, ureg.degF)  # Normal Temperature (NIST)
-P_NTP = Q_(14.7, ureg.psi)  # Normal Pressure (NIST)
+P_NTP = Q_(14.696, ureg.psi)  # Normal Pressure (NIST)
 
 T_MSC = Q_(15, ureg.degC)  # Metric Standard Conditions (used by Crane TP-410)
 P_MSC = Q_(101325, ureg.Pa)  # Metric Standard Conditions (used by Crane TP-410)

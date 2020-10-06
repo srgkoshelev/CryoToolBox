@@ -1,6 +1,31 @@
 * Introduction
-=heat_transfer= is a Python module for simple heat transfer and hydraulics calculation using [[https://github.com/CoolProp/CoolProp][CoolProp]] back-end and [[https://github.com/hgrecco/pint][Pint]] for unit handling.
-Description of module's inner workings can be found [[https://github.com/srgkoshelev/heat_transfer/wiki][here]].
-*WARNING*: This is a pre-alpha build with limited functionality. API hasn't stabilized and non-back-compatible changes should be expected.
+=heat_transfer= is a Python package for simple heat transfer and hydraulics calculation using [[https://github.com/CoolProp/CoolProp][CoolProp]] back-end and [[https://github.com/hgrecco/pint][Pint]] for unit handling.
+
+Description of package's inner workings can be found [[https://github.com/srgkoshelev/heat_transfer/wiki][here]].
+
+Documentation for the package is located [[https://srgkoshelev.github.io/heat_transfer/][here]].
+*WARNING*: Current version is 0.1.0 with limited functionality. API hasn't stabilized and non-back-compatible changes should be expected.
 * Example
 * Installation
+* License
+MIT License
+
+Copyright (c) [year] [fullname]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

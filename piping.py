@@ -8,6 +8,8 @@ from . import logger
 from . import ureg, Q_
 from .cp_wrapper import ThermState
 from .functions import Air
+from .functions import stored_energy
+from . import T_NTP, P_NTP
 from . import os, __location__
 from pint import set_application_registry
 from serialize import load
@@ -50,34 +52,38 @@ class Tube:
         self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self.wall = wall
-        self.ID = self.OD - 2*self.wall
+        self.ID = self._calculate_ID()
         self.L = L
-        self.area = self.calculate_area()
-        self.volume = self.calculate_volume()
-        self.K = self.calculate_K()
+        self.area = self._calculate_area()
+        self.volume = self._calculate_volume()
+        self.K = self._calculate_K()
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         # Wall thickness under tolerance is 12.5% as per ASTM A999
         wall_tol = 0.125 * self.wall
         self.c = c + wall_tol
         self.type = 'Tube'
+        self.S = None
+        self.E = None
+        self.W = None
+        self.Y = None
 
-    def calculate_ID(self):
+    def _calculate_ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
         """
         return self.OD - 2*self.wall
 
-    def calculate_area(self):
+    def _calculate_area(self):
         """ureg.Quantity {length: 2} : Cross sectional area of pipe.
         """
         return pi * self.ID**2 / 4
 
-    def calculate_volume(self):
+    def _calculate_volume(self):
         """ureg.Quantity {length: 3} : Pipe inner volume.
         """
         return self.area * self.L
 
-    def calculate_K(self):
+    def _calculate_K(self):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         return self.f_T()*self.L/self.ID
@@ -102,9 +108,8 @@ class Tube:
         ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
-        if self.check_material_defined():
-            # Check whether S, E, W, and Y are defined
-            pass
+        # Check whether S, E, W, and Y are defined
+        self._check_SEWY()
         D = self.OD
         # d = self.ID
         S, E, W, Y = self.S, self.E, self.W, self.Y
@@ -129,50 +134,75 @@ class Tube:
         ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
-        if self.check_material_defined():
-            # Check whether S, E, W, and Y are defined
-            pass
+        # Check whether S, E, W, and Y are defined
+        self._check_SEWY()
         D = self.OD
         S, E, W, Y = self.S, self.E, self.W, self.Y
         t = self.wall - self.c
         P = 2 * t * S * E * W / (D-2*Y*t)
         return P
 
-    def update(self, **kwargs):
-        """ Add attributes, e.g. material stress or weld joint strength to the pipe.
+    def add_SEWY(self, *, S=None, E=None, W=None, Y=None):
+        """ Add properties for pressure design calculations.
 
         Parameters
         ----------
-        **kwargs
-            Parameters of the pipe, e.g. S=Q_('16700 psi'), Y=0.4.
+        S : Stress value for pipe material
+        E : Quality factor from Table A-1A or A-1B
+        W : Weld joint strength reduction factor in accordance
+            with 302.3.5 (e)
+        Y : coefficient from Table 304.1.1
 
         Returns
         -------
         None
         """
-        # TODO Change to set material for predefined materials; check_material_defined will no longer be needed
-        self.__dict__.update(kwargs)
+        self.S, self.E, self.W, self.Y = S, E, W, Y
 
-    def check_material_defined(self):
+    def _check_SEWY(self):
         """Check whether following properties S, E, W, Y for stress
         calculations are defined.
 
         Parameters
         ----------
-        * S: Stress value for pipe material
-        * E: Quality factor from Table A-1A or A-1B
-        * W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
-        * Y: coefficient from Table 304.1.1
+         S: Stress value for pipe material
+         E: Quality factor from Table A-1A or A-1B
+         W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
+         Y: coefficient from Table 304.1.1
 
         Returns
         -------
         None
         """
-        try:
-            self.S; self.E; self.W; self.Y
-        except AttributeError:
-            raise AttributeError('S, E, W, Y properties of the piping need to be \
-            defined')
+        if self.S is None:
+            try:
+                self.S = self.material.S
+            except AttributeError:
+                raise AttributeError(
+                    'Stress value S from B31.3 Table A-1  needs to be defined')
+        elif self.E is None:
+            try:
+                self.E
+            except AttributeError:
+                raise AttributeError('Quality factor E from B31.3 Table '
+                                     'A-1A/A-1B needs to be defined')
+        elif self.W is None:
+            try:
+                self.W
+            except AttributeError:
+                raise AttributeError(
+                    'Weld joint stress reduction factor W from B31.3 '
+                    '302.3.5(e) needs to be defined')
+        elif self.Y is None:
+            try:
+                self.Y
+            except AttributeError:
+                raise AttributeError('Coefficient Y from B31.3 Table '
+                                     '304.1.1 needs to be defined')
+        else:
+            if self.S != self.material.S:
+                raise AttributeError('Stress value S is different than stress'
+                                     'value for material. Check the inputs.')
 
     def branch_reinforcement(self, BranchPipe, P, beta=Q_('90 deg'), d_1=None,
                              T_r=Q_('0 in')):
@@ -393,7 +423,7 @@ class Entrance ():
             Inside diameter of the entrance.
         """
         self.ID = ID
-        self.area = Tube.calculate_area(self)
+        self.area = Tube._calculate_area(self)
         self.type = 'Entrance'
         self.K = 0.5  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
@@ -417,7 +447,7 @@ class Exit (Entrance):
             Inside diameter of the exit.
         """
         self.ID = ID
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.type = 'Exit'
         self.K = 1  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
@@ -439,7 +469,7 @@ class Orifice():
         """
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self.ID = ID
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.type = 'Orifice'
         self.K = 1/self.Cd**2
         self.volume = 0 * ureg.ft**3
@@ -497,10 +527,10 @@ class Annulus():
         self.L = L
         assert D1 > D2
         self.area = pi / 4 * (D1**2 - D2**2)
-        self.volume = Pipe.calculate_volume(self)
+        self.volume = Pipe._calculate_volume(self)
         self.ID = D1 - D2  # Hydraulic diameter
         self.f_T = lambda: Tube.f_T(self)
-        self.K = Tube.calculate_K(self)
+        self.K = Tube._calculate_K(self)
 
     def info(self):
         return f'Annulus D1={self.D1:.3g~}, D2={self.D2:.3g~}, L={self.L:.3g~}'
@@ -538,7 +568,7 @@ class Elbow(Tube):
         self.L = R_D*self.ID*angle
         self.type = 'Tube elbow'
 
-    def calculate_K(self):
+    def _calculate_K(self):
         """
         Pressure drop in an elbow fitting.
         Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
@@ -561,7 +591,7 @@ class Elbow(Tube):
 
         C1 = 1  # use different value for non-axis symmetric
         # Friction losses in the elbow
-        K_frict = super().calculate_K()
+        K_frict = super()._calculate_K()
         return (A1*B1*C1+K_frict)*self.N
 
     def info(self):
@@ -616,7 +646,7 @@ class Tee(Tube):
         super().__init__(OD, wall, L, c)
         self.type = 'Tube tee'
 
-    def calculate_K(self):
+    def _calculate_K(self):
         if self.direction == 'run':
             return 20*self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
@@ -651,7 +681,7 @@ class Valve():
         self._Cv = Cv
         self.OD = None
         self.ID = self.D
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.L = None
         self.type = 'Valve'
         self.K = Cv_to_K(self._Cv, self.D)
@@ -717,12 +747,12 @@ class Contraction():
         self.L = None
         self.OD = None
         self.ID = min(ID1, ID2)
-        self.area = Pipe.calculate_area(self)
+        self.area = Pipe._calculate_area(self)
         self.L = abs(ID1 - ID2) / tan(theta/2)
         self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
-        self.K = self.calculate_K()
+        self.K = self._calculate_K()
 
-    def calculate_K(self):
+    def _calculate_K(self):
         if self.theta <= 45*ureg.deg:
             K_ = 0.8 * sin(self.theta/2) * (1-self.beta**2)
             # Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
@@ -755,7 +785,7 @@ class Enlargement(Contraction):
         super().__init__(Pipe1, Pipe2, theta)
         self.type = 'Enlargement'
 
-    def calculate_K(self):
+    def _calculate_K(self):
         if self.theta <= 45*ureg.deg:
             K_ = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
@@ -787,8 +817,13 @@ class Piping(list):
         self.extend(pipes)
 
     def K(self):
-        """
-        Converting and adding flow coefficients K to same area.
+        """Calculate resistance coefficient converted to the area of the first element.
+
+        Returns
+        -------
+        tuple
+            K0 : converted resistance coefficient of the piping
+            A0 : area of the first element, basis for conversion
         """
         K0 = 0*ureg.dimensionless
         try:
@@ -809,6 +844,15 @@ class Piping(list):
                                f'{pipe.L.to(ureg.ft).magnitude:.3g}',
                                f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
         return result
+
+    def stored_energy(self):
+        """Calculate stored energy of the piping.
+
+        Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
+        fluid = self.fluid
+        largest_tube = max(self, key=lambda tube: tube.ID)
+        volume = pi * largest_tube.ID**2 / 4 * 8 * largest_tube.L
+        return stored_energy(fluid, volume)
 
     def dP(self, m_dot):
         '''
@@ -850,10 +894,21 @@ class Piping(list):
             return dP_darcy(K, rho_0, w)
 
     def m_dot(self, P_out=0*ureg.psig):
-        '''
-        Calculate mass flow through the piping using initial conditions
+        '''Calculate mass flow through the piping using initial conditions
         at the beginning of piping.
-        Simple solution using Darcy equation is used.
+
+        Calculation is based on Crane TP-410, p. 1.9.
+        Net expansion factor Y is conservatively assumed as 1.
+        Mass flow is calculated using Darcy equation.
+
+        Parameters
+        ----------
+        P_out : ureg.Quantity {length: -1, mass: 1, time: -1}
+            Exit pressure of the piping.
+
+        Returns
+        -------
+        ureg.Quantity : {mass: 1, time: -2}
         '''
         P_0 = self.fluid.P
         if P_0 <= P_out:
