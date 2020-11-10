@@ -5,6 +5,7 @@
 
 """
 import CoolProp.CoolProp as CP
+from math import inf
 from . import Q_, ureg, T_NTP, P_NTP
 
 CP_const_unit = {
