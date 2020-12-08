@@ -203,6 +203,17 @@ class PipingTest(unittest.TestCase):
 # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
 
+class CPWrapperTest(unittest.TestCase):
+    """Test for additional methods of ThermState class"""
+    def test_copy(self):
+        """Minimal test of copy method"""
+        test_state = ht.ThermState('nitrogen')
+        test_state.copy()
+        test_state.update_kw(T=300*ureg.K, P=1*ureg.MPa)
+        test_state.copy()
+
+
+
 if __name__ == '__main__':
     unittest.main()
 

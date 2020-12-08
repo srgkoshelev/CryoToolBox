@@ -979,9 +979,53 @@ class Piping(list):
         {(P_in-P_out).to(ureg.psi)}')
         logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
 
+
+class ParallelPlateRelief:
+    def __init__(self, Springs, Plate, Supply_pipe):
+        """
+        Initiate Parallel Plate instance.
+        Parallel Plate relief valve designed by Fermilab
+
+        Springs: dictionary containing 'N' - number of springs, 'k' - spring rate, and 'dx_precomp' - pre-compression length
+        Plate: dictionary containing 'OD_plate' - OD of the plate, 'OD_O_ring' - OD of the O-Ring installed, and 'W_plate' - plate weight
+        Supply_pipe: Pipe/Tube object of upstream pipe
+        """
+        self.Springs = Springs
+        self.Plate = Plate
+        self.Supply_pipe = Supply_pipe
+
+    def P_set(self):
+        """"
+        Calculate set (lift) pressure of the Parallel Plate relief
+        """
+        # Before lifting pressure affects area within O-Ring OD
+        A_lift = pi * self.Plate['OD_O_ring']**2 / 4
+        F_precomp = self.Springs['N'] * self.Springs['k'] *\
+                    self.Springs['dx_precomp']
+        # Force required to lift the plate
+        F_lift = F_precomp + self.Plate['W_plate']
+        self.F_lift = F_lift
+        P_set = F_lift / A_lift
+        return P_set.to(ureg.psi)
+
+    def P_open(self):
+        """
+        Calculate pressure required to fully open Parallel Plate relief
+        """
+        # compression required to provide vent area equal to supply pipe area
+        dx_open = self.Supply_pipe.area / (pi*self.Plate['OD_plate'])
+        # Force at fully open
+        F_open = self.F_lift = self.Springs['N'] * self.Springs['k'] * dx_open
+        # At fully open pressure is distributed as:
+        # Full pressure for up to supply pipe diameter
+        # Linear fall off up to plate OD
+        A_open = self.Supply_pipe.area + pi/8*(self.Plate['OD_plate']**2 -
+                                               self.Supply_pipe.ID**2)
+        P_open = F_open / A_open
+        return P_open.to(ureg.psi)
+
+
 # Supporting functions used for flow rate and pressure drop calculations.
-
-
 def dP_darcy(K, rho, w):
     '''
     Darcy equation for pressure drop.
@@ -1038,34 +1082,6 @@ def beta(d1, d2):
     return min(d1, d2)/max(d1, d2)
 
 
-def to_standard_flow(flow_rate, fluid):
-    '''
-    Converting volumetric flow at certain conditions or mass flow to
-    flow at NTP.
-    '''
-    fluid_NTP = ThermState(fluid.name)
-    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
-    if flow_rate.dimensionality == ureg('kg/s').dimensionality:
-        # mass flow, flow conditions are unnecessary
-        q_std = flow_rate / fluid_NTP.Dmass
-    elif flow_rate.dimensionality == ureg('m^3/s').dimensionality:
-        # volumetric flow given, converting to standard pressure and
-        # temperature
-        if fluid.Dmass != -float('Inf')*ureg.kg/ureg.m**3:
-            # By default ThermState is initialized with all fields == -inf
-            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
-        else:
-            logger.warning('''Flow conditions for volumetric flow {:.3~}
-                           are not set. Assuming standard flow at NTP.
-                           '''.format(flow_rate))
-            q_std = flow_rate
-    else:
-        logger.error('''Flow dimensionality is not supported: {:.3~}.
-                       '''.format(flow_rate.dimensionality))
-    q_std.ito(ureg.ft**3/ureg.min)
-    return q_std
-
-
 def equivalent_orifice(m_dot, dP, fluid=Air):
     """
     Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
@@ -1077,84 +1093,9 @@ def equivalent_orifice(m_dot, dP, fluid=Air):
     return ID.to(ureg.inch)
 
 
-def to_mass_flow(Q_std, fluid=Air):
-    """
-    Calculate mass flow for given volumetric flow at standard conditions.
-    """
-    fluid_NTP = ThermState(fluid.name)
-    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
-    m_dot = Q_std * fluid_NTP.Dmass
-    return m_dot.to(ureg.g/ureg.s)
-
-
-class ParallelPlateRelief:
-    def __init__(self, Springs, Plate, Supply_pipe):
-        """
-        Initiate Parallel Plate instance.
-        Parallel Plate relief valve designed by Fermilab
-
-        Springs: dictionary containing 'N' - number of springs, 'k' - spring rate, and 'dx_precomp' - pre-compression length
-        Plate: dictionary containing 'OD_plate' - OD of the plate, 'OD_O_ring' - OD of the O-Ring installed, and 'W_plate' - plate weight
-        Supply_pipe: Pipe/Tube object of upstream pipe
-        """
-        self.Springs = Springs
-        self.Plate = Plate
-        self.Supply_pipe = Supply_pipe
-
-    def P_set(self):
-        """"
-        Calculate set (lift) pressure of the Parallel Plate relief
-        """
-        # Before lifting pressure affects area within O-Ring OD
-        A_lift = pi * self.Plate['OD_O_ring']**2 / 4
-        F_precomp = self.Springs['N'] * self.Springs['k'] *\
-                    self.Springs['dx_precomp']
-        # Force required to lift the plate
-        F_lift = F_precomp + self.Plate['W_plate']
-        self.F_lift = F_lift
-        P_set = F_lift / A_lift
-        return P_set.to(ureg.psi)
-
-    def P_open(self):
-        """
-        Calculate pressure required to fully open Parallel Plate relief
-        """
-        # compression required to provide vent area equal to supply pipe area
-        dx_open = self.Supply_pipe.area / (pi*self.Plate['OD_plate'])
-        # Force at fully open
-        F_open = self.F_lift = self.Springs['N'] * self.Springs['k'] * dx_open
-        # At fully open pressure is distributed as:
-        # Full pressure for up to supply pipe diameter
-        # Linear fall off up to plate OD
-        A_open = self.Supply_pipe.area + pi/8*(self.Plate['OD_plate']**2 -
-                                               self.Supply_pipe.ID**2)
-        P_open = F_open / A_open
-        return P_open.to(ureg.psi)
-
-
 def half_width(d_1, T_b, T_h, c, D_h):
     """
     Calculate 'half width' of reinforcement zone per B31.3 304.3.3.
     """
     d_2_a = (T_b-c) + (T_h-c) + d_1/2
     return min(max(d_1, d_2_a), D_h)
-
-
-def m_max(fluid, A):
-    """Calculate max isentropic flow at sonic condition
-    (9.46a, Fluid Mechanics, F. White, 2015)
-    """
-    C = fluid.C_gas_const
-    P = fluid.P
-    m_max_ = C * A * P * fluid.MZT
-    return m_max_.to_base_units()
-
-
-def PRV_flow(ID, Kd, fluid):
-    """Calculate mass flow through the relief valve based on
-    BPVC VIII div. 1 UG-131 (e) (2).
-    """
-    A = pi * ID**2 / 4
-    W_T = m_max(fluid, A)  # Theoretical flow
-    W_a = W_T * Kd  # Actual flow
-    return W_a.to(ureg.g/ureg.s)

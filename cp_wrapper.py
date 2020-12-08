@@ -5,6 +5,7 @@
 
 """
 import CoolProp.CoolProp as CP
+from math import inf
 from . import Q_, ureg, T_NTP, P_NTP
 
 CP_const_unit = {
@@ -520,5 +521,7 @@ class ThermState:
     def copy(self):
         """Create a copy of current ThermState object."""
         TempState = ThermState(self.name, backend=self.backend)
-        TempState.update_kw(T=self.T, Smass=self.Smass)
+        # If conditions are defined
+        if self.Dmass != -inf*ureg.kg/ureg.m**3:
+            TempState.update_kw(T=self.T, Smass=self.Smass)
         return TempState
