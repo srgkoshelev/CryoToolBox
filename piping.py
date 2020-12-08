@@ -832,7 +832,7 @@ class Piping(list):
             raise IndexError('Piping has no elements! '
                              'Use Piping.add to add sections to piping.')
         K0 = sum([section.K*(A0/section.area)**2 for section in self])
-        return (K0, A0)
+        return (K0.to_base_units(), A0)
 
     def volume(self):
         result = []
