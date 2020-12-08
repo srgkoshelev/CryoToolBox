@@ -514,6 +514,7 @@ def nist_property(material, prop, T1, T2=None):
 # Temporary storage for NIST data
 # Materials:
 # 304SS - AISI 304 Stainless Steel
+# 6061 - 6061-T6 Aluminum (UNS A96061)
 # G10 - G10
 # OFHC - Oxygen-free High thermal conductivity copper
 #
@@ -538,6 +539,24 @@ NIST_DATA = {
                'Tlow': 23,
                'f': -300.04,
                'unit': 1e-5*ureg.m/ureg.m},
+        'SH': {'coefs': [22.0061, -127.5528, 303.647, -381.0098, 274.0328,
+                         -112.9212, 24.7593, -2.239153, 0],
+               'range': (4, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.J/(ureg.kg*ureg.K)}
+    },
+    '6061':
+    {
+        'TC': {'coefs': [0.07918, 1.0957, -0.07277, 0.08084, 0.02803, -0.09464,
+                         0.04179, -0.00571, 0],
+               'range': (1, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.W/(ureg.m*ureg.K)},
+        'SH': {'coefs': [46.6467, -314.292, 866.662, -1298.3, 1162.27, -637.795,
+                         210.351, -38.3094, 2.96344],
+               'range': (4, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.J/(ureg.kg*ureg.K)}
     },
     'G10':
     {
@@ -546,6 +565,11 @@ NIST_DATA = {
                'range': (10, 300),
                'fun': _nist_log_fit,
                'unit': ureg.W/(ureg.m*ureg.K)},
+        'SH': {'coefs': [-2.4083, 7.6006, -8.2982, 7.3301, -4.2386, 1.4294,
+                         -0.24396, 0.015236, 0],
+               'range': (4, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.J/(ureg.kg*ureg.K)}
     },
     'OFHC':
     {
