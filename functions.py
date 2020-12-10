@@ -28,7 +28,7 @@ def to_scfma(M_dot_fluid, fluid):
 
     Parameters
     ----------
-    M_dot_fluid : Quantitiy {mass: 1, time: -1}
+    M_dot_fluid : Quantity {mass: 1, time: -1}
         mass flow rate
     fluid : ThermState
 
@@ -62,7 +62,7 @@ def from_scfma(Q_air, fluid):
 
     Returns
     -------
-    Quantitiy {mass: 1, time: -1}
+    Quantity {mass: 1, time: -1}
         mass flow rate
     """
     C_fluid = fluid.C_gas_const
