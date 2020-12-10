@@ -154,6 +154,10 @@ class PipingTest(unittest.TestCase):
 
     Doesn't check for correctness yet."""
 
+    def assertApproxEqual(self, data, calc, uncertainty=0.1):
+        assert abs(data-calc) / data < uncertainty, \
+            f'Calculated value {calc} is not within {uncertainty:%} of data value {data}'
+
     def test_create_pipes(self):
         tube = ht.piping.Tube(Q_('1 inch'))
         pipe = ht.piping.Pipe(Q_('1 inch'))
@@ -186,6 +190,27 @@ class PipingTest(unittest.TestCase):
         piping.volume()
         piping.dP(Q_('10 g/s'))
 
+    def test_f_Darcy(self):
+        eps_smooth = 0.0018 * ureg.inch
+        Re = 1e8
+        ID = 0.2 * ureg.inch
+        eps_r = eps_smooth/ID
+        self.assertApproxEqual(0.0368, ht.piping.f_Darcy(Re, eps_r))
+        ID = 0.4 * ureg.inch
+        eps_r = eps_smooth/ID
+        self.assertApproxEqual(0.0296, ht.piping.f_Darcy(Re, eps_r))
+        ID = 1 * ureg.inch
+        eps_r = eps_smooth/ID
+        self.assertApproxEqual(0.0228, ht.piping.f_Darcy(Re, eps_r))
+        ID = 2 * ureg.inch
+        eps_r = eps_smooth/ID
+        self.assertApproxEqual(0.0191, ht.piping.f_Darcy(Re, eps_r))
+        eps_r = 0.006
+        Re = 1e5
+        self.assertApproxEqual(0.033, ht.piping.f_Darcy(Re, eps_r))
+        eps_r = 0.006
+        Re = 1e3
+        self.assertApproxEqual(64/Re, ht.piping.f_Darcy(Re, eps_r))
     # def test_Crane_4_22(self):
     #     test_air = ht.ThermState('air', P=2.343*ureg.bar, T=40*ureg.degC)
     #     pipe = ht.piping.Pipe(1/2, SCH=80, L=3*ureg.m)

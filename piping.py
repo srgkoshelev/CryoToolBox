@@ -3,7 +3,7 @@
 Contains functions for hydrodynamic calculations. The main source of the
 equations is Crane TP-410.
 """
-from math import pi, sin, log, sqrt, tan
+from math import pi, sin, log, log10, sqrt, tan
 from . import logger
 from . import ureg, Q_
 from .cp_wrapper import ThermState
@@ -1026,6 +1026,29 @@ class ParallelPlateRelief:
 
 
 # Supporting functions used for flow rate and pressure drop calculations.
+def f_Darcy(Re_, eps_r):
+    """Calculate Darcy friction factor using Cheng solution to
+    Colebrook equation.
+
+    Parameters
+    ----------
+    Re_ : float or Quantity {dimensionless}
+        Reynolds number
+    eps_r : float or Quantity {dimensionless}
+        Absolute roughness of the pipe
+
+    Returns
+    -------
+    float
+        Darcy friction coefficient
+    """
+    a = 1 / (1+(Re_/2720)**9)
+    b = 1 / (1+(Re_/(160/eps_r))**2)
+    f_inv = (Re_/64)**a * (1.8*log10(Re_/6.8))**(2*(1-a)*b) * \
+        (2.0*log10(3.7/eps_r))**(2*(1-a)*(1-b))
+    return float(1/f_inv)
+
+
 def dP_darcy(K, rho, w):
     '''
     Darcy equation for pressure drop.
