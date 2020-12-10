@@ -60,13 +60,13 @@ class Tube:
         self.L = L
         self.area = self._calculate_area()
         self.volume = self._calculate_volume()
+        self.eps = eps
         self.K = self._calculate_K()
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         # Wall thickness under tolerance is 12.5% as per ASTM A999
         wall_tol = 0.125 * self.wall
         self.c = c + wall_tol
-        self.eps = eps
         self.type = 'Tube'
         self.S = None
         self.E = None
@@ -94,7 +94,15 @@ class Tube:
         return self.f_T()*self.L/self.ID
 
     def f_T(self):
-        return Pipe.f_T(self)
+        """Calculate Darcy friction factor for complete turbulence for smooth
+        pipe.
+
+        Returns
+        -------
+        ureg.Quantity {dimensionless}
+            Fully turbulent Darcy friction factor.
+        """
+        return 1 / (4*log10(self.eps/(3.7*self.ID))**2)
 
     def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
         """Calculate pressure design thickness for given pressure and pipe material.
@@ -308,21 +316,7 @@ class Pipe(Tube):
         """
 
     def f_T(self):
-        """Calculate Darcy friction factor for complete turbulence for clean
-        steel pipe.
-
-        Fitted logarithmic function to data from A-25.
-
-        Returns
-        -------
-        ureg.Quantity {dimensionless}
-            Darcy friction factor.
-        """
-        if self.ID < 0.2*ureg.inch or self.ID > 48*ureg.inch:
-            logger.debug('''Tabulated friction data is given for
-                           ID = 0.2..48 inch, given {:.2~}'''.format(self.ID))
-        ln_ID = log(self.ID.to(ureg.inch).magnitude)
-        return 0.0236-6.36e-3*ln_ID+8.12e-4*ln_ID**2  # Fitting by S. Koshelev
+        return super().f_T()
 
     def info(self):
         return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
@@ -533,7 +527,7 @@ class Annulus():
     L : ureg.Quantity {length: 1}
         Length of the annulus tube.
     """
-    def __init__(self, D1, D2, L=Q_('0m')):
+    def __init__(self, D1, D2, L=Q_('0m'), eps=0.0018*ureg.inch):
         self.D1 = D1
         self.D2 = D2
         assert D1 > D2, 'D1 should be larger than D2'
@@ -542,6 +536,7 @@ class Annulus():
         self.area = pi / 4 * (D1**2 - D2**2)
         self.volume = Pipe._calculate_volume(self)
         self.ID = D1 - D2  # Hydraulic diameter
+        self.eps = eps
         self.f_T = lambda: Tube.f_T(self)
         self.K = Tube._calculate_K(self)
 
