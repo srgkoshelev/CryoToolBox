@@ -34,7 +34,8 @@ class Tube:
     """
     Tube, requires OD and wall thickness specified
     """
-    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m):
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m,
+                 eps=0.0018*ureg.inch):
         """Generate tube object.
 
         Parameters
@@ -48,6 +49,9 @@ class Tube:
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
+        eps : ureg.Quantity {length: 1}
+            Absolute roughness for the tube. Default value for smooth
+            pipe.
         """
         self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
@@ -62,6 +66,7 @@ class Tube:
         # Wall thickness under tolerance is 12.5% as per ASTM A999
         wall_tol = 0.125 * self.wall
         self.c = c + wall_tol
+        self.eps = eps
         self.type = 'Tube'
         self.S = None
         self.E = None
@@ -263,7 +268,8 @@ class Pipe(Tube):
     will contain information such as OD, ID, wall thickness, and can be
     used to calculate flow coefficient K that is used for flow calculations.
     """
-    def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm')):
+    def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm'),
+                 eps=0.0018*ureg.inch):
         """Generate `Pipe` object.
 
         Parameters
@@ -278,6 +284,9 @@ class Pipe(Tube):
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances.
+        eps : ureg.Quantity {length: 1}
+            Absolute roughness for the tube. Default value for smooth
+            pipe.
         """
         if isinstance(D_nom, ureg.Quantity):
             D = D_nom.magnitude
@@ -287,7 +296,7 @@ class Pipe(Tube):
         self.SCH = SCH
         # TODO Should I be using get here?
         wall = NPS_table[D].get(SCH)
-        super().__init__(OD, wall, L, c)
+        super().__init__(OD, wall, L, c, eps)
         self.D = D
         self.type = 'NPS pipe'
 
@@ -330,8 +339,12 @@ class CopperTube(Tube):
         Wall thickness of the tube.
     L : ureg.Quantity {length: 1}
         Length of the tube.
+    eps : ureg.Quantity {length: 1}
+        Absolute roughness for the tube. Default value for smooth
+        pipe.
     """
-    def __init__(self, D_nom, type_='Type K', L=0*ureg.m):
+    def __init__(self, D_nom, type_='Type K', L=0*ureg.m,
+                 eps=0.0018*ureg.inch):
         if isinstance(D_nom, ureg.Quantity):
             D = D_nom.magnitude
         else:
@@ -339,7 +352,7 @@ class CopperTube(Tube):
         OD = COPPER_TABLE[D]['OD']
         wall = COPPER_TABLE[D][type_]
         c = 0 * ureg.inch  # Not affected by corrosion
-        super().__init__(OD, wall, L, c)
+        super().__init__(OD, wall, L, c, eps)
         self.D = D
         self.type = 'Copper tube ' + type_
 
