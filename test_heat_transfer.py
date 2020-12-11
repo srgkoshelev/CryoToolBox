@@ -156,7 +156,7 @@ class PipingTest(unittest.TestCase):
 
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         assert abs(data-calc) / data < uncertainty, \
-            f'Calculated value {calc} is not within {uncertainty:%} of data value {data}'
+            f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
 
     def test_create_pipes(self):
         tube = ht.piping.Tube(Q_('1 inch'))
@@ -188,7 +188,7 @@ class PipingTest(unittest.TestCase):
              # g_valve, v_cone,
              cont, enl])
         piping.volume()
-        piping.dP(Q_('10 g/s'))
+        self.assertApproxEqual(21.2*ureg.psi, piping.dP(Q_('10 g/s')))
 
     def test_f_Darcy(self):
         eps_smooth = 0.0018 * ureg.inch
@@ -211,6 +211,7 @@ class PipingTest(unittest.TestCase):
         eps_r = 0.006
         Re = 1e3
         self.assertApproxEqual(64/Re, ht.piping.f_Darcy(Re, eps_r))
+
     # def test_Crane_4_22(self):
     #     test_air = ht.ThermState('air', P=2.343*ureg.bar, T=40*ureg.degC)
     #     pipe = ht.piping.Pipe(1/2, SCH=80, L=3*ureg.m)
@@ -219,10 +220,19 @@ class PipingTest(unittest.TestCase):
     #         [pipe,
     #          ht.piping.Exit(pipe.ID)])
     #     Y = 0.76  # Taken from Crane; temporary stub
-    #     flow = ht.piping.to_standard_flow(piping.m_dot(), test_air) * Y
-        # TODO Check this test (might have to do with subsonic flow)
-        # self.assertAlmostEqual(1.76, flow.to(ureg.m**3/ureg.min).magnitude)
+    #     flow = ht.to_standard_flow(piping.m_dot(), test_air) * Y
+    #     # TODO Check this test (might have to do with subsonic flow)
+    #     self.assertAlmostEqual(1.76, flow.to(ureg.m**3/ureg.min).magnitude)
 
+    def test_Crane_7_16(self):
+        air = ht.ThermState('air', P=65*ureg.psig, T=110*ureg.degF)
+        pipe = ht.piping.Pipe(1, SCH=40, L=75*ureg.ft)
+        flow = 100 * ureg.ft**3/ureg.min
+        m_dot = flow * ht.Air.Dmass
+        piping = ht.piping.Piping(
+            air,
+            [pipe, ht.piping.Exit(pipe.ID)])
+        self.assertApproxEqual(2.61, piping.dP(m_dot).m_as(ureg.psi))
 
 # TODO Add Crane examples: 4-22 (may need Y implementation),
 # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?

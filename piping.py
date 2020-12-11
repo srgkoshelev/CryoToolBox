@@ -9,6 +9,7 @@ from . import ureg, Q_
 from .cp_wrapper import ThermState
 from .functions import Air
 from .functions import stored_energy
+from .functions import Re
 from . import T_NTP, P_NTP
 from . import os, __location__
 from pint import set_application_registry
@@ -61,7 +62,6 @@ class Tube:
         self.area = self._calculate_area()
         self.volume = self._calculate_volume()
         self.eps = eps
-        self.K = self._calculate_K()
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         # Wall thickness under tolerance is 12.5% as per ASTM A999
@@ -88,10 +88,11 @@ class Tube:
         """
         return self.area * self.L
 
-    def _calculate_K(self):
+    def K(self, Re_):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
-        return self.f_T()*self.L/self.ID
+        eps_r = self.eps / self.ID
+        return f_Darcy(Re_, eps_r)*self.L/self.ID
 
     def f_T(self):
         """Calculate Darcy friction factor for complete turbulence for smooth
@@ -308,16 +309,6 @@ class Pipe(Tube):
         self.D = D
         self.type = 'NPS pipe'
 
-        # """ureg.Quantity {length: 1} : Pipe OD based on NPS table.
-        # """
-
-
-        """ureg.Quantity {length: 1} : ID of the Pipe based on NPS table.
-        """
-
-    def f_T(self):
-        return super().f_T()
-
     def info(self):
         return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
 
@@ -402,9 +393,11 @@ class CorrugatedPipe(Tube):
         wall = 0 * ureg.m
         c = 0 * ureg.inch
         super().__init__(OD, wall, L, c)
-        self.K = 4*self.K  # Multiplier 4 is used for corrugated pipe
         self.type = 'Corrugated pipe'
         logger.debug('For corrugated piping assumed wall = 0')
+
+    def K(self, Re_):
+        return 4 * super().K(Re_)  # Multiplier 4 is used for corrugated pipe
 
     def branch_reinforcement(self):
         raise NotImplementedError('Branch reinforcement not implemented for'
@@ -432,8 +425,10 @@ class Entrance ():
         self.ID = ID
         self.area = Tube._calculate_area(self)
         self.type = 'Entrance'
-        self.K = 0.5  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
+
+    def K(self):
+        return 0.5  # Crane TP-410, A-29
 
     def info(self):
         return f'{self.type}, {self.ID:.3g~}'
@@ -456,8 +451,10 @@ class Exit (Entrance):
         self.ID = ID
         self.area = Pipe._calculate_area(self)
         self.type = 'Exit'
-        self.K = 1  # Crane TP-410, A-29
         self.volume = 0 * ureg.ft**3
+
+    def K(self):
+        return 1  # Crane TP-410, A-29
 
     def info(self):
         return f'Exit opening, {self.ID:.3g~}'
@@ -478,8 +475,10 @@ class Orifice():
         self.ID = ID
         self.area = Pipe._calculate_area(self)
         self.type = 'Orifice'
-        self.K = 1/self.Cd**2
         self.volume = 0 * ureg.ft**3
+
+    def K(self):
+        return 1/self.Cd**2
 
     def info(self):
         return f'Orifice, {self.ID:.3g~}'
@@ -534,11 +533,12 @@ class Annulus():
         self.L = L
         assert D1 > D2
         self.area = pi / 4 * (D1**2 - D2**2)
-        self.volume = Pipe._calculate_volume(self)
+        self.volume = Tube._calculate_volume(self)
         self.ID = D1 - D2  # Hydraulic diameter
         self.eps = eps
-        self.f_T = lambda: Tube.f_T(self)
-        self.K = Tube._calculate_K(self)
+
+    def K(self, Re_):
+        return Tube.K(self, Re_)
 
     def info(self):
         return f'Annulus D1={self.D1:.3g~}, D2={self.D2:.3g~}, L={self.L:.3g~}'
@@ -576,7 +576,7 @@ class Elbow(Tube):
         self.L = R_D*self.ID*angle
         self.type = 'Tube elbow'
 
-    def _calculate_K(self):
+    def K(self, Re_):
         """
         Pressure drop in an elbow fitting.
         Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
@@ -599,7 +599,7 @@ class Elbow(Tube):
 
         C1 = 1  # use different value for non-axis symmetric
         # Friction losses in the elbow
-        K_frict = super()._calculate_K()
+        K_frict = super().K(Re_)
         return (A1*B1*C1+K_frict)*self.N
 
     def info(self):
@@ -654,7 +654,7 @@ class Tee(Tube):
         super().__init__(OD, wall, L, c)
         self.type = 'Tube tee'
 
-    def _calculate_K(self):
+    def K(self):
         if self.direction == 'run':
             return 20*self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
@@ -692,8 +692,10 @@ class Valve():
         self.area = Pipe._calculate_area(self)
         self.L = None
         self.type = 'Valve'
-        self.K = Cv_to_K(self._Cv, self.D)
         self.volume = 0 * ureg.ft**3
+
+    def K(self):
+        return Cv_to_K(self._Cv, self.D)
 
     def info(self):
         return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
@@ -758,9 +760,8 @@ class Contraction():
         self.area = Pipe._calculate_area(self)
         self.L = abs(ID1 - ID2) / tan(theta/2)
         self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
-        self.K = self._calculate_K()
 
-    def _calculate_K(self):
+    def K(self):
         if self.theta <= 45*ureg.deg:
             K_ = 0.8 * sin(self.theta/2) * (1-self.beta**2)
             # Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
@@ -793,7 +794,7 @@ class Enlargement(Contraction):
         super().__init__(Pipe1, Pipe2, theta)
         self.type = 'Enlargement'
 
-    def _calculate_K(self):
+    def K(self):
         if self.theta <= 45*ureg.deg:
             K_ = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
@@ -817,6 +818,7 @@ class Piping(list):
     added together to calculate single K value for the whole piping. This K
     value is used with Darcy equation to calculate pressure drop or mass flow.
     '''
+    pipe_type = (Pipe, VJPipe, CorrugatedPipe, Tube, Annulus, Elbow)
     def __init__(self, fluid, pipes=[]):
         self.fluid = fluid
         self.extend(pipes)
@@ -824,7 +826,7 @@ class Piping(list):
     def add(self, *pipes):
         self.extend(pipes)
 
-    def K(self):
+    def K(self, m_dot):
         """Calculate resistance coefficient converted to the area of the first element.
 
         Returns
@@ -839,15 +841,20 @@ class Piping(list):
         except IndexError:
             raise IndexError('Piping has no elements! '
                              'Use Piping.add to add sections to piping.')
-        K0 = sum([section.K*(A0/section.area)**2 for section in self])
+        for element in self:
+            Re_ = Re(self.fluid, m_dot, element.ID)
+            if isinstance(element, Piping.pipe_type) and \
+               not isinstance(element, Tee):
+                K0 += element.K(Re_) * (A0/element.area)**2
+            else:
+                K0 += element.K() * (A0/element.area)**2
         return (K0.to_base_units(), A0)
 
     def volume(self):
         result = []
-        pipes = (Pipe, VJPipe, CorrugatedPipe, Tube, Annulus)
         # TODO remove elbows and tees after merge
         for pipe in self:
-            if isinstance(pipe, pipes):
+            if isinstance(pipe, Piping.pipe_type):
                 result.append((str(pipe),
                                f'{pipe.L.to(ureg.ft).magnitude:.3g}',
                                f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
@@ -862,6 +869,7 @@ class Piping(list):
         volume = pi * largest_tube.ID**2 / 4 * 8 * largest_tube.L
         return stored_energy(fluid, volume)
 
+    @ureg.check(None, '[mass]/[time]')
     def dP(self, m_dot):
         '''
         Calculate pressure drop through piping.
@@ -871,7 +879,7 @@ class Piping(list):
         P_0 = self.fluid.P
         T_0 = self.fluid.T
         rho_0 = self.fluid.Dmass
-        K, area = self.K()
+        K, area = self.K(m_dot)
         w = m_dot / (rho_0*area)
         dP = dP_darcy(K, rho_0, w)  # first iteration
         P_out = P_0 - dP
@@ -1035,8 +1043,10 @@ class ParallelPlateRelief:
 
 # Supporting functions used for flow rate and pressure drop calculations.
 def f_Darcy(Re_, eps_r):
-    """Calculate Darcy friction factor using Cheng solution to
+    """Calculate Darcy friction factor using Serghide solution to
     Colebrook equation.
+
+    See Crane TP-410 2013, equation 6-6.
 
     Parameters
     ----------
@@ -1050,11 +1060,11 @@ def f_Darcy(Re_, eps_r):
     float
         Darcy friction coefficient
     """
-    a = 1 / (1+(Re_/2720)**9)
-    b = 1 / (1+(Re_/(160/eps_r))**2)
-    f_inv = (Re_/64)**a * (1.8*log10(Re_/6.8))**(2*(1-a)*b) * \
-        (2.0*log10(3.7/eps_r))**(2*(1-a)*(1-b))
-    return float(1/f_inv)
+    A = -2 * log10(eps_r/3.7+12/Re_)
+    B = -2 * log10(eps_r/3.7+2.51*A/Re_)
+    C = -2 * log10(eps_r/3.7+2.51*B/Re_)
+    f = (A - (B-A)**2/(C-2*B+A))**(-2)
+    return f
 
 
 def dP_darcy(K, rho, w):
