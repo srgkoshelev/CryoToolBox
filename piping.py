@@ -609,7 +609,7 @@ class Elbow(Tube):
 
 class PipeElbow(Elbow, Pipe):
     """
-    NPS Tee fitting.
+    NPS Elbow fitting.
     MRO makes method K from Elbow class to override method from Pipe class.
     """
     def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
@@ -640,7 +640,7 @@ class PipeElbow(Elbow, Pipe):
 
 class Tee(Tube):
     """
-    Tee fitting based.
+    Tee fitting.
     """
     def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru'):
         if direction in ['thru', 'through', 'run']:
