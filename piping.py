@@ -642,7 +642,22 @@ class Tee(Tube):
     """
     Tee fitting.
     """
-    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru'):
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru',
+                 N=1):
+        """Generate a tee.
+
+        Parameters
+        ----------
+        OD : ureg.Quantity {length: 1}
+            Outer diameter of the tube.
+        wall : ureg.Quantity {length: 1}
+            Wall thickness of the tube.
+        c : ureg.Quantity {length: 1}
+            Sum of the mechanical allowances plus corrosion and erosion
+            allowances of the inner pipe.
+        N : int
+            Number of tees in the pipeline
+        """
         if direction in ['thru', 'through', 'run']:
             self.direction = 'run'
         elif direction in ['branch', 'side']:
@@ -652,13 +667,15 @@ class Tee(Tube):
                          try "thru" or "branch": {}'''.format(direction))
         L = 0*ureg.m
         super().__init__(OD, wall, L, c)
+        self.N = N
         self.type = 'Tube tee'
 
     def K(self):
         if self.direction == 'run':
-            return 20*self.f_T()  # Crane TP-410 p. A-29
+            K_ = 20*self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
-            return 60*self.f_T()  # Crane TP-410 p. A-29
+            K_ = 60*self.f_T()  # Crane TP-410 p. A-29
+        return self.N * K_
 
     def info(self):
         return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
@@ -669,7 +686,7 @@ class PipeTee(Tee, Pipe):
     NPS Tee fitting.
     MRO makes method K from Tee class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru'):
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru', N=1):
         # D_nom and SCH go as positional arguments to Pipe __init__
         super().__init__(D_nom, SCH, c, direction)
         self.type = 'NPS tee'
