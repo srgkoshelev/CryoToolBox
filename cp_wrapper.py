@@ -487,8 +487,8 @@ class ThermState:
 
     def __str__(self):
         return f'{self.name.capitalize()} at ' + \
-            f'T = {self.T.to(ureg.K):.3~g~} and ' + \
-            f'P = {self.P.to(ureg.psi):.3g~}.'
+            f'T: {self.T.to(ureg.K):.3~g~} and ' + \
+            f'P: {self.P.to(ureg.psi):.3g~}.'
 
     @property
     def M(self):

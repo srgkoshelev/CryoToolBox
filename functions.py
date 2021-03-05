@@ -123,11 +123,10 @@ def m_max(fluid, A):
     return m_max_.to_base_units()
 
 
-def PRV_flow(ID, Kd, fluid):
+def PRV_flow(A, Kd, fluid):
     """Calculate mass flow through the relief valve based on
     BPVC VIII div. 1 UG-131 (e) (2).
     """
-    A = pi * ID**2 / 4
     W_T = m_max(fluid, A)  # Theoretical flow
     W_a = W_T * Kd  # Actual flow
     return W_a.to(ureg.g/ureg.s)
@@ -178,7 +177,7 @@ def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02}):
     return q_baffle.to(ureg.W/ureg.m**2)
 
 
-def Re(fluid, m_dot, D):
+def Re(fluid, m_dot, D_H, A_cross):
     """
     Calculate Reynolds number.
 
@@ -186,16 +185,18 @@ def Re(fluid, m_dot, D):
     ----------
     fluid : ThermState object describing thermodynamic state (fluid, T, P)
     m_dot : mass flow
-    D : characteristic length/hydraulic diameter
+    D_H : hydraulic diameter of a pipe
+    A_cross : cross-sectional area of a pipe
 
     Returns
     -------
     Reynolds number, dimensionless
     """
-    A = pi * D**2 / 4
-    w_flow = m_dot / (fluid.Dmass*A)
-    Re_ = w_flow * D * fluid.Dmass / fluid.viscosity
-    return Re_.to_base_units()
+    rho = fluid.Dmass
+    v = m_dot / (rho*A_cross)
+    mu = fluid.viscosity
+    Re_ = v * D_H * rho / mu
+    return float(Re_)
 
 
 def Pr(fluid):
