@@ -859,7 +859,7 @@ class Piping(list):
             raise IndexError('Piping has no elements! '
                              'Use Piping.add to add sections to piping.')
         for element in self:
-            Re_ = Re(self.fluid, m_dot, element.ID)
+            Re_ = Re(self.fluid, m_dot, element.ID, element.area)
             if isinstance(element, Piping.pipe_type) and \
                not isinstance(element, Tee):
                 K0 += element.K(Re_) * (A0/element.area)**2
@@ -918,7 +918,7 @@ class Piping(list):
         elif 0.4 < dP/P_0 < (1-rc):  # Subsonic flow
             logger.warning('Pressure drop too high for Darcy equation!')
             # Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
-            w = (1/rho_0*(K+2*log(P_0/P_out))*(P_0**2-P_out**2)/P_0)**0.5
+            w = ((P_0**2-P_out**2) / (P_0*rho_0*(K+2*log(P_0/P_out))))**0.5
             return dP_darcy(K, rho_0, w)
         else:
             logger.warning('''Sonic flow developed. Calculated value ignores
