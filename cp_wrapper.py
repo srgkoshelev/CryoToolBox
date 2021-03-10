@@ -466,7 +466,7 @@ class ThermState:
         return self.C_gas_const.to(us_unit)
 
     @property
-    def C_m(self):
+    def C_si(self):
         """A shortcut to C_gas_const for SI units"""
         si_unit = ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5
         return self.C_gas_const.to(si_unit)
