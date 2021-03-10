@@ -245,9 +245,11 @@ class ThermState:
     # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
         Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
-        return Z_.to(ureg.dimensionless)
+        return Z_.m_as(ureg.dimensionless)
         # Temporarily unavailable function
         # return self._AbstractState.compressibility_factor()
+    # Useful shorthand
+    Z = compressibility_factor
 
     @property
     @ureg.wraps(CP_const_unit['Hmolar'][1], None)
@@ -493,8 +495,7 @@ class ThermState:
     @property
     def M(self):
         """Calculate relative molecular mass."""
-        M_ = self.molar_mass / Q_('1 g/mol')
-        return M_.to(ureg.dimensionless)
+        return self.molar_mass.m_as(ureg.g/ureg.mole)
 
     @property
     def MZT(self):
