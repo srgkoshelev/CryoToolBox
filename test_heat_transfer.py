@@ -1,6 +1,7 @@
 import heat_transfer as ht
 import pprint
 import unittest
+import random
 
 pp = pprint.PrettyPrinter()
 
@@ -180,7 +181,7 @@ class PipingTest(unittest.TestCase):
         # print(f'Generated {v_cone}')
         cont = ht.piping.Contraction(pipe, tube)
         enl = ht.piping.Enlargement(tube, pipe)
-        test_state = ht.ThermState('air', P=ht.P_NTP, T=ht.T_NTP)
+        test_state = ht.Air
         piping = ht.piping.Piping(
             test_state,
             [pipe, vj_pipe, corr_pipe, entrance, pipe_exit, orifice, c_orifice,
@@ -189,6 +190,14 @@ class PipingTest(unittest.TestCase):
              cont, enl])
         piping.volume()
         self.assertApproxEqual(21.2*ureg.psi, piping.dP(Q_('10 g/s')))
+
+        # Test the solver inside Piping.m_dot
+        for i in range(30):
+            m_dot = random.random()*10**(random.randrange(-1, 5)) * ureg.g/ureg.s
+            dP_calc = piping.dP(m_dot)
+            dP = dP_calc
+            m_dot_calc = piping.m_dot(P_out=ht.Air.P-dP)
+            self.assertApproxEqual(m_dot, m_dot_calc)
 
     def test_f_Darcy(self):
         eps_smooth = 0.0018 * ureg.inch
@@ -211,6 +220,7 @@ class PipingTest(unittest.TestCase):
         eps_r = 0.006
         Re = 1e3
         self.assertApproxEqual(64/Re, ht.piping.f_Darcy(Re, eps_r))
+
 
     # def test_Crane_4_22(self):
     #     test_air = ht.ThermState('air', P=2.343*ureg.bar, T=40*ureg.degC)
