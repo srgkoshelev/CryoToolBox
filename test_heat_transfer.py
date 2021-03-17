@@ -23,7 +23,7 @@ class RefPropTest(unittest.TestCase):
 
     def test_air(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
-        self.assertNIST(fluid.M.magnitude, 28.958600656)
+        self.assertNIST(fluid.M, 28.958600656)
         # TODO Open an issue with CoolProp
 
     def test_argon(self):
@@ -134,7 +134,7 @@ class FunctionsTest(unittest.TestCase):
         eps_b = 0.05
         heat_flow = abs(ht.rad_hl(T1, eps, T2, eps,
                                   baffles={'N': 1, 'eps': eps_b}))
-        self.assertAlmostEqual(145.7373,
+        self.assertAlmostEqual(145.7373409,
                                heat_flow.to(ureg.W/ureg.m**2).magnitude, 5)
 
     def test_rad_hl_4(self):
@@ -145,7 +145,7 @@ class FunctionsTest(unittest.TestCase):
         eps_b = 0.05
         heat_flow = abs(ht.rad_hl(T1, eps_1, T2, eps_2,
                                   baffles={'N': 1, 'eps': eps_b}))
-        self.assertAlmostEqual(141.37391,
+        self.assertAlmostEqual(141.3739475,
                                heat_flow.to(ureg.W/ureg.m**2).magnitude, 5)
 
 
