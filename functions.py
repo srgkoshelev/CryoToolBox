@@ -138,17 +138,19 @@ def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
 
     Parameters
     ----------
-    m_dot : mass flow
+    m_dot : Quantity {mass:1, time:-1}
+        mass flow rate
     fluid : ThermState at relief conditions
-    P_back : backpressure
+    P_back : ureg.Quantity {length: -1, mass: 1, time: -2}
+        backpressure
     K_d : discharge coefficient
-    0.975 - when PRV installed with/without a rupture disk
-    0.62 - for rupture disc only (see 5.11.1.1.2)
+        0.975 - when PRV installed with/without a rupture disk
+        0.62 - for rupture disc only (see 5.11.1.1.2)
     K_c : capacity correction factor due to backpressure
-    applies to balanced bellows valves only
+        applies to balanced bellows valves only
     K_c : combination correction factor
-    1 - for no rupture disc installed in combination
-    0.9 - for rupture disc installed in combination
+        1 - for no rupture disc installed in combination
+        0.9 - for rupture disc installed in combination
     """
     W = m_dot.m_as(ureg.lb/ureg.hr)
     P_1 = fluid.P.m_as(ureg.psi)
