@@ -112,6 +112,10 @@ class RefPropTest(unittest.TestCase):
 
 
 class FunctionsTest(unittest.TestCase):
+    def assertApproxEqual(self, data, calc, uncertainty=0.1):
+        assert abs(data-calc) / data < uncertainty, \
+            f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
+
     def test_rad_hl_1(self):
         eps = 0.02
         T1 = 27 * ureg.degC
@@ -149,6 +153,29 @@ class FunctionsTest(unittest.TestCase):
         self.assertAlmostEqual(141.3739475,
                                heat_flow.to(ureg.W/ureg.m**2).magnitude, 5)
 
+    def test_API_subsonic(self):
+        """Example from API 5.6"""
+        m_dot = 53500 * ureg.lb/ureg.hr
+        fluid = ht.ThermState('propane&butane', backend='REFPROP')
+        fluid.set_mole_fractions(0.5, 0.5)
+        fluid.update_kw(T=627*ureg.degR, P=97.2*ureg.psi)
+        P_back = 77.2 * ureg.psi
+        # print(fluid.M, fluid.compressibility_factor, fluid.gamma)
+        A_expect = 6.55 * ureg.inch**2
+        A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
+        self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
+
+    def test_API_sonic(self):
+        """Example from API 5.6"""
+        m_dot = 53500 * ureg.lb/ureg.hr
+        fluid = ht.ThermState('propane&butane', backend='REFPROP')
+        fluid.set_mole_fractions(0.5, 0.5)
+        fluid.update_kw(T=627*ureg.degR, P=97.2*ureg.psi)
+        P_back = 0 * ureg.psig
+        # print(fluid.M, fluid.compressibility_factor, fluid.gamma)
+        A_expect = 5.73 * ureg.inch**2
+        A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
+        self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
 class PipingTest(unittest.TestCase):
     """Simple piping check to see if basic functionality works.

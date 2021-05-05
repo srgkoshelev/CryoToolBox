@@ -132,6 +132,45 @@ def PRV_flow(A, Kd, fluid):
     return W_a.to(ureg.g/ureg.s)
 
 
+def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
+    """Calculate required relief area for given flow as per
+    API 520 5.6.3/4
+
+    Parameters
+    ----------
+    m_dot : mass flow
+    fluid : ThermState at relief conditions
+    P_back : backpressure
+    K_d : discharge coefficient
+    0.975 - when PRV installed with/without a rupture disk
+    0.62 - for rupture disc only (see 5.11.1.1.2)
+    K_c : capacity correction factor due to backpressure
+    applies to balanced bellows valves only
+    K_c : combination correction factor
+    1 - for no rupture disc installed in combination
+    0.9 - for rupture disc installed in combination
+    """
+    W = m_dot.m_as(ureg.lb/ureg.hr)
+    P_1 = fluid.P.m_as(ureg.psi)
+    P_2 = P_back.m_as(ureg.psi)
+    k = fluid.gamma
+    T = fluid.T.m_as(ureg.degR)
+    Z = fluid.compressibility_factor
+    M = fluid.M
+    P_cf = P_1 * (2/(k+1))**(k/(k-1))
+    if P_2 <= P_cf:
+        critical = True  # For future verbose use
+        C = fluid.C.m_as(ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5)
+        A = W / (C*K_d*P_1*K_b*K_c) * (T*Z/M)**0.5
+    else:
+        critical = False
+        r = P_2 / P_1
+        F_2_brack = (1-r**((k-1)/k)) / (1-r)
+        F_2 = (k/(k-1) * r**(2/k) * F_2_brack)**0.5
+        A = W / (735*F_2*K_d*K_c) * (T*Z/(M*P_1*(P_1-P_2)))**0.5
+    return A * ureg.inch**2
+
+
 def theta_heat(fluid, step=0.01):
     logger.warning('Deprecated. Use ht.cga.theta() instead.')
     return cga.theta(fluid, step)
