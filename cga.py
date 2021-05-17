@@ -8,14 +8,30 @@ from . import logger
 from .cp_wrapper import CP_const_unit
 
 
+def P_fr(P_set, factor=1.1):
+    """Calculate flow rating pressure as per CGA S-1.3 2008 5.1.13.
+
+    Parameters:
+    -----------
+    P_set : Set pressure
+    factor : pressure increase factor as per BPVC VIII Div. 1, UG-125
+        Common factors: 1.1, 1.21 (fire)
+
+    Returns:
+    --------
+    P_fr : flow rating pressure
+    """
+    return (factor * P_set.to(ureg.psi)).to(ureg.psig)
+
+
 def theta(fluid, step=0.01):
     """
     Calculate latent heat/specific heat input and temperature for flow
     capacity calculation per CGA S-1.3 2008 6.1.3.
 
-    :fluid: ThermState object describing thermodynamic state (fluid, T, P)
-    :step: temperature step
-    :returns: tuple (specific heat, temperature)
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    step : temperature step
+    returns : tuple (specific heat, temperature)
     """
     temp_state = fluid.copy()
     # Only working for pure fluids and pre-defined mixtures
