@@ -758,21 +758,19 @@ class Contraction():
     """
     Sudden and gradual contraction based on Crane TP-410.
     """
-    def __init__(self, Pipe1, Pipe2, theta=ureg('180 deg')):
+    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
         """
-        Pipe1: upstream pipe
-        Pipe2: downstream pipe
-        theta: contraction angle
+        ID1 : upstream pipe ID
+        ID2 : downstream pipe ID
+        theta : contraction angle
         """
-        self._Pipe1 = Pipe1
-        self._Pipe2 = Pipe2
-        ID1 = Pipe1.ID
-        ID2 = Pipe2.ID
         self.beta = beta(ID1, ID2)
         self.theta = theta
         self.type = 'Contraction'
         self.L = None
         self.OD = None
+        self.ID1 = ID1
+        self.ID2 = ID2
         self.ID = min(ID1, ID2)
         self.area = Pipe._calculate_area(self)
         self.L = abs(ID1 - ID2) / tan(theta/2)
@@ -791,8 +789,8 @@ class Contraction():
         return K_
 
     def info(self):
-        return f'{self.type}, {self.theta.to(ureg.deg)} from {self._Pipe1} ' + \
-            f'to {self._Pipe2}'
+        return f'{self.type}, {self.theta.to(ureg.deg)} from {self.ID1} ' + \
+            f'to {self.ID2}'
 
     def __str__(self):
         return f'{self.type}'
@@ -802,13 +800,13 @@ class Enlargement(Contraction):
     """
     Sudden and gradual enlargement based on Crane TP-410.
     """
-    def __init__(self, Pipe1, Pipe2, theta=ureg('180 deg')):
+    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
         """
-        Pipe1: upstream pipe
-        Pipe2: downstream pipe
-        theta: contraction angle
+        ID1 : upstream pipe ID
+        ID2 : downstream pipe ID
+        theta : contraction angle
         """
-        super().__init__(Pipe1, Pipe2, theta)
+        super().__init__(ID1, ID2, theta)
         self.type = 'Enlargement'
 
     def K(self):
