@@ -339,7 +339,7 @@ class CopperTube(Tube):
         c = 0 * ureg.inch  # Not affected by corrosion
         super().__init__(OD, wall, L, c, eps)
         self.D = D
-        self.type = 'Copper tube ' + type_
+        self.type = 'Copper tube Type ' + type_
 
 
 class VJPipe(Pipe):
