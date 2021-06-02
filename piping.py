@@ -328,7 +328,7 @@ class CopperTube(Tube):
         Absolute roughness for the tube. Default value for smooth
         pipe.
     """
-    def __init__(self, D_nom, type_='Type K', L=0*ureg.m,
+    def __init__(self, D_nom, type_='K', L=0*ureg.m,
                  eps=0.0018*ureg.inch):
         if isinstance(D_nom, ureg.Quantity):
             D = D_nom.magnitude
