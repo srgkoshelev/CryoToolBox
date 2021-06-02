@@ -1034,6 +1034,9 @@ class Piping(list):
         {(P_in-P_out).to(ureg.psi)}')
         logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
 
+    def __str__(self):
+        return '\n'.join([el.__str__() for el in self])
+
 
 class ParallelPlateRelief:
     def __init__(self, Springs, Plate, Supply_pipe):
