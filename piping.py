@@ -851,6 +851,7 @@ class Piping(list):
             A0 : area of the first element, basis for conversion
         """
         K0 = 0*ureg.dimensionless
+        self._K_values = []
         try:
             A0 = self[0].area  # using area of the first element as base
         except IndexError:
@@ -860,9 +861,13 @@ class Piping(list):
             Re_ = Re(self.fluid, m_dot, element.ID, element.area)
             if isinstance(element, Piping.pipe_type) and \
                not isinstance(element, Tee):
-                K0 += element.K(Re_) * (A0/element.area)**2
+                K_el = element.K(Re_) * (A0/element.area)**2
+                self._K_values.append(K_el.to_base_units())
+                K0 += K_el
             else:
-                K0 += element.K() * (A0/element.area)**2
+                K_el = element.K() * (A0/element.area)**2
+                self._K_values.append(K_el.to_base_units())
+                K0 += K_el
         return (K0.to_base_units(), A0)
 
     def volume(self):
