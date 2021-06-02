@@ -206,8 +206,8 @@ class PipingTest(unittest.TestCase):
         # print(f'Generated {g_valve}')
         # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
         # print(f'Generated {v_cone}')
-        cont = ht.piping.Contraction(pipe, tube)
-        enl = ht.piping.Enlargement(tube, pipe)
+        cont = ht.piping.Contraction(1*ureg.inch, 0.5*ureg.inch)
+        enl = ht.piping.Enlargement(0.5*ureg.inch, 1*ureg.inch)
         test_state = ht.Air
         piping = ht.piping.Piping(
             test_state,
