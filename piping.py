@@ -951,7 +951,7 @@ class Piping(list):
         P_0 = self.fluid.P
         if P_0 <= P_out:
             logger.warning(f'Input pressure less or equal to output: \
-            {P_0:.3g}, {P_out:.3g}')
+            {P_0.to(ureg.Pa):.3g}, {P_out.to(ureg.Pa):.3g}')
             return Q_('0 g/s')
         def to_solve(m_dot_gs, P_in_Pa, P_out_Pa):
             # print(m_dot_gs)
