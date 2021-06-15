@@ -424,6 +424,7 @@ class Entrance ():
         """
         self.ID = ID
         self.area = Tube._calculate_area(self)
+        self.L = 0*ureg.m
         self.type = 'Entrance'
         self.volume = 0 * ureg.ft**3
 
@@ -449,7 +450,8 @@ class Exit (Entrance):
             Inside diameter of the exit.
         """
         self.ID = ID
-        self.area = Pipe._calculate_area(self)
+        self.area = Tube._calculate_area(self)
+        self.L = 0*ureg.m
         self.type = 'Exit'
         self.volume = 0 * ureg.ft**3
 
