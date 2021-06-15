@@ -558,6 +558,27 @@ def _nist_pow_fit(T, coefs):
     return y
 
 
+def _nist_Cu_log_fit(T, coefs):
+    """
+    Calculate NIST curve fit for copper thermal conductivity for
+    given coefficients.
+    https://trc.nist.gov/cryogenics/materials/materialproperties.htm
+
+    Parameters
+    ----------
+    T : temperature, K
+    coefs : coefficients from NIST cryo properties database
+
+    Returns
+    -------
+    thermal property (e.g. thermal conductivity)
+    """
+    a, b, c, d, e, f, g, h, i = coefs
+    y = (a + c*T**0.5 + e*T + g*T**1.5 + i*T**2) / \
+        (1 + b*T**0.5 + d*T + f*T**1.5 + h*T**2)
+    return 10**y
+
+
 def _nist_quad(T1, T2, fun, coefs):
     """
     Calculate average value of the property for given temperature range.
@@ -575,7 +596,7 @@ def _nist_quad(T1, T2, fun, coefs):
     return quad(fun, T1, T2, args=coefs)[0] / (T2-T1)
 
 
-def nist_property(material, prop, T1, T2=None):
+def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
     """
     Calculate specific heat capacity using NIST properties database.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
@@ -590,10 +611,18 @@ def nist_property(material, prop, T1, T2=None):
     -------
     specific heat capacity
     """
-    coefs = NIST_DATA[material][prop]['coefs']
+    if material == 'OFHC':
+        if RRR_OFHC is None:
+            logger.warning('RRR for OFHC is not defined. Using RRR=100.')
+            RRR_OHFC = 100
+        RRR = str(RRR_OFHC)
+        coefs = NIST_DATA[material][prop]['coefs'+RRR]
+    else:
+        coefs = NIST_DATA[material][prop]['coefs']
     fun = NIST_DATA[material][prop]['fun']
     unit = NIST_DATA[material][prop]['unit']
     eq_range = NIST_DATA[material][prop]['range']
+
     T1 = T1.to(ureg.K).magnitude
     if prop == 'LE':
         Tlow = NIST_DATA[material][prop]['Tlow']
@@ -617,6 +646,7 @@ def nist_property(material, prop, T1, T2=None):
 # 304SS - AISI 304 Stainless Steel
 # 6061 - 6061-T6 Aluminum (UNS A96061)
 # G10 - G10
+# PTFE - PTFE/Teflon
 # OFHC - Oxygen-free High thermal conductivity copper
 #
 # Properties
@@ -672,6 +702,19 @@ NIST_DATA = {
                'fun': _nist_log_fit,
                'unit': ureg.J/(ureg.kg*ureg.K)}
     },
+    'PTFE':
+    {
+        'TC': {'coefs': [2.7380, -30.677, 89.430, -136.99, 124.69, -69.556,
+                         23.320, -4.3135, 0.33829],
+               'range': (4, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.W/(ureg.m*ureg.K)},
+        'SH': {'coefs': [31.88256, -166.51949, 352.01879, -393.44232, 259.98072,
+                         -104.61429, 24.99276, -3.20792, 0.16503],
+               'range': (4, 300),
+               'fun': _nist_log_fit,
+               'unit': ureg.J/(ureg.kg*ureg.K)}
+    },
     'OFHC':
     {
         'EC': {'coefs': [-17.9081289, 67.131914, -118.809316, 109.9845997,
@@ -679,6 +722,19 @@ NIST_DATA = {
                'range': (4, 300),
                'fun': _nist_log_fit,
                'unit': 1e-6/ureg.K},
+        'TC': {'coefs50': [1.8743, -0.41538, -0.6018, 0.13294, 0.26426, -0.0219,
+                           -0.051276, 0.0014871, 0.003723],
+               'coefs100': [2.2154, -0.47461, -0.88068, 0.13871, 0.29505,
+                            -0.02043, -0.04831, 0.001281, 0.003207],
+               'coefs150': [2.3797, -0.4918, -0.98615, 0.13942, 0.30475,
+                            -0.019713, -0.046897, 0.0011969, 0.0029988],
+               'coefs300': [1.357, 0.3981, 2.669, -0.1346, -0.6683, 0.01342,
+                            0.05773, 0.0002147, 0],
+               'coefs500': [2.8075, -0.54074, -1.2777, 0.15362, 0.36444,
+                            -0.02105, -0.051727, 0.0012226, 0.0030964],
+               'range': (4, 300),
+               'fun': _nist_Cu_log_fit,
+               'unit': ureg.W/(ureg.m*ureg.K)},
     },
 }
 
