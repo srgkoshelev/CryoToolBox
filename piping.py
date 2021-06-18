@@ -262,12 +262,12 @@ class Tube:
         print(f'Available Area A_2+A_3: {A_avail.to(ureg.inch**2):.3g~}')
         print(f'Weld branch connection is safe: {A_avail>A_1}')
 
-    def info(self):
+    def __str__(self):
         return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
             f'L={self.L:.3g~}'
 
-    def __str__(self):
-        return f'{self.D:.3g}" {self.type}'
+    # def __str__(self):
+    #     return f'{self.D:.3g}" {self.type}'
 
 
 class Pipe(Tube):
@@ -309,7 +309,7 @@ class Pipe(Tube):
         self.D = D
         self.type = 'NPS pipe'
 
-    def info(self):
+    def __str__(self):
         return f'{self.type} {self.D}" SCH {self.SCH}, L={self.L:.3~g}'
 
 
@@ -407,7 +407,7 @@ class CorrugatedPipe(Tube):
         raise NotImplementedError('Pressure design thickness not implemented'
                                   ' for corrugated pipe')
 
-    def info(self):
+    def __str__(self):
         return f'Corrugated pipe D={self.OD:.3g~}, L={self.L:.3g~}'
 
 
@@ -431,11 +431,11 @@ class Entrance ():
     def K(self):
         return 0.5  # Crane TP-410, A-29
 
-    def info(self):
+    def __str__(self):
         return f'{self.type}, {self.ID:.3g~}'
 
-    def __str__(self):
-        return self.type
+    # def __str__(self):
+    #     return self.type
 
 
 class Exit (Entrance):
@@ -458,7 +458,7 @@ class Exit (Entrance):
     def K(self):
         return 1  # Crane TP-410, A-29
 
-    def info(self):
+    def __str__(self):
         return f'Exit opening, {self.ID:.3g~}'
 
 
@@ -482,11 +482,11 @@ class Orifice():
     def K(self):
         return 1/self.Cd**2
 
-    def info(self):
+    def __str__(self):
         return f'Orifice, {self.ID:.3g~}'
 
-    def __str__(self):
-        return f'{self.ID:.3g~} orifice'
+    # def __str__(self):
+    #     return f'{self.ID:.3g~} orifice'
 
 
 class ConicOrifice(Orifice):
@@ -509,11 +509,11 @@ class ConicOrifice(Orifice):
             # Flow Measurements Engineering Handbook, Table 9.1, p. 9.16
         self.type = 'Conic orifice'
 
-    def info(self):
+    def __str__(self):
         return f'Conic orifice, {self.ID:.3g~}'
 
-    def __str__(self):
-        return f'{self.ID:.3g~} conic orifice'
+    # def __str__(self):
+    #     return f'{self.ID:.3g~} conic orifice'
 
 
 class Annulus():
@@ -542,11 +542,11 @@ class Annulus():
     def K(self, Re_):
         return Tube.K(self, Re_)
 
-    def info(self):
+    def __str__(self):
         return f'Annulus D1={self.D1:.3g~}, D2={self.D2:.3g~}, L={self.L:.3g~}'
 
-    def __str__(self):
-        return f'{self.D1:.3g~} x {self.D2:.3g~} annulus'
+    # def __str__(self):
+    #     return f'{self.D1:.3g~} x {self.D2:.3g~} annulus'
 
 
 class Elbow(Tube):
@@ -576,6 +576,7 @@ class Elbow(Tube):
         self.angle = angle
         super().__init__(OD, wall, L=0*ureg.m, c=c)
         self.L = R_D*self.ID*angle
+        self.volume = self._calculate_volume()
         self.type = 'Tube elbow'
 
     def K(self, Re_):
@@ -604,7 +605,7 @@ class Elbow(Tube):
         K_frict = super().K(Re_)
         return (A1*B1*C1+K_frict)*self.N
 
-    def info(self):
+    def __str__(self):
         return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
@@ -635,7 +636,7 @@ class PipeElbow(Elbow, Pipe):
         super().__init__(D_nom, SCH, c=c, R_D=R_D, N=N, angle=angle)
         self.type = 'NPS elbow'
 
-    def info(self):
+    def __str__(self):
         return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
@@ -679,7 +680,7 @@ class Tee(Tube):
             K_ = 60*self.f_T()  # Crane TP-410 p. A-29
         return self.N * K_
 
-    def info(self):
+    def __str__(self):
         return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
 
 
@@ -716,12 +717,8 @@ class Valve():
     def K(self):
         return Cv_to_K(self._Cv, self.D)
 
-    def info(self):
-        return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
-
     def __str__(self):
-        # TODO remove after init updated
-        return f'{self.D:.3g~} valve'
+        return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
 
 
 # class GlobeValve(Pipe):
@@ -790,12 +787,12 @@ class Contraction():
                          f'(sudden contraction): {self.theta}')
         return K_
 
-    def info(self):
+    def __str__(self):
         return f'{self.type}, {self.theta.to(ureg.deg)} from {self.ID1} ' + \
             f'to {self.ID2}'
 
-    def __str__(self):
-        return f'{self.type}'
+    # def __str__(self):
+    #     return f'{self.type}'
 
 
 class Enlargement(Contraction):
