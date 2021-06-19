@@ -189,9 +189,9 @@ def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02}):
         emissivity of the first surface
     eps_2 : float
         emissivity of the second surface
-    T_1 : Quality {temperature: 1}
+    T_1 : Quantity {temperature: 1}
         temperature of the first surface
-    T_2 : Quality {temperature: 1}
+    T_2 : Quantity {temperature: 1}
         temperature of the second surface
     F1_2 : float
         F1_2 = F_cold/F_hot
@@ -217,6 +217,54 @@ def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02}):
     q_baffle = eta*q0
     return q_baffle.to(ureg.W/ureg.m**2)
 
+
+def conduction_1D(A_cross, L, k, dT):
+    """Calculate 1-dimensional heat flow rate.
+
+    Parameters
+    ----------
+    A_cross : Quantity {length: 2}
+        cross-sectional area
+    L : Quantity {length: 1}
+        length
+    k : Quantity {length: 1, mass: 1, temperature: -1, time: -3}
+        material thermal conductivity
+    dT : Quantity {temperature: 1}
+        temperature difference
+
+    Returns
+    -------
+    Quantity {length: 2, mass: 1, time: -3}
+        heat flow rate
+    """
+
+    q = k * A_cross / L * dT
+    return q.to(ureg.W)
+
+
+def conduction_cyl(D_i, D_o, L, k, dT):
+    """Calculate heat flow through cylindrical wall
+
+    Parameters
+    ----------
+    D_i : Quantity {length: 2}
+        inner diameter
+    D_o : Quantity {length: 2}
+        outer diameter
+    L : Quantity {length: 1}
+        length
+    k : Quantity {length: 1, mass: 1, temperature: -1, time: -3}
+        material thermal conductivity
+    dT : Quantity {temperature: 1}
+        temperature difference, T_i - T_o
+
+    Returns
+    -------
+    Quantity {length: 2, mass: 1, time: -3}
+        heat flow rate
+    """
+    q = 2 * pi * L * k * dT / log(D_o/D_i)
+    return q.to(ureg.W)
 
 def Re(fluid, m_dot, D_H, A_cross):
     """
@@ -614,9 +662,8 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
     if material == 'OFHC':
         if RRR_OFHC is None:
             logger.warning('RRR for OFHC is not defined. Using RRR=100.')
-            RRR_OHFC = 100
-        RRR = str(RRR_OFHC)
-        coefs = NIST_DATA[material][prop]['coefs'+RRR]
+            RRR_OFHC = 100
+        coefs = NIST_DATA[material][prop]['coefs'+str(RRR_OFHC)]
     else:
         coefs = NIST_DATA[material][prop]['coefs']
     fun = NIST_DATA[material][prop]['fun']
