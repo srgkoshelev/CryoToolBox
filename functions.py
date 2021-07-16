@@ -10,6 +10,7 @@ from . import cga
 from . import logger
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
+from enum import Enum, auto
 
 E_TNT = Q_('4850 J/g')  # TNT equivalent Energy of Explosion (PNNL)
 z_1 = Q_('200 ft')  # Scaled distance for debris and missile damage (PNNL)
@@ -659,129 +660,136 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
     -------
     specific heat capacity
     """
-    if material == 'OFHC':
+    if material == Material.OFHC:
         if RRR_OFHC is None:
             logger.warning('RRR for OFHC is not defined. Using RRR=100.')
             RRR_OFHC = 100
-        coefs = NIST_DATA[material][prop]['coefs'+str(RRR_OFHC)]
+        coefs = _NIST_DATA[material][prop]['coefs'+str(RRR_OFHC)]
     else:
-        coefs = NIST_DATA[material][prop]['coefs']
-    fun = NIST_DATA[material][prop]['fun']
-    unit = NIST_DATA[material][prop]['unit']
-    eq_range = NIST_DATA[material][prop]['range']
+        coefs = _NIST_DATA[material][prop]['coefs']
+    fun = _NIST_DATA[material][prop]['fun']
+    unit = _NIST_DATA[material][prop]['unit']
+    eq_range = _NIST_DATA[material][prop]['range']
 
     T1 = T1.to(ureg.K).magnitude
-    if prop == 'LE':
-        Tlow = NIST_DATA[material][prop]['Tlow']
+    if prop == Property.LE:
+        Tlow = _NIST_DATA[material][prop]['Tlow']
         if T1 < Tlow:
-            f = NIST_DATA[material][prop]['f']
+            f = _NIST_DATA[material][prop]['f']
             return f * unit
     if T1 < eq_range[0] or T1 > eq_range[1]:
         raise ValueError(f'Temperature is out of bounds: {T1} for'
                          f' {eq_range[0]}-{eq_range[1]}'
                          'limits.')
     if T2 is None:
-        result = fun(T1, coefs)
+        value = fun(T1, coefs)
     else:
         T2 = T2.to(ureg.K).magnitude
-        result = _nist_quad(T1, T2, fun, coefs)
-    return result * unit
+        value = _nist_quad(T1, T2, fun, coefs)
+    return value * unit
+
+class Material(Enum):
+    """Available materials with low temperature with fits NIST."""
+    SS304 = auto()  # AISI 304 Stainless Steel
+    Al6061 = auto()  # 6061-T6 Aluminum (UNS A96061)
+    G10 = auto()  # G10
+    PTFE = auto()  # PTFE/Teflon
+    OFHC = auto()  # Oxygen-free High thermal conductivity copper
+
+class Property(Enum):
+    """Available low temperature properties from NIST."""
+    TC = auto()  # TC - thermal conductivity, W/(m*K)
+    SH = auto()  # SH - specific heat, W/(m*K)
+    EC = auto()  # EC - expansion coefficient, 1/K
+    LE = auto()  # LE - linear expansion, dimensionless
 
 
-# Temporary storage for NIST data
-# Materials:
-# 304SS - AISI 304 Stainless Steel
-# 6061 - 6061-T6 Aluminum (UNS A96061)
-# G10 - G10
-# PTFE - PTFE/Teflon
-# OFHC - Oxygen-free High thermal conductivity copper
-#
-# Properties
-# TC - thermal conductivity, W/(m*K)
-# SH - specific heat, W/(m*K)
-# EC - expansion coefficient, 1/K
-# LE - linear expansion, dimensionless
-NIST_DATA = {
-    # TODO Implement different TC, etc functions for the same material
-    '304SS':
+_NIST_DATA = {
+    Material.SS304:
     {
-        'TC': {'coefs': [-1.4087, 1.3982, 0.2543, -0.6260, 0.2334, 0.4256,
-                         -0.4658, 0.1650, -0.0199],
-               'range': (1, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.W/(ureg.m*ureg.K)},
-        'LE': {'coefs': [-2.9554E2, -3.9811E-1, 9.2683E-3, -2.0261E-5,
-                         1.7127E-8],
-               'range': (4, 300),
-               'fun': _nist_pow_fit,
-               'Tlow': 23,
-               'f': -300.04,
-               'unit': 1e-5*ureg.m/ureg.m},
-        'SH': {'coefs': [22.0061, -127.5528, 303.647, -381.0098, 274.0328,
-                         -112.9212, 24.7593, -2.239153, 0],
-               'range': (4, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.J/(ureg.kg*ureg.K)}
+        Property.TC: {'coefs': [-1.4087, 1.3982, 0.2543, -0.6260, 0.2334,
+                                0.4256, -0.4658, 0.1650, -0.0199],
+                      'range': (1, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.W/(ureg.m*ureg.K)},
+        Property.LE: {'coefs': [-2.9554E2, -3.9811E-1, 9.2683E-3,
+                                -2.0261E-5, 1.7127E-8],
+                      'range': (4, 300),
+                      'fun': _nist_pow_fit,
+                      'Tlow': 23,
+                      'f': -300.04,
+                      'unit': 1e-5*ureg.m/ureg.m},
+        Property.SH: {'coefs': [22.0061, -127.5528, 303.647, -381.0098,
+                                274.0328, -112.9212, 24.7593, -2.239153, 0],
+                      'range': (4, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.J/(ureg.kg*ureg.K)}
     },
-    '6061':
+    Material.Al6061:
     {
-        'TC': {'coefs': [0.07918, 1.0957, -0.07277, 0.08084, 0.02803, -0.09464,
-                         0.04179, -0.00571, 0],
-               'range': (1, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.W/(ureg.m*ureg.K)},
-        'SH': {'coefs': [46.6467, -314.292, 866.662, -1298.3, 1162.27, -637.795,
-                         210.351, -38.3094, 2.96344],
-               'range': (4, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.J/(ureg.kg*ureg.K)}
+        Property.TC: {'coefs': [0.07918, 1.0957, -0.07277, 0.08084, 0.02803,
+                                -0.09464, 0.04179, -0.00571, 0],
+                      'range': (1, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.W/(ureg.m*ureg.K)},
+        Property.SH: {'coefs': [46.6467, -314.292, 866.662, -1298.3, 1162.27,
+                                -637.795, 210.351, -38.3094, 2.96344],
+                      'range': (4, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.J/(ureg.kg*ureg.K)}
     },
-    'G10':
+    Material.G10:
     {
-        'TC': {'coefs': [-4.1236, 13.788, -26.068, 26.272, -14.663, 4.4954,
-                         -0.6905, 0.0397, 0],
-               'range': (10, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.W/(ureg.m*ureg.K)},
-        'SH': {'coefs': [-2.4083, 7.6006, -8.2982, 7.3301, -4.2386, 1.4294,
-                         -0.24396, 0.015236, 0],
-               'range': (4, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.J/(ureg.kg*ureg.K)}
+        Property.TC: {'coefs': [-4.1236, 13.788, -26.068, 26.272, -14.663,
+                                4.4954, -0.6905, 0.0397, 0],
+                      'range': (10, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.W/(ureg.m*ureg.K)},
+        Property.SH: {'coefs': [-2.4083, 7.6006, -8.2982, 7.3301, -4.2386,
+                                1.4294, -0.24396, 0.015236, 0],
+                      'range': (4, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.J/(ureg.kg*ureg.K)}
     },
-    'PTFE':
+    Material.PTFE:
     {
-        'TC': {'coefs': [2.7380, -30.677, 89.430, -136.99, 124.69, -69.556,
-                         23.320, -4.3135, 0.33829],
-               'range': (4, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.W/(ureg.m*ureg.K)},
-        'SH': {'coefs': [31.88256, -166.51949, 352.01879, -393.44232, 259.98072,
-                         -104.61429, 24.99276, -3.20792, 0.16503],
-               'range': (4, 300),
-               'fun': _nist_log_fit,
-               'unit': ureg.J/(ureg.kg*ureg.K)}
+        Property.TC: {'coefs': [2.7380, -30.677, 89.430, -136.99, 124.69,
+                                -69.556, 23.320, -4.3135, 0.33829],
+                      'range': (4, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.W/(ureg.m*ureg.K)},
+        Property.SH: {'coefs': [31.88256, -166.51949, 352.01879, -393.44232,
+                                259.98072, -104.61429, 24.99276, -3.20792,
+                                0.16503],
+                      'range': (4, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.J/(ureg.kg*ureg.K)}
     },
-    'OFHC':
+    Material.OFHC:
     {
-        'EC': {'coefs': [-17.9081289, 67.131914, -118.809316, 109.9845997,
-                         -53.8696089, 13.30247491, -1.30843441],
-               'range': (4, 300),
-               'fun': _nist_log_fit,
-               'unit': 1e-6/ureg.K},
-        'TC': {'coefs50': [1.8743, -0.41538, -0.6018, 0.13294, 0.26426, -0.0219,
-                           -0.051276, 0.0014871, 0.003723],
-               'coefs100': [2.2154, -0.47461, -0.88068, 0.13871, 0.29505,
-                            -0.02043, -0.04831, 0.001281, 0.003207],
-               'coefs150': [2.3797, -0.4918, -0.98615, 0.13942, 0.30475,
-                            -0.019713, -0.046897, 0.0011969, 0.0029988],
-               'coefs300': [1.357, 0.3981, 2.669, -0.1346, -0.6683, 0.01342,
-                            0.05773, 0.0002147, 0],
-               'coefs500': [2.8075, -0.54074, -1.2777, 0.15362, 0.36444,
-                            -0.02105, -0.051727, 0.0012226, 0.0030964],
-               'range': (4, 300),
-               'fun': _nist_Cu_log_fit,
-               'unit': ureg.W/(ureg.m*ureg.K)},
+        Property.EC: {'coefs': [-17.9081289, 67.131914, -118.809316,
+                                109.9845997, -53.8696089, 13.30247491,
+                                -1.30843441],
+                      'range': (4, 300),
+                      'fun': _nist_log_fit,
+                      'unit': 1e-6/ureg.K},
+        Property.TC: {'coefs50': [1.8743, -0.41538, -0.6018, 0.13294,
+                                  0.26426, -0.0219, -0.051276, 0.0014871,
+                                  0.003723],
+                      'coefs100': [2.2154, -0.47461, -0.88068, 0.13871,
+                                   0.29505, -0.02043, -0.04831, 0.001281,
+                                   0.003207],
+                      'coefs150': [2.3797, -0.4918, -0.98615, 0.13942,
+                                   0.30475, -0.019713, -0.046897, 0.0011969,
+                                   0.0029988],
+                      'coefs300': [1.357, 0.3981, 2.669, -0.1346, -0.6683,
+                                   0.01342, 0.05773, 0.0002147, 0],
+                      'coefs500': [2.8075, -0.54074, -1.2777, 0.15362,
+                                   0.36444, -0.02105, -0.051727, 0.0012226,
+                                   0.0030964],
+                      'range': (4, 300),
+                      'fun': _nist_Cu_log_fit,
+                      'unit': ureg.W/(ureg.m*ureg.K)},
     },
 }
 
