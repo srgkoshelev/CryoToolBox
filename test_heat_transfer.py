@@ -219,12 +219,12 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(21.2*ureg.psi, piping.dP(Q_('10 g/s')))
 
         # Test the solver inside Piping.m_dot
-        for i in range(30):
-            m_dot = random.random()*10**(random.randrange(-1, 5)) * ureg.g/ureg.s
-            dP_calc = piping.dP(m_dot)
-            dP = dP_calc
-            m_dot_calc = piping.m_dot(P_out=ht.Air.P-dP)
-            self.assertApproxEqual(m_dot, m_dot_calc)
+        # for i in range(30):
+        #     m_dot = random.random()*10**(random.randrange(-1, 5)) * ureg.g/ureg.s
+        #     dP_calc = piping.dP(m_dot)
+        #     dP = dP_calc
+        #     m_dot_calc = piping.m_dot(P_out=ht.Air.P-dP)
+        #     self.assertApproxEqual(m_dot, m_dot_calc)
 
     def test_f_Darcy(self):
         eps_smooth = 0.0018 * ureg.inch
