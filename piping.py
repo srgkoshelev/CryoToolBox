@@ -1083,7 +1083,7 @@ class ParallelPlateRelief:
 
 
 # Supporting functions used for flow rate and pressure drop calculations.
-def f_Darcy(Re_, eps_r):
+def f_Darcy(Re_, eps_r, method='churchill'):
     """Calculate Darcy friction factor using Serghide solution to
     Colebrook equation.
 
@@ -1095,14 +1095,62 @@ def f_Darcy(Re_, eps_r):
         Reynolds number
     eps_r : float or Quantity {dimensionless}
         Absolute roughness of the pipe
+    method : str
+        Friction factor formula name
 
     Returns
     -------
     float
         Darcy friction coefficient
     """
-    if Re_ < 1e3:
-        return 64 / Re_  # Equation below breaks for low Re
+    if method == 'churchill':
+        return churchill(Re_, eps_r)
+    elif method == 'serghide':
+        return serghide(Re_, eps_r)
+
+def churchill(Re_, eps_r):
+    """Calculate Darcy friction factor using modified Churchill formula.
+    See 8.5.2 of "Pipe flow, A Practical and Comprehensive Guide", Rennels,
+    Hobart, Hudson, 2012.
+
+    Parameters
+    ----------
+    Re_ : float or Quantity {dimensionless}
+        Reynolds number
+    eps_r : float or Quantity {dimensionless}
+        Relative roughness of the pipe
+
+    Returns
+    -------
+    float
+        Darcy friction coefficient
+    """
+    A1 = 0.883 * log(Re_)**1.282 / Re_**1.007
+    A2 = 0.27 * eps_r
+    A3 = - 110 * eps_r / Re_
+    A = (0.8687 * log(1/(A1+A2+A3)))**16
+    B = (13269 / Re_)**16
+    f = ((64/Re_)**12 + 1/(A+B)**(3/2))**(1/12)
+    return f
+
+def serghide(Re_, eps_r):
+    """Calculate Darcy friction factor using Serghide solution to
+    Colebrook equation.
+
+    See Crane TP-410 2013, equation 6-6.
+
+    Parameters
+    ----------
+    Re_ : float or Quantity {dimensionless}
+        Reynolds number
+    eps_r : float or Quantity {dimensionless}
+        Relative roughness of the pipe
+
+    Returns
+    -------
+    float
+        Darcy friction coefficient
+    """
     A = -2 * log10(eps_r/3.7+12/Re_)
     B = -2 * log10(eps_r/3.7+2.51*A/Re_)
     C = -2 * log10(eps_r/3.7+2.51*B/Re_)
