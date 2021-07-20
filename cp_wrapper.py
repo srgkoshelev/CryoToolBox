@@ -242,6 +242,11 @@ class ThermState:
         return self._AbstractState.gas_constant()
 
     @property
+    def specific_gas_constant(self):
+        R_spec = self.gas_constant / self.molar_mass
+        return R_spec
+
+    @property
     # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
         Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
