@@ -271,6 +271,13 @@ class PipingTest(unittest.TestCase):
             [pipe, ht.piping.Exit(pipe.ID)])
         self.assertApproxEqual(2.61, piping.dP(m_dot).m_as(ureg.psi))
 
+    def test_Rennels_4_5(self):
+        pipe = ht.piping.Pipe(4, SCH=40, L=100*ureg.ft)
+        fluid = ht.ThermState('nitrogen', P=100*ureg.psi, T=530*ureg.degR)
+        piping = ht.piping.Piping(fluid, [pipe])
+        P_out = 84.056 * ureg.psi
+        self.assertApproxEqual(10, piping.m_dot(P_out).m_as(ureg.lb/ureg.s))
+
 # TODO Add Crane examples: 4-22 (may need Y implementation),
 # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
