@@ -1205,13 +1205,17 @@ def dP_isothermal(m_dot, fluid, pipe):
     A = pipe.area.m_as(ureg.m**2)
     K = float(pipe.K(Re(fluid, m_dot, pipe.ID, pipe.area)))
     m_dot = m_dot.m_as(ureg.kg/ureg.s)
+    B = m_dot**2 * R * T / A**2
     def to_solve(P_2_sq):
         P_2 = P_2_sq**0.5
-        B = m_dot**2 * R * T / A**2
         P_2_sq_calc = P_1**2 - B * (2*log(P_1/P_2)+K)
         return P_2_sq - P_2_sq_calc, 1 - B/P_2_sq
 
-    x0 = P_1**2 - m_dot**2 * R * T / A**2 * K
+    P_2_sq = ((65*ureg.psig-2.61*ureg.psi)**2).m_as(ureg.Pa**2)
+    print()
+    print("P1", P_1, "\nT", T, "\nR", R, "\nA", A, "\nK", K, "\nm_dot", m_dot, "\nP_2_sq", P_2_sq)
+    print(to_solve(P_2_sq))
+    x0 = P_1**2 - B * K
     solution = root_scalar(to_solve, x0=x0,
                             fprime=True, method='newton')
     dP = Q_(solution.root**0.5, ureg.Pa)
