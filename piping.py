@@ -1128,7 +1128,7 @@ def churchill(Re_, eps_r):
     A1 = 0.883 * log(Re_)**1.282 / Re_**1.007
     A2 = 0.27 * eps_r
     A3 = - 110 * eps_r / Re_
-    A = (0.8687 * log(1/(A1+A2+A3)))**16
+    A = (0.8687 * log(A1+A2+A3))**16
     B = (13269 / Re_)**16
     f = ((64/Re_)**12 + 1/(A+B)**(3/2))**(1/12)
     return f
@@ -1157,6 +1157,69 @@ def serghide(Re_, eps_r):
     f = (A - (B-A)**2/(C-2*B+A))**(-2)
     return f
 
+def m_dot_isothermal(fluid, pipe, P_out=0*ureg.psig):
+    """Calculate mass flow rate through piping for isothermal compressible
+    flow.
+
+    See 4.4 of "Pipe flow, A Practical and Comprehensive Guide", Rennels,
+    Hobart, Hudson, 2012.
+
+    Parameters
+    ----------
+    fluid : ThermState
+        Inlet fluid conditions
+    pipe : Pipe
+    P_out : ureg.Quantity {length: -1, mass: 1, time: -1}
+        Exit pressure of the piping.
+
+    Returns
+    -------
+    Quantity {length: -1, mass: 1, time: -2}
+        Pressure drop
+    """
+    pass
+
+def dP_isothermal(m_dot, fluid, pipe):
+    """Calculate pressure drop through piping for isothermal compressible
+    flow.
+
+    See 4.4 of "Pipe flow, A Practical and Comprehensive Guide", Rennels,
+    Hobart, Hudson, 2012.
+
+    Parameters
+    ----------
+    m_dot : Quantity {mass: 1, time: -1}
+        mass flow rate
+    fluid : ThermState
+        Inlet fluid conditions
+    pipe : Pipe
+
+    Returns
+    -------
+    Quantity {length: -1, mass: 1, time: -2}
+        Pressure drop
+    """
+    P_1 = fluid.P.m_as(ureg.Pa)
+    T = fluid.T.m_as(ureg.K)
+    R = fluid.specific_gas_constant.m_as(ureg.J/ureg.kg/ureg.K)
+    A = pipe.area.m_as(ureg.m**2)
+    K = float(pipe.K(Re(fluid, m_dot, pipe.ID, pipe.area)))
+    m_dot = m_dot.m_as(ureg.kg/ureg.s)
+
+    def to_solve(P_2):
+        B = m_dot**2 * R * T / A**2
+        P_2_sq_calc = P_1**2 - B * (2*log(P_1/P_2)+K)
+        P_2_calc = (P_2_sq_calc)**0.5
+        return P_2 - P_2_calc, 1-B/((P_1**2-B*(2*log(P_1/P_2)+K))**0.5*P_2)
+
+    P_min = 1e-9
+    P_max = P_1
+    x0 = (P_1**2 - m_dot**2 * R * T / A**2 * K)**0.5
+    bracket = [P_min, P_max]
+    solution = root_scalar(to_solve, x0=x0, bracket=bracket, x1=0.5*x0,
+                            fprime=True, method='newton')
+    dP = Q_(solution.root, ureg.Pa)
+    return dP.to(ureg.psi)
 
 def dP_darcy(K, rho, w):
     '''
