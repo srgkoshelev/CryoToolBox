@@ -62,12 +62,33 @@ def rennels_m_dot_true(fluid, pipe, P_out):
     solution = root_scalar(to_solve, bracket=bracket)
     m_dot = solution.root * ureg.kg/ureg.s
     return m_dot
+def rennels_m_dot_iter(fluid, pipe, P_out, max_iter=50, tol=1e-4, m_dot_guess=None):
+    if max_iter <=0:
+        raise ValueError(f'No convergence found.')
+    A = pipe.area
+    P1 = fluid.P
+    P2 = P_out
+    R = fluid.specific_gas_constant
+    T = fluid.T
+    L = pipe.L
+    D = pipe.ID
+    rho = fluid.Dmass
+    if m_dot_guess is None:
+        f_guess = pipe.f_T()
+        K_guess = f_guess * L / D
+        m_dot_guess = A * (2*(P1-P2)*rho/K_guess)**0.5
+    Re = ht.Re(fluid, m_dot_guess, D, A)
+    m_dot = A * ((P1**2 - P2**2)/(R*T*(2*log(P1/P2)+pipe.K(Re))))**0.5
+    if abs(m_dot-m_dot_guess)/m_dot > tol:
+        print(m_dot_guess.to_base_units(), m_dot.to_base_units())
+        m_dot = rennels_m_dot_iter(fluid, pipe, P_out, max_iter-1, tol, m_dot)
+    return m_dot
 m_dot_rennels = rennels_m_dot(pipe.area, nitrogen.P, P_out,
                             nitrogen.specific_gas_constant, nitrogen.T,
                             f, pipe.L, pipe.ID)
 print(f"Rennels m_dot works: {check(10*u.lb/u.s, m_dot_rennels)}")
-m_dot_rennels = rennels_m_dot_true(nitrogen, pipe, P_out)
-print(f"True Rennels m_dot works: {check(10*u.lb/u.s, m_dot_rennels_true)}")
+m_dot_rennels_iter = rennels_m_dot_iter(nitrogen, pipe, P_out)
+print(f"Iter Rennels m_dot works: {check(10*u.lb/u.s, m_dot_rennels_iter)}")
 Re = ht.Re(nitrogen, 10*u.lb/u.s, pipe.ID, pipe.area)
 check(f*pipe.L/pipe.ID, pipe.K(Re))
 
@@ -269,7 +290,8 @@ m_dot_rennels = rennels_m_dot(pipe.area, air.P, P_out,
                             air.specific_gas_constant, air.T,
                             f, pipe.L, pipe.ID)
 print(f"Rennels m_dot works: {check(m_dot_expected, m_dot_rennels)}")
-
+m_dot_rennels_iter = rennels_m_dot_iter(air, pipe, P_out)
+print(f"Iter Rennels m_dot works: {check(m_dot_expected, m_dot_rennels_iter)}")
 dP_rennels = dP_isothermal(m_dot_expected, air, pipe, P_out)
 print(f"Rennels dP works: {check(dP, dP_rennels)}")
 M = Mach_total(air, m_dot_expected, pipe.area)
@@ -314,7 +336,8 @@ m_dot_rennels = rennels_m_dot(pipe.area, helium.P, P_out,
                             helium.specific_gas_constant, helium.T,
                             f, pipe.L, pipe.ID)
 print(f"Rennels m_dot works: {check(m_dot_expected, m_dot_rennels)}")
-
+m_dot_rennels_iter = rennels_m_dot_iter(helium, pipe, P_out)
+print(f"Iter Rennels m_dot works: {check(m_dot_expected, m_dot_rennels_iter)}")
 dP_rennels = dP_isothermal(m_dot_expected, helium, pipe, P_out)
 print(f"Rennels dP works: {check(dP_Erik, dP_rennels)}")
 # print('Static Mach at inlet: ', Mach(helium, m_dot_expected, pipe.area))
@@ -410,7 +433,8 @@ m_dot_rennels = rennels_m_dot(pipe.area, air.P, P_out,
                             air.specific_gas_constant, air.T,
                             f, pipe.L, pipe.ID)
 print(f"Rennels m_dot works: {check(m_dot_expected, m_dot_rennels)}")
-
+m_dot_rennels_iter = rennels_m_dot_iter(air, pipe, P_out)
+print(f"Iter Rennels m_dot works: {check(m_dot_expected, m_dot_rennels_iter)}")
 dP_rennels = dP_isothermal(m_dot_expected, air, pipe, P_out)
 print(f"Rennels dP works: {check(dP, dP_rennels)}")
 M = Mach(air, m_dot_expected, pipe.area)
@@ -442,6 +466,8 @@ pipe = ht.piping.Tube(3*u.cm, L=15*u.m)
 P_out = None  # Calculate using mach number
 m_dot_expected = v*pipe.area * air.Dmass
 f = 0.02
+# m_dot_rennels_iter = rennels_m_dot_iter(air, pipe, P_out)
+# print(f"Iter Rennels m_dot works: {check(m_dot_expected, m_dot_rennels_iter)}")
 # q_h_std = simplified_isothermal(air.P.m_as(u.psi), P_out.m_as(u.psi), 0,
 #                                 f, pipe.L.m_as(u.mile), air.T.m_as(u.degR),
 #                                 air.Z, 1, pipe.ID.m_as(u.inch))
