@@ -38,8 +38,7 @@ P_STD = Q_(14.7, ureg.psi)  # Standard conditions (BPVC VIII UG-129 (c))
 
 from .cp_wrapper import ThermState
 # Default fluids
-Air = ThermState('air')
-Air.update('T', T_NTP, 'P', P_NTP)
+AIR = ThermState('air', P=P_NTP, T=T_NTP)
 
 
 from .functions import *
