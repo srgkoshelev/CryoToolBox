@@ -763,7 +763,14 @@ _NIST_DATA = {
                                 0.16503],
                       'range': (4, 300),
                       'fun': _nist_log_fit,
-                      'unit': ureg.J/(ureg.kg*ureg.K)}
+                      'unit': ureg.J/(ureg.kg*ureg.K)},
+        Property.LE: {'coefs': [-2.125E3, -8.201E-1, 6.161E-2,
+                                -3.171E-4, 6.850E-7],
+                      'range': (4, 300),
+                      'fun': _nist_pow_fit,
+                      'Tlow': 0,  # NA
+                      'f': None,  # NA
+                      'unit': 1e-5*ureg.m/ureg.m},
     },
     Material.OFHC:
     {
