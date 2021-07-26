@@ -7,7 +7,7 @@ from math import pi, sin, log, log10, sqrt, tan
 from . import logger
 from . import ureg, Q_
 from .cp_wrapper import ThermState
-from .functions import Air
+from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
 from . import T_NTP, P_NTP
@@ -1214,7 +1214,7 @@ def beta(d1, d2):
     return min(d1, d2)/max(d1, d2)
 
 
-def equivalent_orifice(m_dot, dP, fluid=Air):
+def equivalent_orifice(m_dot, dP, fluid=AIR):
     """
     Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
     flow and pressure drop.
