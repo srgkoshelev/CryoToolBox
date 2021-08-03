@@ -725,7 +725,7 @@ _NIST_DATA = {
                       'fun': _nist_log_fit,
                       'unit': ureg.J/(ureg.kg*ureg.K)}
     },
-    Material.Al6061:
+    Material.AL6061:
     {
         Property.TC: {'coefs': [0.07918, 1.0957, -0.07277, 0.08084, 0.02803,
                                 -0.09464, 0.04179, -0.00571, 0],
