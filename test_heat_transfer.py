@@ -291,6 +291,18 @@ class CPWrapperTest(unittest.TestCase):
         test_state.update_kw(T=300*ureg.K, P=1*ureg.MPa)
         test_state.copy()
 
+    def test_standard(self):
+        air_std = ht.AIR.to_standard(conditions='NTP')
+        self.assertAlmostEqual(ht.P_NTP, air_std.P)
+        self.assertAlmostEqual(ht.T_NTP, air_std.T)
+        air_std = ht.AIR.to_standard(conditions='MSC')
+        self.assertAlmostEqual(ht.P_MSC, air_std.P)
+        self.assertAlmostEqual(ht.T_MSC, air_std.T)
+        air_std = ht.AIR.to_standard(conditions='STD')
+        self.assertAlmostEqual(ht.P_STD, air_std.P)
+        self.assertAlmostEqual(ht.T_STD, air_std.T)
+
+
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@
 """
 import CoolProp.CoolProp as CP
 from math import inf
-from . import Q_, ureg, T_NTP, P_NTP
+from . import Q_, ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
@@ -529,4 +529,21 @@ class ThermState:
         # If conditions are defined
         if self.Dmass != -inf*ureg.kg/ureg.m**3:
             TempState.update_kw(T=self.T, Smass=self.Smass)
+        return TempState
+
+    def to_standard(self, conditions='NTP'):
+        """Create a copy of current ThermState object at standard conditions."""
+        if conditions == 'NTP':
+            P = P_NTP
+            T = T_NTP
+        elif conditions == 'MSC':
+            P = P_MSC
+            T = T_MSC
+        elif conditions == 'STD':
+            P = P_STD
+            T = T_STD
+        else:
+            raise ValueError(f'Conditions {conditions!r} are not defined.')
+        TempState = self.copy()
+        TempState.update_kw(P=P, T=T)
         return TempState
