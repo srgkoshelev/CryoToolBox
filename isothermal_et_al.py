@@ -41,6 +41,7 @@ u = ureg
 #                                 nitrogen.Z, Sg, pipe.ID.m_as(u.inch))
 # m_dot_crane = ht.to_mass_flow(q_h_std, nitrogen)
 # print(f"Crane works: {check(10*u.lb/u.s, m_dot_crane)}")
+
 # def rennels_m_dot(A, P1, P2, R, T, f, L, D):
 #     A = pipe.area
 #     m_dot = A * ((P1**2 - P2**2)/(R*T*(2*log(P1/P2)+f*L/D)))**0.5
@@ -414,49 +415,6 @@ u = ureg
 # # print('P total end: ', P_total_end)
 # # print(f"Mach dP works: {check(P_out, P_total_end)}")
 
-# print()
-# print("Analyzing Crane 7-22")
-# air = ht.ThermState('air', P=19.3*u.psig, T=100*u.degF)
-# print(air)
-# pipe = ht.piping.Pipe(1/2, SCH=80, L=7.04/6.04*10*u.ft)  # Adjust for entrance K = 1, total 7.04
-# dP = 19.3 * u.psi
-# P_out = air.P - dP
-# q_expected = 3762 * u.ft**3/u.hr  # STD flow
-# m_dot_expected = ht.to_mass_flow(q_expected, air)
-# Re = ht.Re(air, m_dot_expected, pipe.ID, pipe.area)
-# f = 0.0275
-# q_h_std = simplified_isothermal(air.P.m_as(u.psi), P_out.m_as(u.psi), 0,
-#                                 f, pipe.L.m_as(u.mile), air.T.m_as(u.degR),
-#                                 air.Z, 1, pipe.ID.m_as(u.inch))
-# m_dot_crane = ht.to_mass_flow(q_h_std, air)
-# print(f"Crane works: {check(m_dot_expected, m_dot_crane)}")
-# m_dot_rennels = rennels_m_dot(pipe.area, air.P, P_out,
-#                             air.specific_gas_constant, air.T,
-#                             f, pipe.L, pipe.ID)
-# print(f"Rennels m_dot works: {check(m_dot_expected, m_dot_rennels)}")
-# m_dot_rennels_iter = rennels_m_dot_iter(air, pipe, P_out)
-# print(f"Iter Rennels m_dot works: {check(m_dot_expected, m_dot_rennels_iter)}")
-# dP_rennels = dP_isothermal(m_dot_expected, air, pipe, P_out)
-# print(f"Rennels dP works: {check(dP, dP_rennels)}")
-# M = Mach(air, m_dot_expected, pipe.area)
-# # print('Mach at inlet: ', M)
-# K_lim = K_limit(M, air.gamma)
-# # print('K limit: ', K_lim)
-# # print('K pipe: ', pipe.K(Re).to_base_units())
-# check(M, M_from_K_limit(K_lim, air.gamma))
-# K_left = K_lim - pipe.K(Re)
-# # print('K left: ', K_left)
-# M_end = M_from_K_limit(K_left, air.gamma)
-# # print('M end: ', M_end)
-# M_out = Mach(ht.ThermState('air', P=P_out, T=air.T), m_dot_expected, pipe.area)
-# check(M_out, M_end)
-# P_static_end = P_from_M(air.P, M, M_end, air.gamma)
-# # print('P static end: ', P_static_end)
-# P_static_out = P_from_M(air.P, M, M_out, air.gamma)
-# check(P_static_end, P_static_out)
-# P_total_end = P_total_from_static(P_static_end, M, air.gamma)
-# # print('P total end: ', P_total_end)
-# print(f"Mach dP works: {check(P_out, P_total_end)}")
 
 # print()
 # print("Analyzing White 9.12b")
@@ -528,6 +486,7 @@ u = ureg
 # # print('M end: ', M_end)
 # M_out = 0.174
 # print(f'Mach checks out: {check(M_out, M_end)}')
+
 # check(0.225, M_from_K_limit(11, air.gamma))
 # check(0.2, M_from_K_limit(14.533, air.gamma))
 # check(0.15, M_from_K_limit(27.932, air.gamma))

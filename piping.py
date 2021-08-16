@@ -15,6 +15,7 @@ from . import os, __location__
 from pint import set_application_registry
 from serialize import load
 from scipy.optimize import root_scalar
+from collections.abc import MutableSequence
 
 set_application_registry(ureg)
 
@@ -821,7 +822,7 @@ class Enlargement(Contraction):
         return K_
 
 
-class Piping(list):
+class Piping(MutableSequence):
     '''
     Piping system defined by initial conditions and structure of
     pipe elements.
@@ -833,208 +834,44 @@ class Piping(list):
     value is used with Darcy equation to calculate pressure drop or mass flow.
     '''
     pipe_type = (Pipe, VJPipe, CorrugatedPipe, Tube, Annulus, Elbow)
-    def __init__(self, fluid, pipes=[]):
-        self.fluid = fluid
-        self.extend(pipes)
-
-    def add(self, *pipes):
-        self.extend(pipes)
-
-    def K(self, m_dot):
-        """Calculate resistance coefficient converted to the area of the first element.
-
-        Returns
-        -------
-        tuple
-            K0 : converted resistance coefficient of the piping
-            A0 : area of the first element, basis for conversion
-        """
-        K0 = 0*ureg.dimensionless
-        self._K_values = []
-        try:
-            A0 = self[0].area  # using area of the first element as base
-        except IndexError:
-            raise IndexError('Piping has no elements! '
-                             'Use Piping.add to add sections to piping.')
-        for element in self:
-            Re_ = Re(self.fluid, m_dot, element.ID, element.area)
-            if isinstance(element, Piping.pipe_type) and \
-               not isinstance(element, Tee):
-                K_el = element.K(Re_) * (A0/element.area)**2
-                self._K_values.append(K_el.to_base_units())
-                K0 += K_el
-            else:
-                K_el = element.K() * (A0/element.area)**2
-                self._K_values.append(K_el.to_base_units())
-                K0 += K_el
-        return (K0.to_base_units(), A0)
+    def __init__(self, *elements):
+        self._elements = list(elements)
 
     def volume(self):
         result = []
         # TODO remove elbows and tees after merge
-        for pipe in self:
+        for pipe in self._elements:
             if isinstance(pipe, Piping.pipe_type):
                 result.append((str(pipe),
                                f'{pipe.L.to(ureg.ft).magnitude:.3g}',
                                f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
         return result
 
-    def stored_energy(self):
+    def stored_energy(self, fluid):
         """Calculate stored energy of the piping.
 
         Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
-        fluid = self.fluid
         largest_tube = max(self, key=lambda tube: tube.ID)
         volume = pi * largest_tube.ID**2 / 4 * 8 * largest_tube.L
         return stored_energy(fluid, volume)
 
-    @ureg.check(None, '[mass]/[time]')
-    def dP(self, m_dot):
-        '''
-        Calculate pressure drop through piping.
-        Lumped method using Darcy equation is used.
-        The pressure dropped is checked for choked condition.
-        '''
-        P_0 = self.fluid.P
-        T_0 = self.fluid.T
-        rho_0 = self.fluid.Dmass
-        K, area = self.K(m_dot)
-        w = m_dot / (rho_0*area)
-        dP = dP_darcy(K, rho_0, w)  # first iteration
-        P_out = P_0 - dP
-        k = self.fluid.gamma  # adiabatic coefficient
-        # Critical pressure drop;
-        # Note: according to Crane TP-410 should be dependent on
-        # the hydraulic resistance of the flow path
-        rc = (2/(k+1))**(k/(k-1))
-        if self.fluid.Q < 0 or dP/P_0 <= 0.1:  # if q<0 then fluid is a liquid
-            return dP
-        elif dP/P_0 <= 0.4:
-            TempState = ThermState(self.fluid.name, backend=self.fluid.backend)
-            # Only working for pure fluids and pre-defined mixtures
-            TempState.update('T', T_0, 'P', P_out)
-            rho_out = TempState.Dmass
-            rho_ave = (rho_0+rho_out) / 2
-            w = m_dot/(rho_ave*area)
-            return dP_darcy(K, rho_ave, w)
-        elif 0.4 < dP/P_0 < (1-rc):  # Subsonic flow
-            logger.warning('Pressure drop too high for Darcy equation!')
-            # Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
-            w = ((P_0**2-P_out**2) / (P_0*rho_0*(K+2*log(P_0/P_out))))**0.5
-            return dP_darcy(K, rho_0, w)
-        else:
-            logger.warning('''Sonic flow developed. Calculated value ignores
-            density changes. Consider reducing mass flow:
-                           {:.3~}'''.format(m_dot))
-            return dP_darcy(K, rho_0, w)
-
-    def m_dot(self, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
-        '''Calculate mass flow through the piping using initial conditions
-        at the beginning of piping.
-
-        Calculation is based on Crane TP-410, p. 1.9.
-        Net expansion factor Y is conservatively assumed as 1.
-        Mass flow is calculated using Darcy equation.
-
-        Parameters
-        ----------
-        P_out : ureg.Quantity {length: -1, mass: 1, time: -1}
-            Exit pressure of the piping.
-        guess : ureg.Quantity {mass: 1, time: -1}
-            guess value for the mass flow rate
-
-        Returns
-        -------
-        ureg.Quantity : {mass: 1, time: -1}
-        '''
-        P_0 = self.fluid.P
-        if P_0 <= P_out:
-            logger.warning(f'Input pressure less or equal to output: \
-            {P_0.to(ureg.Pa):.3g}, {P_out.to(ureg.Pa):.3g}')
-            return Q_('0 g/s')
-        def to_solve(m_dot_gs, P_in_Pa, P_out_Pa):
-            # print(m_dot_gs)
-            dP_calc = self.dP(m_dot_gs*ureg.g/ureg.s)
-            dP_given = P_in_Pa - P_out_Pa
-            return dP_given - dP_calc.m_as(ureg.Pa)
-        P_in_Pa = P_0.m_as(ureg.Pa)
-        P_out_Pa = P_out.m_as(ureg.Pa)
-        args = (P_in_Pa, P_out_Pa)  # arguments passed to to_solve
-        logger_level = logger.getEffectiveLevel()
-        # ERROR and CRITICAL only will be shown; WARNING is suppressed
-        logger.setLevel(40)
-        x0 = guess.m_as(ureg.g/ureg.s)
-        x1 = x0 * 2  # Usually doubling the flow is OK estimate
-        solution = root_scalar(to_solve, args, x0=x0, x1=x1)
-        logger.setLevel(logger_level)
-        m_dot_ = solution.root * ureg.g/ureg.s
-        return m_dot_
-        # rho = self.fluid.Dmass
-        # K, area = self.K()
-        # k = self.fluid.gamma  # adiabatic coefficient
-        # # Critical pressure drop
-        # # Note: according to Crane TP-410 should be dependent on
-        # # the hydraulic resistance of the flow path
-        # rc = (2/(k+1))**(k/(k-1))
-        # if P_out/P_0 > rc:  # Subsonic flow
-        #     delta_P = P_0-P_out
-        # else:  # Sonic flow
-        #     # logger.warning('''End pressure creates sonic flow.
-        #     #                Max possible dP will be used''')
-        #     delta_P = P_0*(1-rc)  # Crane TP-410, p 2-15
-        # # Net expansion factor for discharge is assumed to be 1
-        # # (conservative value):
-        # m_dot_ = area * (2*delta_P*rho/K)**0.5
-        # return m_dot_.to(ureg.g/ureg.s)
-
-    def _solver_func(self, P_in_Pa, m_dot, P_out_act):
-        """
-        Solver function for calculating upstream pressure given flow and
-        downstream pressure.
-
-        :P_in_Pa: input pressure in Pa, float
-        :args: calculation parameters:
-            :m_dot: mass flow
-            :P_out_act: actual downstream pressure
-        """
-        P_in = Q_(P_in_Pa, ureg.Pa)
-        self.fluid.update('P', P_in, 'Smass', self.fluid.Smass)
-        P_out_calc = P_in - self.dP(m_dot)
-        P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
-        P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
-        return P_out_calc_Pa - P_out_act_Pa
-
-    def P_in(self, m_dot, P_out=ureg('0 psig'), P_min=ureg('0 psig'),
-             P_max=ureg('200 bar')):
-        """
-        Calculate upstream pressure given mass flow and downstream pressure.
-
-        :m_dot: mass flow
-        :P_out: downstream pressure
-        :P_min: min expected pressure; should be lower than actual value
-        :P_max: max expected pressure; should be higher than actual value
-        """
-        args = (m_dot, P_out)  # arguments passed to _solver_func
-        # Convert pressure to dimensionless form
-        P_min_Pa = P_min.to(ureg.Pa).magnitude
-        P_max_Pa = P_max.to(ureg.Pa).magnitude
-        bracket = [P_min_Pa, P_max_Pa]
-        logger_level = logger.getEffectiveLevel()
-        # ERROR and CRITICAL only will be shown; WARNING is suppressed
-        logger.setLevel(40)
-        solution = root_scalar(self._solver_func, args, bracket=bracket,
-                               method='brentq')
-        logger.setLevel(logger_level)
-        P_in = Q_(solution.root, ureg.Pa)
-        self.fluid.update('P', P_in, 'Smass', self.fluid.Smass)
-        logger.debug(f'Comparing pressure drop:\n    dP method:\n        \
-        {self.dP(m_dot).to(ureg.psi)}\n    \
-        P_in - P_out:\n        \
-        {(P_in-P_out).to(ureg.psi)}')
-        logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
-
     def __str__(self):
-        return '\n'.join([el.__str__() for el in self])
+        return '\n'.join([el.__str__() for el in self._elements])
+
+    def __delitem__(self, idx):
+        del self._elements[idx]
+
+    def __getitem__(self, idx):
+        return self._elements[idx]
+
+    def __len__(self):
+        return len(self._elements)
+
+    def __setitem__(self, idx, value):
+        self._elements[idx] = value
+
+    def insert(self, idx, value):
+        self._elements.insert(idx, value)
 
 
 class ParallelPlateRelief:
@@ -1157,6 +994,184 @@ def serghide(Re_, eps_r):
     f = (A - (B-A)**2/(C-2*B+A))**(-2)
     return f
 
+def K_piping(m_dot, fluid, piping):
+    """Calculate resistance coefficient converted to the area of the first element.
+
+    Returns
+    -------
+    tuple
+        K0 : converted resistance coefficient of the piping
+        A0 : area of the first element, basis for conversion
+    """
+    K0 = 0*ureg.dimensionless
+    try:
+        A0 = piping[0].area  # using area of the first element as base
+    except IndexError:
+        raise IndexError('Piping has no elements! '
+                            'Use Piping.add to add sections to piping.')
+    for element in piping:
+        Re_ = Re(fluid, m_dot, element.ID, element.area)
+        if isinstance(element, Piping.pipe_type) and \
+            not isinstance(element, Tee):
+            K_el = element.K(Re_) * (A0/element.area)**2
+            K0 += K_el
+        else:
+            K_el = element.K() * (A0/element.area)**2
+            K0 += K_el
+    return (K0.to_base_units(), A0)
+
+# @ureg.check(None, '[mass]/[time]')
+def dP(m_dot, fluid, piping):
+    '''
+    Calculate pressure drop through piping.
+    Lumped method using Darcy equation is used.
+    The pressure dropped is checked for choked condition.
+    '''
+    P_0 = fluid.P
+    T_0 = fluid.T
+    rho_0 = fluid.Dmass
+    K, area = K_piping(m_dot, fluid, piping)
+    w = m_dot / (rho_0*area)
+    dP = dP_Darcy(K, rho_0, w)  # first iteration
+    P_out = P_0 - dP
+    k = fluid.gamma  # adiabatic coefficient
+    # Critical pressure drop;
+    # Note: according to Crane TP-410 should be dependent on
+    # the hydraulic resistance of the flow path
+    rc = (2/(k+1))**(k/(k-1))
+    if fluid.Q < 0 or dP/P_0 <= 0.1:  # if q<0 then fluid is a liquid
+        return dP
+    elif dP/P_0 <= 0.4:
+        TempState = ThermState(fluid.name, backend=fluid.backend)
+        # Only working for pure fluids and pre-defined mixtures
+        TempState.update('T', T_0, 'P', P_out)
+        rho_out = TempState.Dmass
+        rho_ave = (rho_0+rho_out) / 2
+        w = m_dot/(rho_ave*area)
+        return dP_Darcy(K, rho_ave, w)
+    elif 0.4 < dP/P_0 < (1-rc):  # Subsonic flow
+        logger.warning('Pressure drop too high for Darcy equation!')
+        # Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
+        w = ((P_0**2-P_out**2) / (P_0*rho_0*(K+2*log(P_0/P_out))))**0.5
+        return dP_Darcy(K, rho_0, w)
+    else:
+        logger.warning('''Sonic flow developed. Calculated value ignores
+        density changes. Consider reducing mass flow:
+                        {:.3~}'''.format(m_dot))
+        return dP_Darcy(K, rho_0, w)
+
+def dP_simple_ave(m_dot, fluid, piping):
+    """Calculate pressure drop of a compressible flow using simple average specific volume.
+
+    """
+    pass
+
+
+def m_dot(fluid, piping, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
+    '''Calculate mass flow through the piping using initial conditions
+    at the beginning of piping.
+
+    Calculation is based on Crane TP-410, p. 1.9.
+    Net expansion factor Y is conservatively assumed as 1.
+    Mass flow is calculated using Darcy equation.
+
+    Parameters
+    ----------
+    P_out : ureg.Quantity {length: -1, mass: 1, time: -1}
+        Exit pressure of the piping.
+    guess : ureg.Quantity {mass: 1, time: -1}
+        guess value for the mass flow rate
+
+    Returns
+    -------
+    ureg.Quantity : {mass: 1, time: -1}
+    '''
+    P_0 = fluid.P
+    if P_0 <= P_out:
+        logger.warning(f'Input pressure less or equal to output: \
+        {P_0.to(ureg.Pa):.3g}, {P_out.to(ureg.Pa):.3g}')
+        return Q_('0 g/s')
+    def to_solve(m_dot_gs, P_in_Pa, P_out_Pa):
+        # print(m_dot_gs)
+        dP_calc = dP(m_dot_gs*ureg.g/ureg.s, fluid, piping)
+        dP_given = P_in_Pa - P_out_Pa
+        return dP_given - dP_calc.m_as(ureg.Pa)
+    P_in_Pa = P_0.m_as(ureg.Pa)
+    P_out_Pa = P_out.m_as(ureg.Pa)
+    args = (P_in_Pa, P_out_Pa)  # arguments passed to to_solve
+    logger_level = logger.getEffectiveLevel()
+    # ERROR and CRITICAL only will be shown; WARNING is suppressed
+    logger.setLevel(40)
+    x0 = guess.m_as(ureg.g/ureg.s)
+    x1 = x0 * 2  # Usually doubling the flow is OK estimate
+    solution = root_scalar(to_solve, args, x0=x0, x1=x1)
+    logger.setLevel(logger_level)
+    m_dot_ = solution.root * ureg.g/ureg.s
+    return m_dot_
+    # rho = self.fluid.Dmass
+    # K, area = self.K()
+    # k = self.fluid.gamma  # adiabatic coefficient
+    # # Critical pressure drop
+    # # Note: according to Crane TP-410 should be dependent on
+    # # the hydraulic resistance of the flow path
+    # rc = (2/(k+1))**(k/(k-1))
+    # if P_out/P_0 > rc:  # Subsonic flow
+    #     delta_P = P_0-P_out
+    # else:  # Sonic flow
+    #     # logger.warning('''End pressure creates sonic flow.
+    #     #                Max possible dP will be used''')
+    #     delta_P = P_0*(1-rc)  # Crane TP-410, p 2-15
+    # # Net expansion factor for discharge is assumed to be 1
+    # # (conservative value):
+    # m_dot_ = area * (2*delta_P*rho/K)**0.5
+    # return m_dot_.to(ureg.g/ureg.s)
+
+# def _solver_func(self, P_in_Pa, m_dot, P_out_act):
+#     """
+#     Solver function for calculating upstream pressure given flow and
+#     downstream pressure.
+
+#     :P_in_Pa: input pressure in Pa, float
+#     :args: calculation parameters:
+#         :m_dot: mass flow
+#         :P_out_act: actual downstream pressure
+#     """
+#     P_in = Q_(P_in_Pa, ureg.Pa)
+#     self.fluid.update('P', P_in, 'Smass', self.fluid.Smass)
+#     P_out_calc = P_in - self.dP(m_dot)
+#     P_out_calc_Pa = P_out_calc.to(ureg.Pa).magnitude
+#     P_out_act_Pa = P_out_act.to(ureg.Pa).magnitude
+#     return P_out_calc_Pa - P_out_act_Pa
+
+# def P_in(self, m_dot, P_out=ureg('0 psig'), P_min=ureg('0 psig'),
+#             P_max=ureg('200 bar')):
+#     """
+#     Calculate upstream pressure given mass flow and downstream pressure.
+
+#     :m_dot: mass flow
+#     :P_out: downstream pressure
+#     :P_min: min expected pressure; should be lower than actual value
+#     :P_max: max expected pressure; should be higher than actual value
+#     """
+#     args = (m_dot, P_out)  # arguments passed to _solver_func
+#     # Convert pressure to dimensionless form
+#     P_min_Pa = P_min.to(ureg.Pa).magnitude
+#     P_max_Pa = P_max.to(ureg.Pa).magnitude
+#     bracket = [P_min_Pa, P_max_Pa]
+#     logger_level = logger.getEffectiveLevel()
+#     # ERROR and CRITICAL only will be shown; WARNING is suppressed
+#     logger.setLevel(40)
+#     solution = root_scalar(self._solver_func, args, bracket=bracket,
+#                             method='brentq')
+#     logger.setLevel(logger_level)
+#     P_in = Q_(solution.root, ureg.Pa)
+#     self.fluid.update('P', P_in, 'Smass', self.fluid.Smass)
+#     logger.debug(f'Comparing pressure drop:\n    dP method:\n        \
+#     {self.dP(m_dot).to(ureg.psi)}\n    \
+#     P_in - P_out:\n        \
+#     {(P_in-P_out).to(ureg.psi)}')
+#     logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
+
 def m_dot_isothermal(fluid, pipe, P_out=0*ureg.psig):
     """Calculate mass flow rate through piping for isothermal compressible
     flow.
@@ -1221,7 +1236,7 @@ def dP_isothermal(m_dot, fluid, pipe):
     dP = Q_(solution.root**0.5, ureg.Pa)
     return dP.to(ureg.psi)
 
-def dP_darcy(K, rho, w):
+def dP_Darcy(K, rho, w):
     '''
     Darcy equation for pressure drop.
     K - resistance coefficient

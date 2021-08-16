@@ -186,6 +186,21 @@ class PipingTest(unittest.TestCase):
         assert abs(data-calc) / data < uncertainty, \
             f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
 
+    def test_piping(self):
+        pipe = ht.piping.Pipe(1)
+        piping = ht.piping.Piping(pipe)
+        self.assertEqual([pipe], piping._elements)
+        self.assertEqual(pipe, piping[0])
+        piping.insert(0, pipe)
+        self.assertEqual([pipe, pipe], piping._elements)
+        pipe2 = ht.piping.Pipe(2)
+        piping[1] = pipe2
+        self.assertEqual([pipe, pipe2], piping._elements)
+        del piping[0]
+        self.assertEqual([pipe2], piping._elements)
+        self.assertEqual(pipe2, piping[0])
+        self.assertEqual(1, len(piping))
+
     def test_create_pipes(self):
         tube = ht.piping.Tube(Q_('1 inch'))
         pipe = ht.piping.Pipe(Q_('1 inch'))
@@ -210,13 +225,13 @@ class PipingTest(unittest.TestCase):
         enl = ht.piping.Enlargement(0.5*ureg.inch, 1*ureg.inch)
         test_state = ht.Air
         piping = ht.piping.Piping(
-            test_state,
-            [pipe, vj_pipe, corr_pipe, entrance, pipe_exit, orifice, c_orifice,
+            pipe, vj_pipe, corr_pipe, entrance, pipe_exit, orifice, c_orifice,
              tube, c_tube, annulus, pipe_elbow, elbow, pipe_tee, tee, valve,
              # g_valve, v_cone,
-             cont, enl])
+             cont, enl)
         piping.volume()
-        self.assertApproxEqual(21.2*ureg.psi, piping.dP(Q_('10 g/s')))
+        dP = ht.piping.dP(Q_('10 g/s'), test_state, piping)
+        self.assertApproxEqual(21.2*ureg.psi, dP)
 
         # Test the solver inside Piping.m_dot
         # for i in range(30):
@@ -266,17 +281,61 @@ class PipingTest(unittest.TestCase):
         pipe = ht.piping.Pipe(1, SCH=40, L=75*ureg.ft)
         flow = 100 * ureg.ft**3/ureg.min
         m_dot = flow * ht.Air.Dmass
-        piping = ht.piping.Piping(
-            air,
-            [pipe, ht.piping.Exit(pipe.ID)])
-        self.assertApproxEqual(2.61, piping.dP(m_dot).m_as(ureg.psi))
+        piping = ht.piping.Piping(pipe, ht.piping.Exit(pipe.ID))
+        dP = ht.piping.dP(m_dot, air, piping)
+        self.assertApproxEqual(2.61, dP.m_as(ureg.psi))
+
+    def test_Crane_7_22(self):
+        air = ht.ThermState('air', P=19.3*ureg.psig, T=100*ureg.degF)
+        pipe = ht.piping.Pipe(1/2, SCH=80, L=7.04/6.04*10*ureg.ft)  # Adjust for entrance K = 1, total 7.04
+        dP = 19.3 * ureg.psi
+        P_out = air.P - dP
+        q_expected = 3762 * ureg.ft**3/ureg.hr  # STD flow
+        m_dot_expected = ht.to_mass_flow(q_expected, air)
+        Re = ht.Re(air, m_dot_expected, pipe.ID, pipe.area)
+        f = 0.0275
+        # q_h_std = simplified_isothermal(air.P.m_as(u.psi), P_out.m_as(u.psi), 0,
+        #                                 f, pipe.L.m_as(u.mile), air.T.m_as(u.degR),
+        #                                 air.Z, 1, pipe.ID.m_as(u.inch))
+        # m_dot_crane = ht.to_mass_flow(q_h_std, air)
+        # print(f"Crane works: {check(m_dot_expected, m_dot_crane)}")
+        # m_dot_rennels = rennels_m_dot(pipe.area, air.P, P_out,
+        #                             air.specific_gas_constant, air.T,
+        #                             f, pipe.L, pipe.ID)
+        # print(f"Rennels m_dot works: {check(m_dot_expected, m_dot_rennels)}")
+        # m_dot_rennels_iter = rennels_m_dot_iter(air, pipe, P_out)
+        # print(f"Iter Rennels m_dot works: {check(m_dot_expected, m_dot_rennels_iter)}")
+        # dP_rennels = dP_isothermal(m_dot_expected, air, pipe, P_out)
+        # print(f"Rennels dP works: {check(dP, dP_rennels)}")
+        # M = Mach(air, m_dot_expected, pipe.area)
+        # # print('Mach at inlet: ', M)
+        # K_lim = K_limit(M, air.gamma)
+        # # print('K limit: ', K_lim)
+        # # print('K pipe: ', pipe.K(Re).to_base_units())
+        # check(M, M_from_K_limit(K_lim, air.gamma))
+        # K_left = K_lim - pipe.K(Re)
+        # # print('K left: ', K_left)
+        # M_end = M_from_K_limit(K_left, air.gamma)
+        # # print('M end: ', M_end)
+        # M_out = Mach(ht.ThermState('air', P=P_out, T=air.T), m_dot_expected, pipe.area)
+        # check(M_out, M_end)
+        # P_static_end = P_from_M(air.P, M, M_end, air.gamma)
+        # # print('P static end: ', P_static_end)
+        # P_static_out = P_from_M(air.P, M, M_out, air.gamma)
+        # check(P_static_end, P_static_out)
+        # P_total_end = P_total_from_static(P_static_end, M, air.gamma)
+        # # print('P total end: ', P_total_end)
+        # print(f"Mach dP works: {check(P_out, P_total_end)}")
 
     def test_Rennels_4_5(self):
         pipe = ht.piping.Pipe(4, SCH=40, L=100*ureg.ft)
         fluid = ht.ThermState('nitrogen', P=100*ureg.psi, T=530*ureg.degR)
-        piping = ht.piping.Piping(fluid, [pipe])
+        piping = ht.piping.Piping(pipe)
         P_out = 84.056 * ureg.psi
-        self.assertApproxEqual(10, piping.m_dot(P_out).m_as(ureg.lb/ureg.s))
+        m_dot = ht.piping.m_dot(fluid, piping, P_out)
+        self.assertApproxEqual(10, m_dot.m_as(ureg.lb/ureg.s))
+
+
 
 # TODO Add Crane examples: 4-22 (may need Y implementation),
 # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
