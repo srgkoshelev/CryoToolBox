@@ -1202,27 +1202,38 @@ def dP_isot(m_dot, fluid, pipe):
     Quantity {length: -1, mass: 1, time: -2}
         Pressure drop
     """
-    P_1 = fluid.P.m_as(ureg.Pa)
-    T = fluid.T.m_as(ureg.K)
-    R = fluid.specific_gas_constant.m_as(ureg.J/ureg.kg/ureg.K)
-    A = pipe.area.m_as(ureg.m**2)
-    K = float(pipe.K(Re(fluid, m_dot, pipe.ID, pipe.area)))
-    m_dot = m_dot.m_as(ureg.kg/ureg.s)
-    B = m_dot**2 * R * T / A**2
-    def to_solve(P_2_sq):
-        P_2 = P_2_sq**0.5
-        P_2_sq_calc = P_1**2 - B * (2*log(P_1/P_2)+K)
-        return P_2_sq - P_2_sq_calc, 1 - B/P_2_sq
-
-    P_2_sq = ((65*ureg.psig-2.61*ureg.psi)**2).m_as(ureg.Pa**2)
-    print()
-    print("P1", P_1, "\nT", T, "\nR", R, "\nA", A, "\nK", K, "\nm_dot", m_dot, "\nP_2_sq", P_2_sq)
-    print(to_solve(P_2_sq))
-    x0 = P_1**2 - B * K
-    solution = root_scalar(to_solve, x0=x0,
-                            fprime=True, method='newton')
-    dP = Q_(solution.root**0.5, ureg.Pa)
-    return dP.to(ureg.psi)
+    R = fluid.specific_gas_constant
+    T = fluid.T
+    P1 = fluid.P
+    A = pipe.area
+    K = pipe.K(Re(fluid, m_dot, pipe.ID, pipe.area))
+    def to_solve_sq(P2sq_):
+        P1_ = P1.m_as(ureg.Pa)
+        m_dot_ = m_dot.m_as(ureg.kg/ureg.s)
+        R_ = R.m_as(ureg.J/ureg.kg/ureg.K)
+        T_ = T.m_as(ureg.K)
+        A_ = A.m_as(ureg.m**2)
+        K_ = float(K)
+        B = m_dot_**2 * R_ * T_ / A_**2
+        sq_diff = B * (2*log(P1_/(P2sq_)**0.5)+K_)
+        return P2sq_ - P1_**2 + sq_diff, 1 - B/P2sq_, B/P2sq_**2
+    x0 = P1.m_as(ureg.Pa)**2
+    x1 = 0.9 * x0
+    bracket = [1e-9, x0]
+    methods = ['secant', 'newton', 'halley']
+    for method in methods:
+        try:
+            solution = root_scalar(to_solve_sq, x0=x0, x1=x1, fprime=True,
+                                    fprime2=True, bracket=bracket, method=method)
+            P_2_root_sq = solution.root**0.5 * ureg.Pa
+            print(method, solution.iterations)
+        except TypeError:
+            print(f'{method} method failed for square solve')
+            P_2_root_sq = None
+    if P_2_root_sq is None:
+        return None
+    else:
+        return P1 - P_2_root_sq
 
 
 def K_to_Cv(K, ID):

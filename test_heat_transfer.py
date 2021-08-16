@@ -2,6 +2,7 @@ import heat_transfer as ht
 import pprint
 import unittest
 import random
+from attrdict import AttrDict
 
 pp = pprint.PrettyPrinter()
 
@@ -160,7 +161,6 @@ class FunctionsTest(unittest.TestCase):
         fluid.set_mole_fractions(0.5, 0.5)
         fluid.update_kw(T=627*ureg.degR, P=97.2*ureg.psi)
         P_back = 77.2 * ureg.psi
-        # print(fluid.M, fluid.compressibility_factor, fluid.gamma)
         A_expect = 6.55 * ureg.inch**2
         A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
@@ -172,7 +172,6 @@ class FunctionsTest(unittest.TestCase):
         fluid.set_mole_fractions(0.5, 0.5)
         fluid.update_kw(T=627*ureg.degR, P=97.2*ureg.psi)
         P_back = 0 * ureg.psig
-        # print(fluid.M, fluid.compressibility_factor, fluid.gamma)
         A_expect = 5.73 * ureg.inch**2
         A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
@@ -182,8 +181,12 @@ class PipingTest(unittest.TestCase):
 
     Doesn't check for correctness yet."""
 
-    def assertApproxEqual(self, data, calc, uncertainty=0.1):
-        assert abs(data-calc) / data < uncertainty, \
+    def assertApproxEqual(self, expected, calculated, uncertainty=0.1):
+        error = float(abs(expected-calculated)/expected)
+        if isinstance(expected, ureg.Quantity) and isinstance(calculated, ureg.Quantity):
+            unit = expected.units
+            calculated.ito(unit)
+        assert error < uncertainty, \
             f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
 
     def test_piping(self):
@@ -233,14 +236,6 @@ class PipingTest(unittest.TestCase):
         dP = ht.piping.dP_incomp(Q_('10 g/s'), test_state, piping)
         self.assertApproxEqual(21.2*ureg.psi, dP)
 
-        # Test the solver inside Piping.m_dot
-        # for i in range(30):
-        #     m_dot = random.random()*10**(random.randrange(-1, 5)) * ureg.g/ureg.s
-        #     dP_calc = piping.dP(m_dot)
-        #     dP = dP_calc
-        #     m_dot_calc = piping.m_dot(P_out=ht.AIR.P-dP)
-        #     self.assertApproxEqual(m_dot, m_dot_calc)
-
     def test_f_Darcy(self):
         eps_smooth = 0.0018 * ureg.inch
         Re = 1e8
@@ -263,19 +258,6 @@ class PipingTest(unittest.TestCase):
         Re = 1e3
         self.assertApproxEqual(64/Re, ht.piping.f_Darcy(Re, eps_r))
 
-
-    # def test_Crane_4_22(self):
-    #     test_air = ht.ThermState('air', P=2.343*ureg.bar, T=40*ureg.degC)
-    #     pipe = ht.piping.Pipe(1/2, SCH=80, L=3*ureg.m)
-    #     piping = ht.piping.Piping(
-    #         test_air,
-    #         [pipe,
-    #          ht.piping.Exit(pipe.ID)])
-    #     Y = 0.76  # Taken from Crane; temporary stub
-    #     flow = ht.to_standard_flow(piping.m_dot(), test_air) * Y
-    #     # TODO Check this test (might have to do with subsonic flow)
-    #     self.assertAlmostEqual(1.76, flow.to(ureg.m**3/ureg.min).magnitude)
-
     def test_Crane_7_16(self):
         air = ht.ThermState('air', P=65*ureg.psig, T=110*ureg.degF)
         pipe = ht.piping.Pipe(1, SCH=40, L=75*ureg.ft)
@@ -284,6 +266,8 @@ class PipingTest(unittest.TestCase):
         piping = ht.piping.Piping(pipe, ht.piping.Exit(pipe.ID))
         dP = ht.piping.dP_incomp(m_dot, air, piping)
         self.assertApproxEqual(2.61, dP.m_as(ureg.psi))
+        dP_isot = ht.piping.dP_isot(m_dot, air, pipe)
+        self.assertApproxEqual(2.61, dP_isot.m_as(ureg.psi))
 
     def test_Crane_7_22(self):
         air = ht.ThermState('air', P=19.3*ureg.psig, T=100*ureg.degF)
@@ -294,19 +278,8 @@ class PipingTest(unittest.TestCase):
         m_dot_expected = ht.to_mass_flow(q_expected, air)
         Re = ht.Re(air, m_dot_expected, pipe.ID, pipe.area)
         f = 0.0275
-        # q_h_std = simplified_isothermal(air.P.m_as(u.psi), P_out.m_as(u.psi), 0,
-        #                                 f, pipe.L.m_as(u.mile), air.T.m_as(u.degR),
-        #                                 air.Z, 1, pipe.ID.m_as(u.inch))
-        # m_dot_crane = ht.to_mass_flow(q_h_std, air)
-        # print(f"Crane works: {check(m_dot_expected, m_dot_crane)}")
-        # m_dot_rennels = rennels_m_dot(pipe.area, air.P, P_out,
-        #                             air.specific_gas_constant, air.T,
-        #                             f, pipe.L, pipe.ID)
-        # print(f"Rennels m_dot works: {check(m_dot_expected, m_dot_rennels)}")
-        # m_dot_rennels_iter = rennels_m_dot_iter(air, pipe, P_out)
-        # print(f"Iter Rennels m_dot works: {check(m_dot_expected, m_dot_rennels_iter)}")
-        # dP_rennels = dP_isothermal(m_dot_expected, air, pipe, P_out)
-        # print(f"Rennels dP works: {check(dP, dP_rennels)}")
+        m_dot_isot = ht.piping.m_dot_isot(air, pipe)
+        self.assertApproxEqual(m_dot_expected, m_dot_isot)
         # M = Mach(air, m_dot_expected, pipe.area)
         # # print('Mach at inlet: ', M)
         # K_lim = K_limit(M, air.gamma)
@@ -337,11 +310,50 @@ class PipingTest(unittest.TestCase):
         m_dot_isot = ht.piping.m_dot_isot(fluid, pipe, P_out)
         self.assertApproxEqual(10, m_dot_isot.m_as(ureg.lb/ureg.s))
 
+    def test_White_9_10(self):
+        pass
 
+    def test_White_9_11(self):
+        pass
 
-# TODO Add Crane examples: 4-22 (may need Y implementation),
-# 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
+    def test_White_9_12(self):
+        pass
+        # air = ht.ThermState('air', P=300*u.kPa, T=500*u.K)
+        # v = 100 * u.m/u.s
+        # pipe = ht.piping.Tube(3*u.cm, L=15*u.m)
+        # P_out = None  # Calculate using mach number
+        # m_dot_expected = v*pipe.area * air.Dmass
+        # f = 0.02
+        # M = Mach(air, m_dot_expected, pipe.area)
+        # K_lim = K_limit(M, air.gamma)
+        # check(M, M_from_K_limit(K_lim, air.gamma))
+        # K_left = K_lim - f*pipe.L/pipe.ID
+        # M_end = M_from_K_limit(K_left, air.gamma)
+        # M_out = M_from_K_limit(1, air.gamma)
+        # print(f'Mach checks out: {check(M_out, M_end)}')
 
+        # pipe = ht.piping.Tube(3*u.cm, L=30*u.m)
+        # P_out = None
+        # m_dot_expected = v*pipe.area * air.Dmass
+        # f = 0.02
+        # M = Mach(air, m_dot_expected, pipe.area)
+        # check(0.225, M)
+        # K_lim = K_limit(M, air.gamma)
+        # check(M, M_from_K_limit(K_lim, air.gamma))
+        # K_left = K_lim - pipe.K(Re)
+        # M_end = M_from_K_limit(K_left, air.gamma)
+        # M_out = 0.174
+        # print(f'Mach checks out: {check(M_out, M_end)}')
+
+    def test_M_from_K(self):
+        pass
+        # air = ht.ThermState('air', P=300*u.kPa, T=500*u.K)
+        # check(0.225, M_from_K_limit(11, air.gamma))
+        # check(0.2, M_from_K_limit(14.533, air.gamma))
+        # check(0.15, M_from_K_limit(27.932, air.gamma))
+        # check(0.17, M_from_K_limit(21.115, air.gamma))
+        # check(0.175, M_from_K_limit(19.772, air.gamma))
+        # check(0.1741, M_from_K_limit(20, air.gamma))
 
 class CPWrapperTest(unittest.TestCase):
     """Test for additional methods of ThermState class"""
@@ -368,95 +380,3 @@ class CPWrapperTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-    # print('\nCalculating evaporation heat')
-    # Test_State.update('T', Q_('4.2 K'), 'Q', Q_('0'))
-    # Hmass_liq = Test_State.Hmass
-    # print(Hmass_liq)
-    # print(Test_State.specific_heat_input)
-    # Test_State.update('T', Q_('4.2 K'), 'Q', Q_('1'))
-    # Hmass_vap = Test_State.Hmass
-    # print(Hmass_vap)
-    # Hmass_evap = Hmass_vap - Hmass_liq
-    # print(Hmass_evap)
-    # print(Test_State.specific_heat_input)
-    # Test_State.update('P', P_SHI, 'T', Q_('200 K'))
-    # print(theta_bruce(Test_State.P).to(ht.ureg.J/ht.ureg.kg), T_SHI.to(ht.ureg.K))
-    # print(ht.theta_heat(Test_State))
-    # TestPipe = ht.piping.Pipe(1, SCH=10, L=Q_('1 m'))
-    # print(TestPipe.update(S=Q_('16700 psi'), E=0.8, W=1, Y=0.4))
-    # print(TestPipe.pressure_design_thick(ht.P_NTP))
-    # TestPipe2 = ht.piping.Pipe(0.25)
-    # print(TestPipe2.update(S=Q_('1000 psi'), E=1, W=1, Y=0.4))
-    # TestPipe.branch_reinforcement(TestPipe2, 10*ht.P_NTP)
-    # print(TestPipe.pressure_design_thick(Q_('305 psig')).to(ht.ureg.inch))
-    # print(TestPipe.volume.to(ht.ureg.ft**3))
-# print()
-# # TODO Check m_dot and P_in methods
-# # print(TestPiping.volume)
-# # pp.pprint(ht.piping.NPS_table)
-
-# print('Testing mean of nist curve fit')
-# T0 = 300 * ureg.K
-# T1 = 100 * ureg.K
-# T2 = 200 * ureg.K
-# T4 = 5 * ureg.K
-# print(ht.nist_property('304SS', 'TC', T1))  # Was 9
-# print(ht.nist_property('304SS', 'TC', T1, T2))  # Was 11
-# print(ht.nist_property('OFHC', 'EC', T0))  # 1.65e-5
-# print(ht.nist_property('304SS', 'LE', 150*ureg.K))  # -2e-3
-
-
-
-# #print(ht.Gr(Test_State, Q_('300 K'), Q_('1 m')))
-# #Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))
-# #print(Test_pipe)
-# #Test_piping = ht.piping.Piping(ht.AIR, [Test_pipe])
-# #print(Test_piping.m_dot(P_out = ht.piping.ureg('1 psi')))
-# #PipingFluid = ht.ThermState('air')
-# #PipingFluid.update('P', 1*ht.ureg.atm, 'T', 38*ht.ureg.degC)
-# #print ("""100 SCFM of air is equivalent to {:.3g} of Nitrogen flow for P = 1 atm
-# #       and T = 38 C.""".format(ht.from_scfma(100*ht.ureg('ft^3/min'), PipingFluid)))
-# #print ("CGA S-1.3 Formula from 6.1.4 a) gives 0.0547 kg/s for the same air capacity.")
-# #Re = ht.Re(PipingFluid, ht.ureg('1g/s'), ht.ureg('5 mm'))
-# #print(Re)
-# #theta_temp = ht.theta_temp(ht.ureg('100 K'), ht.ureg('300 K'), ht.ureg('77 K'))
-# #Bi = ht.Bi(ht.ureg('1 W/(m*K)'), ht.ureg('1 cm'), ht.ureg('10 W/(m**2*K)'))
-# #Fo = ht.Fo_cyl(theta_temp, Bi)
-# #print(f'Biot number is: {Bi:.3}')
-# #print(f'Fourier number is: {Fo:.3}')
-# #G10_sc = [-2.4083, 7.6006, -8.2982, 7.3301, -4.2386, 1.4294, -0.24396, 0.015236, 0]
-# #G10_tc = [-4.1236, 13.788, -26.088, 26.272, -14.663, 4.4954, -0.6905, 0.0397, 0] #normal direction
-# #print(ht.nist_curve_fit(300, G10_tc))
-# #print(quad(lambda x: ht.nist_curve_fit(x, G10_tc ), 77, 300)[0]/(77-300))
-# #
-# #print('\nTesting invert dP calc')
-# #m_dot = ht.ureg('1000 g/s')
-# #P_out = ht.ureg('0 psig')
-# #Test_piping.P_in(m_dot, P_out)
-# #print(Test_piping.Fluid.P.to(ht.ureg.psig))
-# ##for p in range(1,100,10):
-# ##    m_dot = ht.ureg('1 g/s')
-# ##    P_test = Q_(p, ht.ureg.psig)
-# ##    Test_piping.init_cond['fluid'] = 'helium'
-# ##    Test_piping.init_cond['P'] = P_test
-# ##    T_test = ht.max_theta(Test_piping.init_cond)
-# ##    Test_piping.init_cond['T'] = T_test
-# ##    print(Test_piping.init_cond['P'].to(ht.ureg.psig), Test_piping.init_cond['T'].to(ht.ureg.K))
-# ##    print (Test_piping.dP(m_dot))
-# ##
-# ##
-# ##
-# ##if __name__ == "__main__":
-# ##        print (Ra().to_base_units())
-# ##        print (gamma())
-# ##        print (rp_init({'fluid':'helium', 'T':Q_(20,ht.ureg.degC), 'P':Q_(101325, ht.ureg.Pa)}))
-# ##        print (rp_init({'fluid':'helium', 'T':Q_(4.2,ht.ureg.K), 'P':Q_(101325, ht.ureg.Pa)}))
-# ##        print (satp(Q_(101325, ht.ureg.Pa), [1])['t'])
-# ##        print ('Decorator test:', satp(Q_(101325, ht.ureg.Pa), [1]))
-# ##        print(tc_304(150*ht.ureg.K))
-# ##        Leak = tc_304(150*ht.ureg.K)*3.14159*0.125*ht.ureg.inch*0.035*ht.ureg.inch/(1*ht.ureg.ft)*300*ht.ureg.K
-# ##        print(Leak)
-# ##        print(Leak.to(ht.ureg.W))
-# ##        print((Leak/(7*ht.ureg('kJ/kg'))).to(ht.ureg.g/ht.ureg.s))
-# ##        print(therm_exp(ht.ureg('4.5 K'))*ht.ureg('20 ft').to(ht.ureg.inch))
