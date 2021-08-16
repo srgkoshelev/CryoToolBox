@@ -3,7 +3,7 @@
 
 from math import log, log10, pi
 from . import ureg, Q_
-from . import Air
+from . import AIR
 from .cp_wrapper import ThermState
 from . import T_NTP, P_NTP
 from . import cga
@@ -39,11 +39,11 @@ def to_scfma(M_dot_fluid, fluid):
         volumetric air flow rate
     """
     C_fluid = fluid.C_gas_const
-    C_air = Air.C_gas_const
+    C_air = AIR.C_gas_const
 
     # Calculation
-    M_dot_air = M_dot_fluid * C_air / C_fluid * Air.MZT / fluid.MZT
-    Q_air = M_dot_air / Air.Dmass
+    M_dot_air = M_dot_fluid * C_air / C_fluid * AIR.MZT / fluid.MZT
+    Q_air = M_dot_air / AIR.Dmass
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air
 
@@ -67,11 +67,11 @@ def from_scfma(Q_air, fluid):
         mass flow rate
     """
     C_fluid = fluid.C_gas_const
-    C_air = Air.C_gas_const
+    C_air = AIR.C_gas_const
 
     # Calculation
-    M_dot_air = Q_air * Air.Dmass
-    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / Air.MZT
+    M_dot_air = Q_air * AIR.Dmass
+    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / AIR.MZT
     M_dot_fluid.ito(ureg.g/ureg.s)
     return M_dot_fluid
 
@@ -691,7 +691,7 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
 class Material(Enum):
     """Available materials with low temperature with fits NIST."""
     SS304 = auto()  # AISI 304 Stainless Steel
-    Al6061 = auto()  # 6061-T6 Aluminum (UNS A96061)
+    AL6061 = auto()  # 6061-T6 Aluminum (UNS A96061)
     G10 = auto()  # G10
     PTFE = auto()  # PTFE/Teflon
     OFHC = auto()  # Oxygen-free High thermal conductivity copper
@@ -725,7 +725,7 @@ _NIST_DATA = {
                       'fun': _nist_log_fit,
                       'unit': ureg.J/(ureg.kg*ureg.K)}
     },
-    Material.Al6061:
+    Material.AL6061:
     {
         Property.TC: {'coefs': [0.07918, 1.0957, -0.07277, 0.08084, 0.02803,
                                 -0.09464, 0.04179, -0.00571, 0],
@@ -763,7 +763,14 @@ _NIST_DATA = {
                                 0.16503],
                       'range': (4, 300),
                       'fun': _nist_log_fit,
-                      'unit': ureg.J/(ureg.kg*ureg.K)}
+                      'unit': ureg.J/(ureg.kg*ureg.K)},
+        Property.LE: {'coefs': [-2.125E3, -8.201E-1, 6.161E-2,
+                                -3.171E-4, 6.850E-7],
+                      'range': (4, 300),
+                      'fun': _nist_pow_fit,
+                      'Tlow': 0,  # NA
+                      'f': None,  # NA
+                      'unit': 1e-5*ureg.m/ureg.m},
     },
     Material.OFHC:
     {

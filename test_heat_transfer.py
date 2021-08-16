@@ -223,7 +223,7 @@ class PipingTest(unittest.TestCase):
         # print(f'Generated {v_cone}')
         cont = ht.piping.Contraction(1*ureg.inch, 0.5*ureg.inch)
         enl = ht.piping.Enlargement(0.5*ureg.inch, 1*ureg.inch)
-        test_state = ht.Air
+        test_state = ht.AIR
         piping = ht.piping.Piping(
             pipe, vj_pipe, corr_pipe, entrance, pipe_exit, orifice, c_orifice,
              tube, c_tube, annulus, pipe_elbow, elbow, pipe_tee, tee, valve,
@@ -238,7 +238,7 @@ class PipingTest(unittest.TestCase):
         #     m_dot = random.random()*10**(random.randrange(-1, 5)) * ureg.g/ureg.s
         #     dP_calc = piping.dP(m_dot)
         #     dP = dP_calc
-        #     m_dot_calc = piping.m_dot(P_out=ht.Air.P-dP)
+        #     m_dot_calc = piping.m_dot(P_out=ht.AIR.P-dP)
         #     self.assertApproxEqual(m_dot, m_dot_calc)
 
     def test_f_Darcy(self):
@@ -280,7 +280,7 @@ class PipingTest(unittest.TestCase):
         air = ht.ThermState('air', P=65*ureg.psig, T=110*ureg.degF)
         pipe = ht.piping.Pipe(1, SCH=40, L=75*ureg.ft)
         flow = 100 * ureg.ft**3/ureg.min
-        m_dot = flow * ht.Air.Dmass
+        m_dot = flow * ht.AIR.Dmass
         piping = ht.piping.Piping(pipe, ht.piping.Exit(pipe.ID))
         dP = ht.piping.dP_incomp(m_dot, air, piping)
         self.assertApproxEqual(2.61, dP.m_as(ureg.psi))
@@ -352,6 +352,18 @@ class CPWrapperTest(unittest.TestCase):
         test_state.update_kw(T=300*ureg.K, P=1*ureg.MPa)
         test_state.copy()
 
+    def test_standard(self):
+        air_std = ht.AIR.to_standard(conditions='NTP')
+        self.assertAlmostEqual(ht.P_NTP, air_std.P)
+        self.assertAlmostEqual(ht.T_NTP, air_std.T)
+        air_std = ht.AIR.to_standard(conditions='MSC')
+        self.assertAlmostEqual(ht.P_MSC, air_std.P)
+        self.assertAlmostEqual(ht.T_MSC, air_std.T)
+        air_std = ht.AIR.to_standard(conditions='STD')
+        self.assertAlmostEqual(ht.P_STD, air_std.P)
+        self.assertAlmostEqual(ht.T_STD, air_std.T)
+
+
 
 
 if __name__ == '__main__':
@@ -399,7 +411,7 @@ if __name__ == '__main__':
 # #print(ht.Gr(Test_State, Q_('300 K'), Q_('1 m')))
 # #Test_pipe = ht.piping.Pipe(1/8, L=ht.ureg('1 m'))
 # #print(Test_pipe)
-# #Test_piping = ht.piping.Piping(ht.Air, [Test_pipe])
+# #Test_piping = ht.piping.Piping(ht.AIR, [Test_pipe])
 # #print(Test_piping.m_dot(P_out = ht.piping.ureg('1 psi')))
 # #PipingFluid = ht.ThermState('air')
 # #PipingFluid.update('P', 1*ht.ureg.atm, 'T', 38*ht.ureg.degC)
