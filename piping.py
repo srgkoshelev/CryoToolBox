@@ -20,6 +20,11 @@ from collections.abc import MutableSequence
 set_application_registry(ureg)
 
 
+class HydraulicError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
 def _load_table(table_name):
     yaml_table = load((os.path.join(__location__, table_name)))
     result = {}
@@ -1020,13 +1025,27 @@ def K_piping(m_dot, fluid, piping):
             K0 += K_el
     return (K0.to_base_units(), A0)
 
-# @ureg.check(None, '[mass]/[time]')
-def dP(m_dot, fluid, piping):
+def rc(fluid):
+    """Calculate critical pressure drop for the given fluid."""
+    k = fluid.gamma
+    rc = (2/(k+1))**(k/(k-1))
+    return rc
+
+def dP_Darcy(K, rho, w):
     '''
-    Calculate pressure drop through piping.
+    Darcy equation for pressure drop.
+    K - resistance coefficient
+    rho - density of flow at entrance
+    w - flow speed
+    '''
+    d_P = K*rho*w**2/2
+    return d_P.to(ureg.psi)
+
+def dP_incomp(m_dot, fluid, piping):
+    """Calculate pressure drop of incompressible flow through piping.
     Lumped method using Darcy equation is used.
     The pressure dropped is checked for choked condition.
-    '''
+    """
     P_0 = fluid.P
     T_0 = fluid.T
     rho_0 = fluid.Dmass
@@ -1034,40 +1053,23 @@ def dP(m_dot, fluid, piping):
     w = m_dot / (rho_0*area)
     dP = dP_Darcy(K, rho_0, w)  # first iteration
     P_out = P_0 - dP
-    k = fluid.gamma  # adiabatic coefficient
-    # Critical pressure drop;
-    # Note: according to Crane TP-410 should be dependent on
-    # the hydraulic resistance of the flow path
-    rc = (2/(k+1))**(k/(k-1))
     if fluid.Q < 0 or dP/P_0 <= 0.1:  # if q<0 then fluid is a liquid
         return dP
     elif dP/P_0 <= 0.4:
-        TempState = ThermState(fluid.name, backend=fluid.backend)
-        # Only working for pure fluids and pre-defined mixtures
+        TempState = fluid.copy()
         TempState.update('T', T_0, 'P', P_out)
         rho_out = TempState.Dmass
         rho_ave = (rho_0+rho_out) / 2
+        # Comprehensive average properties, Rennels 4.2.2.2
+        K_corr = K - rho_ave**2/rho_0**2 + rho_ave**2/rho_out**2
         w = m_dot/(rho_ave*area)
-        return dP_Darcy(K, rho_ave, w)
-    elif 0.4 < dP/P_0 < (1-rc):  # Subsonic flow
-        logger.warning('Pressure drop too high for Darcy equation!')
-        # Complete isothermal equation, Crane TP-410, p. 1-8, eq. 1-6:
-        w = ((P_0**2-P_out**2) / (P_0*rho_0*(K+2*log(P_0/P_out))))**0.5
-        return dP_Darcy(K, rho_0, w)
+        return dP_Darcy(K_corr, rho_ave, w)
     else:
-        logger.warning('''Sonic flow developed. Calculated value ignores
-        density changes. Consider reducing mass flow:
-                        {:.3~}'''.format(m_dot))
-        return dP_Darcy(K, rho_0, w)
-
-def dP_simple_ave(m_dot, fluid, piping):
-    """Calculate pressure drop of a compressible flow using simple average specific volume.
-
-    """
-    pass
+        raise HydraulicError(f'Estimated pressure drop {dP/P_0:.3g~} exceeds 40 % limit for'
+                             ' incompressible flow.')
 
 
-def m_dot(fluid, piping, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
+def m_dot_incomp(fluid, piping, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
     '''Calculate mass flow through the piping using initial conditions
     at the beginning of piping.
 
@@ -1088,43 +1090,20 @@ def m_dot(fluid, piping, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
     '''
     P_0 = fluid.P
     if P_0 <= P_out:
-        logger.warning(f'Input pressure less or equal to output: \
+        raise HydraulicError(f'Input pressure less or equal to output: \
         {P_0.to(ureg.Pa):.3g}, {P_out.to(ureg.Pa):.3g}')
-        return Q_('0 g/s')
     def to_solve(m_dot_gs, P_in_Pa, P_out_Pa):
-        # print(m_dot_gs)
-        dP_calc = dP(m_dot_gs*ureg.g/ureg.s, fluid, piping)
+        dP_calc = dP_incomp(m_dot_gs*ureg.g/ureg.s, fluid, piping)
         dP_given = P_in_Pa - P_out_Pa
         return dP_given - dP_calc.m_as(ureg.Pa)
     P_in_Pa = P_0.m_as(ureg.Pa)
     P_out_Pa = P_out.m_as(ureg.Pa)
     args = (P_in_Pa, P_out_Pa)  # arguments passed to to_solve
-    logger_level = logger.getEffectiveLevel()
-    # ERROR and CRITICAL only will be shown; WARNING is suppressed
-    logger.setLevel(40)
     x0 = guess.m_as(ureg.g/ureg.s)
     x1 = x0 * 2  # Usually doubling the flow is OK estimate
     solution = root_scalar(to_solve, args, x0=x0, x1=x1)
-    logger.setLevel(logger_level)
     m_dot_ = solution.root * ureg.g/ureg.s
     return m_dot_
-    # rho = self.fluid.Dmass
-    # K, area = self.K()
-    # k = self.fluid.gamma  # adiabatic coefficient
-    # # Critical pressure drop
-    # # Note: according to Crane TP-410 should be dependent on
-    # # the hydraulic resistance of the flow path
-    # rc = (2/(k+1))**(k/(k-1))
-    # if P_out/P_0 > rc:  # Subsonic flow
-    #     delta_P = P_0-P_out
-    # else:  # Sonic flow
-    #     # logger.warning('''End pressure creates sonic flow.
-    #     #                Max possible dP will be used''')
-    #     delta_P = P_0*(1-rc)  # Crane TP-410, p 2-15
-    # # Net expansion factor for discharge is assumed to be 1
-    # # (conservative value):
-    # m_dot_ = area * (2*delta_P*rho/K)**0.5
-    # return m_dot_.to(ureg.g/ureg.s)
 
 # def _solver_func(self, P_in_Pa, m_dot, P_out_act):
 #     """
@@ -1172,7 +1151,7 @@ def m_dot(fluid, piping, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
 #     {(P_in-P_out).to(ureg.psi)}')
 #     logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
 
-def m_dot_isothermal(fluid, pipe, P_out=0*ureg.psig):
+def m_dot_isot(fluid, pipe, P_out=0*ureg.psig, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
     """Calculate mass flow rate through piping for isothermal compressible
     flow.
 
@@ -1192,9 +1171,18 @@ def m_dot_isothermal(fluid, pipe, P_out=0*ureg.psig):
     Quantity {length: -1, mass: 1, time: -2}
         Pressure drop
     """
-    pass
+    P1 = fluid.P
+    P2 = P_out
+    T = fluid.T
+    R = fluid.specific_gas_constant
+    K = pipe.K(Re(fluid, m_dot_g, pipe.ID, pipe.area))
+    A = pipe.area
+    m_dot = A * ((P1**2-P2**2)/(R*T*(2*log(P1/P2)+K)))**0.5
+    if abs(m_dot-m_dot_g)/m_dot > tol:
+        m_dot = m_dot_isot(fluid, pipe, P_out, m_dot, tol)
+    return m_dot
 
-def dP_isothermal(m_dot, fluid, pipe):
+def dP_isot(m_dot, fluid, pipe):
     """Calculate pressure drop through piping for isothermal compressible
     flow.
 
@@ -1235,16 +1223,6 @@ def dP_isothermal(m_dot, fluid, pipe):
                             fprime=True, method='newton')
     dP = Q_(solution.root**0.5, ureg.Pa)
     return dP.to(ureg.psi)
-
-def dP_Darcy(K, rho, w):
-    '''
-    Darcy equation for pressure drop.
-    K - resistance coefficient
-    rho - density of flow at entrance
-    w - flow speed
-    '''
-    d_P = K*rho*w**2/2
-    return d_P.to(ureg.psi)
 
 
 def K_to_Cv(K, ID):

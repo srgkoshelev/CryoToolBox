@@ -230,7 +230,7 @@ class PipingTest(unittest.TestCase):
              # g_valve, v_cone,
              cont, enl)
         piping.volume()
-        dP = ht.piping.dP(Q_('10 g/s'), test_state, piping)
+        dP = ht.piping.dP_incomp(Q_('10 g/s'), test_state, piping)
         self.assertApproxEqual(21.2*ureg.psi, dP)
 
         # Test the solver inside Piping.m_dot
@@ -282,7 +282,7 @@ class PipingTest(unittest.TestCase):
         flow = 100 * ureg.ft**3/ureg.min
         m_dot = flow * ht.Air.Dmass
         piping = ht.piping.Piping(pipe, ht.piping.Exit(pipe.ID))
-        dP = ht.piping.dP(m_dot, air, piping)
+        dP = ht.piping.dP_incomp(m_dot, air, piping)
         self.assertApproxEqual(2.61, dP.m_as(ureg.psi))
 
     def test_Crane_7_22(self):
@@ -332,8 +332,10 @@ class PipingTest(unittest.TestCase):
         fluid = ht.ThermState('nitrogen', P=100*ureg.psi, T=530*ureg.degR)
         piping = ht.piping.Piping(pipe)
         P_out = 84.056 * ureg.psi
-        m_dot = ht.piping.m_dot(fluid, piping, P_out)
+        m_dot = ht.piping.m_dot_incomp(fluid, piping, P_out)
         self.assertApproxEqual(10, m_dot.m_as(ureg.lb/ureg.s))
+        m_dot_isot = ht.piping.m_dot_isot(fluid, pipe, P_out)
+        self.assertApproxEqual(10, m_dot_isot.m_as(ureg.lb/ureg.s))
 
 
 
