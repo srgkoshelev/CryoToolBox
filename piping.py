@@ -1226,9 +1226,10 @@ def dP_isot(m_dot, fluid, pipe):
             solution = root_scalar(to_solve_sq, x0=x0, x1=x1, fprime=True,
                                     fprime2=True, bracket=bracket, method=method)
             P_2_root_sq = solution.root**0.5 * ureg.Pa
-            print(method, solution.iterations)
+            logger.debug(method, solution.iterations)
+            break
         except TypeError:
-            print(f'{method} method failed for square solve')
+            logger.debug(f'{method} method failed for square solve')
             P_2_root_sq = None
     if P_2_root_sq is None:
         return None
