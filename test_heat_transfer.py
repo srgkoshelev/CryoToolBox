@@ -3,6 +3,7 @@ import pprint
 import unittest
 import random
 from attrdict import AttrDict
+from unittest.mock import MagicMock
 
 pp = pprint.PrettyPrinter()
 
@@ -344,6 +345,29 @@ class PipingTest(unittest.TestCase):
         # M_end = M_from_K_limit(K_left, air.gamma)
         # M_out = 0.174
         # print(f'Mach checks out: {check(M_out, M_end)}')
+
+    def test_White_P_9_100(self):
+        fluid = ht.ThermState('methane', T=68*ureg.degF, P=5*ureg.bar+101325*ureg.Pa)
+        P_out = 1*ureg.bar + 101325*ureg.Pa
+        pipe = ht.piping.Pipe(6, L=31*ureg.mile)
+        K = 0.019 * pipe.L/pipe.ID
+        pipe.K = MagicMock(return_value=K)
+        m_dot_isot = ht.piping.m_dot_isot(fluid, pipe, P_out)
+        self.assertApproxEqual(0.345*ureg.kg/ureg.s, m_dot_isot)
+        dP_isot = ht.piping.dP_isot(m_dot_isot, fluid, pipe)
+        self.assertApproxEqual(fluid.P-P_out, dP_isot)
+
+    def test_White_P_9_101(self):
+        air = ht.ThermState('air', T=20*ureg.degC, P=102*ureg.kPa)
+        P_out = 100*ureg.kPa
+        pipe = ht.piping.Tube(3*ureg.cm, wall=0*ureg.m, L=1*ureg.m)
+        K = 0.028 * pipe.L/pipe.ID
+        pipe.K = MagicMock(return_value=K)
+        m_dot_incomp = ht.piping.m_dot_incomp(air, ht.piping.Piping(pipe), P_out=P_out)
+        m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out)
+        self.assertApproxEqual(m_dot_incomp, m_dot_isot)
+        dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
+        self.assertApproxEqual(air.P-P_out, dP_isot)
 
     def test_M_from_K(self):
         pass

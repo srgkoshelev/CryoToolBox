@@ -1180,7 +1180,7 @@ def m_dot_isot(fluid, pipe, P_out=0*ureg.psig, m_dot_g=1*ureg.g/ureg.s, tol=1e-6
     m_dot = A * ((P1**2-P2**2)/(R*T*(2*log(P1/P2)+K)))**0.5
     if abs(m_dot-m_dot_g)/m_dot > tol:
         m_dot = m_dot_isot(fluid, pipe, P_out, m_dot, tol)
-    return m_dot
+    return m_dot.to(ureg.g/ureg.s)
 
 def dP_isot(m_dot, fluid, pipe):
     """Calculate pressure drop through piping for isothermal compressible
