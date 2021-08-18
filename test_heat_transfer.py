@@ -182,13 +182,14 @@ class PipingTest(unittest.TestCase):
 
     Doesn't check for correctness yet."""
 
-    def assertApproxEqual(self, expected, calculated, uncertainty=0.1):
+    def assertApproxEqual(self, expected, calculated, uncertainty=0.05):
         error = float(abs(expected-calculated)/expected)
         if isinstance(expected, ureg.Quantity) and isinstance(calculated, ureg.Quantity):
             unit = expected.units
             calculated.ito(unit)
         assert error < uncertainty, \
-            f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
+            f'Calculated value {calculated:g} is not within {uncertainty:.1%} of ' + \
+            f'expected value {expected:g}'
 
     def test_piping(self):
         pipe = ht.piping.Pipe(1)
@@ -283,13 +284,13 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(m_dot_expected, m_dot_isot)
         # M = Mach(air, m_dot_expected, pipe.area)
         # # print('Mach at inlet: ', M)
-        # K_lim = K_limit(M, air.gamma)
+        # K_lim = K_lim(M, air.gamma)
         # # print('K limit: ', K_lim)
         # # print('K pipe: ', pipe.K(Re).to_base_units())
-        # check(M, M_from_K_limit(K_lim, air.gamma))
+        # check(M, M_from_K_lim(K_lim, air.gamma))
         # K_left = K_lim - pipe.K(Re)
         # # print('K left: ', K_left)
-        # M_end = M_from_K_limit(K_left, air.gamma)
+        # M_end = M_from_K_lim(K_left, air.gamma)
         # # print('M end: ', M_end)
         # M_out = Mach(ht.ThermState('air', P=P_out, T=air.T), m_dot_expected, pipe.area)
         # check(M_out, M_end)
@@ -297,7 +298,7 @@ class PipingTest(unittest.TestCase):
         # # print('P static end: ', P_static_end)
         # P_static_out = P_from_M(air.P, M, M_out, air.gamma)
         # check(P_static_end, P_static_out)
-        # P_total_end = P_total_from_static(P_static_end, M, air.gamma)
+        # P_total_end = P_total(P_static_end, M, air.gamma)
         # # print('P total end: ', P_total_end)
         # print(f"Mach dP works: {check(P_out, P_total_end)}")
 
@@ -306,45 +307,88 @@ class PipingTest(unittest.TestCase):
         fluid = ht.ThermState('nitrogen', P=100*ureg.psi, T=530*ureg.degR)
         piping = ht.piping.Piping(pipe)
         P_out = 84.056 * ureg.psi
-        m_dot = ht.piping.m_dot_incomp(fluid, piping, P_out)
-        self.assertApproxEqual(10, m_dot.m_as(ureg.lb/ureg.s))
         m_dot_isot = ht.piping.m_dot_isot(fluid, pipe, P_out)
         self.assertApproxEqual(10, m_dot_isot.m_as(ureg.lb/ureg.s))
 
+    def test_White_9_3(self):
+        v = 240 * ureg.m/ureg.s
+        T1 = 320 * ureg.K
+        P1 = 170 * ureg.kPa
+        T01 = 349 * ureg.K
+        P01 = 230 * ureg.kPa
+        fluid_static = ht.ThermState('air', P=P1, T=T1)
+        area = 0.05 * ureg.m**2  # Assumed value
+        M = ht.piping.Mach(fluid_static, v)
+        M_exp = 0.67
+        self.assertApproxEqual(M_exp, M, uncertainty=0.005)
+        fluid_total = ht.ThermState('air', P=P01, T=T01)
+        m_dot = v * area * fluid_static.Dmass
+        M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
+        self.assertApproxEqual(M_exp, M_total, uncertainty=0.005)
+
+    def test_White_9_4(self):
+        fluid_static = ht.ThermState('air', P=500*ureg.kPa, T=470*ureg.K)
+        area = 0.05 * ureg.m**2
+        v = 180 * ureg.m/ureg.s
+        m_dot = v * area * fluid_static.Dmass
+        M = ht.piping.Mach(fluid_static, v)
+        M_exp = 0.414
+        self.assertApproxEqual(M_exp, M, uncertainty=0.005)
+        P0 = 563 * ureg.kPa
+        T0 = 486 * ureg.K
+        fluid_total = ht.ThermState('air', P=P0, T=T0)
+        M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
+        self.assertApproxEqual(M_exp, M_total, uncertainty=0.005)
+
     def test_White_9_10(self):
-        pass
+        Ma1 = 0.1
+        Ma2 = 0.5
+        Ma3 = 1
+        k = ht.AIR.gamma
+        f = 0.024
+        d = 2 * ureg.cm
+        K_lim1 = ht.piping.K_lim(Ma1, k)
+        L1 = K_lim1 * d / f
+        K_lim2 = ht.piping.K_lim(Ma2, k)
+        L2 = K_lim2 * d / f
+        K_lim3 = ht.piping.K_lim(Ma3, k)
+        L3 = K_lim3 * d / f
+        self.assertApproxEqual(55*ureg.m, L1-L2)
+        self.assertApproxEqual(0.9*ureg.m, L2-L3)
 
     def test_White_9_11(self):
-        pass
+        f = 0.024
+        d = 2 * ureg.cm
+        Ma1 = 0.1
+        Ma2 = 0.5
+        P1 = 600 * ureg.kPa
+        T1 = 450 * ureg.K
+        fluid = ht.ThermState('air', P=P1, T=T1)
+        k = fluid.gamma
+        P2 = ht.piping.P_from_M(P1, Ma1, Ma2, k)
+        self.assertApproxEqual(117*ureg.kPa, P2)
+        P02 = ht.piping.P_total(P2, Ma2, k)
+        self.assertApproxEqual(139*ureg.kPa, P02)
 
     def test_White_9_12(self):
-        pass
-        # air = ht.ThermState('air', P=300*u.kPa, T=500*u.K)
-        # v = 100 * u.m/u.s
-        # pipe = ht.piping.Tube(3*u.cm, L=15*u.m)
-        # P_out = None  # Calculate using mach number
-        # m_dot_expected = v*pipe.area * air.Dmass
-        # f = 0.02
-        # M = Mach(air, m_dot_expected, pipe.area)
-        # K_lim = K_limit(M, air.gamma)
-        # check(M, M_from_K_limit(K_lim, air.gamma))
-        # K_left = K_lim - f*pipe.L/pipe.ID
-        # M_end = M_from_K_limit(K_left, air.gamma)
-        # M_out = M_from_K_limit(1, air.gamma)
-        # print(f'Mach checks out: {check(M_out, M_end)}')
+        fluid_total = ht.ThermState('air', P=200*ureg.kPa, T=500*ureg.K)
+        v = 100 * ureg.m/ureg.s
+        pipe = ht.piping.Tube(3*ureg.cm, L=15*ureg.m)
+        m_dot = 0.0961 * ureg.kg/ureg.s  # Based on static density from the source
+        f = 0.02
+        Ma = ht.piping.Mach_total(fluid_total, m_dot, pipe.area)
+        K_lim = ht.piping.K_lim(Ma, fluid_total.gamma)
+        Lstar = K_lim * pipe.ID / f
+        self.assertApproxEqual(16.5*ureg.m, Lstar)
 
-        # pipe = ht.piping.Tube(3*u.cm, L=30*u.m)
-        # P_out = None
-        # m_dot_expected = v*pipe.area * air.Dmass
-        # f = 0.02
-        # M = Mach(air, m_dot_expected, pipe.area)
-        # check(0.225, M)
-        # K_lim = K_limit(M, air.gamma)
-        # check(M, M_from_K_limit(K_lim, air.gamma))
-        # K_left = K_lim - pipe.K(Re)
-        # M_end = M_from_K_limit(K_left, air.gamma)
-        # M_out = 0.174
-        # print(f'Mach checks out: {check(M_out, M_end)}')
+    def test_White_9_13(self):
+        fluid_static = ht.ThermState('air', P=220*ureg.kPa, T=300*ureg.K)
+        P_out = 140 * ureg.kPa
+        pipe = ht.piping.Tube(1*ureg.cm, wall=0*ureg.m, L=1.2*ureg.m)
+        K = 0.025 * pipe.L/pipe.ID
+        pipe.K = MagicMock(return_value=K)
+        m_dot_adiab = ht.piping.m_dot_adiab(fluid_static, pipe, P_out, state='static')
+        self.assertApproxEqual(0.0233*ureg.kg/ureg.s, m_dot_adiab)
 
     def test_White_P_9_100(self):
         fluid = ht.ThermState('methane', T=68*ureg.degF, P=5*ureg.bar+101325*ureg.Pa)
@@ -366,18 +410,30 @@ class PipingTest(unittest.TestCase):
         m_dot_incomp = ht.piping.m_dot_incomp(air, ht.piping.Piping(pipe), P_out=P_out)
         m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out)
         self.assertApproxEqual(m_dot_incomp, m_dot_isot)
+        m_dot_adiab = ht.piping.m_dot_adiab(air, pipe, P_out)
+        self.assertApproxEqual(m_dot_incomp, m_dot_adiab)
+        dP_incomp = ht.piping.dP_incomp(m_dot_incomp, air, [pipe])
+        self.assertApproxEqual(air.P-P_out, dP_incomp)
         dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
         self.assertApproxEqual(air.P-P_out, dP_isot)
 
+
     def test_M_from_K(self):
-        pass
-        # air = ht.ThermState('air', P=300*u.kPa, T=500*u.K)
-        # check(0.225, M_from_K_limit(11, air.gamma))
-        # check(0.2, M_from_K_limit(14.533, air.gamma))
-        # check(0.15, M_from_K_limit(27.932, air.gamma))
-        # check(0.17, M_from_K_limit(21.115, air.gamma))
-        # check(0.175, M_from_K_limit(19.772, air.gamma))
-        # check(0.1741, M_from_K_limit(20, air.gamma))
+        air = ht.ThermState('air', P=300*ureg.kPa, T=500*ureg.K)
+        self.assertApproxEqual(0.225, ht.piping.M_from_K_lim(
+            11, air.gamma))
+        self.assertApproxEqual(0.2, ht.piping.M_from_K_lim(
+            14.533, air.gamma))
+        self.assertApproxEqual(0.15, ht.piping.M_from_K_lim(
+            27.932, air.gamma))
+        self.assertApproxEqual(0.17, ht.piping.M_from_K_lim(
+            21.115, air.gamma))
+        self.assertApproxEqual(0.175, ht.piping.M_from_K_lim(
+            19.772, air.gamma))
+        self.assertApproxEqual(0.1741, ht.piping.M_from_K_lim(
+            20, air.gamma))
+        self.assertApproxEqual(1, ht.piping.M_from_K_lim(
+            0, air.gamma))
 
 class CPWrapperTest(unittest.TestCase):
     """Test for additional methods of ThermState class"""

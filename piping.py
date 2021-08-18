@@ -1232,10 +1232,160 @@ def dP_isot(m_dot, fluid, pipe):
             logger.debug(f'{method} method failed for square solve')
             P_2_root_sq = None
     if P_2_root_sq is None:
-        return None
+        raise HydraulicError('No solution for isothermal pressure drop found')
     else:
         return P1 - P_2_root_sq
 
+
+def Mach(fluid, v):
+    """Calculate Mach number for given static conditions of the fluid.
+
+
+    Parameters:
+    -----------
+    fluid : ThermState
+        Fluid state at static temperature and pressure
+    v : Quantity, {length: 1, time: -1}
+    """
+    M = v / fluid.speed_sound
+    return M.to_base_units()
+
+def Mach_total(fluid, m_dot, area):
+    """Calculate Mach number for total temperature and pressure.
+
+    Parameters:
+    -----------
+    fluid : ThermState
+        Fluid state at total temperature and pressure
+    """
+    k = float(fluid.gamma)
+    v = velocity(fluid, m_dot, area)
+    M_core = float(Mach(fluid, v))
+
+    def M_sq_total(Msq, M_core, k):
+        return M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1))
+    def to_solve(Msq):
+        return Msq - M_sq_total(Msq, M_core, k)
+
+    x0 = M_core**2
+    x1 = 0.9 * x0
+    bracket = [0, 1]
+    solution = root_scalar(to_solve, x0=x0, x1=x1)
+    M_root = solution.root**0.5
+    T = fluid.T - v**2 / fluid.Cpmass
+    if T < 0*ureg.K:
+        raise HydraulicError('Flow is choked')
+    if isinstance(M_root, complex):
+        raise HydraulicError(f'No real solutions for Mach number found.')
+    return M_root
+
+def K_lim(M, k):
+    """Calculate max resistance coefficient of a pipe.
+    """
+    A = (1-M**2) / (k*M**2)
+    B = (k+1)/(2*k)
+    C = (k+1) * M**2
+    D = 2 + (k-1) * M**2
+    K = A + B * log(C/D)
+    return K
+
+def M_from_K_lim(K, k):
+    if K < 0:
+        raise ValueError(f"Resistance coefficient value can't be less than 0: {K}")
+    K_ = float(K)
+    def to_solve(M):
+        return K_ - K_lim(M, k)
+    x0 = 0.9
+    x1 = 0.5
+    bracket = [1e-15, 1]
+    try:
+        solution = root_scalar(to_solve, bracket=bracket, method='brentq')
+        logger.debug('Brentq failed for M_from_K_lim')
+    except ValueError:
+        solution = root_scalar(to_solve, x0=x0, x1=x1)
+    M = solution.root
+    return M
+
+def M_complex(M, k):
+    return 1 + M**2 * (k-1) /2
+
+def P_from_M(P1, M1, M2, k):
+    """Calculate static pressure from inlet static pressure and Mach numbers."""
+    PM1 = P1 * M1 * M_complex(M1, k)**0.5
+    P2 = PM1 / (M2*M_complex(M2, k)**0.5)
+    return P2
+
+def P_total(P, M, k):
+    """Calculate total pressure from static pressure."""
+    return P * M_complex(M, k)**(k/(k-1))
+
+def P_crit(P, M, k):
+    """Calculate critical(sonic) pressure for the given static pressure and Ma."""
+    M_crit_comp = (k+1) / (2+(k-1)*M**2)
+    P_c = P * M / M_crit_comp**0.5
+    return P_c
+
+def dP_adiab(m_dot, fluid, pipe):
+    """Calculate pressure drop for isentropic flow given total inlet conditions.
+
+    """
+    M = Mach_total(fluid, m_dot, pipe.area)
+    K_limit = K_lim(M, fluid.gamma)
+    Re_ = Re(fluid, m_dot, pipe.ID, pipe.area)
+    K_left = K_limit - pipe.K(Re_)
+    if K_left < 0:
+        raise HydraulicError('Flow is choked. Reduce hydraulic resistance or mass flow.')
+    M_end = M_from_K_lim(K_left, fluid.gamma)
+    P_static_end = P_from_M(fluid.P, M, M_end, fluid.gamma)
+    P_total_end = P_total(P_static_end, M, fluid.gamma)
+    return fluid.P - P_total_end
+
+def m_dot_adiab(fluid, pipe, P_out=0*ureg.psig, m_dot_g=1*ureg.g/ureg.s, state='total'):
+    """Calculate mass flow rate through piping for adiabatic compressible
+    flow.
+
+    Parameters
+    ----------
+    fluid : ThermState
+        Inlet fluid conditions
+    pipe : Pipe
+    P_out : Quantity {length: -1, mass: 1, time: -2}
+        Outlet pressure
+
+    Returns
+    -------
+    Quantity {mass: 1, time: -1}
+        mass flow rate
+    """
+    k = fluid.gamma
+    P1 = fluid.P
+    P2 = P_out
+    m_dot_g_ = m_dot_g.m_as(ureg.kg/ureg.s)
+    def to_solve(m_dot_):
+        choked = False
+        m_dot = m_dot_ * ureg.kg/ureg.s
+        if state == 'total':
+            try:
+                M1 = Mach_total(fluid, m_dot, pipe.area)
+            except HydraulicError:
+                return -1
+        elif state =='static':
+            v = velocity(fluid, m_dot, pipe.area)
+            M1 = Mach(fluid, v)
+        P_crit1_ = P_crit(P1, M1, k).m_as(ureg.Pa)
+        K_lim1 = K_lim(M1, k)
+        Re_ = Re(fluid, m_dot_g, pipe.ID, pipe.area)
+        K_lim2 = K_lim1 - pipe.K(Re_)
+        if K_lim2 < 0:
+            return -1
+        M2 = M_from_K_lim(K_lim2, k)
+        P_crit2_ = P_crit(P2, M2, k).m_as(ureg.Pa)
+        result = P_crit1_ - P_crit2_
+        return result
+    bracket = [1e-10, 1e10]  # Limits search range
+    solution = root_scalar(to_solve, bracket=bracket)
+    m_dot = solution.root * ureg.kg/ureg.s
+    return m_dot
 
 def K_to_Cv(K, ID):
     """
@@ -1299,3 +1449,7 @@ def half_width(d_1, T_b, T_h, c, D_h):
     """
     d_2_a = (T_b-c) + (T_h-c) + d_1/2
     return min(max(d_1, d_2_a), D_h)
+
+def velocity(fluid, m_dot, area):
+    """Calculate velocity of fluid with given local parameters."""
+    return m_dot/(area*fluid.Dmass)
