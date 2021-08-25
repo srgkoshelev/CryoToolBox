@@ -15,6 +15,7 @@ from . import os, __location__
 from pint import set_application_registry
 from serialize import load
 from scipy.optimize import root_scalar
+from scipy.integrate import quad
 
 set_application_registry(ureg)
 
@@ -1231,3 +1232,39 @@ def half_width(d_1, T_b, T_h, c, D_h):
     """
     d_2_a = (T_b-c) + (T_h-c) + d_1/2
     return min(max(d_1, d_2_a), D_h)
+
+def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
+    """Calculate mass flux through a converging nozzle using direct integration method.
+
+    This method is recommended for relief valve sizing.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+    fluid_temp = fluid.copy()
+    P1_ = fluid.P.m_as(ureg.Pa)
+    P2_ = P_out.m_as(ureg.Pa)
+    S = fluid.Smass
+    def v(P_):
+        P = P_ * ureg.Pa
+        fluid_temp.update_kw(P=P, Smass=S)
+        rho = fluid_temp.Dmass.m_as(ureg.kg/ureg.m**3)
+        return 1/rho
+    dP = (P1_-P2_) / n_steps
+    P_ = P1_
+    # temp = []
+    G_max = 0
+    while P_ > P2_:
+        G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
+        # temp.append((G, (P_*ureg.Pa).m_as(ureg.psi)))
+        if G >= G_max:
+            G_max = G
+        else:
+            break
+        P_ -= dP
+    G_max *= ureg.kg/(ureg.s*ureg.m**2)
+    return G_max

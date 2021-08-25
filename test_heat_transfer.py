@@ -278,6 +278,12 @@ class PipingTest(unittest.TestCase):
         P_out = 84.056 * ureg.psi
         self.assertApproxEqual(10, piping.m_dot(P_out).m_as(ureg.lb/ureg.s))
 
+    def test_direct_integration(self):
+        fluid = ht.ThermState('helium', P=200*ureg.psi, T=7*ureg.K)
+        self.assertApproxEqual(13920*ureg.kg/(ureg.s*ureg.m**2),
+                               ht.piping.G_nozzle(fluid, P_out=1*ureg.atm),
+                               uncertainty=0.01)
+
 # TODO Add Crane examples: 4-22 (may need Y implementation),
 # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
