@@ -25,6 +25,11 @@ class HydraulicError(Exception):
         self.message = message
         super().__init__(message)
 
+class ChokedFlow(HydraulicError):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
 def _load_table(table_name):
     yaml_table = load((os.path.join(__location__, table_name)))
     result = {}
@@ -1044,7 +1049,6 @@ def dP_Darcy(K, rho, w):
 def dP_incomp(m_dot, fluid, piping):
     """Calculate pressure drop of incompressible flow through piping.
     Lumped method using Darcy equation is used.
-    The pressure dropped is checked for choked condition.
     """
     P_0 = fluid.P
     T_0 = fluid.T
@@ -1274,7 +1278,7 @@ def Mach_total(fluid, m_dot, area):
     M_root = solution.root**0.5
     T = fluid.T - v**2 / fluid.Cpmass
     if T < 0*ureg.K:
-        raise HydraulicError('Flow is choked')
+        raise HydraulicError('Negative static temperature: {T:.3g~}. Required speed {v:.3g~} cannot be achieved.')
     if isinstance(M_root, complex):
         raise HydraulicError(f'No real solutions for Mach number found.')
     return M_root
@@ -1291,7 +1295,7 @@ def K_lim(M, k):
 
 def M_from_K_lim(K, k):
     if K < 0:
-        raise ValueError(f"Resistance coefficient value can't be less than 0: {K}")
+        raise HydraulicError(f"Resistance coefficient value can't be less than 0: {K}")
     K_ = float(K)
     def to_solve(M):
         return K_ - K_lim(M, k)
@@ -1332,9 +1336,12 @@ def dP_adiab(m_dot, fluid, pipe):
     M = Mach_total(fluid, m_dot, pipe.area)
     K_limit = K_lim(M, fluid.gamma)
     Re_ = Re(fluid, m_dot, pipe.ID, pipe.area)
-    K_left = K_limit - pipe.K(Re_)
+    K_pipe = pipe.K(Re_)
+    K_left = K_limit - K_pipe
     if K_left < 0:
-        raise HydraulicError('Flow is choked. Reduce hydraulic resistance or mass flow.')
+        raise ChokedFlow(f'Flow is choked at K={float(K_limit):.3g} with given '
+                         f'K={float(K_pipe):.3g}. Reduce hydraulic resistance or'
+                         ' mass flow.')
     M_end = M_from_K_lim(K_left, fluid.gamma)
     P_static_end = P_from_M(fluid.P, M, M_end, fluid.gamma)
     P_total_end = P_total(P_static_end, M, fluid.gamma)
@@ -1362,7 +1369,6 @@ def m_dot_adiab(fluid, pipe, P_out=0*ureg.psig, m_dot_g=1*ureg.g/ureg.s, state='
     P2 = P_out
     m_dot_g_ = m_dot_g.m_as(ureg.kg/ureg.s)
     def to_solve(m_dot_):
-        choked = False
         m_dot = m_dot_ * ureg.kg/ureg.s
         if state == 'total':
             try:
