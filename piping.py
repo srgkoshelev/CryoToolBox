@@ -6,11 +6,9 @@ equations is Crane TP-410.
 from math import pi, sin, log, log10, sqrt, tan
 from . import logger
 from . import ureg, Q_
-from .cp_wrapper import ThermState
 from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
-from . import T_NTP, P_NTP
 from . import os, __location__
 from pint import set_application_registry
 from serialize import load
@@ -25,10 +23,12 @@ class HydraulicError(Exception):
         self.message = message
         super().__init__(message)
 
+
 class ChokedFlow(HydraulicError):
     def __init__(self, message):
         self.message = message
         super().__init__(message)
+
 
 def _load_table(table_name):
     yaml_table = load((os.path.join(__location__, table_name)))
@@ -1278,7 +1278,8 @@ def Mach_total(fluid, m_dot, area):
     M_root = solution.root**0.5
     T = fluid.T - v**2 / fluid.Cpmass
     if T < 0*ureg.K:
-        raise HydraulicError('Negative static temperature: {T:.3g~}. Required speed {v:.3g~} cannot be achieved.')
+        raise HydraulicError(f'Negative static temperature: {T:.3g~}. Required \
+        speed {v:.3g~} cannot be achieved.')
     if isinstance(M_root, complex):
         raise HydraulicError(f'No real solutions for Mach number found.')
     return M_root
@@ -1295,7 +1296,8 @@ def K_lim(M, k):
 
 def M_from_K_lim(K, k):
     if K < 0:
-        raise HydraulicError(f"Resistance coefficient value can't be less than 0: {K}")
+        raise HydraulicError(f"Resistance coefficient value can't be less \
+        than 0: {K}")
     K_ = float(K)
     def to_solve(M):
         return K_ - K_lim(M, k)
@@ -1455,6 +1457,7 @@ def half_width(d_1, T_b, T_h, c, D_h):
     """
     d_2_a = (T_b-c) + (T_h-c) + d_1/2
     return min(max(d_1, d_2_a), D_h)
+
 
 def velocity(fluid, m_dot, area):
     """Calculate velocity of fluid with given local parameters."""
