@@ -162,11 +162,9 @@ def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
     M = fluid.M
     P_cf = P_1 * (2/(k+1))**(k/(k-1))
     if P_2 <= P_cf:
-        critical = True  # For future verbose use
         C = fluid.C.m_as(ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5)
         A = W / (C*K_d*P_1*K_b*K_c) * (T*Z/M)**0.5
     else:
-        critical = False
         r = P_2 / P_1
         F_2_brack = (1-r**((k-1)/k)) / (1-r)
         F_2 = (k/(k-1) * r**(2/k) * F_2_brack)**0.5
@@ -267,6 +265,7 @@ def conduction_cyl(D_i, D_o, L, k, dT):
     q = 2 * pi * L * k * dT / log(D_o/D_i)
     return q.to(ureg.W)
 
+
 def Re(fluid, m_dot, D_H, A_cross):
     """
     Calculate Reynolds number.
@@ -364,6 +363,7 @@ def Nu_cyl_hor(fluid, T_cyl, D_cyl):
     Nu_T = 0.772*C_l*Ra_**(1/4)  # HHT (4.45)
     f = 1-0.13/Nu_T**0.16
     Nu_l = 2*f/log(1+2*f*Nu_T)
+    # TODO Check Nu_t formula - why C_t is not used?
     C_t = 0.0002*log(Pr_)**3 - 0.0027*log(Pr_)**2 + 0.0061*log(Pr_) + 0.1054
     Nu_t = 0.103*Ra_**(1/3)
     Nu_ = (Nu_l**10 + Nu_t**10)**(1/10)
@@ -688,6 +688,7 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
         value = _nist_quad(T1, T2, fun, coefs)
     return value * unit
 
+
 class Material(Enum):
     """Available materials with low temperature with fits NIST."""
     SS304 = auto()  # AISI 304 Stainless Steel
@@ -695,6 +696,7 @@ class Material(Enum):
     G10 = auto()  # G10
     PTFE = auto()  # PTFE/Teflon
     OFHC = auto()  # Oxygen-free High thermal conductivity copper
+
 
 class Property(Enum):
     """Available low temperature properties from NIST."""

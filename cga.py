@@ -3,7 +3,7 @@ Pressure relief calculations for CGA S-1.3.
 2008 ed.
 """
 
-from . import ureg, Q_
+from . import ureg
 from . import logger
 from .cp_wrapper import CP_const_unit
 
@@ -37,7 +37,8 @@ def theta(fluid, step=0.01):
     # Only working for pure fluids and pre-defined mixtures
     if fluid.is_super_critical:
         logger.warning(f'{fluid.name} is supercritical at {fluid.P:.3~g}'
-                       f' and {fluid.T:.3g~}. Specific heat input will be used.')
+                       f' and {fluid.T:.3g~}. Specific heat input will be \
+                       used.')
         temp_state.update('P', fluid.P, 'T', fluid.T_min)
         T_start = temp_state.T
         T_end = 300*ureg.K
@@ -116,6 +117,7 @@ def G_i(fluid_FR, conservative=True):
         return 52.5
     else:
         return _G_i_us(T, C, L, TZM)
+
 
 @ureg.wraps(None, (ureg.degR,
                    CP_const_unit['C_us'][1],

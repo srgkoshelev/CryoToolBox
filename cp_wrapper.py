@@ -6,7 +6,7 @@
 """
 import CoolProp.CoolProp as CP
 from math import inf
-from . import Q_, ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
+from . import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
@@ -414,7 +414,6 @@ class ThermState:
         """Mass fractions of a mixture."""
         return self._AbstractState.get_mass_fractions()
 
-
     @property
     def is_super_critical(self):
         """Return True if state is supercritical."""
@@ -532,7 +531,8 @@ class ThermState:
         return TempState
 
     def to_standard(self, conditions='NTP'):
-        """Create a copy of current ThermState object at standard conditions."""
+        """Create a copy of current ThermState object at standard conditions.
+        """
         if conditions == 'NTP':
             P = P_NTP
             T = T_NTP
