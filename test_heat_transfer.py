@@ -1,7 +1,6 @@
 import heat_transfer as ht
 import pprint
 import unittest
-import random
 
 pp = pprint.PrettyPrinter()
 
@@ -20,7 +19,8 @@ class RefPropTest(unittest.TestCase):
     def assertNIST(self, nist, calc, criteria=None):
         criteria = criteria or self.criteria
         assert abs(nist-calc) / nist < criteria, \
-            f'Calculated value {calc} is not within {criteria:%} of NIST value {nist}'
+            f'Calculated value {calc} is not within {criteria:%} of NIST value \
+            {nist}'
 
     def test_air(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
@@ -54,7 +54,8 @@ class RefPropTest(unittest.TestCase):
         T = 100 * ureg.K
         fluid.update_kw(T=T, Q=0)
         self.assertNIST(100.111748964945,
-                        fluid.conductivity.to(ureg.W/(ureg.m*ureg.K)).magnitude*1000)
+                        fluid.conductivity.to(ureg.W/(ureg.m*ureg.K)).magnitude*
+                        1000)
 
     def test_air_density(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
@@ -62,7 +63,8 @@ class RefPropTest(unittest.TestCase):
         P = 14.7 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(P=P, T=T)
         self.assertNIST(0.0749156384666842,
-                        fluid.Dmolar.to(ureg.mol/ureg.L).magnitude*fluid.M*0.062427974)
+                        fluid.Dmolar.to(ureg.mol/ureg.L).magnitude*fluid.M *
+                        0.062427974)
 
     # def test_freon_mixture(self):
     #     fluid = ht.ThermState('R32&R125', backend='REFPROP')
@@ -91,7 +93,8 @@ class RefPropTest(unittest.TestCase):
         P = 10000 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(T=T, P=P)
         self.assertNIST(5536.79144924071,
-                        fluid.speed_sound.to(ureg.m/ureg.s).magnitude * 1000 / 25.4 / 12)
+                        fluid.speed_sound.to(ureg.m/ureg.s).magnitude *
+                        1000 / 25.4 / 12)
 
     def test_octane(self):
         fluid = ht.ThermState('octane', backend='REFPROP')
@@ -114,7 +117,8 @@ class RefPropTest(unittest.TestCase):
 class FunctionsTest(unittest.TestCase):
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         assert abs(data-calc) / data < uncertainty, \
-            f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
+            f'Calculated value {calc} is not within {uncertainty:.1%} of data \
+            value {data}'
 
     def test_rad_hl_1(self):
         eps = 0.02
@@ -177,6 +181,7 @@ class FunctionsTest(unittest.TestCase):
         A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
+
 class PipingTest(unittest.TestCase):
     """Simple piping check to see if basic functionality works.
 
@@ -184,7 +189,8 @@ class PipingTest(unittest.TestCase):
 
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         assert abs(data-calc) / data < uncertainty, \
-            f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
+            f'Calculated value {calc} is not within {uncertainty:.1%} of data \
+            value {data}'
 
     def test_create_pipes(self):
         tube = ht.piping.Tube(Q_('1 inch'))
@@ -248,7 +254,6 @@ class PipingTest(unittest.TestCase):
         Re = 1e3
         self.assertApproxEqual(64/Re, ht.piping.f_Darcy(Re, eps_r))
 
-
     # def test_Crane_4_22(self):
     #     test_air = ht.ThermState('air', P=2.343*ureg.bar, T=40*ureg.degC)
     #     pipe = ht.piping.Pipe(1/2, SCH=80, L=3*ureg.m)
@@ -307,8 +312,6 @@ class CPWrapperTest(unittest.TestCase):
         air_std = ht.AIR.to_standard(conditions='STD')
         self.assertAlmostEqual(ht.P_STD, air_std.P)
         self.assertAlmostEqual(ht.T_STD, air_std.T)
-
-
 
 
 if __name__ == '__main__':
