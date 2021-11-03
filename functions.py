@@ -20,6 +20,12 @@ z_3 = Q_('6.7 ft')  # Scaled distance for lung damage (PNNL)
 sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
 
+class NISTError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
 
 def to_scfma(M_dot_fluid, fluid):
     """
@@ -664,7 +670,11 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
         if RRR_OFHC is None:
             logger.warning('RRR for OFHC is not defined. Using RRR=100.')
             RRR_OFHC = 100
-        coefs = _NIST_DATA[material][prop]['coefs'+str(RRR_OFHC)]
+        try:
+            coefs = _NIST_DATA[material][prop]['coefs'+str(RRR_OFHC)]
+        except KeyError:
+            raise NISTError(f'No data for RRR {RRR_OFHC}.'
+                            'Use RRR 50, 100, 150, 300 or 500')
     else:
         coefs = _NIST_DATA[material][prop]['coefs']
     fun = _NIST_DATA[material][prop]['fun']
