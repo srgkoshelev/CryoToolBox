@@ -22,7 +22,7 @@ logging.config.fileConfig(os.path.join(__location__, 'logging.ini'))
 logger = logging.getLogger(__name__)
 
 # Configuring units package:
-ureg = UnitRegistry(autoconvert_offset_to_baseunit=True)
+ureg = UnitRegistry()
 Q_ = ureg.Quantity
 ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
 

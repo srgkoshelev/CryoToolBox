@@ -9,6 +9,7 @@ from . import ureg, Q_
 from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
+from .functions import P_NTP
 from . import os, __location__
 from pint import set_application_registry
 from serialize import load
@@ -116,7 +117,7 @@ class Tube:
         """
         return 1 / (4*log10(self.eps/(3.7*self.ID))**2)
 
-    def pressure_design_thick(self, P_int, P_ext=Q_('0 psig')):
+    def pressure_design_thick(self, P_int, P_ext=P_NTP):
         """Calculate pressure design thickness for given pressure and pipe material.
 
         Based on B31.3 304.1.
@@ -201,7 +202,7 @@ class Tube:
         """
         if self.S is None:
             try:
-                self.S = self.material.S
+                self.S
             except AttributeError:
                 raise AttributeError(
                     'Stress value S from B31.3 Table A-1  needs to be defined')
@@ -224,10 +225,6 @@ class Tube:
             except AttributeError:
                 raise AttributeError('Coefficient Y from B31.3 Table '
                                      '304.1.1 needs to be defined')
-        else:
-            if self.S != self.material.S:
-                raise AttributeError('Stress value S is different than stress'
-                                     'value for material. Check the inputs.')
 
     def branch_reinforcement(self, BranchPipe, P, beta=Q_('90 deg'), d_1=None,
                              T_r=Q_('0 in')):
@@ -1073,7 +1070,7 @@ def dP_incomp(m_dot, fluid, piping):
                              ' incompressible flow.')
 
 
-def m_dot_incomp(fluid, piping, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
+def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
     '''Calculate mass flow through the piping using initial conditions
     at the beginning of piping.
 
@@ -1155,7 +1152,7 @@ def m_dot_incomp(fluid, piping, P_out=0*ureg.psig, guess=1*ureg.g/ureg.s):
 #     {(P_in-P_out).to(ureg.psi)}')
 #     logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
 
-def m_dot_isot(fluid, pipe, P_out=0*ureg.psig, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
+def m_dot_isot(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
     """Calculate mass flow rate through piping for isothermal compressible
     flow.
 
@@ -1349,7 +1346,7 @@ def dP_adiab(m_dot, fluid, pipe):
     P_total_end = P_total(P_static_end, M, fluid.gamma)
     return fluid.P - P_total_end
 
-def m_dot_adiab(fluid, pipe, P_out=0*ureg.psig, m_dot_g=1*ureg.g/ureg.s, state='total'):
+def m_dot_adiab(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, state='total'):
     """Calculate mass flow rate through piping for adiabatic compressible
     flow.
 

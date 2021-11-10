@@ -218,6 +218,8 @@ def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02}):
     eps_baffle = baffles['eps']
 
     eps_mut = 1/(1/eps_1 + F1_2*(1/eps_2-1))  # Mutual emissivity
+    T_1.ito(ureg.K)
+    T_2.ito(ureg.K)
     q0 = eps_mut*sigma*(T_2**4 - T_1**4)*F1_2
     eps_baffle_mut = eps_baffle/(2-eps_baffle)
     eta = (1+N_baffles*eps_mut/eps_baffle_mut)**(-1)

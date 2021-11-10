@@ -1,4 +1,5 @@
 import heat_transfer as ht
+from heat_transfer import odh
 import pprint
 import unittest
 import random
@@ -120,24 +121,24 @@ class FunctionsTest(unittest.TestCase):
 
     def test_rad_hl_1(self):
         eps = 0.02
-        T1 = 27 * ureg.degC
-        T2 = -183 * ureg.degC
+        T1 = Q_(27, ureg.degC)
+        T2 = Q_(-183, ureg.degC)
         A = 0.05 * ureg.m**2
         heat_flow = abs(ht.rad_hl(T1, eps, T2, eps)) * A
         self.assertAlmostEqual(0.23054, heat_flow.to(ureg.W).magnitude, 5)
 
     def test_rad_hl_2(self):
         eps = 0.55
-        T1 = 27 * ureg.degC
-        T2 = -183 * ureg.degC
+        T1 = Q_(27, ureg.degC)
+        T2 = Q_(-183, ureg.degC)
         A = 0.05 * ureg.m**2
         heat_flow = abs(ht.rad_hl(T1, eps, T2, eps)) * A
         self.assertAlmostEqual(8.65727, heat_flow.to(ureg.W).magnitude, 5)
 
     def test_rad_hl_3(self):
         eps = 0.8
-        T1 = 327 * ureg.degC
-        T2 = 127 * ureg.degC
+        T1 = Q_(327, ureg.degC)
+        T2 = Q_(127, ureg.degC)
         eps_b = 0.05
         heat_flow = abs(ht.rad_hl(T1, eps, T2, eps,
                                   baffles={'N': 1, 'eps': eps_b}))
@@ -145,9 +146,9 @@ class FunctionsTest(unittest.TestCase):
                                heat_flow.to(ureg.W/ureg.m**2).magnitude, 5)
 
     def test_rad_hl_4(self):
-        T1 = 327 * ureg.degC
+        T1 = Q_(327, ureg.degC)
         eps_1 = 0.8
-        T2 = 127 * ureg.degC
+        T2 = Q_(127, ureg.degC)
         eps_2 = 0.4
         eps_b = 0.05
         heat_flow = abs(ht.rad_hl(T1, eps_1, T2, eps_2,
@@ -172,15 +173,14 @@ class FunctionsTest(unittest.TestCase):
         fluid = ht.ThermState('propane&butane', backend='REFPROP')
         fluid.set_mole_fractions(0.5, 0.5)
         fluid.update_kw(T=627*ureg.degR, P=97.2*ureg.psi)
-        P_back = 0 * ureg.psig
+        P_back = Q_(0, ureg.psig)
         A_expect = 5.73 * ureg.inch**2
         A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
 class PipingTest(unittest.TestCase):
-    """Simple piping check to see if basic functionality works.
-
-    Doesn't check for correctness yet."""
+    """Piping checks, mostly taken from textbooks.
+    """
 
     def assertApproxEqual(self, expected, calculated, uncertainty=0.05):
         error = float(abs(expected-calculated)/expected)
@@ -261,7 +261,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(64/Re, ht.piping.f_Darcy(Re, eps_r))
 
     def test_Crane_7_16(self):
-        air = ht.ThermState('air', P=65*ureg.psig, T=110*ureg.degF)
+        air = ht.ThermState('air', P=Q_(65, ureg.psig), T=Q_(110, ureg.degF))
         pipe = ht.piping.Pipe(1, SCH=40, L=75*ureg.ft)
         flow = 100 * ureg.ft**3/ureg.min
         m_dot = flow * ht.AIR.Dmass
@@ -272,7 +272,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(2.61, dP_isot.m_as(ureg.psi))
 
     def test_Crane_7_22(self):
-        air = ht.ThermState('air', P=19.3*ureg.psig, T=100*ureg.degF)
+        air = ht.ThermState('air', P=Q_(19.3, ureg.psig), T=Q_(100, ureg.degF))
         pipe = ht.piping.Pipe(1/2, SCH=80, L=7.04/6.04*10*ureg.ft)  # Adjust for entrance K = 1, total 7.04
         dP = 19.3 * ureg.psi
         P_out = air.P - dP
@@ -391,7 +391,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(0.0233*ureg.kg/ureg.s, m_dot_adiab)
 
     def test_White_P_9_100(self):
-        fluid = ht.ThermState('methane', T=68*ureg.degF, P=5*ureg.bar+101325*ureg.Pa)
+        fluid = ht.ThermState('methane', T=Q_(68, ureg.degF), P=5*ureg.bar+101325*ureg.Pa)
         P_out = 1*ureg.bar + 101325*ureg.Pa
         pipe = ht.piping.Pipe(6, L=31*ureg.mile)
         K = 0.019 * pipe.L/pipe.ID
@@ -402,7 +402,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(fluid.P-P_out, dP_isot)
 
     def test_White_P_9_101(self):
-        air = ht.ThermState('air', T=20*ureg.degC, P=102*ureg.kPa)
+        air = ht.ThermState('air', T=Q_(20, ureg.degC), P=102*ureg.kPa)
         P_out = 100*ureg.kPa
         pipe = ht.piping.Tube(3*ureg.cm, wall=0*ureg.m, L=1*ureg.m)
         K = 0.028 * pipe.L/pipe.ID
@@ -416,7 +416,6 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(air.P-P_out, dP_incomp)
         dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
         self.assertApproxEqual(air.P-P_out, dP_isot)
-
 
     def test_M_from_K(self):
         air = ht.ThermState('air', P=300*ureg.kPa, T=500*ureg.K)
@@ -434,6 +433,7 @@ class PipingTest(unittest.TestCase):
             20, air.gamma))
         self.assertApproxEqual(1, ht.piping.M_from_K_lim(
             0, air.gamma))
+
 
 class CPWrapperTest(unittest.TestCase):
     """Test for additional methods of ThermState class"""
@@ -455,6 +455,29 @@ class CPWrapperTest(unittest.TestCase):
         self.assertAlmostEqual(ht.P_STD, air_std.P)
         self.assertAlmostEqual(ht.T_STD, air_std.T)
 
+
+class ODHTest(FunctionsTest):
+    """Set of tests for basic functionality of ODH analysis
+    """
+    def test_source(self):
+        LHe = ht.ThermState('helium')
+        LHe.update('P', ht.P_NTP, 'Q', Q_('0'))
+        Portable_500L = odh.Source('Portable 500L', LHe, Q_(500, ureg.L))
+        Portable_500L.dewar_insulation_failure(1054*ureg('ft^3/min'))
+        fluid = ht.ThermState('water', P=Q_(2, ureg.psig), T=Q_(60, ureg.degF))
+        tube = ht.piping.Pipe(3, SCH=80)
+        d_hole = 2 * ureg.inch
+        area = 3.14159 * d_hole**2 / 4
+        self.assertApproxEqual(131*ureg.gal/ureg.min,
+                               odh.hole_leak(tube, area, fluid),
+                               uncertainty=0.2)
+        # Crane gives 131 gal/min for flow, different in equations gives 20 % difference
+
+        # Portable_500L.u_tube_failure(outer_tube=ht.piping.Pipe(1),
+        #                              inner_tube=ht.piping.Pipe(0.5),
+        #                              L=1*ureg.ft,
+        #                              use_rate=1/ureg.year
+        #                              )
 
 
 

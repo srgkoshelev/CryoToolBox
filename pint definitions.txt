@@ -1,2 +1,2 @@
-pound_force_per_square_inch_gauge = 6.895*10**6 * g/(m*s**2); offset: 14.696*6.895*10**6 = psig
+pound_force_per_square_inch_gauge = 6894757.293168363 * g/(m*s**2); offset: 14.696*6894757.293168363 = psig
 debye = 10**(-10)*esu*angstrom
