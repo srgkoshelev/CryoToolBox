@@ -1459,3 +1459,12 @@ def half_width(d_1, T_b, T_h, c, D_h):
 def velocity(fluid, m_dot, area):
     """Calculate velocity of fluid with given local parameters."""
     return m_dot/(area*fluid.Dmass)
+
+
+def piping_stress(tube, P_int, P_ext=Q_(0, ureg.psig), *, E, W, Y):
+    """Calculate piping stress in a given tube for internal pressure P_int."""
+    P = P_int - P_ext
+    D = tube.OD
+    t = tube.wall - tube.c
+    S = P / (E*W) * (D/(2*t) - Y)
+    return S.to(ureg.psi)

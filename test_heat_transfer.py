@@ -434,6 +434,23 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(1, ht.piping.M_from_K_lim(
             0, air.gamma))
 
+    def test_piping_stress(self):
+        OD = 1.75*ureg.inch
+        ID = 1.625*ureg.inch
+        wall = (OD - ID) / 2
+        tube = ht.piping.Tube(OD, wall=wall)
+        S = 16700*ureg.psi
+        E = 1
+        W = 1
+        Y = 0.4
+        self.assertApproxEqual(
+            S,
+            ht.piping.piping_stress(
+                tube,
+                1070.512*ureg.psi,
+                P_ext=0*ureg.Pa,
+                E=E, W=W, Y=Y), uncertainty=0.01)
+
 
 class CPWrapperTest(unittest.TestCase):
     """Test for additional methods of ThermState class"""
