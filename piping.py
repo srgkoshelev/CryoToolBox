@@ -134,6 +134,7 @@ class Tube:
         ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
+        logger.warning('Deprecated, use standalone function instead.')
         # Check whether S, E, W, and Y are defined
         self._check_SEWY()
         D = self.OD
@@ -1461,10 +1462,43 @@ def velocity(fluid, m_dot, area):
     return m_dot/(area*fluid.Dmass)
 
 
-def piping_stress(tube, P_int, P_ext=Q_(0, ureg.psig), *, E, W, Y):
+def piping_stress(tube, P_int, P_ext=P_NTP, *, E, W, Y):
     """Calculate piping stress in a given tube for internal pressure P_int."""
     P = P_int - P_ext
     D = tube.OD
     t = tube.wall - tube.c
     S = P / (E*W) * (D/(2*t) - Y)
     return S.to(ureg.psi)
+
+
+def pressure_design_thick(tube, P_int, P_ext=P_NTP, *, S, E, W, Y):
+    """Calculate pressure design thickness for given pressure and pipe material.
+
+    Based on B31.3 304.1.
+
+    Parameters
+    ----------
+    P_int : ureg.Quantity {length: -1, mass: 1, time: -2}
+        Internal pressure, absolute
+    P_ext : ureg.Quantity {length: -1, mass: 1, time: -2}
+        External pressure, absolute
+
+    Returns
+    -------
+    ureg.Quantity {length: 1}
+        Minimum required wall thickness.
+    """
+    # Check whether S, E, W, and Y are defined
+    tube._check_SEWY()
+    D = tube.OD
+    # d = tube.ID
+    P = P_int - P_ext  # Differential pressure across the wall
+    t = P * D / (2*(S*E*W + P*Y))
+    # TODO add 3b equation handling:
+    # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
+    if (t >= D/6) or (P/(S*E)) > 0.385:
+        logger.error('Calculate design thickness in accordance \
+        with B31.3 304.1.2 (b)')
+        return None
+    tm = t + tube.c
+    return tm
