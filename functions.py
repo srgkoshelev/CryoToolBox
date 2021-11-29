@@ -697,8 +697,15 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
         value = fun(T1, coefs)
     else:
         T2 = T2.to(ureg.K).magnitude
-        value = _nist_quad(T1, T2, fun, coefs)
+        if prop == Property.LE:
+            value_1 = nist_property(material, prop, T1*ureg.K)
+            value_2 = nist_property(material, prop, T2*ureg.K)
+            value = value_2 - value_1
+            return value
+        else:
+            value = _nist_quad(T1, T2, fun, coefs)
     return value * unit
+
 
 class Material(Enum):
     """Available materials with low temperature with fits NIST."""
@@ -707,6 +714,7 @@ class Material(Enum):
     G10 = auto()  # G10
     PTFE = auto()  # PTFE/Teflon
     OFHC = auto()  # Oxygen-free High thermal conductivity copper
+
 
 class Property(Enum):
     """Available low temperature properties from NIST."""
