@@ -77,8 +77,8 @@ class Tube:
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         # Wall thickness under tolerance is 12.5% as per ASTM A999
-        wall_tol = 0.125 * self.wall
-        self.c = c + wall_tol
+        self.wall_tol = 0.125 * self.wall
+        self.c = c
         self.type = 'Tube'
         self.S = None
         self.E = None
