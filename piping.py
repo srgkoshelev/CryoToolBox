@@ -161,6 +161,7 @@ class Tube:
         ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
+        logger.warning('Deprecated, use standalone function instead.')
         # Check whether S, E, W, and Y are defined
         self._check_SEWY()
         D = self.OD
@@ -226,50 +227,6 @@ class Tube:
             except AttributeError:
                 raise AttributeError('Coefficient Y from B31.3 Table '
                                      '304.1.1 needs to be defined')
-
-    def branch_reinforcement(self, BranchPipe, P, beta=Q_('90 deg'), d_1=None,
-                             T_r=Q_('0 in')):
-        """Calculate branch reinforcement status for given BranchPipe and
-        reinforcing ring thickness, Tr.
-
-        Parameters
-        ----------
-        BranchPipe : Pipe
-            Branch pipe/tube instance with S, E, W, Y properties defined
-        P : ureg.Quantity {length: -1, mass: 1, time: -2}
-            Design pressure
-        beta : ureg.Quantity {dimensionless}
-            Smaller angle between axes of branch and run
-        d_1 : ureg.Quantity {length: 1}
-            Effective length removed from pipe at branch (opening for branch)
-        T_r : ureg.Quantity {length: 1}
-            Minimum thickness of reinforcing ring
-
-        Returns
-        -------
-        None
-
-        """
-        # TODO Rename to reinforcement area?
-        t_h = self.pressure_design_thick(P)
-        if d_1 is None:
-            d_1 = BranchPipe.OD
-        D_h = self.OD
-        T_h = self.wall
-        T_b = BranchPipe.wall
-        t_b = BranchPipe.pressure_design_thick(P)
-        c = max(self.c, BranchPipe.c)  # Max allowance is used for calculation
-        # B31.3 has no specification which allowance to use
-        d_2 = half_width(d_1, T_b, T_h, c, D_h)
-        A_1 = t_h * d_1 * (2-sin(beta))
-        A_2 = (2*d_2-d_1) * (T_h - t_h - c)
-        # height of reinforcement zone outside of run pipe
-        L_4 = min(2.5*(T_h-c), 2.5*(T_b-c))
-        A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * BranchPipe.S / self.S
-        print(f'Required Reinforcement Area A_1: {A_1.to(ureg.inch**2):.3g~}')
-        A_avail = A_2 + A_3  # Ignoring welding reinforcement
-        print(f'Available Area A_2+A_3: {A_avail.to(ureg.inch**2):.3g~}')
-        print(f'Weld branch connection is safe: {A_avail>A_1}')
 
     def __str__(self):
         return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
@@ -1449,39 +1406,42 @@ def equivalent_orifice(m_dot, dP, fluid=AIR):
     return ID.to(ureg.inch)
 
 
-def half_width(d_1, T_b, T_h, c, D_h):
-    """
-    Calculate 'half width' of reinforcement zone per B31.3 304.3.3.
-    """
-    d_2_a = (T_b-c) + (T_h-c) + d_1/2
-    return min(max(d_1, d_2_a), D_h)
-
-
 def velocity(fluid, m_dot, area):
     """Calculate velocity of fluid with given local parameters."""
     return m_dot/(area*fluid.Dmass)
 
 
-def piping_stress(tube, P_int, P_ext=P_NTP, *, E, W, Y):
-    """Calculate piping stress in a given tube for internal pressure P_int."""
-    P = P_int - P_ext
+def piping_stress(tube, P_diff, *, E, W, Y):
+    """Calculate piping stress for given pressure and pipe material.
+
+    Based on B31.3 304.1.
+
+    Parameters
+    ----------
+    P_diff : ureg.Quantity {length: -1, mass: 1, time: -2}
+        Differential internal pressure, absolute
+
+    Returns
+    -------
+    ureg.Quantity {mass: 1, length: -1, time: -2}
+        Piping stress
+    """
+    P = P_diff
     D = tube.OD
-    t = tube.wall - tube.c
+    t = tube.wall - tube.wall_tol - tube.c
     S = P / (E*W) * (D/(2*t) - Y)
     return S.to(ureg.psi)
 
 
-def pressure_design_thick(tube, P_int, P_ext=P_NTP, *, S, E, W, Y):
+def pressure_design_thick(tube, P_diff, *, S, E, W, Y):
     """Calculate pressure design thickness for given pressure and pipe material.
 
     Based on B31.3 304.1.
 
     Parameters
     ----------
-    P_int : ureg.Quantity {length: -1, mass: 1, time: -2}
-        Internal pressure, absolute
-    P_ext : ureg.Quantity {length: -1, mass: 1, time: -2}
-        External pressure, absolute
+    P_diff : ureg.Quantity {length: -1, mass: 1, time: -2}
+        Differential internal pressure, absolute
 
     Returns
     -------
@@ -1492,7 +1452,7 @@ def pressure_design_thick(tube, P_int, P_ext=P_NTP, *, S, E, W, Y):
     tube._check_SEWY()
     D = tube.OD
     # d = tube.ID
-    P = P_int - P_ext  # Differential pressure across the wall
+    P = P_diff
     t = P * D / (2*(S*E*W + P*Y))
     # TODO add 3b equation handling:
     # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
@@ -1502,3 +1462,73 @@ def pressure_design_thick(tube, P_int, P_ext=P_NTP, *, S, E, W, Y):
         return None
     tm = t + tube.c
     return tm
+
+
+def pressure_rating(tube, *, S, E, W, Y):
+    """Calculate internal pressure rating.
+
+    Based on B31.3 304.1.
+
+    Returns
+    -------
+    ureg.Quantity {length: 1}
+        Minimum required wall thickness.
+    """
+    D = tube.OD
+    t = tube.wall - tube.wall_tol - tube.c
+    P = 2 * t * S * E * W / (D-2*Y*t)
+    return P.to(ureg.psi)
+
+
+def reinforcement_area(header, branch, P_diff, beta=Q_('90 deg'), d_1=None,
+                       T_r=Q_('0 in'), *, S, E, W, Y):
+    """Calculate reinforcement and available area for given branch pipe and
+    reinforcing ring thickness, Tr.
+
+    Parameters
+    ----------
+    header : Pipe
+        Header pipe/tube
+    branch : Pipe
+        Branch pipe/tube
+    P_diff : ureg.Quantity {length: -1, mass: 1, time: -2}
+        Differential internal pressure in pipe and branch
+    beta : ureg.Quantity {dimensionless}
+        Smaller angle between axes of branch and run
+    d_1 : ureg.Quantity {length: 1}
+        Effective length removed from pipe at branch (opening for branch)
+    T_r : ureg.Quantity {length: 1}
+        Minimum thickness of reinforcing ring
+
+    Returns
+    -------
+    None
+
+    """
+    D_h = header.OD
+    T_h = header.wall - header.wall_tol
+    t_h = pressure_design_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
+    D_b = branch.OD
+    T_b = branch.wall - branch.wall_tol
+    t_b = pressure_design_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
+    if d_1 is None:
+        d_1 = (D_b - 2*(T_b-branch.c)) / sin(beta)
+    c = max(header.c, branch.c)  # Max allowance is used for calculation
+    # B31.3 has no specification which allowance to use
+    d_2 = half_width(d_1, T_b, T_h, c, D_h)
+    A_1 = t_h * d_1 * (2-sin(beta))
+    A_2 = (2*d_2-d_1) * (T_h - t_h - c)
+    # height of reinforcement zone outside of run pipe
+    L_4 = min(2.5*(T_h-c), 2.5*(T_b-c))
+    A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta)
+    # A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * branch.S / header.S
+    A_avail = A_2 + A_3  # Ignoring welding reinforcement
+    return (A_1.to(ureg.inch**2), A_avail.to(ureg.inch**2))
+
+
+def half_width(d_1, T_b, T_h, c, D_h):
+    """
+    Calculate 'half width' of reinforcement zone per B31.3 304.3.3.
+    """
+    d_2_a = (T_b-c) + (T_h-c) + d_1/2
+    return min(max(d_1, d_2_a), D_h)
