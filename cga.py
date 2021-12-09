@@ -117,6 +117,7 @@ def G_i(fluid_FR, conservative=True):
     else:
         return _G_i_us(T, C, L, TZM)
 
+
 @ureg.wraps(None, (ureg.degR,
                    CP_const_unit['C_us'][1],
                    ureg.BTU/ureg.lb,

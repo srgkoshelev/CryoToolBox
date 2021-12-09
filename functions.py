@@ -274,6 +274,7 @@ def conduction_cyl(D_i, D_o, L, k, dT):
     q = 2 * pi * L * k * dT / log(D_o/D_i)
     return q.to(ureg.W)
 
+
 def Re(fluid, m_dot, D_H, A_cross):
     """
     Calculate Reynolds number.
@@ -371,6 +372,7 @@ def Nu_cyl_hor(fluid, T_cyl, D_cyl):
     Nu_T = 0.772*C_l*Ra_**(1/4)  # HHT (4.45)
     f = 1-0.13/Nu_T**0.16
     Nu_l = 2*f/log(1+2*f*Nu_T)
+    # TODO Check Nu_t formula - why C_t is not used?
     C_t = 0.0002*log(Pr_)**3 - 0.0027*log(Pr_)**2 + 0.0061*log(Pr_) + 0.1054
     Nu_t = 0.103*Ra_**(1/3)
     Nu_ = (Nu_l**10 + Nu_t**10)**(1/10)

@@ -23,7 +23,8 @@ class RefPropTest(unittest.TestCase):
     def assertNIST(self, nist, calc, criteria=None):
         criteria = criteria or self.criteria
         assert abs(nist-calc) / nist < criteria, \
-            f'Calculated value {calc} is not within {criteria:%} of NIST value {nist}'
+            f'Calculated value {calc} is not within {criteria:%} of NIST value \
+            {nist}'
 
     def test_air(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
@@ -57,7 +58,8 @@ class RefPropTest(unittest.TestCase):
         T = 100 * ureg.K
         fluid.update_kw(T=T, Q=0)
         self.assertNIST(100.111748964945,
-                        fluid.conductivity.to(ureg.W/(ureg.m*ureg.K)).magnitude*1000)
+                        fluid.conductivity.to(ureg.W/(ureg.m*ureg.K)).magnitude*
+                        1000)
 
     def test_air_density(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
@@ -65,7 +67,8 @@ class RefPropTest(unittest.TestCase):
         P = 14.7 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(P=P, T=T)
         self.assertNIST(0.0749156384666842,
-                        fluid.Dmolar.to(ureg.mol/ureg.L).magnitude*fluid.M*0.062427974)
+                        fluid.Dmolar.to(ureg.mol/ureg.L).magnitude*fluid.M *
+                        0.062427974)
 
     # def test_freon_mixture(self):
     #     fluid = ht.ThermState('R32&R125', backend='REFPROP')
@@ -94,7 +97,8 @@ class RefPropTest(unittest.TestCase):
         P = 10000 / 14.50377377 * (10**5) / 1000 * ureg.kPa
         fluid.update_kw(T=T, P=P)
         self.assertNIST(5536.79144924071,
-                        fluid.speed_sound.to(ureg.m/ureg.s).magnitude * 1000 / 25.4 / 12)
+                        fluid.speed_sound.to(ureg.m/ureg.s).magnitude *
+                        1000 / 25.4 / 12)
 
     def test_octane(self):
         fluid = ht.ThermState('octane', backend='REFPROP')
@@ -117,7 +121,8 @@ class RefPropTest(unittest.TestCase):
 class FunctionsTest(unittest.TestCase):
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         assert abs(data-calc) / data < uncertainty, \
-            f'Calculated value {calc} is not within {uncertainty:.1%} of data value {data}'
+            f'Calculated value {calc} is not within {uncertainty:.1%} of data \
+            value {data}'
 
     def test_rad_hl_1(self):
         eps = 0.02
@@ -177,6 +182,7 @@ class FunctionsTest(unittest.TestCase):
         A_expect = 5.73 * ureg.inch**2
         A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
+
 
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.
@@ -259,6 +265,18 @@ class PipingTest(unittest.TestCase):
         eps_r = 0.006
         Re = 1e3
         self.assertApproxEqual(64/Re, ht.piping.f_Darcy(Re, eps_r))
+
+    # def test_Crane_4_22(self):
+    #     test_air = ht.ThermState('air', P=2.343*ureg.bar, T=40*ureg.degC)
+    #     pipe = ht.piping.Pipe(1/2, SCH=80, L=3*ureg.m)
+    #     piping = ht.piping.Piping(
+    #         test_air,
+    #         [pipe,
+    #          ht.piping.Exit(pipe.ID)])
+    #     Y = 0.76  # Taken from Crane; temporary stub
+    #     flow = ht.to_standard_flow(piping.m_dot(), test_air) * Y
+    #     # TODO Check this test (might have to do with subsonic flow)
+    #     self.assertAlmostEqual(1.76, flow.to(ureg.m**3/ureg.min).magnitude)
 
     def test_Crane_7_16(self):
         air = ht.ThermState('air', P=Q_(65, ureg.psig), T=Q_(110, ureg.degF))
@@ -448,8 +466,16 @@ class PipingTest(unittest.TestCase):
             ht.piping.piping_stress(
                 tube,
                 1070.512*ureg.psi,
-                P_ext=0*ureg.Pa,
                 E=E, W=W, Y=Y), uncertainty=0.01)
+
+    def test_direct_integration(self):
+        fluid = ht.ThermState('helium', P=200*ureg.psi, T=7*ureg.K)
+        self.assertApproxEqual(13920*ureg.kg/(ureg.s*ureg.m**2),
+                               ht.piping.G_nozzle(fluid, P_out=1*ureg.atm),
+                               uncertainty=0.01)
+
+# TODO Add Crane examples: 4-22 (may need Y implementation),
+# 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
 
 class CPWrapperTest(unittest.TestCase):

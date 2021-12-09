@@ -15,6 +15,7 @@ from pint import set_application_registry
 from serialize import load
 from scipy.optimize import root_scalar
 from collections.abc import MutableSequence
+from scipy.integrate import quad
 
 set_application_registry(ureg)
 
@@ -581,7 +582,8 @@ class PipeElbow(Elbow, Pipe):
     NPS Elbow fitting.
     MRO makes method K from Elbow class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1, angle=90*ureg.deg):
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1,
+                 angle=90*ureg.deg):
         """Generate a pipe elbow object.
 
         Parameters
@@ -860,7 +862,7 @@ class ParallelPlateRelief:
         # Before lifting pressure affects area within O-Ring OD
         A_lift = pi * self.Plate['OD_O_ring']**2 / 4
         F_precomp = self.Springs['N'] * self.Springs['k'] *\
-                    self.Springs['dx_precomp']
+            self.Springs['dx_precomp']
         # Force required to lift the plate
         F_lift = F_precomp + self.Plate['W_plate']
         self.F_lift = F_lift
@@ -910,6 +912,7 @@ def f_Darcy(Re_, eps_r, method='churchill'):
     elif method == 'serghide':
         return serghide(Re_, eps_r)
 
+
 def churchill(Re_, eps_r):
     """Calculate Darcy friction factor using modified Churchill formula.
     See 8.5.2 of "Pipe flow, A Practical and Comprehensive Guide", Rennels,
@@ -934,6 +937,7 @@ def churchill(Re_, eps_r):
     B = (13269 / Re_)**16
     f = ((64/Re_)**12 + 1/(A+B)**(3/2))**(1/12)
     return f
+
 
 def serghide(Re_, eps_r):
     """Calculate Darcy friction factor using Serghide solution to
@@ -1532,3 +1536,43 @@ def half_width(d_1, T_b, T_h, c, D_h):
     """
     d_2_a = (T_b-c) + (T_h-c) + d_1/2
     return min(max(d_1, d_2_a), D_h)
+
+
+def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
+    """Calculate mass flux through a converging nozzle using direct integration
+    method.
+
+    This method is recommended for relief valve sizing.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+    fluid_temp = fluid.copy()
+    P1_ = fluid.P.m_as(ureg.Pa)
+    P2_ = P_out.m_as(ureg.Pa)
+    S = fluid.Smass
+
+    def v(P_):
+        P = P_ * ureg.Pa
+        fluid_temp.update_kw(P=P, Smass=S)
+        rho = fluid_temp.Dmass.m_as(ureg.kg/ureg.m**3)
+        return 1/rho
+
+    dP = (P1_-P2_) / n_steps
+    P_ = P1_
+    # temp = []
+    G_max = 0
+    while P_ > P2_:
+        G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
+        # temp.append((G, (P_*ureg.Pa).m_as(ureg.psi)))
+        if G >= G_max:
+            G_max = G
+        else:
+            break
+        P_ -= dP
+    G_max *= ureg.kg/(ureg.s*ureg.m**2)
+    return G_max
