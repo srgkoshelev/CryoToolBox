@@ -26,7 +26,6 @@ class NISTError(Exception):
         super().__init__(message)
 
 
-
 def to_scfma(M_dot_fluid, fluid):
     """
     Convert mass flow rate into equivalent flow of air.
