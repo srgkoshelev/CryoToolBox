@@ -134,8 +134,7 @@ class Source:
                             ODHError('Leak area cannot be larger'
                                      ' than pipe area.')
                         q_std = hole_leak(tube, area, fluid)
-                    self.leaks.append(
-                        self._make_leak(name, failure_rate, q_std, N_events))
+                    self.failure_mode(name, failure_rate, q_std, N_events)
 
     def dewar_insulation_failure(self, q_std):
         """Add dewar insulation failure to leaks dict.
@@ -153,8 +152,7 @@ class Source:
             Thermodynamic state of the fluid stored in the source.
         """
         failure_rate = TABLE_1['Dewar']['Loss of vacuum']
-        self.leaks.append(
-            self._make_leak('Dewar insulation failure', failure_rate, q_std, 1))
+        self.failure_mode('Dewar insulation failure', failure_rate, q_std, 1)
 
     # def u_tube_failure(self, outer_tube, inner_tube, L, use_rate,
     #                    fluid=None, N=1):
@@ -190,8 +188,7 @@ class Source:
     #         # If fluid not defined use fluid of the Source
     #         fluid = fluid or self.fluid
     #         q_std = Source._leak_flow(flow_path, area, fluid)
-    #         self.leaks.append(
-    #             self._make_leak(name, failure_rate, q_std, N))
+#             self.failure_mode(name, failure_rate, q_std, N)
 
     def flange_failure(self, pipe, fluid=None, N=1):
         """Add reinforced or preformed gasket flange failure
@@ -229,8 +226,7 @@ class Source:
             # If fluid not defined use fluid of the Source
             fluid = fluid or self.fluid
             q_std = hole_leak(pipe, area, fluid)
-            self.leaks.append(
-                self._make_leak(name, failure_rate, q_std, N))
+            self.failure_mode(name, failure_rate, q_std, N)
 
     def transfer_line_failure(self, pipe, fluid=None, N=1):
         """Add transfer line failure to leaks dict.
@@ -271,8 +267,7 @@ class Source:
             # If fluid not defined use fluid of the Source
             fluid = fluid or self.fluid
             q_std = hole_leak(pipe, area, fluid)
-            self.leaks.append(
-                self._make_leak(name, failure_rate, q_std, N))
+            self.failure_mode(name, failure_rate, q_std, N)
 
     def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid=None):
         """Add pressure vessel failure to leaks dict.
@@ -297,8 +292,7 @@ class Source:
         area = TABLE_2['Vessel, pressure']['Small leak']['Area']
         failure_rate = TABLE_2['Vessel, pressure']['Small leak']['Failure rate']
         q_std = hole_leak(None, area, fluid)
-        self.leaks.append(
-                self._make_leak(name, failure_rate, q_std, 1))
+        self.failure_mode(name, failure_rate, q_std, 1)
 
         # Rupture case
         name = 'Pressure vessel rupture'
@@ -309,8 +303,7 @@ class Source:
             area = relief_area
         failure_rate = TABLE_2['Vessel, pressure']['Failure']
         q_std = hole_leak(None, area, fluid)
-        self.leaks.append(
-                self._make_leak(name, failure_rate, q_std, 1))
+        self.failure_mode(name, failure_rate, q_std, 1)
 
     # def constant_leak(self, name, q_std, N=1):
     #     """Add constant leak to leaks dict.
@@ -333,8 +326,7 @@ class Source:
     #     # Failure rate for constant leak doesn't depend on N or self.N
     #     # Dividing by self.N*N to undo _make_leak multiplication
     #     failure_rate = q_std/(self.volume*self.N*N)
-    #     self.leaks.append(
-    #         self._make_leak(name, failure_rate, N*q_std, N))
+    #     self.failure_mode(name, failure_rate, N*q_std, N)
 
     def failure_mode(self, name, failure_rate, q_std, N=1):
         """Add general failure mode to leaks dict.
@@ -355,30 +347,11 @@ class Source:
         N : int
             Quantity of similar failure modes.
         """
-        self.leaks.append(
-            self._make_leak(name, failure_rate, q_std, N))
-
-    def _make_leak(self, name, failure_rate, q_std, N):
-        """Format failure rate, flow rate and expected time duration of the
-        failure event for a leak.
-
-        Parameters
-        ----------
-        name : str
-            Name of the failure mode
-        failure rate : ureg.Quantity {time: -1}
-            Failure rate of the failure mode,
-            i.e. how often the failure occurs
-        q_std : ureg.Quantity {length: 3, time: -1}
-            Standard volumetric flow rate
-        N : int
-            Quantity of similar failure modes.
-        """
         N_events = N * self.N
         tau = self.volume/q_std
         total_failure_rate = N_events*failure_rate
         total_failure_rate.ito(1/ureg.hr)
-        return (name, total_failure_rate, q_std, tau.to(ureg.min), N_events)
+        self.leaks.append((name, total_failure_rate, q_std, tau.to(ureg.min), N_events))
 
     @staticmethod
     def combine(name, sources):
