@@ -22,7 +22,7 @@ from .FESHM4240_TABLES import TABLE_1, TABLE_2
 # Probability of failure on demand for main cases
 PFD_ODH = Q_('2 * 10^-3')
 # TODO Update to value from J. Anderson's document
-TRANSFER_LINE_LEAK_AREA = Q_('10 mm^2')  # Taken for consistency
+TRANSFER_LINE_LEAK_AREA = Q_(10, ureg.mm**2)  # Taken for consistency
 SHOW_SENS = 5e-8/ureg.hr
 # Min required air intake from Table 6.1, ASHRAE 62-2001
 ASHRAE_MIN_FLOW = 0.06 * ureg.ft**3/(ureg.min*ureg.ft**2)
@@ -256,7 +256,7 @@ class Source:
         # Leak case
         name = f'Fluid line gasket leak: {pipe}'
         failure_rate = TABLE_1['Fluid line']['Leak']
-        area = TRANSFER_LINE_LEAK_AREA,
+        area = TRANSFER_LINE_LEAK_AREA
         q_std = hole_leak(pipe, area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
         # Rupture case
