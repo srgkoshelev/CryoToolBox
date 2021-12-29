@@ -190,7 +190,7 @@ class Source:
     #         q_std = Source._leak_flow(flow_path, area, fluid)
 #             self.failure_mode(name, failure_rate, q_std, N)
 
-    def flange_failure(self, pipe, fluid=None, N=1):
+    def flange_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -206,29 +206,26 @@ class Source:
         N : int
             Number of reinforced seal connections on the pipe.
         """
+        fluid = fluid or self.fluid
         # TODO Make leak and rupture areas adjustable, add info to docstring
         table = TABLE_2['Flange, reinforced gasket']
-        area_cases = {
-            'Leak': table['Leak']['Area'],
-            'Rupture': pipe.area}
-        for mode in table:
-            name = f'Flange {mode.lower()}: {pipe}'
-            if isinstance(table[mode], dict):
-                failure_rate = table[mode]['Failure rate']
-            else:
-                failure_rate = table[mode]
-            area = area_cases[mode]
-            # TODO move this and gas leak check to separate method
-            if area > pipe.area:
-                logger.warning('Leak area cannot be larger'
-                               ' than pipe area.')
-                continue
-            # If fluid not defined use fluid of the Source
-            fluid = fluid or self.fluid
+        # Leak case
+        name = f'Flange leak: {pipe}'
+        failure_rate = table['Leak']['Failure rate']
+        area = table['Leak']['Area']
+        q_std = hole_leak(pipe, area, fluid)
+        self.failure_mode(name, failure_rate, q_std, N)
+        # Rupture
+        name = f'Flange rupture: {pipe}'
+        failure_rate = table['Rupture']
+        if q_std_rupture is not None:
+            q_std = q_std_rupture
+        else:
+            area = pipe.area
             q_std = hole_leak(pipe, area, fluid)
-            self.failure_mode(name, failure_rate, q_std, N)
+        self.failure_mode(name, failure_rate, q_std, N)
 
-    def transfer_line_failure(self, pipe, fluid=None, N=1):
+    def transfer_line_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
         """Add transfer line failure to leaks dict.
 
         For a given tube calculate leak parameters as following:
@@ -254,20 +251,23 @@ class Source:
             Number of bayonets/soft seals on the transfer line.
         """
         # TODO This should be replaced by flange failure at some point
-        area_cases = {'Leak': TRANSFER_LINE_LEAK_AREA,
-                      'Rupture': pipe.area}
-        for mode in TABLE_1['Fluid line']:
-            name = f'Fluid line {mode.lower()}: {pipe}'
-            failure_rate = TABLE_1['Fluid line'][mode]
-            area = area_cases[mode]
-            if area > pipe.area:
-                logger.warning('Leak area cannot be larger'
-                               ' than pipe area.')
-                continue
-            # If fluid not defined use fluid of the Source
-            fluid = fluid or self.fluid
+        # If fluid not defined use fluid of the Source
+        fluid = fluid or self.fluid
+        # Leak case
+        name = f'Fluid line gasket leak: {pipe}'
+        failure_rate = TABLE_1['Fluid line']['Leak']
+        area = TRANSFER_LINE_LEAK_AREA,
+        q_std = hole_leak(pipe, area, fluid)
+        self.failure_mode(name, failure_rate, q_std, N)
+        # Rupture case
+        name = f'Fluid line gasket rupture: {pipe}'
+        failure_rate = TABLE_1['Fluid line']['Rupture']
+        if q_std_rupture is not None:
+            q_std = q_std_rupture
+        else:
+            area = pipe.area
             q_std = hole_leak(pipe, area, fluid)
-            self.failure_mode(name, failure_rate, q_std, N)
+        self.failure_mode(name, failure_rate, q_std, N)
 
     def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid=None):
         """Add pressure vessel failure to leaks dict.
