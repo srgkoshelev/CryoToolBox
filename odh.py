@@ -7,14 +7,12 @@ This package is maintained at https://github.com/srgkoshelev/ODH_analysis"""
 
 import math
 from scipy.special import binom
-from scipy.optimize import root_scalar, fsolve
 from . import ureg, Q_
 from . import logger
 from . import piping
 from . import T_NTP, P_NTP
 from .functions import ThermState
 from .functions import to_standard_flow
-from copy import copy
 from collections import namedtuple
 import xlsxwriter
 # Loading FESHM 4240 Failure rates
@@ -24,7 +22,7 @@ from .FESHM4240_TABLES import TABLE_1, TABLE_2
 # Probability of failure on demand for main cases
 PFD_ODH = Q_('2 * 10^-3')
 # TODO Update to value from J. Anderson's document
-TRANSFER_LINE_LEAK_AREA = Q_('10 mm^2')
+TRANSFER_LINE_LEAK_AREA = Q_('10 mm^2')  # Taken for consistency
 SHOW_SENS = 5e-8/ureg.hr
 # Min required air intake from Table 6.1, ASHRAE 62-2001
 ASHRAE_MIN_FLOW = 0.06 * ureg.ft**3/(ureg.min*ureg.ft**2)
@@ -139,49 +137,6 @@ class Source:
                     self.leaks.append(
                         self._make_leak(name, failure_rate, q_std, N_events))
 
-    def transfer_line_failure(self, Pipe, fluid=None, N=1):
-        """Add transfer line failure to leaks dict.
-
-        For a given tube calculate leak parameters as following:
-        - failure rate
-        - standard volumetric flow
-        - duration of the release
-        - number of possible similar events
-        for all failure modes for transfer line listed in Table 1 of
-        FESHM 4240. Note that Rationale for Table 1: “Fermilab Equipment
-        Failure Rate Estimates” clearly states that only bayonet failures
-        are considered for these failure modes. Therefore only bayonet leak and
-        blowout (rupture) are considered. Leak area is not defined in
-        FESHM 4240 and is defined globally as `TRANSFER_LINE_LEAK_AREA`.
-
-        Failure modes are analyzed by `Volume.odh` method.
-
-        Parameters
-        ----------
-        Pipe : heat_transfer.Pipe
-        fluid : heat_transfer.ThermState
-            Thermodynamic state of the fluid stored in the source.
-        N : int
-            Number of bayonets/soft seals on the transfer line.
-        """
-        # TODO Make leak and rupture areas adjustable, add info to docstring
-        area_cases = {'Leak': TRANSFER_LINE_LEAK_AREA,
-                      'Rupture': Pipe.area}
-        for mode in TABLE_1['Fluid line']:
-            name = f'Fluid line {mode.lower()}: {Pipe}'
-            failure_rate = TABLE_1['Fluid line'][mode]
-            area = area_cases[mode]
-            # TODO move this and gas leak check to separate method
-            if area > Pipe.area:
-                logger.warning('Leak area cannot be larger'
-                               ' than pipe area.')
-                continue
-            # If fluid not defined use fluid of the Source
-            fluid = fluid or self.fluid
-            q_std = Source._leak_flow(Pipe, area, fluid)
-            self.leaks.append(
-                self._make_leak(name, failure_rate, q_std, N))
-
     def dewar_insulation_failure(self, q_std):
         """Add dewar insulation failure to leaks dict.
 
@@ -201,44 +156,44 @@ class Source:
         self.leaks.append(
             self._make_leak('Dewar insulation failure', failure_rate, q_std, 1))
 
-    def u_tube_failure(self, outer_tube, inner_tube, L, use_rate,
-                       fluid=None, N=1):
-        """Add U-Tube failure to leaks dict.
+    # def u_tube_failure(self, outer_tube, inner_tube, L, use_rate,
+    #                    fluid=None, N=1):
+    #     """Add U-Tube failure to leaks dict.
 
-        Store failure rate, flow rate and expected time duration of the
-        failure event for the dewar insulation failure. Based on FESHM4240.
-        Failure modes are analyzed by `Volume.odh` method.
+    #     Store failure rate, flow rate and expected time duration of the
+    #     failure event for the dewar insulation failure. Based on FESHM4240.
+    #     Failure modes are analyzed by `Volume.odh` method.
 
-        Parameters
-        ----------
-        flow_rate : ureg.Quantity {mass: 1, time: -1} or {length: 3, time: -1}
-            Relief flow rate for the case of dewar insulation failure.
-        fluid : heat_transfer.ThermState
-            Thermodynamic state of the fluid stored in the source.
-        """
-        # TODO Make areas adjustable, add info to docstring
-        flow_path_cases = {'Small event': piping.Annulus(outer_tube.ID,
-                                                            inner_tube.OD,
-                                                            L=L),
-                           'Large event': outer_tube}
-        for mode in TABLE_1['U-Tube change']:
-            flow_path = flow_path_cases[mode]
-            name = f'U-Tube {mode.lower()}: {flow_path}'
-            failure_rate = TABLE_1['U-Tube change'][mode] * \
-                use_rate
-            area = flow_path.area
-            # TODO move this and gas leak check to separate method
-            if area > outer_tube.area:
-                logger.warning('Leak area cannot be larger'
-                               ' than outer tube area.')
-                continue
-            # If fluid not defined use fluid of the Source
-            fluid = fluid or self.fluid
-            q_std = Source._leak_flow(flow_path, area, fluid)
-            self.leaks.append(
-                self._make_leak(name, failure_rate, q_std, N))
+    #     Parameters
+    #     ----------
+    #     flow_rate : ureg.Quantity {mass: 1, time: -1} or {length: 3, time: -1}
+    #         Relief flow rate for the case of dewar insulation failure.
+    #     fluid : heat_transfer.ThermState
+    #         Thermodynamic state of the fluid stored in the source.
+    #     """
+    #     # TODO Make areas adjustable, add info to docstring
+    #     flow_path_cases = {'Small event': piping.Annulus(outer_tube.ID,
+    #                                                         inner_tube.OD,
+    #                                                         L=L),
+    #                        'Large event': outer_tube}
+    #     for mode in TABLE_1['U-Tube change']:
+    #         flow_path = flow_path_cases[mode]
+    #         name = f'U-Tube {mode.lower()}: {flow_path}'
+    #         failure_rate = TABLE_1['U-Tube change'][mode] * \
+    #             use_rate
+    #         area = flow_path.area
+    #         # TODO move this and gas leak check to separate method
+    #         if area > outer_tube.area:
+    #             logger.warning('Leak area cannot be larger'
+    #                            ' than outer tube area.')
+    #             continue
+    #         # If fluid not defined use fluid of the Source
+    #         fluid = fluid or self.fluid
+    #         q_std = Source._leak_flow(flow_path, area, fluid)
+    #         self.leaks.append(
+    #             self._make_leak(name, failure_rate, q_std, N))
 
-    def flange_failure(self, Pipe, fluid=None, N=1):
+    def flange_failure(self, pipe, fluid=None, N=1):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -248,36 +203,78 @@ class Source:
 
         Parameters
         ----------
-        Pipe : heat_transfer.Pipe
+        pipe : heat_transfer.Pipe
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         N : int
-            Number of reinforced seal connections on the Pipe.
+            Number of reinforced seal connections on the pipe.
         """
         # TODO Make leak and rupture areas adjustable, add info to docstring
         table = TABLE_2['Flange, reinforced gasket']
         area_cases = {
             'Leak': table['Leak']['Area'],
-            'Rupture': Pipe.area}
+            'Rupture': pipe.area}
         for mode in table:
-            name = f'Flange {mode.lower()}: {Pipe}'
+            name = f'Flange {mode.lower()}: {pipe}'
             if isinstance(table[mode], dict):
                 failure_rate = table[mode]['Failure rate']
             else:
                 failure_rate = table[mode]
             area = area_cases[mode]
             # TODO move this and gas leak check to separate method
-            if area > Pipe.area:
+            if area > pipe.area:
                 logger.warning('Leak area cannot be larger'
                                ' than pipe area.')
                 continue
             # If fluid not defined use fluid of the Source
             fluid = fluid or self.fluid
-            q_std = Source._leak_flow(Pipe, area, fluid)
+            q_std = hole_leak(pipe, area, fluid)
             self.leaks.append(
                 self._make_leak(name, failure_rate, q_std, N))
 
-    def pressure_vessel_failure(self, q_std_rupture, fluid=None):
+    def transfer_line_failure(self, pipe, fluid=None, N=1):
+        """Add transfer line failure to leaks dict.
+
+        For a given tube calculate leak parameters as following:
+        - failure rate
+        - standard volumetric flow
+        - duration of the release
+        - number of possible similar events
+        for all failure modes for transfer line listed in Table 1 of
+        FESHM 4240. Note that Rationale for Table 1: “Fermilab Equipment
+        Failure Rate Estimates” clearly states that only bayonet failures
+        are considered for these failure modes. Therefore only bayonet leak and
+        blowout (rupture) are considered. Leak area is not defined in
+        FESHM 4240 and is defined globally as `TRANSFER_LINE_LEAK_AREA`.
+
+        Failure modes are analyzed by `Volume.odh` method.
+
+        Parameters
+        ----------
+        pipe : heat_transfer.Pipe
+        fluid : heat_transfer.ThermState
+            Thermodynamic state of the fluid stored in the source.
+        N : int
+            Number of bayonets/soft seals on the transfer line.
+        """
+        # TODO This should be replaced by flange failure at some point
+        area_cases = {'Leak': TRANSFER_LINE_LEAK_AREA,
+                      'Rupture': pipe.area}
+        for mode in TABLE_1['Fluid line']:
+            name = f'Fluid line {mode.lower()}: {pipe}'
+            failure_rate = TABLE_1['Fluid line'][mode]
+            area = area_cases[mode]
+            if area > pipe.area:
+                logger.warning('Leak area cannot be larger'
+                               ' than pipe area.')
+                continue
+            # If fluid not defined use fluid of the Source
+            fluid = fluid or self.fluid
+            q_std = hole_leak(pipe, area, fluid)
+            self.leaks.append(
+                self._make_leak(name, failure_rate, q_std, N))
+
+    def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid=None):
         """Add pressure vessel failure to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -288,47 +285,56 @@ class Source:
         ----------
         q_std_rupture : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate for pressure vessel rupture.
+        relief_area : ureg.Quantity {length: 2}
+            Vacuum jacket relief area if the vessel has one, None otherwise.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         """
         # If fluid not defined use fluid of the Source
         fluid = fluid or self.fluid
-        for case, parameters in TABLE_2['Vessel, pressure'].items():
-            name = 'Pressure vessel ' + case
-            if isinstance(parameters, dict):
-                area = parameters['Area']
-                failure_rate = parameters['Failure rate']
-                q_std = Source._leak_flow(piping.Pipe(1, L=0*ureg.m), area,
-                                        fluid)
-            else:
-                failure_rate = parameters
-                q_std = q_std_rupture
-            self.leaks.append(
+        # Leak case
+        name = 'Pressure vessel leak'
+        area = TABLE_2['Vessel, pressure']['Small leak']['Area']
+        failure_rate = TABLE_2['Vessel, pressure']['Small leak']['Failure rate']
+        q_std = hole_leak(None, area, fluid)
+        self.leaks.append(
                 self._make_leak(name, failure_rate, q_std, 1))
 
-    def constant_leak(self, name, q_std, N=1):
-        """Add constant leak to leaks dict.
-
-        Store flow rate and expected time duration of the
-        failure event for general failure mode.
-        Failure modes are analyzed by `Volume.odh` method.
-
-        Parameters
-        ----------
-        name : str
-            Name of the failure mode
-        q_std : ureg.Quantity {length: 3, time: -1}
-            Standard volumetric flow rate.
-        N : int
-            Quantity of similar failure modes.
-        """
-        # Failure rate assumes the volume instantly refilled
-        # after being completely emptied, and continues release
-        # Failure rate for constant leak doesn't depend on N or self.N
-        # Dividing by self.N*N to undo _make_leak multiplication
-        failure_rate = q_std/(self.volume*self.N*N)
+        # Rupture case
+        name = 'Pressure vessel rupture'
+        if relief_area is None:
+            # No vacuum jacket on the vessel
+            area = 1000 * ureg.mm**2  # Equal to large leak of a pipe
+        else:
+            area = relief_area
+        failure_rate = TABLE_2['Vessel, pressure']['Failure']
+        q_std = hole_leak(None, area, fluid)
         self.leaks.append(
-            self._make_leak(name, failure_rate, N*q_std, N))
+                self._make_leak(name, failure_rate, q_std, 1))
+
+    # def constant_leak(self, name, q_std, N=1):
+    #     """Add constant leak to leaks dict.
+
+    #     Store flow rate and expected time duration of the
+    #     failure event for general failure mode.
+    #     Failure modes are analyzed by `Volume.odh` method.
+
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         Name of the failure mode
+    #     q_std : ureg.Quantity {length: 3, time: -1}
+    #         Standard volumetric flow rate.
+    #     N : int
+    #         Quantity of similar failure modes.
+    #     """
+    #     # Failure rate assumes the volume instantly refilled
+    #     # after being completely emptied, and continues release
+    #     # Failure rate for constant leak doesn't depend on N or self.N
+    #     # Dividing by self.N*N to undo _make_leak multiplication
+    #     failure_rate = q_std/(self.volume*self.N*N)
+    #     self.leaks.append(
+    #         self._make_leak(name, failure_rate, N*q_std, N))
 
     def failure_mode(self, name, failure_rate, q_std, N=1):
         """Add general failure mode to leaks dict.
@@ -351,46 +357,6 @@ class Source:
         """
         self.leaks.append(
             self._make_leak(name, failure_rate, q_std, N))
-
-    # @classmethod
-    # def _leak_flow(cls, tube, area, fluid):
-    #     """Calculate leak flow/release for a given piping element.
-
-    #     For this calculation the gas is assumed to have no pressure loss on
-    #     entry due to the different possible options. This makes analysis simple
-    #     and conservative.
-    #     For the full pipe rupture case it is usually assumed that the release
-    #     area is equal to tube cross section area. For other leak cases, the
-    #     hole in the piping is considered to be a square-edged orifice.
-
-    #     Parameters
-    #     ----------
-    #     tube : heat_transfer.Tube
-    #     area : ureg.Quantity {length: 2}
-    #         Area of the leak.
-    #     fluid : heat_transfer.ThermState
-    #         Thermodynamic state of the fluid stored in the source.
-
-    #     Returns
-    #     -------
-    #     ureg.Quantity {length: 3, time: -1}
-    #         Standard volumetric flow at Normal Temperature and Pressure.
-    #     """
-    #     d = (4*area/math.pi)**0.5  # diameter for the leak opening
-    #     exit_ = piping.Exit(d)
-    #     TempPiping = piping.Piping(fluid)
-    #     TempPiping.add(
-    #                    tube,
-    #                    exit_,
-    #     )
-    #     if area != tube.area:
-    #         Hole = piping.Orifice(d)
-    #         TempPiping.insert(1, Hole)
-    #     m_dot = TempPiping.m_dot(P_NTP)
-    #     fluid_NTP = fluid.copy()
-    #     fluid_NTP.update_kw(P=P_NTP, T=T_NTP)
-    #     q_std = m_dot / fluid_NTP.Dmass
-    #     return q_std
 
     def _make_leak(self, name, failure_rate, q_std, N):
         """Format failure rate, flow rate and expected time duration of the
@@ -437,7 +403,7 @@ class Source:
             total_volume = sum([source.volume for source in sources])
             return Source(name, fluid, total_volume)
         else:
-            print('\nAll volumes should contain the same fluid')
+            ODHError('All volumes should contain the same fluid')
             return None
 
     def __str__(self):
@@ -447,12 +413,15 @@ class Source:
 
     def print_leaks(self):
         """Print information on the leaks defined for the source."""
-        for key in sorted(self.leaks.keys()):
-            print('Failure mode:   '+key)
-            print('Failure rate:   {:.2~}'.format(self.leaks[key][0]))
-            print('Flow rate:      {:.2~}'.format(
-                self.leaks[key][1].to(ureg.ft**3/ureg.min)))
-            print('Event duration: {:.2~}'.format(self.leaks[key][2]))
+        print(f'Printing leaks for {self}')
+        print()
+        for leak in self.leaks:
+            name, total_failure_rate, q_std, tau, N_events = leak
+            print(name)
+            print(f'Total failure rate: {total_failure_rate:.3g~}')
+            print(f'Leak rate: {q_std:.3g~}')
+            print(f'Event duration: {tau:.3g~}')
+            print(f'Number of events: {N_events}')
             print()
 
 
@@ -953,7 +922,8 @@ def hole_leak(tube, area, fluid, P_out=P_NTP):
 
     Parameters
     ----------
-    tube : heat_transfer.Tube
+    tube : heat_transfer.Tube or None
+        Tube upstream of the leak orifice. None if leaking from a vessel.
     area : ureg.Quantity {length: 2}
         Area of the leak.
     fluid : heat_transfer.ThermState
@@ -984,8 +954,11 @@ def hole_leak(tube, area, fluid, P_out=P_NTP):
         Y = 1
     else:
         Y = 1 - (0.351 + 0.256*beta**4 + 0.93*beta**8) * (1-(P2/P1)**(1/k))
-    lam = 1 + 0.622*(1 - 0.215*beta**2 - 0.785*beta**5)
-    K_orifice = lam**2 * (1 + 0.0696*(1-beta**5))
+    if tube is None:
+        K_orifice = 2.81  # Rennels, Pipe Flow, 13.2.3
+    else:
+        lam = 1 + 0.622*(1 - 0.215*beta**2 - 0.785*beta**5)
+        K_orifice = lam**2 * (1 + 0.0696*(1-beta**5))
 
     q_local = Y * A_hole * ((2*dP)/(rho*K_orifice))**0.5
     q_std = to_standard_flow(q_local, fluid)

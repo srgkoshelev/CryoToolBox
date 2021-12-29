@@ -3,6 +3,7 @@ from heat_transfer import odh
 import pprint
 import unittest
 import random
+from math import pi
 from attrdict import AttrDict
 from unittest.mock import MagicMock
 
@@ -502,7 +503,7 @@ class CPWrapperTest(unittest.TestCase):
 class ODHTest(FunctionsTest):
     """Set of tests for basic functionality of ODH analysis
     """
-    def test_source(self):
+    def test_hole_leak_Crane(self):
         LHe = ht.ThermState('helium')
         LHe.update('P', ht.P_NTP, 'Q', Q_('0'))
         Portable_500L = odh.Source('Portable 500L', LHe, Q_(500, ureg.L))
@@ -514,13 +515,26 @@ class ODHTest(FunctionsTest):
         self.assertApproxEqual(131*ureg.gal/ureg.min,
                                odh.hole_leak(tube, area, fluid),
                                uncertainty=0.2)
-        # Crane gives 131 gal/min for flow, different in equations gives 20 % difference
+        # Crane gives 131 gal/min for flow
+        # difference in equations gives 20 % difference
 
-        # Portable_500L.u_tube_failure(outer_tube=ht.piping.Pipe(1),
-        #                              inner_tube=ht.piping.Pipe(0.5),
-        #                              L=1*ureg.ft,
-        #                              use_rate=1/ureg.year
-        #                              )
+    def test_hole_leak_voirin(self):
+        P_150 = Q_(150, ureg.psig)
+        P_15 = Q_(15, ureg.psig)
+        T = Q_(60, ureg.degF)
+        V_flux_150 = 2.856 * ureg.ft**3 / (ureg.min * ureg.mm**2)
+        V_flux_15 = 0.515 * ureg.ft**3 / (ureg.min * ureg.mm**2)
+
+        area = 1*ureg.mm**2  # Chosen for simplicity
+        ID = (4*area/pi)**0.5  # Assuming tube ID based on area
+        tube = ht.piping.Tube(ID, wall=0*ureg.m)
+        fluid = ht.ThermState('nitrogen', P=P_150, T=T)
+        m_dot = ht.odh.hole_leak(tube, area, fluid)
+        self.assertApproxEqual(V_flux_150*area, m_dot)
+        fluid = ht.ThermState('nitrogen', P=P_15, T=T)
+        m_dot = ht.odh.hole_leak(tube, area, fluid)
+        self.assertApproxEqual(V_flux_15*area, m_dot)
+
 
 
 
