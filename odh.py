@@ -23,7 +23,6 @@ from .FESHM4240_TABLES import TABLE_1, TABLE_2
 PFD_ODH = Q_('2 * 10^-3')
 # TODO Update to value from J. Anderson's document
 TRANSFER_LINE_LEAK_AREA = Q_(10, ureg.mm**2)  # Taken for consistency
-SHOW_SENS = 5e-8/ureg.hr
 # Min required air intake from Table 6.1, ASHRAE 62-2001
 ASHRAE_MIN_FLOW = 0.06 * ureg.ft**3/(ureg.min*ureg.ft**2)
 
@@ -81,7 +80,7 @@ class Source:
         self.sol_PFD = (int(not isol_valve) or
                         TABLE_2['Valve, solenoid']['Failure to operate'])
 
-    def pipe_failure(self, max_flow, tube, fluid=None, N_welds=1):
+    def pipe_failure(self, tube, fluid=None, q_std_rupture=None, N_welds=1):
         """Add pipe failure to the leaks dict.
 
         For a given tube calculate leak parameters as following:
@@ -102,6 +101,8 @@ class Source:
         tube : heat_transfer.piping.Tube
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid for the release.
+        q_std_rupture : ureg.Quantity {length: 3, time: -1}
+            Standard volumetric flow rate for flange rupture.
         N_welds : int
             Number of welds on the tube.
         """
@@ -113,19 +114,24 @@ class Source:
                               'Pipe weld': (tube.OD / tube.wall,
                                             N_welds)}
         # Piping and weld leaks as per Table 2
-        for cause in ['Piping', 'Pipe weld']:
+        for cause, fr_coefs in failure_rate_coeff.items():
             for mode in TABLE_2[cause].keys():
                 if tube.D > 2 or mode != 'Large leak':  # Large leak only for D > 2"
                     name = f'{cause} {mode.lower()}: {tube}, ' + \
                         f'{tube.L.to(ureg.ft):.3g~}'
-                    fr_coef = failure_rate_coeff[cause][0]
-                    N_events = failure_rate_coeff[cause][1]
+                    fr_coef, N_events = fr_coefs
+                    if fr_coef.magnitude == 0:
+                        raise ODHError('Failure rate should not be 0 '
+                                       f'{cause} {mode}.')
+                    if N_events == 0:
+                        continue
                     if mode == 'Rupture':
                         failure_rate = fr_coef * TABLE_2[cause][mode]
-                        # For rupture calculate flow through available
-                        # pipe area
-                        area = tube.area
-                        q_std = to_standard_flow(max_flow, fluid)
+                        if q_std_rupture is not None:
+                            q_std = q_std_rupture
+                        else:
+                            area = tube.area
+                            q_std = hole_leak(tube, area, fluid)
                     else:
                         failure_rate = fr_coef * \
                             TABLE_2[cause][mode]['Failure rate']
@@ -203,6 +209,8 @@ class Source:
         pipe : heat_transfer.Pipe
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
+        q_std_rupture : ureg.Quantity {length: 3, time: -1}
+            Standard volumetric flow rate for flange rupture.
         N : int
             Number of reinforced seal connections on the pipe.
         """
@@ -247,6 +255,8 @@ class Source:
         pipe : heat_transfer.Pipe
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
+        q_std_rupture : ureg.Quantity {length: 3, time: -1}
+            Standard volumetric flow rate for fluid line rupture.
         N : int
             Number of bayonets/soft seals on the transfer line.
         """
@@ -351,7 +361,8 @@ class Source:
         tau = self.volume/q_std
         total_failure_rate = N_events*failure_rate
         total_failure_rate.ito(1/ureg.hr)
-        self.leaks.append((name, total_failure_rate, q_std, tau.to(ureg.min), N_events))
+        self.leaks.append((name, total_failure_rate, q_std, tau.to(ureg.min),
+                           N_events))
 
     @staticmethod
     def combine(name, sources):
@@ -400,7 +411,7 @@ class Source:
 
 class Volume:
     """Volume/building affected by inert gases."""
-    def __init__(self, name, volume, *, Q_fan, N_fans, T_fan,
+    def __init__(self, name, volume, *, Q_fan, N_fans, T_test,
                  lambda_fan=TABLE_2['Fan']['Failure to run'],
                  vent_rate=0*ureg.ft**3/ureg.min):
         """Define a volume affected by inert gas release from  a `Source`.
@@ -415,8 +426,8 @@ class Volume:
             Volumetric flow of a single ODH fan installed in the volume.
         N_fans : int
             Number of fans installed.
-        T_fan : ureg.Quantity {time: 1}
-            Test period of the fans.
+        T_test : ureg.Quantity {time: 1}
+            Test period of the fans and louvers.
         vent_rate : ureg.Quantity {length: 3, time: -1}
             Min volumetric flow required or present in the building.
         lambda_fan : ureg.Quantity {time: -1}
@@ -430,7 +441,7 @@ class Volume:
         self.lambda_fan = lambda_fan
         self.Q_fan = Q_fan
         self.N_fans = N_fans
-        self.Test_period = T_fan
+        self.Test_period = T_test
         # Calculate fan probability of failure
         self._fan_fail()
         # TODO should be external function; Don't need to keep fan info?
@@ -614,7 +625,7 @@ class Volume:
 
         The report is sorted by fatality rate descending."""
         self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
-        sens = sens or SHOW_SENS
+        sens = sens or 0/ureg.hr
         title = f'ODH report for {self}'
         padding = len(title) + 10
         print('#'*padding)
@@ -647,18 +658,20 @@ class Volume:
 
         The report is sorted by fatality rate descending."""
         self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
-        sens = sens or SHOW_SENS
-        table = [["Failure mode", "Fans on", "O_2", "Duration, min", "\\phi_i"]]
-        table.append(None)
+        sens = sens or 0/ureg.hr
+        table = [
+            ["Failure mode", "Fans on", "O_2", "Duration, min", "\\phi_i"],
+            None]
         for f_mode in self.fail_modes:
-            if f_mode.phi >= sens:
-                row = []
-                row.append(f'{f_mode.source.name} {f_mode.name}')
-                row.append(f'{f_mode.N_fan}')
-                row.append(f'{f_mode.O2_conc:.0%}')
-                row.append(f'{f_mode.tau.m_as(ureg.min):,.1f}')
-                row.append(f'{f_mode.phi.m_as(1/ureg.hr):.2}')
-                table.append(row)
+            if f_mode.phi <= sens:
+                break
+            row = []
+            row.append(f'{f_mode.source.name} {f_mode.name}')
+            row.append(f'{f_mode.N_fan}')
+            row.append(f'{f_mode.O2_conc:.0%}')
+            row.append(f'{f_mode.tau.m_as(ureg.min):,.1f}')
+            row.append(f'{f_mode.phi.m_as(1/ureg.hr):.2}')
+            table.append(row)
         return table
 
     def report_table(self, filename='ODH_report'):
