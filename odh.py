@@ -117,8 +117,7 @@ class Source:
         for cause, fr_coefs in failure_rate_coeff.items():
             for mode in TABLE_2[cause].keys():
                 if tube.D > 2 or mode != 'Large leak':  # Large leak only for D > 2"
-                    name = f'{cause} {mode.lower()}: {tube}, ' + \
-                        f'{tube.L.to(ureg.ft):.3g~}'
+                    name = f'{cause} {mode.lower()}: {tube}'
                     fr_coef, N_events = fr_coefs
                     if fr_coef.magnitude == 0:
                         raise ODHError('Failure rate should not be 0 '
