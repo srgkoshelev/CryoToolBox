@@ -233,6 +233,43 @@ class Source:
             q_std = hole_leak(pipe, area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
 
+    def valve_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
+        """Add valve leak and rupture failure modes to leaks dict.
+
+        Store failure rate, flow rate and expected time duration of
+        the event for transfer line failure. Based on FESHM 4240.
+        Failure modes are analyzed by `Volume.odh` method.
+
+        Parameters
+        ----------
+        pipe : heat_transfer.Pipe
+            Pipe/tube upstream the valve.
+        fluid : heat_transfer.ThermState
+            Thermodynamic state of the fluid stored in the source.
+        q_std_rupture : ureg.Quantity {length: 3, time: -1}
+            Standard volumetric flow rate for flange rupture.
+        N : int
+            Number of valves
+        """
+        fluid = fluid or self.fluid
+        table = TABLE_2['Valve, pneumatic']
+        # Leak case
+        name = f'Valve leak: {pipe}'
+        failure_rate = table['External leak']
+        # Using area from flange leak for consistency
+        area = TABLE_2['Flange, soft gasket']['Leak']['Area']
+        q_std = hole_leak(pipe, area, fluid)
+        self.failure_mode(name, failure_rate, q_std, N)
+        # Rupture
+        name = f'Valve rupture: {pipe}'
+        failure_rate = table['Rupture']
+        if q_std_rupture is not None:
+            q_std = q_std_rupture
+        else:
+            area = pipe.area
+            q_std = hole_leak(pipe, area, fluid)
+        self.failure_mode(name, failure_rate, q_std, N)
+
     def transfer_line_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
         """Add transfer line failure to leaks dict.
 
