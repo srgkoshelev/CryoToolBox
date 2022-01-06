@@ -4,7 +4,6 @@ import pprint
 import unittest
 import random
 from math import pi
-from attrdict import AttrDict
 from unittest.mock import MagicMock
 
 pp = pprint.PrettyPrinter()
