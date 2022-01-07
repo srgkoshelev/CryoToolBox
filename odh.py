@@ -510,7 +510,8 @@ class Volume:
         """
         self.name = name
         self.volume = volume
-        self.vent_rate = vent_rate
+        # self.vent_rate = vent_rate
+        self.vent_rate = 0*ureg.ft**3/ureg.min  # Temporary disabling
         self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
         # TODO Should be explicit/with default option
         self.lambda_fan = lambda_fan
@@ -631,8 +632,8 @@ class Volume:
             Probability of power failure.
         """
         # Check 1 fan is sufficient to counteract the constant leak
-        Q_fan = self.Q_fan
-        O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_fan, leak.tau)
+        Q_1fan = self.Q_fan
+        O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, leak.tau)
         F_1fan = self._fatality_prob(O2_conc_1fan)
         if F_1fan > 0:
             raise ODHError('Constant leak creates ODH even with fan '
@@ -641,13 +642,15 @@ class Volume:
         # For constant leak event rate is power and solenoid failure
         # + ODH system failure
         P_i = lambda_pow * source.sol_PFD + lambda_ODH
+        # Event can't go undetected for longer than the test period
+        tau = min(leak.tau, self.Test_period)
         # Natural ventilation can be considered
-        O2_conc = conc_vent(self.volume, leak.q_std, self.vent_rate, leak.tau)
+        O2_conc = conc_vent(self.volume, leak.q_std, self.vent_rate, tau)
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
         f_mode = FailureMode(leak.name, source, phi_i, O2_conc,
                              P_i, P_i, F_i, PFD_power_build == 1,
-                             leak.q_std, leak.tau, self.vent_rate, 0, 1)
+                             leak.q_std, tau, self.vent_rate, 0, 1)
         self.fail_modes.append(f_mode)
 
     def _fan_fail(self):
