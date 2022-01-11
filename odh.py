@@ -29,6 +29,14 @@ ASHRAE_MIN_FLOW = 0.06 * ureg.ft**3/(ureg.min*ureg.ft**2)
 class ODHError(Exception):
     pass
 
+
+class ConstLeakTooBig(Exception):
+    pass
+
+
+class ConstLeakNoVent(Exception):
+    pass
+
 @ureg.check(None, '1/[time]', '[length]^3/[time]', '[time]', None)
 @dataclass
 class Leak:
@@ -47,6 +55,7 @@ class ConstLeak:
     name: str
     q_std: ureg.Quantity
     tau: ureg.Quantity
+    N_events = 1
     _is_const = True
     # TODO Remove once isinstance() issue resolved
 
@@ -57,8 +66,8 @@ class Source:
     Attributes
     ----------
     sol_PFD : float
-        Probability of failure on demand (PFD) for solenoid valve.
-        If the source doesn't have isolating solenoid valve
+        Probability of failure on demand (PFD) for isolation valve.
+        If the source doesn't have isolating valve
         the probability is 1.
     """
     def __init__(self, name, fluid, volume, N=1, isol_valve=False):
@@ -77,7 +86,7 @@ class Source:
             e.g. gas bottles.
         isol_valve : bool
             Denotes whether the source is protected using a normally closed
-            solenoid valve.
+            valve.
         """
         self.name = name
         self.fluid = fluid
@@ -488,6 +497,7 @@ class Volume:
     """Volume/building affected by inert gases."""
     def __init__(self, name, volume, *, Q_fan, N_fans, T_test,
                  lambda_fan=TABLE_2['Fan']['Failure to run'],
+                 PFD_power=TABLE_1['Electrical Power Failure']['Demand rate'],
                  vent_rate=0*ureg.ft**3/ureg.min):
         """Define a volume affected by inert gas release from  a `Source`.
 
@@ -510,17 +520,18 @@ class Volume:
         """
         self.name = name
         self.volume = volume
-        # self.vent_rate = vent_rate
-        self.vent_rate = 0*ureg.ft**3/ureg.min  # Temporary disabling
-        self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
+        self.vent_rate = vent_rate
         # TODO Should be explicit/with default option
-        self.lambda_fan = lambda_fan
         self.Q_fan = Q_fan
         self.N_fans = N_fans
         self.Test_period = T_test
+        self.lambda_fan = lambda_fan
+        self.PFD_power = PFD_power
         # Calculate fan probability of failure
         self._fan_fail()
         # TODO should be external function; Don't need to keep fan info?
+
+        self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
 
     def odh(self, sources, power_outage=False):
         """Calculate ODH fatality rate for given `Source`s.
@@ -536,30 +547,27 @@ class Volume:
         power_outage : bool
             Shows whether there is a power outage is in effect.
             Default is no outage.
+
+        Returns
+        -------
+        None
         """
         self.fail_modes = []
-        # Probability of power failure in the building:
-        # PFD_power if no outage, 1 if there is outage
-        PFD_power_build = (power_outage or
-                           TABLE_1['Electrical Power Failure']['Demand rate'])
-        # Calculate fatality rates for each source
         for source in sources:
             for leak in source.leaks:
                 if not leak._is_const:
-                    self._fatality_no_response(source, leak, PFD_power_build)
-                    self._fatality_fan_powered(source, leak, PFD_power_build)
+                    self._fatality_no_power(source, leak, power_outage)
+                    if not power_outage:
+                        self._fatality_no_odh(source, leak)
+                        self._fatality_with_fans(source, leak)
                 else:
-                    self._fatality_const_leak(source, leak, PFD_power_build)
+                    self._fatality_const_leak(source, leak, power_outage)
 
-    def _fatality_no_response(self, source, leak, PFD_power_build):
-        """Calculate fatality rate in the volume for ODH protection failure.
+    def _fatality_no_power(self, source, leak, power_outage):
+        """Calculate fatality rate in the event of power failure.
 
-        Calculate failure rate of leak occuring and no safety response
-        occuring due to power failure and isolation solenoid failure,
-        or power on and ODH system failure.
-        O2 concentration is limited only by amount of inert gas the source has.
-        Fans are not operational.
-        Adds calculation results to the fail_modes list.
+        Source isolation is the only protection for this case. No ventilation
+        is available without electric power.
 
         Parameters
         ----------
@@ -567,54 +575,117 @@ class Volume:
         leak : Leak
             Leak failure rate, volumetric flow rate, event duration, and number
             of events.
-        PFD_power_building : float
-            Probability of power failure.
+        power_outage : bool
+            Shows whether there is a power outage is in effect.
+
+        Returns
+        -------
+        None
         """
-        P_no_response = float(PFD_power_build) * source.sol_PFD + \
-            (1-PFD_power_build)*self.PFD_ODH
-        P_i = leak.failure_rate * P_no_response
+        if not power_outage:
+            PFD_power = self.PFD_power
+        else:
+            PFD_power = 1
+        PFD_isol_valve = source.sol_PFD
+        P_event = PFD_power * PFD_isol_valve
+        Q_fan = 0 * ureg.ft**3/ureg.min
+        self._add_failure_mode(P_event, leak.failure_rate, source, leak, Q_fan,
+                               0, power_outage)
+
+    def _fatality_no_odh(self, source, leak):
+        """Calculate fatality rate in the event of ODH system failure.
+
+        Power has to be  on for ODH system to fail. Source isolation is
+        possible for this event. Only ventilation independent from ODH system
+        is available, e.g., HVAC.
+
+        Parameters
+        ----------
+        source : Source
+        leak : Leak
+            Leak failure rate, volumetric flow rate, event duration, and number
+            of events.
+        power_outage : bool
+            Shows whether there is a power outage is in effect.
+
+        Returns
+        -------
+        None
+        """
+        PFD_isol_valve = source.sol_PFD
+        P_event = (1-self.PFD_power) * self.PFD_ODH * PFD_isol_valve
         Q_fan = self.vent_rate
+        self._add_failure_mode(P_event, leak.failure_rate, source, leak, Q_fan,
+                               0, False)
+
+    def _fatality_with_fans(self, source, leak):
+        """Calculate fatality rate for any number of fans operational.
+
+        Power has to be  on, and ODH system operational. Source isolation is
+        possible for this event. Ventilation independent from ODH system,
+        e.g., HVAC, is considered for all fans unavailable at the time of
+        the event.
+
+        Parameters
+        ----------
+        source : Source
+        leak : Leak
+            Leak failure rate, volumetric flow rate, event duration, and number
+            of events.
+
+        Returns
+        -------
+        None
+        """
+        PFD_isol_valve = source.sol_PFD
+        # Probability for this group of the events
+        P_group = (1-self.PFD_power) * (1-self.PFD_ODH) * PFD_isol_valve
+        for (P_fan, Q_fan, N_fans) in self.Fan_flowrates:
+            P_event = P_group * P_fan  # Probability of the particular event
+            if Q_fan == 0 * ureg.ft**3/ureg.min:
+                Q_fan = self.vent_rate
+            self._add_failure_mode(P_event, leak.failure_rate, source, leak,
+                                   Q_fan, N_fans, False)
+
+    def _add_failure_mode(self, P_event, failure_rate, source, leak, Q_fan,
+                          N_fans, power_outage):
+        """Add a failure mode.
+
+        Parameters
+        ----------
+        P_event : float
+            Probability of a particular state of the system, assuming the leak
+            has happened. Alternatively, probability of a constant leak or 1.
+        failure_rate : ureg.Quantity {time: -1}
+            Failure rate of the leak. Alternatively, system failure rate for
+            a constant leak.
+        source : Source
+            Inert gas source.
+        leak : Leak
+            Leak failure rate, volumetric flow rate, event duration, and number
+            of events.
+        Q_fan : ureg.Quantity {length: 3, time: -1}
+            Combined volumetric flow of ODH fans for the event.
+        N_fans : int
+            Number of fans operational during the event.
+        power_outage : bool
+            Shows whether there is a power outage is in effect.
+
+        Returns
+        -------
+        None
+        """
+        P_i = failure_rate * P_event
         O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, leak.tau)
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
-        f_mode = FailureMode(leak.name, source, phi_i, O2_conc,
-                             leak.failure_rate, P_i, F_i, PFD_power_build == 1,
-                             leak.q_std, leak.tau, Q_fan, 0, leak.N_events)
-        self.fail_modes.append(f_mode)
+        self.fail_modes.append(
+            FailureMode(leak.name, source, phi_i, O2_conc,
+                        failure_rate, P_i, F_i, power_outage, leak.q_std,
+                        leak.tau, Q_fan, N_fans, leak.N_events)
+        )
 
-    def _fatality_fan_powered(self, source, leak, PFD_power_build):
-        """Calculate fatality rates for fan failure on demand.
-
-        Calculate fatality rates for the case of ODH system responding and
-        fans powered but some of the fans failing on demand.
-        See wiki for further explanation.
-        Adds calculation results to the fail_modes list.
-
-        Parameters
-        ----------
-        source : Source
-        leak : Leak
-            Leak failure rate, volumetric flow rate, event duration, and number
-            of events.
-        PFD_power_building : float
-            Probability of power failure.
-        """
-        for (P_fan, Q_fan, N_fan) in self.Fan_flowrates:
-            # Probability of power on, ODH system working, and m number of fans
-            # with flow rate Q_fan on.
-            P_response = (1-PFD_power_build) * (1-self.PFD_ODH) * \
-                source.sol_PFD * P_fan
-            P_i = leak.failure_rate * P_response
-            O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, leak.tau)
-            F_i = self._fatality_prob(O2_conc)
-            phi_i = P_i*F_i
-            f_mode = FailureMode(leak.name, source, phi_i, O2_conc,
-                                 leak.failure_rate, P_i, F_i,
-                                 PFD_power_build == 1, leak.q_std, leak.tau,
-                                 Q_fan, N_fan, leak.N_events)
-            self.fail_modes.append(f_mode)
-
-    def _fatality_const_leak(self, source, leak, PFD_power_build):
+    def _fatality_const_leak(self, source, leak, power_outage):
         """Calculate fatality rates for constant leak case.
 
         Calculate fatality rates for the case of ODH system responding and
@@ -628,30 +699,55 @@ class Volume:
         leak : Leak
             Leak failure rate, volumetric flow rate, event duration, and number
             of events.
-        PFD_power_building : float
-            Probability of power failure.
+        power_outage : bool
+            Shows whether there is a power outage is in effect.
+
+        Returns
+        -------
+        None
         """
-        # Check 1 fan is sufficient to counteract the constant leak
+
+        PFD_isol_valve = source.sol_PFD
+        if power_outage:
+            raise ConstLeakNoVent(f'Constant leak {leak.name} from '
+                                f'{source.name} is not mitigated during '
+                                f'power outage in {self.name}.')
+
+        # TODO Replace hard coded value with changeable
+        # Constant leak and power failure
+        l_power = TABLE_1['Electrical Power Failure']['Time rate']
+        failure_rate = l_power
+        # Constant leak is assumed to be hazardous only when
+        # the isolation valve fails
+        P_event = PFD_isol_valve
+        Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
+        self._add_failure_mode(P_event, failure_rate, source, leak, Q_fan,
+                               0, False)
+
+        # Constant leak and ODH system failure
+        failure_rate = lambda_ODH
+        P_event = PFD_isol_valve
+        # Ventilation is available on ODH system failure
+        self._add_failure_mode(P_event, failure_rate, source, leak,
+                               self.vent_rate, 0, False)
+
+        # Fan failure
+        # If at least 1 fan is down, all fans are considered non-operational
+        failure_rate = TABLE_2['Fan']['Failure to run']
+        P_event = PFD_isol_valve
+        self._add_failure_mode(P_event, failure_rate, source, leak,
+                               self.vent_rate, 0, False)
+
+        # Fans operational
+        # If fatality is possible with just one fan, raise error
         Q_1fan = self.Q_fan
-        O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, leak.tau)
-        F_1fan = self._fatality_prob(O2_conc_1fan)
-        if F_1fan > 0:
-            raise ODHError('Constant leak creates ODH even with fan '
-                           f'operational: {leak}')
-        lambda_pow = TABLE_1['Electrical Power Failure']['Time rate']
-        # For constant leak event rate is power and solenoid failure
-        # + ODH system failure
-        P_i = lambda_pow * source.sol_PFD + lambda_ODH
         # Event can't go undetected for longer than the test period
         tau = min(leak.tau, self.Test_period)
-        # Natural ventilation can be considered
-        O2_conc = conc_vent(self.volume, leak.q_std, self.vent_rate, tau)
-        F_i = self._fatality_prob(O2_conc)
-        phi_i = P_i*F_i
-        f_mode = FailureMode(leak.name, source, phi_i, O2_conc,
-                             P_i, P_i, F_i, PFD_power_build == 1,
-                             leak.q_std, tau, self.vent_rate, 0, 1)
-        self.fail_modes.append(f_mode)
+        O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
+        F_1fan = self._fatality_prob(O2_conc_1fan)
+        if F_1fan > 0:
+            raise ConstLeakTooBig('Constant leak creates ODH with at least 1 fan '
+                           f'operational: {leak}')
 
     def _fan_fail(self):
         """Calculate (Probability, flow) pairs for all combinations of fans
