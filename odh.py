@@ -493,12 +493,58 @@ class FailureMode:
     N: int
 
 
+@ureg.check(None, '[time]')
+@dataclass
+class BuildPower():
+    pfd: float = TABLE_1['Electrical Power Failure']['Demand rate']
+    max_outage: ureg.Quantity = float('inf') * ureg.hr
+
+
+@ureg.check('[length]^3/[time]', None, '[time]', '1/[time]',
+            '[length]^3/[time]')
+@dataclass
+class BuildVent():
+    """
+        Q_fan : ureg.Quantity {length: 3, time: -1}
+            Volumetric flow of a single ODH fan installed in the volume.
+        N_fans : int
+            Number of fans installed.
+        T_test : ureg.Quantity {time: 1}
+            Test period of the fans and louvers.
+        lambda_fan : ureg.Quantity {time: -1}
+            Failure rate of the fans in the building.
+        min_vent : ureg.Quantity {length: 3, time: -1}
+            Min volumetric flow required or present in the building.
+"""
+    Q_fan: ureg.Quantity
+    N_fans: int
+    Test_period: ureg.Quantity
+    lambda_fan: ureg.Quantity = TABLE_2['Fan']['Failure to run']
+    min_vent: ureg.Quantity = 0*ureg.ft**3/ureg.min
+
+    def fan_flowrates(self):
+        """Calculate (Probability, flow) pairs for all combinations of fans
+        working.
+
+        All fans are expected to have same volume flow.
+        """
+        # TODO add fans with different volumetric rates (see report as well)
+        fail_rate = self.lambda_fan
+        fan_flowrates = []
+        for m in range(self.N_fans+1):
+            # Probability of exactly m units starting
+            P_m_fan_work = prob_m_of_n(m, self.N_fans, self.Test_period,
+                                       fail_rate)
+            flowrate = self.Q_fan*m
+            if flowrate == Q_('0 m**3/min'):
+                flowrate = self.min_vent
+            fan_flowrates.append((P_m_fan_work, flowrate, m))
+        return fan_flowrates
+
+
 class Volume:
     """Volume/building affected by inert gases."""
-    def __init__(self, name, volume, *, Q_fan, N_fans, T_test,
-                 lambda_fan=TABLE_2['Fan']['Failure to run'],
-                 PFD_power=TABLE_1['Electrical Power Failure']['Demand rate'],
-                 vent_rate=0*ureg.ft**3/ureg.min):
+    def __init__(self, name, volume, build_vent, build_power):
         """Define a volume affected by inert gas release from  a `Source`.
 
         Parameters
@@ -507,30 +553,11 @@ class Volume:
             Name of the volume.
         volume : ureg.Quantity {length: 3}
             Volume of the building or part of the building.
-        Q_fan : ureg.Quantity {length: 3, time: -1}
-            Volumetric flow of a single ODH fan installed in the volume.
-        N_fans : int
-            Number of fans installed.
-        T_test : ureg.Quantity {time: 1}
-            Test period of the fans and louvers.
-        vent_rate : ureg.Quantity {length: 3, time: -1}
-            Min volumetric flow required or present in the building.
-        lambda_fan : ureg.Quantity {time: -1}
-            Failure rate of the fans in the building.
         """
         self.name = name
         self.volume = volume
-        self.vent_rate = vent_rate
-        # TODO Should be explicit/with default option
-        self.Q_fan = Q_fan
-        self.N_fans = N_fans
-        self.Test_period = T_test
-        self.lambda_fan = lambda_fan
-        self.PFD_power = PFD_power
-        # Calculate fan probability of failure
-        self._fan_fail()
-        # TODO should be external function; Don't need to keep fan info?
-
+        self.vent = build_vent
+        self.power = build_power
         self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
 
     def odh(self, sources, power_outage=False):
@@ -582,15 +609,17 @@ class Volume:
         -------
         None
         """
-        if not power_outage:
-            PFD_power = self.PFD_power
-        else:
+        if power_outage:
             PFD_power = 1
+            tau_event = min(leak.tau, float('inf') * ureg.hr)
+        else:
+            PFD_power = self.power.pfd
+            tau_event = min(leak.tau, self.power.max_outage)
         PFD_isol_valve = source.sol_PFD
         P_event = PFD_power * PFD_isol_valve
         Q_fan = 0 * ureg.ft**3/ureg.min
-        self._add_failure_mode(P_event, leak.failure_rate, source, leak, Q_fan,
-                               0, power_outage)
+        self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
+                               leak, Q_fan, 0, power_outage)
 
     def _fatality_no_odh(self, source, leak):
         """Calculate fatality rate in the event of ODH system failure.
@@ -613,10 +642,11 @@ class Volume:
         None
         """
         PFD_isol_valve = source.sol_PFD
-        P_event = (1-self.PFD_power) * self.PFD_ODH * PFD_isol_valve
-        Q_fan = self.vent_rate
-        self._add_failure_mode(P_event, leak.failure_rate, source, leak, Q_fan,
-                               0, False)
+        P_event = (1-self.power.pfd) * self.PFD_ODH * PFD_isol_valve
+        Q_fan = self.vent.min_vent
+        tau_event = min(leak.tau, self.vent.Test_period)
+        self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
+                               leak, Q_fan, 0, False)
 
     def _fatality_with_fans(self, source, leak):
         """Calculate fatality rate for any number of fans operational.
@@ -639,16 +669,18 @@ class Volume:
         """
         PFD_isol_valve = source.sol_PFD
         # Probability for this group of the events
-        P_group = (1-self.PFD_power) * (1-self.PFD_ODH) * PFD_isol_valve
-        for (P_fan, Q_fan, N_fans) in self.Fan_flowrates:
+        P_group = (1-self.power.pfd) * (1-self.PFD_ODH) * PFD_isol_valve
+        tau_event = min(leak.tau, self.vent.Test_period)
+        for (P_fan, Q_fan, N_fans) in self.vent.fan_flowrates():
             P_event = P_group * P_fan  # Probability of the particular event
             if Q_fan == 0 * ureg.ft**3/ureg.min:
-                Q_fan = self.vent_rate
-            self._add_failure_mode(P_event, leak.failure_rate, source, leak,
-                                   Q_fan, N_fans, False)
+                Q_fan = self.vent.min_vent
+            self._add_failure_mode(P_event, tau_event,
+                                   leak.failure_rate, source, leak, Q_fan,
+                                   N_fans, False)
 
-    def _add_failure_mode(self, P_event, failure_rate, source, leak, Q_fan,
-                          N_fans, power_outage):
+    def _add_failure_mode(self, P_event, tau_event, failure_rate, source, leak,
+                          Q_fan, N_fans, power_outage):
         """Add a failure mode.
 
         Parameters
@@ -659,6 +691,8 @@ class Volume:
         failure_rate : ureg.Quantity {time: -1}
             Failure rate of the leak. Alternatively, system failure rate for
             a constant leak.
+        tau_event : ureg.Quantity {time: 1}
+            Maximum duration of the event.
         source : Source
             Inert gas source.
         leak : Leak
@@ -676,13 +710,13 @@ class Volume:
         None
         """
         P_i = failure_rate * P_event
-        O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, leak.tau)
+        O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, tau_event)
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
         self.fail_modes.append(
             FailureMode(leak.name, source, phi_i, O2_conc,
                         failure_rate, P_i, F_i, power_outage, leak.q_std,
-                        leak.tau, Q_fan, N_fans, leak.N_events)
+                        tau_event, Q_fan, N_fans, leak.N_events)
         )
 
     def _fatality_const_leak(self, source, leak, power_outage):
@@ -721,52 +755,36 @@ class Volume:
         # the isolation valve fails
         P_event = PFD_isol_valve
         Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-        self._add_failure_mode(P_event, failure_rate, source, leak, Q_fan,
-                               0, False)
+        tau_event = min(leak.tau, self.power.max_outage)  # And Test_period?
+        self._add_failure_mode(P_event, tau_event, failure_rate,
+                               source, leak, Q_fan, 0, False)
 
         # Constant leak and ODH system failure
         failure_rate = lambda_ODH
         P_event = PFD_isol_valve
+        tau_event = min(leak.tau, self.vent.Test_period)
         # Ventilation is available on ODH system failure
-        self._add_failure_mode(P_event, failure_rate, source, leak,
-                               self.vent_rate, 0, False)
+        self._add_failure_mode(P_event, tau_event, failure_rate,
+                               source, leak, self.vent.min_vent, 0, False)
 
         # Fan failure
         # If at least 1 fan is down, all fans are considered non-operational
         failure_rate = TABLE_2['Fan']['Failure to run']
         P_event = PFD_isol_valve
-        self._add_failure_mode(P_event, failure_rate, source, leak,
-                               self.vent_rate, 0, False)
+        tau_event = min(leak.tau, self.vent.Test_period)
+        self._add_failure_mode(P_event, tau_event, failure_rate,
+                               source, leak, self.vent.min_vent, 0, False)
 
         # Fans operational
         # If fatality is possible with just one fan, raise error
-        Q_1fan = self.Q_fan
+        Q_1fan = self.vent.Q_fan
         # Event can't go undetected for longer than the test period
-        tau = min(leak.tau, self.Test_period)
+        tau = min(leak.tau, self.vent.Test_period)
         O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
         F_1fan = self._fatality_prob(O2_conc_1fan)
         if F_1fan > 0:
             raise ConstLeakTooBig('Constant leak creates ODH with at least 1 fan '
                            f'operational: {leak}')
-
-    def _fan_fail(self):
-        """Calculate (Probability, flow) pairs for all combinations of fans
-        working.
-
-        All fans are expected to have same volume flow.
-        """
-        # TODO add fans with different volumetric rates (see report as well)
-        Fail_rate = self.lambda_fan
-        Fan_flowrates = []
-        for m in range(self.N_fans+1):
-            # Probability of exactly m units starting
-            P_m_fan_work = prob_m_of_n(m, self.N_fans, self.Test_period,
-                                       Fail_rate)
-            flowrate = self.Q_fan*m
-            if flowrate == Q_('0 m**3/min'):
-                flowrate = self.vent_rate
-            Fan_flowrates.append((P_m_fan_work, flowrate, m))
-        self.Fan_flowrates = Fan_flowrates
 
     def _fatality_prob(self, O2_conc):
         """Calculate fatality probability for given oxygen concentration.
@@ -947,7 +965,7 @@ class Volume:
             worksheet.freeze_panes(1, 0)
 
     def __str__(self):
-        return (f'Volume: {self.name}, {self.volume.to(ureg.ft**3):.2~}')
+        return (f'Volume: {self.name}, {self.volume.to(ureg.ft**3):~}')
 
     # def source_safe(self, source, escape = True):
     #    """
