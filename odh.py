@@ -1185,7 +1185,10 @@ def hole_leak(tube, area, fluid, P_out=P_NTP):
     dP = P1 - P2
     rho = fluid.Dmass
     A_hole = area
-    beta = float((area/tube.area)**0.5)
+    if tube is None:
+        beta = 0
+    else:
+        beta = float((area/tube.area)**0.5)
     if fluid.phase in (0, 3, 6):
         # Fluid is a liquid
         Y = 1
