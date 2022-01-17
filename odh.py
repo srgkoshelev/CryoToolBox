@@ -509,7 +509,7 @@ class BuildVent():
             Volumetric flow of a single ODH fan installed in the volume.
         N_fans : int
             Number of fans installed.
-        T_test : ureg.Quantity {time: 1}
+        Test_period : ureg.Quantity {time: 1}
             Test period of the fans and louvers.
         lambda_fan : ureg.Quantity {time: -1}
             Failure rate of the fans in the building.
