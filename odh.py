@@ -372,7 +372,7 @@ class Source:
         if N_valves != 0:
             self.valve_failure(tube, N_valves, fluid, q_std_rupture)
 
-    def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid=None):
+    def pressure_vessel_failure(self, relief_area=None, fluid=None):
         """Add pressure vessel failure to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -381,8 +381,6 @@ class Source:
 
         Parameters
         ----------
-        q_std_rupture : ureg.Quantity {length: 3, time: -1}
-            Standard volumetric flow rate for pressure vessel rupture.
         relief_area : ureg.Quantity {length: 2}
             Vacuum jacket relief area if the vessel has one, None otherwise.
         fluid : heat_transfer.ThermState
