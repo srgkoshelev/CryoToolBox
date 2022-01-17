@@ -105,7 +105,7 @@ class Source:
         self.sol_PFD = (int(not isol_valve) or
                         TABLE_2['Valve, solenoid']['Failure to operate'])
 
-    def pipe_failure(self, tube, fluid=None, q_std_rupture=None, N_welds=1):
+    def pipe_failure(self, tube, N_welds, fluid=None, q_std_rupture=None):
         """Add pipe failure to the leaks dict.
 
         For a given tube calculate leak parameters as following:
@@ -120,16 +120,13 @@ class Source:
 
         Parameters
         ----------
-        max_flow : ureg.Quantity {mass: 1, time: -1} or {length: 3, time: -1}
-            Max mass or volumetric flow through if limited,
-            e.g. by compressor output.
         tube : heat_transfer.piping.Tube
+        N_welds : int
+            Number of welds on the tube.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid for the release.
         q_std_rupture : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate for flange rupture.
-        N_welds : int
-            Number of welds on the tube.
         """
         # If fluid not defined use fluid of the Source
         fluid = fluid or self.fluid
@@ -220,7 +217,7 @@ class Source:
     #         q_std = Source._leak_flow(flow_path, area, fluid)
 #             self.failure_mode(name, failure_rate, q_std, N)
 
-    def flange_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
+    def flange_failure(self, pipe, N=1, fluid=None, q_std_rupture=None):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -231,12 +228,12 @@ class Source:
         Parameters
         ----------
         pipe : heat_transfer.Pipe
+        N : int
+            Number of reinforced seal connections on the pipe.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         q_std_rupture : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate for flange rupture.
-        N : int
-            Number of reinforced seal connections on the pipe.
         """
         fluid = fluid or self.fluid
         # TODO Make leak and rupture areas adjustable, add info to docstring
@@ -257,7 +254,7 @@ class Source:
             q_std = hole_leak(pipe, area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
 
-    def valve_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
+    def valve_failure(self, pipe, N=1, fluid=None, q_std_rupture=None):
         """Add valve leak and rupture failure modes to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -268,12 +265,12 @@ class Source:
         ----------
         pipe : heat_transfer.Pipe
             Pipe/tube upstream the valve.
+        N : int
+            Number of valves
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         q_std_rupture : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate for flange rupture.
-        N : int
-            Number of valves
         """
         fluid = fluid or self.fluid
         table = TABLE_2['Valve, pneumatic']
@@ -339,6 +336,41 @@ class Source:
             area = pipe.area
             q_std = hole_leak(pipe, area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
+
+    def line_failure(self, tube, N_welds, N_seals, N_valves, fluid=None,
+                     q_std_rupture=None):
+        """Adds pipe, pipe weld, seal/flange, and valve failures
+        to the leaks dict.
+
+        For a given tube calculate leak parameters as following:
+        - failure rate
+        - standard volumetric flow
+        - duration of the release
+        - number of possible similar events
+        for all failure modes for piping and welds listed in Table 2 of
+        FESHM 4240.
+
+        Failure modes are analyzed by `Volume.odh` method.
+
+        Parameters
+        ----------
+        tube : heat_transfer.piping.Tube
+        N_welds : int
+            Number of welds on the tube.
+        N_seals : int
+            Number of reinforced seal connections on the pipe.
+        N_valves : int
+            Number of valves
+        fluid : heat_transfer.ThermState
+            Thermodynamic state of the fluid for the release.
+        q_std_rupture : ureg.Quantity {length: 3, time: -1}
+            Standard volumetric flow rate for flange rupture.
+        """
+        self.pipe_failure(tube, N_welds, fluid, q_std_rupture)
+        if N_seals != 0:
+            self.flange_failure(tube, N_seals, fluid, q_std_rupture)
+        if N_valves != 0:
+            self.valve_failure(tube, N_valves, fluid, q_std_rupture)
 
     def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid=None):
         """Add pressure vessel failure to leaks dict.
