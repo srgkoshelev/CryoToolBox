@@ -773,9 +773,15 @@ class Volume:
 
         PFD_isol_valve = source.sol_PFD
         if power_outage:
-            raise ConstLeakNoVent(f'Constant leak {leak.name} from '
-                                f'{source.name} is not mitigated during '
-                                f'power outage in {self.name}.')
+            t_max_outage = self.volume / leak.q_std * math.log(21/18)
+            if self.power.max_outage > t_max_outage:
+                raise ConstLeakNoVent(
+                    f'Constant leak {leak.name} from {source.name} is not '
+                    f'mitigated during power outage in {self.name}.'
+                    ' Time to reach 18 % oxygen concentration: '
+                    f'{t_max_outage:.3g~}. Power outage time: '
+                    f'{self.power.max_outage:.3g~}.'
+                )
 
         # TODO Replace hard coded value with changeable
         # Constant leak and power failure
