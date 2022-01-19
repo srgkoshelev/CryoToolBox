@@ -1072,7 +1072,7 @@ def conc_vent(V, R, Q, t):
     return C
 
 
-def conc_final(V, R, Q):
+def conc_inf(V, R, Q):
     """Calculate the final oxygen concentration for continuous flow.
 
     Equivalent to conc_vent(V, R, Q, float('inf')).
