@@ -1,8 +1,8 @@
 import heat_transfer as ht
 from heat_transfer import odh
+from heat_transfer import geometry as g
 import pprint
 import unittest
-import random
 from math import pi
 from unittest.mock import MagicMock
 
@@ -535,6 +535,18 @@ class ODHTest(FunctionsTest):
         self.assertApproxEqual(V_flux_15*area, m_dot)
 
 
+class GeometryTest(unittest.TestCase):
+    def test_circle_area(self):
+        D = 1 * ureg.inch**2
+        A = pi * D**2 / 4
+        self.assertEqual(A, g.area_circle(D))
+
+    def test_cylinder_volume(self):
+        D = 1 * ureg.inch**2
+        A = pi * D**2 / 4
+        L = 10 * ureg.ft
+        V = A * L
+        self.assertEqual(V, g.cylinder_volume(D, L))
 
 
 if __name__ == '__main__':
