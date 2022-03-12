@@ -34,7 +34,7 @@ class ConstLeakTooBig(Exception):
     pass
 
 
-class ConstLeakNoVent(Exception):
+class ConstLeakTooLong(Exception):
     pass
 
 @ureg.check(None, '1/[time]', '[length]^3/[time]', '[time]', None)
@@ -775,7 +775,7 @@ class Volume:
         if power_outage:
             t_max_outage = self.volume / leak.q_std * math.log(21/18)
             if self.power.max_outage > t_max_outage:
-                raise ConstLeakNoVent(
+                raise ConstLeakTooLong(
                     f'Constant leak {leak.name} from {source.name} is not '
                     f'mitigated during power outage in {self.name}.'
                     ' Time to reach 18 % oxygen concentration: '
@@ -819,8 +819,8 @@ class Volume:
         O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
         F_1fan = self._fatality_prob(O2_conc_1fan)
         if F_1fan > 0:
-            raise ConstLeakTooBig('Constant leak creates ODH with at least 1 fan '
-                           f'operational: {leak}')
+            raise ConstLeakTooBig('Constant leak creates ODH with at least 1 '
+                                  f'fan operational: {leak}')
 
     def _fatality_prob(self, O2_conc):
         """Calculate fatality probability for given oxygen concentration.
@@ -917,7 +917,7 @@ class Volume:
             row = []
             row.append(f'{f_mode.source.name} {f_mode.name}')
             row.append(f'{f_mode.N_fan}')
-            row.append(f'{f_mode.O2_conc:.0%}')
+            row.append(f'{float(f_mode.O2_conc):.0%}')
             row.append(f'{f_mode.tau.m_as(ureg.min):,.1f}')
             row.append(f'{f_mode.phi.m_as(1/ureg.hr):.2}')
             table.append(row)
