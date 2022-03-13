@@ -539,7 +539,7 @@ class GeometryTest(unittest.TestCase):
     def test_circle_area(self):
         D = 1 * ureg.inch**2
         A = pi * D**2 / 4
-        self.assertEqual(A, g.area_circle(D))
+        self.assertEqual(A, g.circle_area(D))
 
     def test_cylinder_volume(self):
         D = 1 * ureg.inch**2
