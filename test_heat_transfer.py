@@ -653,37 +653,29 @@ class CPWrapperTest(unittest.TestCase):
 class ODHTest(FunctionsTest):
     """Set of tests for basic functionality of ODH analysis
     """
-    def test_hole_leak_Crane(self):
-        LHe = ht.ThermState('helium')
-        LHe.update('P', ht.P_NTP, 'Q', Q_('0'))
-        Portable_500L = odh.Source('Portable 500L', LHe, Q_(500, ureg.L))
-        Portable_500L.dewar_insulation_failure(1054*ureg('ft^3/min'))
-        fluid = ht.ThermState('water', P=Q_(2, ureg.psig), T=Q_(60, ureg.degF))
-        tube = ht.piping.Pipe(3, SCH=80)
-        d_hole = 2 * ureg.inch
-        area = 3.14159 * d_hole**2 / 4
-        self.assertApproxEqual(131*ureg.gal/ureg.min,
-                               odh.hole_leak(tube, area, fluid),
-                               uncertainty=0.2)
-        # Crane gives 131 gal/min for flow
-        # difference in equations gives 20 % difference
-
-    def test_hole_leak_voirin(self):
+    def test_hole_leak_voirin_P150(self):
+        # Uses classic API 520 calculation
         P_150 = Q_(150, ureg.psig)
-        P_15 = Q_(15, ureg.psig)
         T = Q_(60, ureg.degF)
         V_flux_150 = 2.856 * ureg.ft**3 / (ureg.min * ureg.mm**2)
-        V_flux_15 = 0.515 * ureg.ft**3 / (ureg.min * ureg.mm**2)
+        K_d = 0.6
 
         area = 1*ureg.mm**2  # Chosen for simplicity
-        ID = (4*area/pi)**0.5  # Assuming tube ID based on area
-        tube = ht.piping.Tube(ID, wall=0*ureg.m)
         fluid = ht.ThermState('nitrogen', P=P_150, T=T)
-        m_dot = ht.odh.hole_leak(tube, area, fluid)
-        self.assertApproxEqual(V_flux_150*area, m_dot)
+        q_std = ht.odh.hole_leak(area, fluid)
+        self.assertApproxEqual(V_flux_150*area/K_d, q_std)
+
+    def test_hole_leak_voirin_P15(self):
+        # Uses classic API 520 calculation
+        P_15 = Q_(15, ureg.psig)
+        T = Q_(60, ureg.degF)
+        V_flux_15 = 0.515 * ureg.ft**3 / (ureg.min * ureg.mm**2)
+        K_d = 0.6
+
+        area = 1*ureg.mm**2  # Chosen for simplicity
         fluid = ht.ThermState('nitrogen', P=P_15, T=T)
-        m_dot = ht.odh.hole_leak(tube, area, fluid)
-        self.assertApproxEqual(V_flux_15*area, m_dot)
+        q_std = ht.odh.hole_leak(area, fluid)
+        self.assertApproxEqual(V_flux_15*area/K_d, q_std)
 
 
 class GeometryTest(unittest.TestCase):

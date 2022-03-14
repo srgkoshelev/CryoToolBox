@@ -11,6 +11,7 @@ from . import ureg, Q_
 from . import T_NTP, P_NTP
 from .functions import ThermState
 from .functions import to_standard_flow
+from .piping import G_nozzle
 from dataclasses import dataclass
 import xlsxwriter
 # Loading FESHM 4240 Failure rates
@@ -1151,7 +1152,7 @@ def print_result(*Volumes):
     print('#'*pad)
 
 
-def hole_leak(tube, area, fluid, P_out=P_NTP):
+def hole_leak(area, fluid, P_out=P_NTP):
     """Calculate leak flow rate through a hole in a pipe.
 
     Discharge flow through a hole is calculated using Darcy equation for
@@ -1176,34 +1177,7 @@ def hole_leak(tube, area, fluid, P_out=P_NTP):
         Standard volumetric flow at Normal Temperature and Pressure.
 
     """
-    P1 = fluid.P
-    P2 = P_out
-    if P2 >= P1:
-        return 0*ureg.ft**3/ureg.min
-
-    k = float(fluid.gamma)
-    rc = (2/(k+1))**(k/(k-1))  # Critical pressure ratio
-    if P2/P1 < rc:
-        P2 = P1 * rc  # Choked flow
-
-    dP = P1 - P2
-    rho = fluid.Dmass
-    A_hole = area
-    if tube is None:
-        beta = 0
-    else:
-        beta = float((area/tube.area)**0.5)
-    if fluid.phase in (0, 3, 6):
-        # Fluid is a liquid
-        Y = 1
-    else:
-        Y = 1 - (0.351 + 0.256*beta**4 + 0.93*beta**8) * (1-(P2/P1)**(1/k))
-    if tube is None:
-        K_orifice = 2.81  # Rennels, Pipe Flow, 13.2.3
-    else:
-        lam = 1 + 0.622*(1 - 0.215*beta**2 - 0.785*beta**5)
-        K_orifice = lam**2 * (1 + 0.0696*(1-beta**5))
-
-    q_local = Y * A_hole * ((2*dP)/(rho*K_orifice))**0.5
-    q_std = to_standard_flow(q_local, fluid)
+    G_max = G_nozzle(fluid, P_out=P_out)[0]
+    m_dot = G_max * area
+    q_std = to_standard_flow(m_dot, fluid)
     return q_std

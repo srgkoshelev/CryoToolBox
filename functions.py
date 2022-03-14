@@ -158,6 +158,7 @@ def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
         1 - for no rupture disc installed in combination
         0.9 - for rupture disc installed in combination
     """
+    logger.warning('Deprecated. Use ht.piping.G_nozzle() instead.')
     W = m_dot.m_as(ureg.lb/ureg.hr)
     P_1 = fluid.P.m_as(ureg.psi)
     P_2 = P_back.m_as(ureg.psi)
