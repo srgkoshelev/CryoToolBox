@@ -1538,7 +1538,7 @@ def half_width(d_1, T_b, T_h, c, D_h):
     return min(max(d_1, d_2_a), D_h)
 
 
-def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
+def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
     """Calculate mass flux through a converging nozzle using direct integration
     method.
 
@@ -1560,19 +1560,18 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
         P = P_ * ureg.Pa
         fluid_temp.update_kw(P=P, Smass=S)
         rho = fluid_temp.Dmass.m_as(ureg.kg/ureg.m**3)
-        return 1/rho
+        return 1 / rho
 
     dP = (P1_-P2_) / n_steps
     P_ = P1_
-    # temp = []
     G_max = 0
-    while P_ > P2_:
+    while P_ > 1.3*P2_:
         G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
-        # temp.append((G, (P_*ureg.Pa).m_as(ureg.psi)))
-        if G >= G_max:
-            G_max = G
-        else:
+        if G < G_max:
             break
-        P_ -= dP
+        else:
+            G_max = G
+            P_ -= dP
     G_max *= ureg.kg/(ureg.s*ureg.m**2)
-    return G_max
+    P = P_ * ureg.Pa
+    return G_max, P
