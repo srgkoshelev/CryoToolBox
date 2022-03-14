@@ -1561,7 +1561,6 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
         fluid_temp.update_kw(P=P, Smass=S)
         rho = fluid_temp.Dmass.m_as(ureg.kg/ureg.m**3)
         return 1 / rho
-
     dP = (P1_-P2_) / n_steps
     P_ = P1_
     G_max = 0
