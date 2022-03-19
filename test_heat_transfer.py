@@ -207,6 +207,13 @@ class FunctionsTest(unittest.TestCase):
         A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
+    def test_blast_radia(self):
+        E_stored = 150000 * ureg.lbf*ureg.ft
+        R_blast = ht.blast_radius(E_stored)
+        self.assertAlmostEqual(29.9744399*ureg.ft, R_blast[0])
+        self.assertAlmostEqual(17.984664*ureg.ft, R_blast[1])
+        self.assertAlmostEqual(8.99233198*ureg.ft, R_blast[2])
+        self.assertAlmostEqual(2.99744399*ureg.ft, R_blast[3])
 
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.

@@ -12,10 +12,9 @@ from scipy.interpolate import interp1d
 from scipy.integrate import quad
 from enum import Enum, auto
 
-E_TNT = Q_('4850 J/g')  # TNT equivalent Energy of Explosion (PNNL)
-z_1 = Q_('200 ft')  # Scaled distance for debris and missile damage (PNNL)
-z_2 = Q_('15 ft')  # Scaled distance for eardrum rupture (PNNL)
-z_3 = Q_('6.7 ft')  # Scaled distance for lung damage (PNNL)
+# TNT equivalent Energy of Explosion (ASME PCC-2)
+E_TNT = 4266920 * ureg.J / ureg.kg
+R_scaled = [20, 12, 6, 2] * ureg.m/ureg.kg**(1/3)
 
 sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
@@ -833,10 +832,11 @@ def stored_energy(fluid, volume):
 
 
 def blast_radius(E_stored):
-    """Calculate maximum distance for debris, eardrum rupture and
-    lung damage based on PNNL paper."""
+    """Calculate maximum distance for debris, eardrum rupture,
+    lung damage, and fatality based on ASME PCC-2."""
     W_TNT = E_stored / E_TNT  # Energy equivalent in TNT
-    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
-    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
-    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
-    return (D_1, D_2, D_3)
+    result = []
+    for R_s in R_scaled:
+        R = R_s * (2*W_TNT)**(1/3)
+        result.append(R.to(ureg.ft))
+    return result
