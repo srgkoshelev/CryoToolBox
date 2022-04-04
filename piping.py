@@ -1563,14 +1563,16 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
         return 1 / rho
     dP = (P1_-P2_) / n_steps
     P_ = P1_
+    Pc_ = P2_
     G_max = 0
     while P_ > P2_:
         G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
         if G < G_max:
+            Pc_ = P_
             break
         else:
             G_max = G
             P_ -= dP
     G_max *= ureg.kg/(ureg.s*ureg.m**2)
-    P = P_ * ureg.Pa
-    return G_max, P
+    Pc = Pc_ * ureg.Pa
+    return G_max, Pc
