@@ -118,6 +118,12 @@ class Tube:
         """
         return 1 / (4*log10(self.eps/(3.7*self.ID))**2)
 
+    @property
+    def K_T(self):
+        """Calculate flow resistance coefficient for turbulent flow.
+        """
+        return self.f_T()*self.L/self.ID
+
     def pressure_design_thick(self, P_int, P_ext=P_NTP):
         """Calculate pressure design thickness for given pressure and pipe material.
 
