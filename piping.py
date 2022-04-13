@@ -1566,7 +1566,11 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
     Pc_ = P2_
     G_max = 0
     while P_ > P2_:
-        G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
+        try:
+            G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
+        except ValueError:  # CoolProp has issues around critical point
+            P_ -= dP
+            continue
         if G < G_max:
             Pc_ = P_
             break
