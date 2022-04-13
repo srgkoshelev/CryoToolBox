@@ -1056,9 +1056,13 @@ def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
     ureg.Quantity : {mass: 1, time: -1}
     '''
     P_0 = fluid.P
+    dP = P_0 - P_out
     if P_0 <= P_out:
         raise HydraulicError(f'Input pressure less or equal to output: \
         {P_0.to(ureg.Pa):.3g}, {P_out.to(ureg.Pa):.3g}')
+    elif dP/P_0 > 0.4:
+        raise HydraulicError(f'Estimated pressure drop {dP/P_0:.3g~} exceeds '
+                             '40% limit for incompressible flow.')
     def to_solve(m_dot_gs, P_in_Pa, P_out_Pa):
         dP_calc = dP_incomp(m_dot_gs*ureg.g/ureg.s, fluid, piping)
         dP_given = P_in_Pa - P_out_Pa
