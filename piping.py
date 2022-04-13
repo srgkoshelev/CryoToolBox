@@ -1032,8 +1032,8 @@ def dP_incomp(m_dot, fluid, piping):
         w = m_dot/(rho_ave*area)
         return dP_Darcy(K_corr, rho_ave, w)
     else:
-        raise HydraulicError(f'Estimated pressure drop {dP/P_0:.3g~} exceeds 40 % limit for'
-                             ' incompressible flow.')
+        raise HydraulicError(f'Estimated pressure drop {dP/P_0:.3g~} exceeds '
+                             '40% limit for incompressible flow.')
 
 
 def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
