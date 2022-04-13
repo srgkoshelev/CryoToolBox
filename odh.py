@@ -1036,7 +1036,7 @@ class Volume:
         print(f'Number of fans: {self.vent.N_fans:.0f}')
         print(f'ODH system test period: {self.vent.Test_period:.0f~}')
         print(f'Fan failure rate: {self.vent.lambda_fan:.1e~}')
-        print(f'Building fresh air intake rate: {self.vent.min_vent:.3g~}')
+        print(f'Building fresh air supply rate: {self.vent.min_vent:.3g~}')
 
     # def source_safe(self, source, escape = True):
     #    """
