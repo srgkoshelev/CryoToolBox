@@ -183,7 +183,7 @@ class FunctionsTest(unittest.TestCase):
 
     def test_API_subsonic(self):
         """Example from API 5.6"""
-        if REFPROP_TEST == False:
+        if REFPROP_TEST==False:
             return
         m_dot = 53500 * ureg.lb/ureg.hr
         fluid = ht.ThermState('propane&butane', backend='REFPROP')
@@ -196,7 +196,7 @@ class FunctionsTest(unittest.TestCase):
 
     def test_API_sonic(self):
         """Example from API 5.6"""
-        if REFPROP_TEST == False:
+        if REFPROP_TEST==False:
             return
         m_dot = 53500 * ureg.lb/ureg.hr
         fluid = ht.ThermState('propane&butane', backend='REFPROP')
