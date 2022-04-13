@@ -165,10 +165,8 @@ class Tube:
         logger.warning('Deprecated, use standalone function instead.')
         # Check whether S, E, W, and Y are defined
         self._check_SEWY()
-        D = self.OD
         S, E, W, Y = self.S, self.E, self.W, self.Y
-        t = self.wall - self.c
-        P = 2 * t * S * E * W / (D-2*Y*t)
+        P = pressure_rating(self, S=S, E=E, W=W, Y=Y)
         return P
 
     def add_SEWY(self, *, S=None, E=None, W=None, Y=None):
