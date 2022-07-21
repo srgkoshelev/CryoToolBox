@@ -14,6 +14,7 @@ from .functions import to_standard_flow
 from .piping import G_nozzle
 from dataclasses import dataclass
 import xlsxwriter
+from enum import Enum, auto
 # Loading FESHM 4240 Failure rates
 from .FESHM4240_TABLES import TABLE_1, TABLE_2
 
@@ -473,7 +474,8 @@ class Source:
         name : str
             Name of the new combined source.
         sources : list of Source
-            Sources connected together.
+            Sources connected together. If a source represents multiple
+            identical sources, e.g., N > 1, the volumes are added together.
 
         Returns
         -------
@@ -482,7 +484,7 @@ class Source:
         """
         fluid = ThermState(sources[0].fluid.name, T=T_NTP, P=P_NTP)
         if all([source.fluid.name == fluid.name for source in sources]):
-            total_volume = sum([source.volume for source in sources])
+            total_volume = sum([source.N*source.volume for source in sources])
             return Source(name, fluid, total_volume)
         else:
             ODHError('All volumes should contain the same fluid')
@@ -492,7 +494,11 @@ class Source:
         return f'Source({self.name}, {self.fluid}, {self.volume}, N={self.N}, isol_valve={self.isol_valve})'
 
     def __str__(self):
-        return f'{self.name}, ' + \
+        if self.N == 1:
+            quant_str = ''
+        else:
+            quant_str = f'{self.N}x '
+        return quant_str + f'{self.name}, ' + \
             f'{self.volume.to(ureg.ft**3):.3g~} ' + \
             f'of {self.fluid.name}'
 
@@ -541,7 +547,7 @@ class BuildPower():
 
 
 @ureg.check('[length]^3/[time]', None, '[time]', '1/[time]',
-            '[length]^3/[time]')
+            '[length]^3/[time]', None)
 @dataclass
 class BuildVent():
     """
@@ -555,12 +561,28 @@ class BuildVent():
             Failure rate of the fans in the building.
         min_vent : ureg.Quantity {length: 3, time: -1}
             Min volumetric flow required or present in the building.
+            Default value is 0 CFM.
+        indep_vent : bool
+            `True` means min fresh air intake is independent from the fans,
+            e.g., provided by HVAC system. `False` means min ventilation
+            is achieved using the dedicated ODH fan, generally run at a lower
+            capacity. For this case fan failure means no ventilation will be
+            present in the building. Default value: `False`.
 """
     Q_fan: ureg.Quantity
     N_fans: int
     Test_period: ureg.Quantity
     lambda_fan: ureg.Quantity = TABLE_2['Fan']['Failure to run']
     min_vent: ureg.Quantity = 0*ureg.ft**3/ureg.min
+    indep_vent: bool = False
+
+    def const_vent(self, fail_case):
+        if fail_case == FailCase.POWER:
+            return 0 * ureg.ft**3/ureg.min
+        elif fail_case == FailCase.ODH:
+            return self.min_vent
+        elif fail_case == FailCase.FAN:
+            return float(self.indep_vent) * self.min_vent
 
     def fan_flowrates(self):
         """Calculate (Probability, flow) pairs for all combinations of fans
@@ -575,11 +597,19 @@ class BuildVent():
             # Probability of exactly m units starting
             P_m_fan_work = prob_m_of_n(m, self.N_fans, self.Test_period,
                                        fail_rate)
-            flowrate = self.Q_fan*m
-            if flowrate == Q_('0 m**3/min'):
-                flowrate = self.min_vent
+            if m == 0:
+                flowrate = self.const_vent(FailCase.FAN)
+            else:
+                flowrate = m * self.Q_fan
             fan_flowrates.append((P_m_fan_work, flowrate, m))
         return fan_flowrates
+
+
+class FailCase(Enum):
+    """Failure cases possible during a release event, i.e., power failure, ODH system failure, or fan failure."""
+    POWER = auto()
+    ODH = auto()
+    FAN = auto()
 
 
 class Volume:
@@ -688,7 +718,7 @@ class Volume:
         """
         PFD_isol_valve = source.sol_PFD
         P_case = (1-self.power.pfd) * self.PFD_ODH * PFD_isol_valve
-        Q_fan = self.vent.min_vent
+        Q_fan = self.vent.const_vent(FailCase.ODH)
         tau_event = min(leak.tau, self.vent.Test_period)
         case = 'ODH fail'
         self._add_failure_mode(case, P_case, tau_event, leak.fluid,
@@ -699,9 +729,9 @@ class Volume:
         """Calculate fatality rate for any number of fans operational.
 
         Power has to be  on, and ODH system operational. Source isolation is
-        possible for this event. Ventilation independent from ODH system,
-        e.g., HVAC, is considered for all fans unavailable at the time of
-        the event.
+        possible for this event. If ventilation is independent from the ODH
+        system, e.g., HVAC, it is used for the case of all fans failure at
+        the time of the event.
 
         Parameters
         ----------
@@ -721,8 +751,6 @@ class Volume:
         case = 'Fan failure'
         for (P_fan, Q_fan, N_fans) in self.vent.fan_flowrates():
             P_case = P_group * P_fan  # Probability of the particular case
-            if Q_fan == 0 * ureg.ft**3/ureg.min:
-                Q_fan = self.vent.min_vent
             self._add_failure_mode(case, P_case, tau_event, leak.fluid,
                                    leak.failure_rate, source, leak, Q_fan,
                                    N_fans, False)
@@ -825,7 +853,8 @@ class Volume:
         # Ventilation is available on ODH system failure
         case = 'No ODH'
         self._add_failure_mode(case, P_case, tau_event, leak.fluid,
-                               failure_rate, source, leak, self.vent.min_vent,
+                               failure_rate, source, leak,
+                               self.vent.const_vent(FailCase.ODH),
                                0, False)
 
         # Fan failure
@@ -835,7 +864,8 @@ class Volume:
         tau_event = min(leak.tau, self.vent.Test_period)
         case = 'No fan'
         self._add_failure_mode(case, P_case, tau_event, leak.fluid,
-                               failure_rate, source, leak, self.vent.min_vent,
+                               failure_rate, source, leak,
+                               self.vent.const_vent(FailCase.FAN),
                                0, False)
 
         # Fans operational
@@ -950,7 +980,7 @@ class Volume:
             table.append(row)
         return table
 
-    def report_table(self, filename='ODH_report'):
+    def report_table(self, filename='ODH_report', sort='name'):
         """Make a table with the calculation results."""
         table = []
         header = ['Source', 'Failure', 'Fluid',
@@ -961,7 +991,12 @@ class Volume:
                   'Case prob ', 'Fatality rate, 1/hr']
         # 'Total failure rate', 'ODH protection PFD', 'Building is powered'
         table.append(header)
-        self.fail_modes.sort(key=lambda x: x.source.name)
+        if sort == 'name':
+            self.fail_modes.sort(key=lambda x: x.source.name)
+        elif sort == 'phi':
+            self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
+        else:
+            ODHError(f'Sort option {sort} not supported.')
         for f_mode in self.fail_modes:
             tau = f_mode.tau.m_as(ureg.min)
             if tau == float('inf'):
@@ -999,7 +1034,7 @@ class Volume:
                                                  'font_size': 12,
                                                  'bottom': 3})
             sci_format = workbook.add_format({'num_format': '0.00E+00'},)
-            percent_format = workbook.add_format({'num_format': '0%'},)
+            percent_format = workbook.add_format({'num_format': '0.0%'},)
             number_format = workbook.add_format({'num_format': '0'},)
             worksheet.set_row(0, None, header_format)
             worksheet.set_column(3, 3, None, sci_format)  # Event fr
@@ -1072,7 +1107,7 @@ def prob_m_of_n(m, n, T, l):
     """
     PFD_one_unit = l*T
     m_of_n = binom(n, m) * (PFD_one_unit)**(n-m) * (1-PFD_one_unit)**m
-    return m_of_n
+    return m_of_n.to_base_units()
 
 
 def conc_vent(V, R, Q, t):
