@@ -1437,7 +1437,7 @@ def piping_stress(tube, P_diff, *, E, W, Y):
     return S.to(ureg.psi)
 
 
-def pressure_design_thick(tube, P_diff, *, S, E, W, Y):
+def pressure_design_thick(tube, P_diff, I=1, *, S, E, W, Y):
     """Calculate pressure design thickness for given pressure and pipe material.
 
     Based on B31.3 304.1.
@@ -1452,12 +1452,10 @@ def pressure_design_thick(tube, P_diff, *, S, E, W, Y):
     ureg.Quantity {length: 1}
         Minimum required wall thickness.
     """
-    # Check whether S, E, W, and Y are defined
-    tube._check_SEWY()
     D = tube.OD
     # d = tube.ID
     P = P_diff
-    t = P * D / (2*(S*E*W + P*Y))
+    t = P * D / (2*(S*E*W/I + P*Y))
     # TODO add 3b equation handling:
     # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
     if (t >= D/6) or (P/(S*E)) > 0.385:
@@ -1466,6 +1464,44 @@ def pressure_design_thick(tube, P_diff, *, S, E, W, Y):
         return None
     tm = t + tube.c
     return tm
+
+
+def I_intrados(R1, D):
+    """Calculate coefficient I at the intrados of a bend per B31.3 304.2.1 (3d).
+
+    Parameters
+    ----------
+    R1 : float
+        bend radius of a pipe bend
+    D : ureg.Quantity {length: 1}
+        Outside diameter of a pipe
+
+    Returns
+    -------
+    float
+    """
+
+    I = (4*(R1/D)-1) / (4*(R1/D)-2)
+    return I
+
+
+def I_extrados(R1, D):
+    """Calculate coefficient I at the extrados of a bend per B31.3 304.2.1 (3e).
+
+    Parameters
+    ----------
+    R1 : float
+        bend radius of a pipe bend
+    D : ureg.Quantity {length: 1}
+        Outside diameter of a pipe
+
+    Returns
+    -------
+    float
+    """
+
+    I = (4*(R1/D)+1) / (4*(R1/D)+2)
+    return I
 
 
 def pressure_rating(tube, *, S, E, W, Y):
