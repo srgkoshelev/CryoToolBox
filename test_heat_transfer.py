@@ -565,6 +565,43 @@ class Nu_test(FunctionsTest):
         for Ra, Nu in figure_4_17_HHT:
             self.assertApproxEqual(Nu, ht.Nu_hcyl(Pr, Ra, C_t_bar), 0.1)
 
+    def test_Nu_vcyl(self):
+        Pr = 0.7
+        Ra = 1e6
+        thesis_data = {
+            10: [
+                (1e6, 23),
+                (1e4, 11),
+                # (1e3, 8.5),
+                # (1e2, 7),
+                (1e7, 38),
+                (1e8, 60),
+                (1e9, 100)
+            ],
+            5: [
+                (1e4, 8.2),
+                # (1e5, 10.3),
+                (1e6, 20),
+                (1e7, 35),
+                (1e8, 60)
+            ],
+            1: [
+                (1e4, 6),
+                (1e5, 10),
+                # (1e6, 10.8),
+                (1e7, 30)
+            ],
+            0.1: [
+                # (1e2, 1.3),
+                # (1e3, 2.6),
+                (1e4, 5)
+            ]
+        }
+        for AR, plot_data in thesis_data.items():
+            for Ra, Nu in plot_data:
+                D = 1 * ureg.inch
+                L = D * AR
+                self.assertApproxEqual(Nu, ht.Nu_vcyl(Pr, Ra, D, L), uncertainty=0.4)
 
 if __name__ == '__main__':
     unittest.main()

@@ -474,8 +474,8 @@ def Nu_vcyl(Pr_, Ra_, D_cyl, L_cyl):
     -------
     Nusselt number, dimensionless
     """
-    N_l = Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl)
-    N_t = Nu_t_vplate(Pr_, Ra_)
+    Nu_l = Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl)
+    Nu_t = Nu_t_vplate(Pr_, Ra_)
     return Nu_blend(Nu_l, Nu_t, m=6)
 
 
