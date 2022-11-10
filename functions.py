@@ -329,7 +329,7 @@ def Gr(fluid, T_surf, L_surf):
     nu_fluid = fluid.viscosity/fluid.Dmass  # kinematic viscosity
     beta_exp = fluid.isobaric_expansion_coefficient
     Gr_ = ureg.g_0 * L_surf**3 * beta_exp * abs(T_surf-fluid.T) / nu_fluid**2
-    return Gr_.to(ureg.dimensionless)
+    return float(Gr_)
 
 
 def Ra(fluid, T_surf, L_surf):

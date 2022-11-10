@@ -23,8 +23,8 @@ class RefPropTest(unittest.TestCase):
     def assertNIST(self, nist, calc, criteria=None):
         criteria = criteria or self.criteria
         assert abs(nist-calc) / nist < criteria, \
-            f'Calculated value {calc} is not within {criteria:%} of NIST value \
-            {nist}'
+            f'Calculated value {calc} is not within {criteria:%} of NIST value ' + \
+            f'{nist}'
 
     def test_air(self):
         fluid = ht.ThermState('air.mix', backend='REFPROP')
@@ -121,8 +121,8 @@ class RefPropTest(unittest.TestCase):
 class FunctionsTest(unittest.TestCase):
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         assert abs(data-calc) / data < uncertainty, \
-            f'Calculated value {calc} is not within {uncertainty:.1%} of data \
-            value {data}'
+            f'Calculated value {calc} is not within {uncertainty:.1%} of data ' + \
+            f'value {data}'
 
     def test_rad_hl_1(self):
         eps = 0.02
