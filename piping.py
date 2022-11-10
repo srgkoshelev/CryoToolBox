@@ -1028,7 +1028,7 @@ def dP_incomp(m_dot, fluid, piping):
         w = m_dot/(rho_ave*area)
         return dP_Darcy(K_corr, rho_ave, w)
     else:
-        raise HydraulicError(f'Estimated pressure drop {dP/P_0:.3g~} exceeds 40 % limit for'
+        raise HydraulicError(f'Estimated pressure drop {(dP/P_0).to_base_units():.0%~} exceeds 40% limit for'
                              ' incompressible flow.')
 
 
@@ -1237,8 +1237,8 @@ def Mach_total(fluid, m_dot, area):
     M_root = solution.root**0.5
     T = fluid.T - v**2 / fluid.Cpmass
     if T < 0*ureg.K:
-        raise HydraulicError(f'Negative static temperature: {T:.3g~}. Required \
-        speed {v:.3g~} cannot be achieved.')
+        raise HydraulicError(f'Negative static temperature: {T:.3g~}. Required '
+                             f'speed {v.to(ureg.m/ureg.s):.3g~} cannot be achieved.')
     if isinstance(M_root, complex):
         raise HydraulicError(f'No real solutions for Mach number found.')
     return M_root
