@@ -535,6 +535,35 @@ class ODHTest(FunctionsTest):
         self.assertApproxEqual(V_flux_15*area, m_dot)
 
 
+class Nu_test(FunctionsTest):
+    def test_Nu_vplate(self):
+        fluid = ht.AIR
+        Pr = fluid.Prandtl
+        # Estimated values from Figure 4.7 of Handbook of Heat Transfer
+        figure_4_7_HHT = [
+            (100, 2.5),
+            (1e5, 10),
+            (1e6, 17),
+            (1e10, 200)
+        ]
+        for Ra, Nu in figure_4_7_HHT:
+            self.assertApproxEqual(Nu, ht.Nu_vplate(Pr, Ra), 0.1)
+
+    def test_C_t_bar_cyl(self):
+        self.assertApproxEqual(0.103, ht.C_t_bar_cyl(0.71), uncertainty=1e-5)
+        self.assertApproxEqual((0.103+0.109)/2, ht.C_t_bar_cyl((0.71+6)/2), uncertainty=1e-5)
+
+    def test_Nu_hcyl(self):
+        Pr = 0.71  # Taken as Pr for air
+        figure_4_17_HHT = [
+            (1, 1),
+            (1e-6, 0.3),
+            (1e-9, 0.2),
+            (1e5, 8)
+        ]
+        C_t_bar = ht.C_t_bar_cyl(Pr)
+        for Ra, Nu in figure_4_17_HHT:
+            self.assertApproxEqual(Nu, ht.Nu_hcyl(Pr, Ra, C_t_bar), 0.1)
 
 
 if __name__ == '__main__':
