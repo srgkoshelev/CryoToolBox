@@ -20,6 +20,7 @@ z_3 = Q_('6.7 ft')  # Scaled distance for lung damage (PNNL)
 sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
 
+
 class NISTError(Exception):
     def __init__(self, message):
         self.message = message
@@ -406,6 +407,7 @@ def Nu_T_hcyl(Pr_, Ra_):
     """
     return 0.772 * Nu_T_vplate(Pr_, Ra_)
 
+
 def Nu_l_hcyl(Pr_, Ra_):
     """Calculate laminar Nusselt number for isothermal horizontal cylinder.
     From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45b).
@@ -422,6 +424,7 @@ def Nu_t_hcyl(Ra_, C_t_bar):
     """
     return C_t_bar * Ra_**(1/3)
 
+
 def C_t_bar_cyl(Pr_):
     """Interpolate value of the turbulent coefficient C_t for isothermal
     horizontal cylinder (C/L=1).
@@ -431,6 +434,7 @@ def C_t_bar_cyl(Pr_):
     C_t_bar_values = (0.103, 0.109, 0.097, 0.088)
     C_t_bar_interp = interp1d(Pr_values, C_t_bar_values)
     return C_t_bar_interp(Pr_)
+
 
 def Nu_hcyl(Pr_, Ra_, C_t_bar):
     """Calculate Nusselt number for isothermal horizontal cylinder.
@@ -456,6 +460,7 @@ def Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl):
     """
     zeta = 1.8 * L_cyl/D_cyl / Nu_T_vplate(Pr_, Ra_)
     return zeta / log(1+zeta) * Nu_l_vplate(Pr_, Ra_)
+
 
 def Nu_vcyl(Pr_, Ra_, D_cyl, L_cyl):
     """ Calculate Nusselt number for vertical isothermal cylinder.
