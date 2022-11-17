@@ -418,6 +418,7 @@ def Nu_l_hcyl(Pr_, Ra_):
         f = 1 - 0.13/Nu_T_hcyl(Pr_, Ra_)**0.16
     return 2*f / log(1+2*f/Nu_T_hcyl(Pr_, Ra_))
 
+
 def Nu_t_hcyl(Ra_, C_t_bar):
     """Calculate turbulent Nusselt number for isothermal horizontal cylinder.
     From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45c).
@@ -451,7 +452,8 @@ def Nu_hcyl(Pr_, Ra_, C_t_bar):
     """
     Nu_l = Nu_l_hcyl(Pr_, Ra_)
     Nu_t = Nu_t_hcyl(Ra_, C_t_bar)
-    return Nu_blend(Nu_l, Nu_t, m=10)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=10)
+    return float(Nu_)
 
 
 def Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl):
@@ -481,7 +483,8 @@ def Nu_vcyl(Pr_, Ra_, D_cyl, L_cyl):
     """
     Nu_l = Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl)
     Nu_t = Nu_t_vplate(Pr_, Ra_)
-    return Nu_blend(Nu_l, Nu_t, m=6)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=6)
+    return float(Nu_)
 
 
 def heat_trans_coef(fluid, Nu, L_surf):

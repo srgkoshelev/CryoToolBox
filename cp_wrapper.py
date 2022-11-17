@@ -54,7 +54,7 @@ CP_const_unit = {
     'viscosity': (CP.iviscosity, ureg.Pa*ureg.s),
     'conductivity': (CP.iconductivity, ureg.W/ureg.m/ureg.K),
     # 'surface_tension': (CP.isurface_tension, ),
-    'Prandtl': (CP.iPrandtl, ureg.dimensionless),
+    'Prandtl': (CP.iPrandtl, None),
     'speed_sound': (CP.ispeed_sound, ureg.m/ureg.s),
     'isothermal_compressibility': (CP.iisothermal_compressibility,
                                    ureg.Pa**-1),
@@ -357,7 +357,6 @@ class ThermState:
         return self._AbstractState.isentropic_expansion_coefficient()
 
     @property
-    @ureg.wraps(CP_const_unit['Prandtl'][1], None)
     def Prandtl(self):
         return self._AbstractState.Prandtl()
 
