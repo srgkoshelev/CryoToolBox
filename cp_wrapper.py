@@ -53,7 +53,7 @@ CP_const_unit = {
     # 'Helmholtzmass': (CP.iHelmholtzmass, ),
     'viscosity': (CP.iviscosity, ureg.Pa*ureg.s),
     'conductivity': (CP.iconductivity, ureg.W/ureg.m/ureg.K),
-    # 'surface_tension': (CP.isurface_tension, ),
+    'surface_tension': (CP.isurface_tension, ureg.N/ureg.m),
     'Prandtl': (CP.iPrandtl, None),
     'speed_sound': (CP.ispeed_sound, ureg.m/ureg.s),
     'isothermal_compressibility': (CP.iisothermal_compressibility,
@@ -305,6 +305,11 @@ class ThermState:
     @ureg.wraps(CP_const_unit['conductivity'][1], None)
     def conductivity(self):
         return self._AbstractState.conductivity()
+
+    @property
+    @ureg.wraps(CP_const_unit['surface_tension'][1], None)
+    def surface_tension(self):
+        return self._AbstractState.surface_tension()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
