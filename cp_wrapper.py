@@ -520,9 +520,11 @@ class ThermState:
         assert self.is_super_critical is False, (
             'Latent heat is only defined '
             'for subcritical phase')
-        h_liq = self.Hmass
         TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=1*ureg.dimensionless)
+        TempState.update_kw(P=self.P, Q=0)
+        h_liq = TempState.Hmass
+        TempState = self.copy()
+        TempState.update_kw(P=self.P, Q=1)
         h_gas = TempState.Hmass
         return h_gas - h_liq
 
