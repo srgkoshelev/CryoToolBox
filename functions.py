@@ -431,8 +431,9 @@ def C_t_bar_cyl(Pr_):
     horizontal cylinder (C/L=1).
     From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) Table 4.2.
     """
-    Pr_values = (0.71, 6.0, 100, 2000)
-    C_t_bar_values = (0.103, 0.109, 0.097, 0.088)
+    # Using 0.71 value for 0.7..0.71 Pr rang
+    Pr_values = (0.7, 0.71, 6.0, 100, 2000)
+    C_t_bar_values = (0.103, 0.103, 0.109, 0.097, 0.088)
     C_t_bar_interp = interp1d(Pr_values, C_t_bar_values)
     return C_t_bar_interp(Pr_)
 
