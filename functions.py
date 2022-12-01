@@ -798,7 +798,7 @@ class Material(Enum):
 class Property(Enum):
     """Available low temperature properties from NIST."""
     TC = auto()  # TC - thermal conductivity, W/(m*K)
-    SH = auto()  # SH - specific heat, W/(m*K)
+    SH = auto()  # SH - specific heat, J/(kg*K)
     EC = auto()  # EC - expansion coefficient, 1/K
     LE = auto()  # LE - linear expansion, dimensionless
 
