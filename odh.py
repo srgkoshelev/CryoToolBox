@@ -999,7 +999,7 @@ def prob_m_of_n(m, n, T, l):
     float
         Probability of m out of n units working.
     """
-    PFD_one_unit = l*T
+    PFD_one_unit = l*T/2
     m_of_n = binom(n, m) * (PFD_one_unit)**(n-m) * (1-PFD_one_unit)**m
     return m_of_n
 
