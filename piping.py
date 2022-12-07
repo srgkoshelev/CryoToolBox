@@ -818,8 +818,12 @@ class Piping(MutableSequence):
         """Calculate stored energy of the piping.
 
         Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
-        largest_tube = max(self, key=lambda tube: tube.ID)
-        volume = pi * largest_tube.ID**2 / 4 * 8 * largest_tube.L
+        volume = 0 * ureg.m**3
+        for tube in self:
+            # Smaller of 8*ID and actual length
+            length = min(tube.L, 8*tube.ID)
+            area = pi * tube.ID**2 / 4
+            volume = max(volume, area*length)
         return stored_energy(fluid, volume)
 
     def __str__(self):
