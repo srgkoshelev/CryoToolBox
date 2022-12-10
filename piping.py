@@ -81,10 +81,6 @@ class Tube:
         self.wall_tol = 0.125 * self.wall
         self.c = c
         self.type = 'Tube'
-        self.S = None
-        self.E = None
-        self.W = None
-        self.Y = None
 
     def _calculate_ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
@@ -118,8 +114,9 @@ class Tube:
         """
         return 1 / (4*log10(self.eps/(3.7*self.ID))**2)
 
-    def pressure_design_thick(self, P_int, P_ext=P_NTP):
-        """Calculate pressure design thickness for given pressure and pipe material.
+    def pressure_design_thick(self, P_int, P_ext=P_NTP, *, S, E, W, Y):
+        """Calculate pressure design thickness for given pressure and pipe
+        material.
 
         Based on B31.3 304.1.
 
@@ -136,23 +133,10 @@ class Tube:
             Minimum required wall thickness.
         """
         logger.warning('Deprecated, use standalone function instead.')
-        # Check whether S, E, W, and Y are defined
-        self._check_SEWY()
-        D = self.OD
-        # d = self.ID
-        S, E, W, Y = self.S, self.E, self.W, self.Y
-        P = P_int - P_ext  # Differential pressure across the wall
-        t = P * D / (2*(S*E*W + P*Y))
-        # TODO add 3b equation handling:
-        # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
-        if (t >= D/6) or (P/(S*E)) > 0.385:
-            logger.error('Calculate design thickness in accordance \
-            with B31.3 304.1.2 (b)')
-            return None
-        tm = t + self.c
-        return tm
+        P_diff = P_int - P_ext
+        return pressure_design_thick(self, P_diff, I=1, S=S, E=E, W=W, Y=Y)
 
-    def pressure_rating(self):
+    def pressure_rating(self, *, S, E, W, Y):
         """Calculate internal pressure rating.
 
         Based on B31.3 304.1.
@@ -163,71 +147,8 @@ class Tube:
             Minimum required wall thickness.
         """
         logger.warning('Deprecated, use standalone function instead.')
-        # Check whether S, E, W, and Y are defined
-        self._check_SEWY()
-        D = self.OD
-        S, E, W, Y = self.S, self.E, self.W, self.Y
-        t = self.wall - self.c
-        P = 2 * t * S * E * W / (D-2*Y*t)
-        return P
+        return pressure_rating(self, S, E, W, Y)
 
-    def add_SEWY(self, *, S=None, E=None, W=None, Y=None):
-        """ Add properties for pressure design calculations.
-
-        Parameters
-        ----------
-        S : Stress value for pipe material
-        E : Quality factor from Table A-1A or A-1B
-        W : Weld joint strength reduction factor in accordance
-            with 302.3.5 (e)
-        Y : coefficient from Table 304.1.1
-
-        Returns
-        -------
-        None
-        """
-        self.S, self.E, self.W, self.Y = S, E, W, Y
-
-    def _check_SEWY(self):
-        """Check whether following properties S, E, W, Y for stress
-        calculations are defined.
-
-        Parameters
-        ----------
-         S: Stress value for pipe material
-         E: Quality factor from Table A-1A or A-1B
-         W: Weld joint strength reduction factor in accordance with 302.3.5 (e)
-         Y: coefficient from Table 304.1.1
-
-        Returns
-        -------
-        None
-        """
-        if self.S is None:
-            try:
-                self.S
-            except AttributeError:
-                raise AttributeError(
-                    'Stress value S from B31.3 Table A-1  needs to be defined')
-        elif self.E is None:
-            try:
-                self.E
-            except AttributeError:
-                raise AttributeError('Quality factor E from B31.3 Table '
-                                     'A-1A/A-1B needs to be defined')
-        elif self.W is None:
-            try:
-                self.W
-            except AttributeError:
-                raise AttributeError(
-                    'Weld joint stress reduction factor W from B31.3 '
-                    '302.3.5(e) needs to be defined')
-        elif self.Y is None:
-            try:
-                self.Y
-            except AttributeError:
-                raise AttributeError('Coefficient Y from B31.3 Table '
-                                     '304.1.1 needs to be defined')
 
     def __str__(self):
         return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
