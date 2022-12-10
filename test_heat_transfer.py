@@ -301,10 +301,10 @@ class PipingTest(unittest.TestCase):
         # K_lim = K_lim(M, air.gamma)
         # # print('K limit: ', K_lim)
         # # print('K pipe: ', pipe.K(Re).to_base_units())
-        # check(M, M_from_K_lim(K_lim, air.gamma))
+        # check(M, M_Klim(K_lim, air.gamma))
         # K_left = K_lim - pipe.K(Re)
         # # print('K left: ', K_left)
-        # M_end = M_from_K_lim(K_left, air.gamma)
+        # M_end = M_Klim(K_left, air.gamma)
         # # print('M end: ', M_end)
         # M_out = Mach(ht.ThermState('air', P=P_out, T=air.T), m_dot_expected, pipe.area)
         # check(M_out, M_end)
@@ -433,19 +433,19 @@ class PipingTest(unittest.TestCase):
 
     def test_M_from_K(self):
         air = ht.ThermState('air', P=300*u.kPa, T=500*u.K)
-        self.assertApproxEqual(0.225, ht.piping.M_from_K_lim(
+        self.assertApproxEqual(0.225, ht.piping.M_Klim(
             11, air.gamma))
-        self.assertApproxEqual(0.2, ht.piping.M_from_K_lim(
+        self.assertApproxEqual(0.2, ht.piping.M_Klim(
             14.533, air.gamma))
-        self.assertApproxEqual(0.15, ht.piping.M_from_K_lim(
+        self.assertApproxEqual(0.15, ht.piping.M_Klim(
             27.932, air.gamma))
-        self.assertApproxEqual(0.17, ht.piping.M_from_K_lim(
+        self.assertApproxEqual(0.17, ht.piping.M_Klim(
             21.115, air.gamma))
-        self.assertApproxEqual(0.175, ht.piping.M_from_K_lim(
+        self.assertApproxEqual(0.175, ht.piping.M_Klim(
             19.772, air.gamma))
-        self.assertApproxEqual(0.1741, ht.piping.M_from_K_lim(
+        self.assertApproxEqual(0.1741, ht.piping.M_Klim(
             20, air.gamma))
-        self.assertApproxEqual(1, ht.piping.M_from_K_lim(
+        self.assertApproxEqual(1, ht.piping.M_Klim(
             0, air.gamma))
 
     def test_piping_stress(self):

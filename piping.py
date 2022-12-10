@@ -1142,7 +1142,12 @@ def Mach_total(fluid, m_dot, area):
     """
     k = float(fluid.gamma)
     v = velocity(fluid, m_dot, area)
-    M_core = float(Mach(fluid, v))
+    T = fluid.T
+    P = fluid.P
+    Z = fluid.Z
+    R = ureg.molar_gas_constant / fluid.molar_mass
+    B = m_dot / area * (Z*R/k)**0.5
+    M_core = float(B * T**0.5 / P)
 
     def M_sq_total(Msq, M_core, k):
         return M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1))
@@ -1172,19 +1177,19 @@ def K_lim(M, k):
     K = A + B * log(C/D)
     return K
 
-def M_from_K_lim(K, k):
+def M_Klim(K, k):
     if K < 0:
         raise HydraulicError(f"Resistance coefficient value can't be less \
         than 0: {K}")
     K_ = float(K)
     def to_solve(M):
         return K_ - K_lim(M, k)
-    x0 = 0.9
-    x1 = 0.5
+    x0 = 0.3
+    x1 = 0.1
     bracket = [1e-15, 1]
     try:
         solution = root_scalar(to_solve, bracket=bracket, method='brentq')
-        logger.debug('Brentq failed for M_from_K_lim')
+        logger.debug('Brentq failed for M_Klim')
     except ValueError:
         solution = root_scalar(to_solve, x0=x0, x1=x1)
     M = solution.root
@@ -1222,7 +1227,7 @@ def dP_adiab(m_dot, fluid, pipe):
         raise ChokedFlow(f'Flow is choked at K={float(K_limit):.3g} with given '
                          f'K={float(K_pipe):.3g}. Reduce hydraulic resistance or'
                          ' mass flow.')
-    M_end = M_from_K_lim(K_left, fluid.gamma)
+    M_end = M_Klim(K_left, fluid.gamma)
     P_static_end = P_from_M(fluid.P, M, M_end, fluid.gamma)
     P_total_end = P_total(P_static_end, M, fluid.gamma)
     return fluid.P - P_total_end
@@ -1264,7 +1269,7 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, state='total'
         K_lim2 = K_lim1 - pipe.K(Re_)
         if K_lim2 < 0:
             return -1
-        M2 = M_from_K_lim(K_lim2, k)
+        M2 = M_Klim(K_lim2, k)
         P_crit2_ = P_crit(P2, M2, k).m_as(ureg.Pa)
         result = P_crit1_ - P_crit2_
         return result
