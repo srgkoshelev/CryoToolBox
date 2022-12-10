@@ -1045,6 +1045,7 @@ def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
 #     {(P_in-P_out).to(ureg.psi)}')
 #     logger.info(f'Calculated initial pressure: {P_in.to(ureg.psi):.1~f}')
 
+
 def m_dot_isot(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
     """Calculate mass flow rate through piping for isothermal compressible
     flow.
@@ -1076,7 +1077,9 @@ def m_dot_isot(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
         m_dot = m_dot_isot(fluid, pipe, P_out, m_dot, tol)
     return m_dot.to(ureg.g/ureg.s)
 
-def dP_isot(m_dot, fluid, pipe):
+
+
+def dP_isot(m_dot, fluid, pipe, tol=1e-6):
     """Calculate pressure drop through piping for isothermal compressible
     flow.
 
@@ -1090,6 +1093,8 @@ def dP_isot(m_dot, fluid, pipe):
     fluid : ThermState
         Inlet fluid conditions
     pipe : Pipe
+    tol : float
+        Accuracy of the calculation.
 
     Returns
     -------
@@ -1101,34 +1106,17 @@ def dP_isot(m_dot, fluid, pipe):
     P1 = fluid.P
     A = pipe.area
     K = pipe.K(Re(fluid, m_dot, pipe.ID, pipe.area))
-    def to_solve_sq(P2sq_):
-        P1_ = P1.m_as(ureg.Pa)
-        m_dot_ = m_dot.m_as(ureg.kg/ureg.s)
-        R_ = R.m_as(ureg.J/ureg.kg/ureg.K)
-        T_ = T.m_as(ureg.K)
-        A_ = A.m_as(ureg.m**2)
-        K_ = float(K)
-        B = m_dot_**2 * R_ * T_ / A_**2
-        sq_diff = B * (2*log(P1_/(P2sq_)**0.5)+K_)
-        return P2sq_ - P1_**2 + sq_diff, 1 - B/P2sq_, B/P2sq_**2
-    x0 = P1.m_as(ureg.Pa)**2
-    x1 = 0.9 * x0
-    bracket = [1e-9, x0]
-    methods = ['secant', 'newton', 'halley']
-    for method in methods:
-        try:
-            solution = root_scalar(to_solve_sq, x0=x0, x1=x1, fprime=True,
-                                    fprime2=True, bracket=bracket, method=method)
-            P_2_root_sq = solution.root**0.5 * ureg.Pa
-            logger.debug(method, solution.iterations)
-            break
-        except TypeError:
-            logger.debug(f'{method} method failed for square solve')
-            P_2_root_sq = None
-    if P_2_root_sq is None:
-        raise HydraulicError('No solution for isothermal pressure drop found')
-    else:
-        return P1 - P_2_root_sq
+    P2 = P1
+    converged = False
+    while not converged:
+        sq_diff = m_dot**2*R*T/A**2 * (2*log(P1/P2)+K)
+        P2_new = (P1**2 - sq_diff)**0.5
+        converged = abs(P2_new-P2)/P2_new
+        P2 = P2_new
+        v = m_dot / (fluid.Dmass*A)
+        if Mach(fluid, v) > 1/(fluid.gamma):
+            raise ChokedFlow('K needs to be reduced to reach P2={P2:.3g~}')
+    return P1 - P2
 
 
 def Mach(fluid, v):
