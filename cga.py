@@ -3,8 +3,8 @@ Pressure relief calculations for CGA S-1.3.
 2008 ed.
 """
 
-from . import ureg, Q_
 from . import logger
+from .std_conditions import ureg, Q_
 from .cp_wrapper import CP_const_unit
 
 

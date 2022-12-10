@@ -6,7 +6,7 @@
 """
 import CoolProp.CoolProp as CP
 from math import inf
-from . import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
+from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),

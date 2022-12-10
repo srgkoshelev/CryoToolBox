@@ -5,11 +5,10 @@ equations is Crane TP-410.
 """
 from math import pi, sin, log, log10, sqrt, tan
 from . import logger
-from . import ureg, Q_
+from .std_conditions import ureg, Q_, P_NTP
 from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
-from .functions import P_NTP
 from .geometry import circle_area
 from . import os, __location__
 from pint import set_application_registry

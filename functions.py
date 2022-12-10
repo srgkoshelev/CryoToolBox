@@ -2,10 +2,9 @@
 """
 
 from math import log, log10, pi
-from . import ureg, Q_
-from . import AIR
+from .std_conditions import ureg, Q_, T_NTP, P_NTP
+from .constants import AIR
 from .cp_wrapper import ThermState
-from . import T_NTP, P_NTP
 from . import cga
 from . import logger
 from scipy.interpolate import interp1d
