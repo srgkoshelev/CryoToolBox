@@ -280,12 +280,14 @@ class CorrugatedPipe(Tube):
         logger.debug('For corrugated piping assumed OD = D')
         wall = 0 * ureg.m
         c = 0 * ureg.inch
+        # Friction factor multiplicator usually in 2.2..2.6 range
+        self.f_mult = 2.6
         super().__init__(OD, wall, L, c)
         self.type = 'Corrugated pipe'
         logger.debug('For corrugated piping assumed wall = 0')
 
     def K(self, Re_):
-        return 4 * super().K(Re_)  # Multiplier 4 is used for corrugated pipe
+        return self.f_mult * super().K(Re_)  # Multiplier 4 is used for corrugated pipe
 
     def branch_reinforcement(self):
         raise NotImplementedError('Branch reinforcement not implemented for'
