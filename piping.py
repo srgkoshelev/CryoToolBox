@@ -10,6 +10,7 @@ from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
 from .functions import P_NTP
+from .geometry import circle_area
 from . import os, __location__
 from pint import set_application_registry
 from serialize import load
@@ -70,10 +71,7 @@ class Tube:
         self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self.wall = wall
-        self.ID = self._calculate_ID()
         self.L = L
-        self.area = self._calculate_area()
-        self.volume = self._calculate_volume()
         self.eps = eps
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
@@ -82,17 +80,20 @@ class Tube:
         self.c = c
         self.type = 'Tube'
 
-    def _calculate_ID(self):
+    @property
+    def ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
         """
         return self.OD - 2*self.wall
 
-    def _calculate_area(self):
+    @property
+    def area(self):
         """ureg.Quantity {length: 2} : Cross sectional area of pipe.
         """
-        return pi * self.ID**2 / 4
+        return circle_area(self.ID)
 
-    def _calculate_volume(self):
+    @property
+    def volume(self):
         """ureg.Quantity {length: 3} : Pipe inner volume.
         """
         return self.area * self.L
@@ -304,22 +305,28 @@ class CorrugatedPipe(Tube):
 class Entrance ():
     """Pipe entrance, flush, sharp edged.
     """
-    def __init__(self, ID):
+    def __init__(self, ID, K=0.5):
         """Generate an pipe entrance.
 
         Parameters
         ----------
         ID : ureg.Quantity {length: 1}
             Inside diameter of the entrance.
+        K : float
+            Resistance coefficient. 0.5 for sharp entrance.
         """
         self.ID = ID
-        self.area = Tube._calculate_area(self)
         self.L = 0*ureg.m
+        self._K = K
         self.type = 'Entrance'
         self.volume = 0 * ureg.ft**3
 
+    @property
+    def area(self):
+        return circle_area(self.ID)
+
     def K(self):
-        return 0.5  # Crane TP-410, A-29
+        return self._K
 
     def __str__(self):
         return f'{self.type}, {self.ID:.3g~}'
@@ -340,13 +347,12 @@ class Exit (Entrance):
             Inside diameter of the exit.
         """
         self.ID = ID
-        self.area = Tube._calculate_area(self)
         self.L = 0*ureg.m
         self.type = 'Exit'
         self.volume = 0 * ureg.ft**3
 
     def K(self):
-        return 1  # Crane TP-410, A-29
+        return 1  # Crane TP-410, A-30
 
     def __str__(self):
         return f'Exit opening, {self.ID:.3g~}'
@@ -365,7 +371,8 @@ class Orifice():
         """
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self.ID = ID
-        self.area = Pipe._calculate_area(self)
+        self.L = 0*ureg.m
+        self.area = circle_area(ID)
         self.type = 'Orifice'
         self.volume = 0 * ureg.ft**3
 
@@ -425,7 +432,7 @@ class Annulus():
         self.L = L
         assert D1 > D2
         self.area = pi / 4 * (D1**2 - D2**2)
-        self.volume = Tube._calculate_volume(self)
+        self.volume = self.area * L
         self.ID = D1 - D2  # Hydraulic diameter
         self.eps = eps
 
@@ -466,7 +473,6 @@ class Elbow(Tube):
         self.angle = angle
         super().__init__(OD, wall, L=0*ureg.m, c=c)
         self.L = R_D*self.ID*angle
-        self.volume = self._calculate_volume()
         self.type = 'Tube elbow'
 
     def K(self, Re_):
@@ -600,7 +606,7 @@ class Valve():
         self._Cv = Cv
         self.OD = None
         self.ID = self.D
-        self.area = Pipe._calculate_area(self)
+        self.area = circle_area(D)
         self.L = None
         self.type = 'Valve'
         self.volume = 0 * ureg.ft**3
@@ -657,12 +663,11 @@ class Contraction():
         self.beta = beta(ID1, ID2)
         self.theta = theta
         self.type = 'Contraction'
-        self.L = None
         self.OD = None
         self.ID1 = ID1
         self.ID2 = ID2
         self.ID = min(ID1, ID2)
-        self.area = Pipe._calculate_area(self)
+        self.area = circle_area(self.ID)  # Probably for K_\Sigma calc
         self.L = abs(ID1 - ID2) / tan(theta/2)
         self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
 

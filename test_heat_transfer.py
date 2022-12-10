@@ -696,6 +696,43 @@ class Tubestest(unittest.TestCase):
         V = A * L
         self.assertEqual(elbow.volume, V)
 
+    def test_Entrance(self):
+        ID = 1 * u.inch
+        K = 0.78
+        entrance = ht.piping.Entrance(ID, K=K)
+        self.assertEqual(entrance.ID, ID)
+        A = pi * ID**2 / 4
+        self.assertEqual(entrance.area, A)
+        L = 0*u.inch
+        self.assertEqual(entrance.L, L)
+        V = A * L
+        self.assertEqual(entrance.volume, V)
+        self.assertEqual(entrance.K(), K)
+
+    def test_Exit(self):
+        ID = 1 * u.inch
+        exit_ = ht.piping.Exit(ID)
+        self.assertEqual(exit_.ID, ID)
+        A = pi * ID**2 / 4
+        self.assertEqual(exit_.area, A)
+        L = 0*u.inch
+        self.assertEqual(exit_.L, L)
+        V = A * L
+        self.assertEqual(exit_.volume, V)
+        self.assertEqual(exit_.K(), 1)
+
+    def test_Orifice(self):
+        ID = 1 * u.inch
+        orifice = ht.piping.Orifice(ID)
+        self.assertEqual(orifice.ID, ID)
+        A = pi * ID**2 / 4
+        self.assertEqual(orifice.area, A)
+        L = 0*u.inch
+        self.assertEqual(orifice.L, L)
+        V = A * L
+        self.assertEqual(orifice.volume, V)
+        self.assertEqual(orifice.K(), 1/.61**2)
+
 
 if __name__ == '__main__':
     print("NO REFPROP TESTS PERFORMED!")
