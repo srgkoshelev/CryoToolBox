@@ -215,18 +215,12 @@ class PipingTest(unittest.TestCase):
         self.assertEqual(1, len(piping))
 
     def test_create_pipes(self):
-        tube = ht.piping.Tube(Q_('1 inch'))
-        pipe = ht.piping.Pipe(Q_('1 inch'))
-        c_tube = ht.piping.CopperTube(Q_('3/4 inch'))
         vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
-        corr_pipe = ht.piping.CorrugatedPipe(Q_('1 inch'))
         entrance = ht.piping.Entrance(Q_('1 inch'))
         pipe_exit = ht.piping.Exit(Q_('1 inch'))
         orifice = ht.piping.Orifice(Q_('1 inch'))
         c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
         annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
-        pipe_elbow = ht.piping.PipeElbow(Q_('1 inch'), N=2)
-        elbow = ht.piping.Elbow(Q_('1 inch'), N=2)
         pipe_tee = ht.piping.PipeTee(Q_('1 inch'), N=2)
         tee = ht.piping.Tee(Q_('1 inch'), N=2)
         valve = ht.piping.Valve(Q_('1 inch'), 1)
@@ -238,8 +232,8 @@ class PipingTest(unittest.TestCase):
         enl = ht.piping.Enlargement(0.5*u.inch, 1*u.inch)
         test_state = ht.AIR
         piping = ht.piping.Piping(
-            pipe, vj_pipe, corr_pipe, entrance, pipe_exit, orifice, c_orifice,
-             tube, c_tube, annulus, pipe_elbow, elbow, pipe_tee, tee, valve,
+            vj_pipe, entrance, pipe_exit, orifice, c_orifice,
+             annulus, pipe_tee, tee, valve,
              # g_valve, v_cone,
              cont, enl)
         piping.volume()
@@ -604,6 +598,104 @@ class Nu_test(FunctionsTest):
                 D = 1 * u.inch
                 L = D * AR
                 self.assertApproxEqual(Nu, ht.Nu_vcyl(Pr, Ra, D, L), uncertainty=0.4)
+
+
+class Tubestest(unittest.TestCase):
+    def test_tube(self):
+        tubes = [
+            (1*u.inch, 0*u.inch, 0*u.inch),
+            (1*u.inch, 1*u.inch, 0*u.inch),
+            (2*u.inch, 1*u.inch, 1*u.inch)
+        ]
+        for OD, wall, L in tubes:
+            tube = ht.piping.Tube(OD, wall=wall, L=L)
+            self.assertEqual(tube.OD, OD)
+            self.assertEqual(tube.wall, wall)
+            ID = OD-wall*2
+            self.assertEqual(tube.ID, ID)
+            A = pi * ID**2 / 4
+            self.assertEqual(tube.area, A)
+            V = A * L
+            self.assertEqual(tube.volume, V)
+            # Check for eps
+            # Check for c
+
+    def test_pipe(self):
+        pipes = [
+            (1, 10, 1.315*u.inch, 0.109*u.inch),
+            (1, 40, 1.315*u.inch, 0.133*u.inch),
+        ]
+        # Check for proper error on non-existent schedules
+        for D, SCH, OD, wall in pipes:
+            pipe = ht.piping.Pipe(D, SCH=SCH)
+            self.assertEqual(pipe.OD, OD)
+            self.assertEqual(pipe.wall, wall)
+            ID = OD-wall*2
+            self.assertEqual(pipe.ID, ID)
+            A = pi * ID**2 / 4
+            self.assertEqual(pipe.area, A)
+
+    def test_CopperTube(self):
+        copper_tube = ht.piping.CopperTube(1)
+        OD = 1.125 * u.inch
+        wall = 0.065 * u.inch
+        self.assertEqual(copper_tube.OD, OD)
+        self.assertEqual(copper_tube.wall, wall)
+        ID = OD-wall*2
+        self.assertEqual(copper_tube.ID, ID)
+        A = pi * ID**2 / 4
+        self.assertEqual(copper_tube.area, A)
+
+    def test_CorrugatedPipe(self):
+        OD = 1 * u.inch
+        corr_pipe = ht.piping.CorrugatedPipe(OD)
+        self.assertEqual(corr_pipe.OD, OD)
+        wall = 0 * u.inch
+        self.assertEqual(corr_pipe.wall, wall)
+        ID = OD-wall*2
+        self.assertEqual(corr_pipe.ID, ID)
+        A = pi * ID**2 / 4
+        self.assertEqual(corr_pipe.area, A)
+
+    def test_Elbow(self):
+        OD = 1*u.inch
+        wall = 0.049 * u.inch
+        R_D = 1.5
+        N = 1
+        angle = 90 * u.degrees
+        elbow = ht.piping.Elbow(OD, wall=wall, R_D=R_D, N=N, angle=angle)
+        self.assertEqual(elbow.OD, OD)
+        self.assertEqual(elbow.wall, wall)
+        ID = OD-wall*2
+        self.assertEqual(elbow.ID, ID)
+        A = pi * ID**2 / 4
+        self.assertEqual(elbow.area, A)
+        L = R_D * ID * angle
+        self.assertEqual(elbow.L, L)
+        V = A * L
+        self.assertEqual(elbow.volume, V)
+
+    def test_PipeElbow(self):
+        D_nom = 1
+        SCH = 10
+        OD = 1.315 * u.inch
+        wall = 0.109 * u.inch
+
+        R_D = 1.5
+        N = 1
+        angle = 90 * u.degrees
+        elbow = ht.piping.PipeElbow(D_nom, SCH, R_D=R_D, N=N, angle=angle)
+        self.assertEqual(elbow.OD, OD)
+        self.assertEqual(elbow.wall, wall)
+        ID = OD-wall*2
+        self.assertEqual(elbow.ID, ID)
+        A = pi * ID**2 / 4
+        self.assertEqual(elbow.area, A)
+        L = R_D * ID * angle
+        self.assertEqual(elbow.L, L)
+        V = A * L
+        self.assertEqual(elbow.volume, V)
+
 
 if __name__ == '__main__':
     print("NO REFPROP TESTS PERFORMED!")
