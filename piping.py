@@ -1078,7 +1078,6 @@ def m_dot_isot(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
     return m_dot.to(ureg.g/ureg.s)
 
 
-
 def dP_isot(m_dot, fluid, pipe, tol=1e-6):
     """Calculate pressure drop through piping for isothermal compressible
     flow.
@@ -1151,12 +1150,12 @@ def Mach_total(fluid, m_dot, area):
 
     def M_sq_total(Msq, M_core, k):
         return M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1))
+
     def to_solve(Msq):
         return Msq - M_sq_total(Msq, M_core, k)
 
     x0 = M_core**2
-    x1 = 0.9 * x0
-    bracket = [0, 1]
+    x1 = 0.5 * x0
     solution = root_scalar(to_solve, x0=x0, x1=x1)
     M_root = solution.root**0.5
     T = fluid.T - v**2 / fluid.Cpmass
@@ -1166,6 +1165,7 @@ def Mach_total(fluid, m_dot, area):
     if isinstance(M_root, complex):
         raise HydraulicError(f'No real solutions for Mach number found.')
     return M_root
+
 
 def K_lim(M, k):
     """Calculate max resistance coefficient of a pipe.
@@ -1177,11 +1177,13 @@ def K_lim(M, k):
     K = A + B * log(C/D)
     return K
 
+
 def M_Klim(K, k):
     if K < 0:
         raise HydraulicError(f"Resistance coefficient value can't be less \
         than 0: {K}")
     K_ = float(K)
+
     def to_solve(M):
         return K_ - K_lim(M, k)
     x0 = 0.3
@@ -1195,8 +1197,10 @@ def M_Klim(K, k):
     M = solution.root
     return M
 
+
 def M_complex(M, k):
-    return 1 + M**2 * (k-1) /2
+    return 1 + M**2 * (k-1) / 2
+
 
 def P_from_M(P1, M1, M2, k):
     """Calculate static pressure from inlet static pressure and Mach numbers."""
@@ -1204,15 +1208,18 @@ def P_from_M(P1, M1, M2, k):
     P2 = PM1 / (M2*M_complex(M2, k)**0.5)
     return P2
 
+
 def P_total(P, M, k):
     """Calculate total pressure from static pressure."""
     return P * M_complex(M, k)**(k/(k-1))
+
 
 def P_crit(P, M, k):
     """Calculate critical(sonic) pressure for the given static pressure and Ma."""
     M_crit_comp = (k+1) / (2+(k-1)*M**2)
     P_c = P * M / M_crit_comp**0.5
     return P_c
+
 
 def dP_adiab(m_dot, fluid, pipe):
     """Calculate pressure drop for isentropic flow given total inlet conditions.
@@ -1232,7 +1239,8 @@ def dP_adiab(m_dot, fluid, pipe):
     P_total_end = P_total(P_static_end, M, fluid.gamma)
     return fluid.P - P_total_end
 
-def m_dot_adiab(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, state='total'):
+
+def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
     """Calculate mass flow rate through piping for adiabatic compressible
     flow.
 
@@ -1252,7 +1260,7 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, state='total'
     k = fluid.gamma
     P1 = fluid.P
     P2 = P_out
-    m_dot_g_ = m_dot_g.m_as(ureg.kg/ureg.s)
+
     def to_solve(m_dot_):
         m_dot = m_dot_ * ureg.kg/ureg.s
         if state == 'total':
@@ -1260,12 +1268,12 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, state='total'
                 M1 = Mach_total(fluid, m_dot, pipe.area)
             except HydraulicError:
                 return -1
-        elif state =='static':
+        elif state == 'static':
             v = velocity(fluid, m_dot, pipe.area)
             M1 = Mach(fluid, v)
         P_crit1_ = P_crit(P1, M1, k).m_as(ureg.Pa)
         K_lim1 = K_lim(M1, k)
-        Re_ = Re(fluid, m_dot_g, pipe.ID, pipe.area)
+        Re_ = Re(fluid, m_dot, pipe.ID, pipe.area)
         K_lim2 = K_lim1 - pipe.K(Re_)
         if K_lim2 < 0:
             return -1
@@ -1277,6 +1285,7 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, state='total'
     solution = root_scalar(to_solve, bracket=bracket)
     m_dot = solution.root * ureg.kg/ureg.s
     return m_dot
+
 
 def K_to_Cv(K, ID):
     """
