@@ -716,6 +716,57 @@ class Enlargement(Contraction):
         return K_
 
 
+class PackedBed:
+    """Packed bed piping element.
+
+    Attributes
+    ----------
+    ID : Quantity {length: 1}
+        Internal diameter of the pipe or the shell containing a packed bed or
+        filter media.
+    H : Quantity {length: 1}
+        Height of the a packed bed or filter.
+    x : Quantity, {length: 1}
+        Equivalent spherical diameter of the packing.
+    eps : float
+        Porosity or void fraction of the bed.
+    """
+    def __init__(self, ID, H, x, eps):
+        self.ID = ID
+        self.H = H
+        self.x = x
+        self.eps = eps
+
+    def area(self):
+        return pi * self.ID**2 / 4
+
+    def _f(self, Re):
+        """Calculate friction factor for the packed bed."""
+        return 150 / self._Re_mod(Re) + 1.75
+
+    def _Re_mod(self, Re):
+        """Calculate modified Reynolds number for the packed bed.
+
+        Parameters
+        ----------
+        Re : float
+            Superficial Re number w*ID*rho/mu, where w - superficial velocity.
+        """
+        Re_ = self.x / ((1-self.eps)*self.ID)
+        return Re_.to_base_units()
+
+    def _dP(self, Re):
+        """Calculate pressure drop through the packed bed using
+        Ergun equation.
+        """
+        rho = fluid.Dmass
+        Re_ = Re_mod(fluid, m_dot, ID, x, eps)
+        f_ = f_packed(Re_)
+        Q = m_dot / rho
+        A = pi * ID**2 / 4
+        u_s = Q / A
+        dP = self._f(Re) * self.H * rho * u_s**2 * (1-self.eps) / (self.x*self.eps**3)
+
 class Piping(MutableSequence):
     '''
     Piping system defined by initial conditions and structure of
