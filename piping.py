@@ -20,6 +20,12 @@ from scipy.integrate import quad
 set_application_registry(ureg)
 
 
+class PipingError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
 class HydraulicError(Exception):
     def __init__(self, message):
         self.message = message
@@ -193,6 +199,8 @@ class Pipe(Tube):
         self.SCH = SCH
         # TODO Should I be using get here?
         wall = NPS_table[D].get(SCH)
+        if wall is None:
+            raise PipingError(f'SCH {SCH} not available for pipe size {D}.')
         super().__init__(OD, wall, L, c, eps)
         self.D = D
         self.type = 'NPS pipe'
