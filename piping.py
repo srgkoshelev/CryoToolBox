@@ -721,51 +721,47 @@ class PackedBed:
 
     Attributes
     ----------
-    ID : Quantity {length: 1}
-        Internal diameter of the pipe or the shell containing a packed bed or
-        filter media.
-    H : Quantity {length: 1}
-        Height of the a packed bed or filter.
-    x : Quantity, {length: 1}
-        Equivalent spherical diameter of the packing.
+    ID : ureg.Quantity {length: 1}
+        Inner diameter of the shell of the packed bed.
+    height : ureg.Quantity {length: 1}
+        Height of the packed bed.
+    D_part : ureg.Quantity {length: 1}
+        Spherical equivalent particle diameter.
     eps : float
-        Porosity or void fraction of the bed.
+        Void fraction (porosity) of the bed.
     """
-    def __init__(self, ID, H, x, eps):
+    def __init__(self, ID, height, D_part, eps):
         self.ID = ID
-        self.H = H
-        self.x = x
+        self.height = height
+        self.D_part = D_part
         self.eps = eps
 
+    @property
     def area(self):
         return pi * self.ID**2 / 4
 
-    def _f(self, Re):
-        """Calculate friction factor for the packed bed."""
-        return 150 / self._Re_mod(Re) + 1.75
+    def f(self, Re_s):
+        """Calculate packed bed friction factor."""
+        return 150/self.Re_mod(Re_s) + 1.75
 
-    def _Re_mod(self, Re):
+    def Re_mod(self, Re_s):
         """Calculate modified Reynolds number for the packed bed.
 
         Parameters
         ----------
-        Re : float
-            Superficial Re number w*ID*rho/mu, where w - superficial velocity.
+        Re_s : Quantity {dimensionless} or float
+            Superficial Re number; Re_s = U_s*ID*rho/mu,
+            where U_s - superficial velocity and ID - shell ID.
         """
-        Re_ = self.x / ((1-self.eps)*self.ID)
+        Re_ = Re_s * self.D_part/(self.ID*(1-self.eps))
         return Re_.to_base_units()
 
-    def _dP(self, Re):
-        """Calculate pressure drop through the packed bed using
-        Ergun equation.
-        """
-        rho = fluid.Dmass
-        Re_ = Re_mod(fluid, m_dot, ID, x, eps)
-        f_ = f_packed(Re_)
-        Q = m_dot / rho
-        A = pi * ID**2 / 4
-        u_s = Q / A
-        dP = self._f(Re) * self.H * rho * u_s**2 * (1-self.eps) / (self.x*self.eps**3)
+    def K(self, Re_s):
+        """Calculate resistance coefficient for the packed bed."""
+        K_ = 2*self.f(Re_s)*self.height*(1-self.eps) / \
+            (self.D_part*self.eps**3)
+        return K_.to_base_units()
+
 
 class Piping(MutableSequence):
     '''

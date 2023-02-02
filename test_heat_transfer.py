@@ -474,57 +474,6 @@ class PipingTest(unittest.TestCase):
     # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
     def test_packed_bed(self):
-        def Re_mod(fluid, m_dot, ID, x, eps):
-            """Calculate modified Reynolds number for packed beds.
-
-            Parameters
-            ----------
-            fluid :
-            m_dot : Quantity, {mass: 1, time: -1}
-                Mass flow rate of the fluid.
-            ID : Quantity, {length: 1}
-                ID of the pipe or the shell containing a packed bed or filter media.
-            eps : float
-                Porosity or void fraction of the bed.
-            x : Quantity, {length: 1}
-                Equivalent spherical diameter of the packing.
-            """
-            rho = fluid.Dmass
-            mu = fluid.viscosity
-            Q = m_dot / rho
-            A = pi * ID**2 / 4
-            u_s = Q / A
-            Re_ = x * u_s * rho / (mu*(1-eps))
-            return Re_.to_base_units()
-
-        def f_packed(Re_mod_):
-            """Calculate packed bed friction factor."""
-            return 150 / Re_mod_ + 1.75
-
-        def dP_packed_bed(fluid, m_dot, ID, L, x, eps):
-            """Calculate pressure drop through a packed bed using Ergun equation.
-
-            Parameters
-            ----------
-            fluid :
-            m_dot : Quantity, {mass: 1, time: -1}
-                Mass flow rate of the fluid.
-            ID : Quantity, {length: 1}
-                ID of the pipe or the shell containing a packed bed or filter media.
-            eps : float
-                Porosity or void fraction of the bed.
-            x : Quantity, {length: 1}
-                Equivalent spherical diameter of the packing.
-            """
-            rho = fluid.Dmass
-            Re_ = Re_mod(fluid, m_dot, ID, x, eps)
-            f_ = f_packed(Re_)
-            Q = m_dot / rho
-            A = pi * ID**2 / 4
-            u_s = Q / A
-            dP = f_ * L * rho * u_s**2 * (1-eps) / (x*eps**3)
-            return dP
-
         fluid = ht.ThermState('argon', T=Q_(80, u.degF), P=126.2*u.psi)
         filter_shell = ht.piping.Pipe(12, SCH=10)
         filter_L = 3.33 * u.ft
@@ -532,10 +481,21 @@ class PipingTest(unittest.TestCase):
         m_dot = 419.5 * u.lb/u.hr
         x_ox = 0.00336 * u.ft  # oxygen filter particle size
         x_ms = 0.00666 * u.ft  # molsieve filter particle size
-        dP_ox = dP_packed_bed(fluid, m_dot, filter_shell.ID, filter_L, x_ox, eps)
+
+        ox_filter = ht.piping.PackedBed(filter_shell.ID, filter_L, x_ox, eps)
+        ms_filter = ht.piping.PackedBed(filter_shell.ID, filter_L, x_ms, eps)
+        # TODO use dP_incomp once it is simplified to only incompressible
+        rho = fluid.Dmass
+        mu = fluid.viscosity
+        U_s_ox = m_dot / (ox_filter.area*rho)
+        Re_s = U_s_ox*ox_filter.ID*rho/mu
+        dP_ox = ht.piping.dP_Darcy(ox_filter.K(Re_s), rho, U_s_ox)
         self.assertApproxEqual(0.261*u.psi, dP_ox, uncertainty=0.1)
-        dP_ms = dP_packed_bed(fluid, m_dot, filter_shell.ID, filter_L, x_ms, eps)
+        U_s_ms = m_dot / (ms_filter.area*rho)
+        Re_s = U_s_ms*ms_filter.ID*rho/mu
+        dP_ms = ht.piping.dP_Darcy(ms_filter.K(Re_s), rho, U_s_ms)
         self.assertApproxEqual(0.092*u.psi, dP_ms, uncertainty=0.1)
+
 
 class CPWrapperTest(unittest.TestCase):
     """Test for additional methods of ThermState class"""
