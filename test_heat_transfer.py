@@ -470,8 +470,31 @@ class PipingTest(unittest.TestCase):
                                ht.piping.G_nozzle(fluid, P_out=1*u.atm),
                                uncertainty=0.01)
 
-# TODO Add Crane examples: 4-22 (may need Y implementation),
-# 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
+    # TODO Add Crane examples: 4-22 (may need Y implementation),
+    # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
+
+    def test_packed_bed(self):
+        fluid = ht.ThermState('argon', T=Q_(80, u.degF), P=126.2*u.psi)
+        filter_shell = ht.piping.Pipe(12, SCH=10)
+        filter_L = 3.33 * u.ft
+        eps = 0.37  # filter void fraction
+        m_dot = 419.5 * u.lb/u.hr
+        x_ox = 0.00336 * u.ft  # oxygen filter particle size
+        x_ms = 0.00666 * u.ft  # molsieve filter particle size
+
+        ox_filter = ht.piping.PackedBed(filter_shell.ID, filter_L, x_ox, eps)
+        ms_filter = ht.piping.PackedBed(filter_shell.ID, filter_L, x_ms, eps)
+        # TODO use dP_incomp once it is simplified to only incompressible
+        rho = fluid.Dmass
+        mu = fluid.viscosity
+        U_s_ox = m_dot / (ox_filter.area*rho)
+        Re_s = U_s_ox*ox_filter.ID*rho/mu
+        dP_ox = ht.piping.dP_Darcy(ox_filter.K(Re_s), rho, U_s_ox)
+        self.assertApproxEqual(0.261*u.psi, dP_ox, uncertainty=0.1)
+        U_s_ms = m_dot / (ms_filter.area*rho)
+        Re_s = U_s_ms*ms_filter.ID*rho/mu
+        dP_ms = ht.piping.dP_Darcy(ms_filter.K(Re_s), rho, U_s_ms)
+        self.assertApproxEqual(0.092*u.psi, dP_ms, uncertainty=0.1)
 
 
 class CPWrapperTest(unittest.TestCase):

@@ -724,6 +724,53 @@ class Enlargement(Contraction):
         return K_
 
 
+class PackedBed:
+    """Packed bed piping element.
+
+    Attributes
+    ----------
+    ID : ureg.Quantity {length: 1}
+        Inner diameter of the shell of the packed bed.
+    height : ureg.Quantity {length: 1}
+        Height of the packed bed.
+    D_part : ureg.Quantity {length: 1}
+        Spherical equivalent particle diameter.
+    eps : float
+        Void fraction (porosity) of the bed.
+    """
+    def __init__(self, ID, height, D_part, eps):
+        self.ID = ID
+        self.height = height
+        self.D_part = D_part
+        self.eps = eps
+
+    @property
+    def area(self):
+        return pi * self.ID**2 / 4
+
+    def f(self, Re_s):
+        """Calculate packed bed friction factor."""
+        return 150/self.Re_mod(Re_s) + 1.75
+
+    def Re_mod(self, Re_s):
+        """Calculate modified Reynolds number for the packed bed.
+
+        Parameters
+        ----------
+        Re_s : Quantity {dimensionless} or float
+            Superficial Re number; Re_s = U_s*ID*rho/mu,
+            where U_s - superficial velocity and ID - shell ID.
+        """
+        Re_ = Re_s * self.D_part/(self.ID*(1-self.eps))
+        return Re_.to_base_units()
+
+    def K(self, Re_s):
+        """Calculate resistance coefficient for the packed bed."""
+        K_ = 2*self.f(Re_s)*self.height*(1-self.eps) / \
+            (self.D_part*self.eps**3)
+        return K_.to_base_units()
+
+
 class Piping(MutableSequence):
     '''
     Piping system defined by initial conditions and structure of
@@ -902,6 +949,7 @@ def serghide(Re_, eps_r):
     f = (A - (B-A)**2/(C-2*B+A))**(-2)
     return f
 
+
 def K_piping(m_dot, fluid, piping):
     """Calculate resistance coefficient converted to the area of the first element.
 
@@ -928,11 +976,13 @@ def K_piping(m_dot, fluid, piping):
             K0 += K_el
     return (K0.to_base_units(), A0)
 
+
 def rc(fluid):
     """Calculate critical pressure drop for the given fluid."""
     k = fluid.gamma
     rc = (2/(k+1))**(k/(k-1))
     return rc
+
 
 def dP_Darcy(K, rho, w):
     '''
@@ -943,6 +993,7 @@ def dP_Darcy(K, rho, w):
     '''
     d_P = K*rho*w**2/2
     return d_P.to(ureg.psi)
+
 
 def dP_incomp(m_dot, fluid, piping):
     """Calculate pressure drop of incompressible flow through piping.
