@@ -941,6 +941,7 @@ def serghide(Re_, eps_r):
     f = (A - (B-A)**2/(C-2*B+A))**(-2)
     return f
 
+
 def K_piping(m_dot, fluid, piping):
     """Calculate resistance coefficient converted to the area of the first element.
 
@@ -967,11 +968,13 @@ def K_piping(m_dot, fluid, piping):
             K0 += K_el
     return (K0.to_base_units(), A0)
 
+
 def rc(fluid):
     """Calculate critical pressure drop for the given fluid."""
     k = fluid.gamma
     rc = (2/(k+1))**(k/(k-1))
     return rc
+
 
 def dP_Darcy(K, rho, w):
     '''
@@ -982,6 +985,7 @@ def dP_Darcy(K, rho, w):
     '''
     d_P = K*rho*w**2/2
     return d_P.to(ureg.psi)
+
 
 def dP_incomp(m_dot, fluid, piping):
     """Calculate pressure drop of incompressible flow through piping.
