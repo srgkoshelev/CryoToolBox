@@ -15,6 +15,7 @@ from pint import set_application_registry
 from serialize import load
 from scipy.optimize import root_scalar
 from collections.abc import MutableSequence
+from abc import ABC, abstractmethod
 from scipy.integrate import quad
 
 set_application_registry(ureg)
@@ -50,7 +51,20 @@ NPS_table = _load_table('NPS_table.yaml')
 COPPER_TABLE = _load_table('copper_table.yaml')
 
 
-class Tube:
+class PipingElement(ABC):
+    """Generic piping element."""
+
+    @property
+    @abstractmethod
+    def area(self):
+        pass
+
+    @abstractmethod
+    def K(Re):
+        pass
+
+
+class Tube(PipingElement):
     """
     Tube, requires OD and wall thickness specified
     """
@@ -309,7 +323,7 @@ class CorrugatedPipe(Tube):
         return f'Corrugated pipe D={self.OD:.3g~}, L={self.L:.3g~}'
 
 
-class Entrance ():
+class Entrance(PipingElement):
     """Pipe entrance, flush, sharp edged.
     """
     def __init__(self, ID, K=0.5):
@@ -365,7 +379,7 @@ class Exit (Entrance):
         return f'Exit opening, {self.ID:.3g~}'
 
 
-class Orifice():
+class Orifice(PipingElement):
     """Square-edged orifice plate
     """
     def __init__(self, ID):
@@ -379,9 +393,13 @@ class Orifice():
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self.ID = ID
         self.L = 0*ureg.m
-        self.area = circle_area(ID)
+        self._area = circle_area(ID)
         self.type = 'Orifice'
         self.volume = 0 * ureg.ft**3
+
+    @property
+    def area(self):
+        return self._area
 
     def K(self):
         return 1/self.Cd**2
@@ -420,7 +438,7 @@ class ConicOrifice(Orifice):
     #     return f'{self.ID:.3g~} conic orifice'
 
 
-class Annulus():
+class Annulus(PipingElement):
     """"Annulus or tube in tube.
 
     Parameters
@@ -603,7 +621,7 @@ class PipeTee(Tee, Pipe):
             f'{self.direction}'
 
 
-class Valve():
+class Valve(PipingElement):
     """
     Generic valve with known Cv.
     """
@@ -657,7 +675,7 @@ class Valve():
 #         self._K = 1/(self.beta**2/(1-self.beta**4)**0.5*self._Cf)**2
 
 
-class Contraction():
+class Contraction(PipingElement):
     """
     Sudden and gradual contraction based on Crane TP-410.
     """
@@ -724,7 +742,7 @@ class Enlargement(Contraction):
         return K_
 
 
-class PackedBed:
+class PackedBed(PipingElement):
     """Packed bed piping element.
 
     Attributes
@@ -1189,6 +1207,7 @@ def Mach(fluid, v):
     """
     M = v / fluid.speed_sound
     return M.to_base_units()
+
 
 def Mach_total(fluid, m_dot, area):
     """Calculate Mach number for total temperature and pressure.
