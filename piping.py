@@ -346,7 +346,8 @@ class Entrance(PipingElement):
     def area(self):
         return circle_area(self.ID)
 
-    def K(self):
+    def K(self, Re=None):
+        # TODO add Re handling
         return self._K
 
     def __str__(self):
@@ -371,9 +372,7 @@ class Exit (Entrance):
         self.L = 0*ureg.m
         self.type = 'Exit'
         self.volume = 0 * ureg.ft**3
-
-    def K(self):
-        return 1  # Crane TP-410, A-30
+        self._K = 1  # Crane TP-410, A-30
 
     def __str__(self):
         return f'Exit opening, {self.ID:.3g~}'
@@ -401,7 +400,8 @@ class Orifice(PipingElement):
     def area(self):
         return self._area
 
-    def K(self):
+    def K(self, Re=None):
+        # TODO add Re handling
         return 1/self.Cd**2
 
     def __str__(self):
@@ -456,10 +456,14 @@ class Annulus(PipingElement):
         assert D1 > D2, 'D1 should be larger than D2'
         self.L = L
         assert D1 > D2
-        self.area = pi / 4 * (D1**2 - D2**2)
+        self._area = pi / 4 * (D1**2 - D2**2)
         self.volume = self.area * L
         self.ID = D1 - D2  # Hydraulic diameter
         self.eps = eps
+
+    @property
+    def area(self):
+        return self._area
 
     def K(self, Re_):
         return Tube.K(self, Re_)
@@ -473,7 +477,7 @@ class Annulus(PipingElement):
 
 class Elbow(Tube):
     """
-    NPS Tee fitting.
+    NPS elbow fitting.
     MRO makes method K from PipeElbow class to override method from Pipe class.
     """
     def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5, N=1,
@@ -595,7 +599,8 @@ class Tee(Tube):
         self.N = N
         self.type = 'Tube tee'
 
-    def K(self):
+    def K(self, Re=None):
+        # TODO Add Re handling
         if self.direction == 'run':
             K_ = 20*self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
@@ -631,12 +636,17 @@ class Valve(PipingElement):
         self._Cv = Cv
         self.OD = None
         self.ID = self.D
-        self.area = circle_area(D)
+        self._area = circle_area(D)
         self.L = None
         self.type = 'Valve'
         self.volume = 0 * ureg.ft**3
 
-    def K(self):
+    @property
+    def area(self):
+        return self._area
+
+    def K(self, Re=None):
+        # TODO Add Re handling
         return Cv_to_K(self._Cv, self.D)
 
     def __str__(self):
@@ -692,11 +702,16 @@ class Contraction(PipingElement):
         self.ID1 = ID1
         self.ID2 = ID2
         self.ID = min(ID1, ID2)
-        self.area = circle_area(self.ID)  # Probably for K_\Sigma calc
+        self._area = circle_area(self.ID)  # Probably for K_\Sigma calc
         self.L = abs(ID1 - ID2) / tan(theta/2)
         self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
 
-    def K(self):
+    @property
+    def area(self):
+        return self._area
+
+    def K(self, Re=None):
+        # TODO Add Re handling
         if self.theta <= 45*ureg.deg:
             K_ = 0.8 * sin(self.theta/2) * (1-self.beta**2)
             # Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
@@ -729,7 +744,8 @@ class Enlargement(Contraction):
         super().__init__(ID1, ID2, theta)
         self.type = 'Enlargement'
 
-    def K(self):
+    def K(self, Re=None):
+        # TODO Add Re handling
         if self.theta <= 45*ureg.deg:
             K_ = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
             # Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
@@ -789,60 +805,6 @@ class PackedBed(PipingElement):
         return K_.to_base_units()
 
 
-class Piping(MutableSequence):
-    '''
-    Piping system defined by initial conditions and structure of
-    pipe elements.
-    Piping is modeled as a list of Pipe objects with given conditions at the
-    beginning. Implemented methods allow to calculate pressure drop for given
-    mass flow rate or mass flow rate for given pressure drop using lumped
-    Darcy equation. All flow coefficients K are converted to the same base and
-    added together to calculate single K value for the whole piping. This K
-    value is used with Darcy equation to calculate pressure drop or mass flow.
-    '''
-    pipe_type = (Pipe, VJPipe, CorrugatedPipe, Tube, Annulus, Elbow)
-    def __init__(self, *elements):
-        self._elements = list(elements)
-
-    def volume(self):
-        result = []
-        # TODO remove elbows and tees after merge
-        for pipe in self._elements:
-            if isinstance(pipe, Piping.pipe_type):
-                result.append((str(pipe),
-                               f'{pipe.L.to(ureg.ft).magnitude:.3g}',
-                               f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
-        return result
-
-    def stored_energy(self, fluid):
-        """Calculate stored energy of the piping.
-
-        Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
-        volume = 0 * ureg.m**3
-        for tube in self:
-            # Smaller of 8*ID and actual length
-            length = min(tube.L, 8*tube.ID)
-            area = pi * tube.ID**2 / 4
-            volume = max(volume, area*length)
-        return stored_energy(fluid, volume)
-
-    def __str__(self):
-        return '\n'.join([el.__str__() for el in self._elements])
-
-    def __delitem__(self, idx):
-        del self._elements[idx]
-
-    def __getitem__(self, idx):
-        return self._elements[idx]
-
-    def __len__(self):
-        return len(self._elements)
-
-    def __setitem__(self, idx, value):
-        self._elements[idx] = value
-
-    def insert(self, idx, value):
-        self._elements.insert(idx, value)
 
 
 class ParallelPlateRelief:
@@ -971,6 +933,9 @@ def serghide(Re_, eps_r):
 def K_piping(m_dot, fluid, piping):
     """Calculate resistance coefficient converted to the area of the first element.
 
+    Parameters
+    ----------
+    piping : List[PipingElement]
     Returns
     -------
     tuple
@@ -985,13 +950,8 @@ def K_piping(m_dot, fluid, piping):
                             'Use Piping.add to add sections to piping.')
     for element in piping:
         Re_ = Re(fluid, m_dot, element.ID, element.area)
-        if isinstance(element, Piping.pipe_type) and \
-            not isinstance(element, Tee):
-            K_el = element.K(Re_) * (A0/element.area)**2
-            K0 += K_el
-        else:
-            K_el = element.K() * (A0/element.area)**2
-            K0 += K_el
+        K_el = element.K(Re_) * (A0/element.area)**2
+        K0 += K_el
     return (K0.to_base_units(), A0)
 
 
@@ -1623,3 +1583,29 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
         P_ -= dP
     G_max *= ureg.kg/(ureg.s*ureg.m**2)
     return G_max
+
+
+def volume(piping):
+    """Calculate volume inside piping."""
+    result = []
+    pipe_type = (Pipe, VJPipe, CorrugatedPipe, Tube, Annulus, Elbow)
+    # TODO remove elbows and tees after merge
+    for pipe in piping:
+        if isinstance(pipe, pipe_type):
+            result.append((str(pipe),
+                            f'{pipe.L.to(ureg.ft).magnitude:.3g}',
+                            f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
+    return result
+
+
+def stored_energy(fluid, piping):
+    """Calculate stored energy of the piping.
+
+    Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
+    volume = 0 * ureg.m**3
+    for tube in piping:
+        # Smaller of 8*ID and actual length
+        length = min(tube.L, 8*tube.ID)
+        area = pi * tube.ID**2 / 4
+        volume = max(volume, area*length)
+    return stored_energy(fluid, volume)

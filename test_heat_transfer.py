@@ -199,21 +199,6 @@ class PipingTest(unittest.TestCase):
             f'Calculated value {calculated:g} is not within {uncertainty:.1%} of ' + \
             f'expected value {expected:g}'
 
-    def test_piping(self):
-        pipe = ht.piping.Pipe(1)
-        piping = ht.piping.Piping(pipe)
-        self.assertEqual([pipe], piping._elements)
-        self.assertEqual(pipe, piping[0])
-        piping.insert(0, pipe)
-        self.assertEqual([pipe, pipe], piping._elements)
-        pipe2 = ht.piping.Pipe(2)
-        piping[1] = pipe2
-        self.assertEqual([pipe, pipe2], piping._elements)
-        del piping[0]
-        self.assertEqual([pipe2], piping._elements)
-        self.assertEqual(pipe2, piping[0])
-        self.assertEqual(1, len(piping))
-
     def test_create_pipes(self):
         vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
         entrance = ht.piping.Entrance(Q_('1 inch'))
@@ -231,12 +216,13 @@ class PipingTest(unittest.TestCase):
         cont = ht.piping.Contraction(1*u.inch, 0.5*u.inch)
         enl = ht.piping.Enlargement(0.5*u.inch, 1*u.inch)
         test_state = ht.AIR
-        piping = ht.piping.Piping(
+        piping = [
             vj_pipe, entrance, pipe_exit, orifice, c_orifice,
              annulus, pipe_tee, tee, valve,
              # g_valve, v_cone,
-             cont, enl)
-        piping.volume()
+             cont, enl
+        ]
+        ht.piping.volume(piping)
         dP = ht.piping.dP_incomp(Q_('10 g/s'), test_state, piping)
         self.assertApproxEqual(21.2*u.psi, dP)
 
@@ -279,7 +265,7 @@ class PipingTest(unittest.TestCase):
         pipe = ht.piping.Pipe(1, SCH=40, L=75*u.ft)
         flow = 100 * u.ft**3/u.min
         m_dot = flow * ht.AIR.Dmass
-        piping = ht.piping.Piping(pipe, ht.piping.Exit(pipe.ID))
+        piping = [pipe, ht.piping.Exit(pipe.ID)]
         dP = ht.piping.dP_incomp(m_dot, air, piping)
         self.assertApproxEqual(2.61, dP.m_as(u.psi))
         dP_isot = ht.piping.dP_isot(m_dot, air, pipe)
@@ -319,7 +305,7 @@ class PipingTest(unittest.TestCase):
     def test_Rennels_4_5(self):
         pipe = ht.piping.Pipe(4, SCH=40, L=100*u.ft)
         fluid = ht.ThermState('nitrogen', P=100*u.psi, T=530*u.degR)
-        piping = ht.piping.Piping(pipe)
+        piping = [pipe]
         P_out = 84.056 * u.psi
         m_dot_isot = ht.piping.m_dot_isot(fluid, pipe, P_out)
         self.assertApproxEqual(10, m_dot_isot.m_as(u.lb/u.s))
@@ -421,7 +407,7 @@ class PipingTest(unittest.TestCase):
         pipe = ht.piping.Tube(3*u.cm, wall=0*u.m, L=1*u.m)
         K = 0.028 * pipe.L/pipe.ID
         pipe.K = MagicMock(return_value=K)
-        m_dot_incomp = ht.piping.m_dot_incomp(air, ht.piping.Piping(pipe), P_out=P_out)
+        m_dot_incomp = ht.piping.m_dot_incomp(air, [pipe], P_out=P_out)
         m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out)
         self.assertApproxEqual(m_dot_incomp, m_dot_isot)
         m_dot_adiab = ht.piping.m_dot_adiab(air, pipe, P_out)
