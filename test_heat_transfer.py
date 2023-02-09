@@ -218,9 +218,9 @@ class PipingTest(unittest.TestCase):
         test_state = ht.AIR
         piping = [
             vj_pipe, entrance, pipe_exit, orifice, c_orifice,
-             annulus, pipe_tee, tee, valve,
-             # g_valve, v_cone,
-             cont, enl
+            annulus, pipe_tee, tee, valve,
+            # g_valve, v_cone,
+            cont, enl
         ]
         ht.piping.volume(piping)
         dP = ht.piping.dP_incomp(Q_('10 g/s'), test_state, piping)
