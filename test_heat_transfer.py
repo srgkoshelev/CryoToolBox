@@ -637,6 +637,16 @@ class ODHTest(FunctionsTest):
             self.assertAlmostEqual(leak1.q_std, leak2.q_std)
             self.assertAlmostEqual(source.volume/leak1.q_std, leak2.tau)
 
+    def test_const_leak(self):
+        fluid = ht.ThermState('nitrogen', P=100*u.psi, Q=0)
+        source = odh.Source('Test source', fluid, 100*u.L)
+        q_leak = 1*u.ft**3/u.min
+        N_leaks = 5
+        source.add_const_leak('Constant leak', q_leak, N=N_leaks)
+        self.assertEqual(1, len(source.leaks))
+        self.assertAlmostEqual(N_leaks*q_leak, source.leaks[0].q_std)
+        self.assertEqual(N_leaks, source.leaks[0].N_events)
+
 
 class Nu_test(FunctionsTest):
     def test_Nu_vplate(self):

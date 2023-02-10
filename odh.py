@@ -50,13 +50,12 @@ class Leak:
     _is_const = False
 
 
-@ureg.check(None, '[length]^3/[time]', '[time]')
+@ureg.check(None, '[length]^3/[time]', None)
 @dataclass
 class ConstLeak:
     name: str
     q_std: ureg.Quantity
-    tau: ureg.Quantity
-    N_events = 1
+    N_events: int
     _is_const = True
     # TODO Remove once isinstance() issue resolved
 
@@ -408,8 +407,7 @@ class Source:
             Quantity of leaks.
         """
         N_events = N * self.N
-        tau = self.volume/q_std
-        self.leaks.append(ConstLeak(name, q_std*N_events, tau))
+        self.leaks.append(ConstLeak(name, q_std*N_events, N_events))
 
     def add_failure_mode(self, name, failure_rate, q_std, N=1):
         """Add general failure mode to leaks dict.
@@ -776,9 +774,13 @@ class Volume:
 
         PFD_isol_valve = source.sol_PFD
         if power_outage:
-            raise ConstLeakNoVent(f'Constant leak {leak.name} from '
-                                f'{source.name} is not mitigated during '
-                                f'power outage in {self.name}.')
+            tau_outage = source.volume/leak.q_std  # No refills during outage
+            Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
+            O2_conc_outage = conc_vent(self.volume, leak.q_std, Q_fan_outage, tau_outage)
+            if O2_conc_outage < 0.195:
+                raise ConstLeakNoVent(f'Constant leak {leak.name} from '
+                                    f'{source.name} is not mitigated during '
+                                    f'power outage in {self.name}.')
 
         # TODO Replace hard coded value with changeable
         # Constant leak and power failure
@@ -788,7 +790,7 @@ class Volume:
         # the isolation valve fails
         P_event = PFD_isol_valve
         Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-        tau_event = min(leak.tau, self.power.max_outage)  # And Test_period?
+        tau_event = min(self.vent.Test_period, self.power.max_outage)
         self._add_failure_mode(P_event, tau_event, failure_rate,
                                source, leak, Q_fan, 0, False)
 
@@ -796,7 +798,7 @@ class Volume:
         failure_rate = lambda_ODH
         P_event = PFD_isol_valve
         # Event can't go undetected for longer than the test period
-        tau_event = min(leak.tau, self.vent.Test_period)
+        tau_event = self.vent.Test_period
         # Ventilation is available on ODH system failure
         self._add_failure_mode(P_event, tau_event, failure_rate,
                                source, leak, self.vent.const_vent, 0, False)
@@ -806,19 +808,19 @@ class Volume:
         failure_rate = TABLE_2['Fan']['Failure to run']
         P_event = PFD_isol_valve
         # Event can't go undetected for longer than the test period
-        tau_event = min(leak.tau, self.vent.Test_period)
+        tau_event = self.vent.Test_period
         self._add_failure_mode(P_event, tau_event, failure_rate,
                                source, leak, self.vent.const_vent, 0, False)
 
         # Fans operational
         # If fatality is possible with just one fan, raise error
         Q_1fan = self.vent.Q_fan
-        tau = leak.tau
+        tau = math.inf * ureg.s
         O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
-        F_1fan = self._fatality_prob(O2_conc_1fan)
-        if F_1fan > 0:
-            raise ConstLeakTooBig('Constant leak creates ODH with at least 1 fan '
-                           f'operational: {leak}')
+        if O2_conc_1fan < 0.195:
+            raise ConstLeakTooBig('Constant leak reduces O2 conecntration to '
+                                  f'{O2_conc_1fan} with at least 1 fan '
+                                  f'operational: {leak}')
 
     def _fatality_prob(self, O2_conc):
         """Calculate fatality probability for given oxygen concentration.
