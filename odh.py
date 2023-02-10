@@ -508,7 +508,7 @@ class FailureMode:
 
 @ureg.check(None, '[time]')
 @dataclass
-class BuildPower():
+class BuildPower:
     pfd: float = TABLE_1['Electrical Power Failure']['Demand rate']
     max_outage: ureg.Quantity = float('inf') * ureg.hr
 
@@ -516,7 +516,7 @@ class BuildPower():
 @ureg.check('[length]^3/[time]', None, '[time]', '1/[time]',
             '[length]^3/[time]')
 @dataclass
-class BuildVent():
+class BuildVent:
     """
     Q_fan : ureg.Quantity {length: 3, time: -1}
         Volumetric flow of a single ODH fan installed in the volume.
@@ -557,7 +557,7 @@ class BuildVent():
 
 class Volume:
     """Volume/building affected by inert gases."""
-    def __init__(self, name, volume, build_vent, build_power):
+    def __init__(self, name, volume, *, build_vent, build_power):
         """Define a volume affected by inert gas release from  a `Source`.
 
         Parameters
