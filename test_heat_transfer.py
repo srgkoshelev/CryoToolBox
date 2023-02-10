@@ -547,18 +547,59 @@ class ODHTest(FunctionsTest):
         D_t = tube.OD / tube.wall
         source.pipe_failure(tube, fluid)
         leaks = [
-            odh.Leak('', 1e-9/u.hr, odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
-            odh.Leak('', 1e-10/u.hr, odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
-            odh.Leak('', 3e-11/u.hr, odh.hole_leak(tube.area, fluid), 0*u.s, 1),
-            odh.Leak('', 2e-11*D_t/u.hr, odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
-            odh.Leak('', 2e-12*D_t/u.hr, odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
-            odh.Leak('', 6e-13*D_t/u.hr, odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            odh.Leak('', 1e-9/u.hr, odh.hole_leak(10*u.mm**2, fluid),
+                     0*u.s, 1),
+            odh.Leak('', 1e-10/u.hr, odh.hole_leak(1000*u.mm**2, fluid),
+                     0*u.s, 1),
+            odh.Leak('', 3e-11/u.hr, odh.hole_leak(tube.area, fluid),
+                     0*u.s, 1),
+            odh.Leak('', 2e-11*D_t/u.hr, odh.hole_leak(10*u.mm**2, fluid),
+                     0*u.s, 1),
+            odh.Leak('', 2e-12*D_t/u.hr, odh.hole_leak(1000*u.mm**2, fluid),
+                     0*u.s, 1),
+            odh.Leak('', 6e-13*D_t/u.hr, odh.hole_leak(tube.area, fluid),
+                     0*u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):
             self.assertAlmostEqual(leak1.failure_rate, leak2.failure_rate)
             self.assertAlmostEqual(leak1.q_std, leak2.q_std)
             self.assertAlmostEqual(source.volume/leak1.q_std, leak2.tau)
+
+    def test_flange_failure(self):
+        fluid = ht.ThermState('nitrogen', P=100*u.psi, Q=0)
+        source = odh.Source('Test source', fluid, 100*u.L)
+        tube = ht.piping.Pipe(3, SCH=10, L=1*u.m)
+        source.flange_failure(tube, fluid)
+        leaks = [
+            odh.Leak('', 4e-7/u.hr, odh.hole_leak(10*u.mm**2, fluid),
+                     0*u.s, 1),
+            odh.Leak('', 1e-9/u.hr, odh.hole_leak(tube.area, fluid),
+                     0*u.s, 1),
+        ]
+        self.assertEqual(len(leaks), len(source.leaks))
+        for leak1, leak2 in zip(leaks, source.leaks):
+            self.assertAlmostEqual(leak1.failure_rate, leak2.failure_rate)
+            self.assertAlmostEqual(leak1.q_std, leak2.q_std)
+            self.assertAlmostEqual(source.volume/leak1.q_std, leak2.tau)
+
+    def test_valve_failure(self):
+        fluid = ht.ThermState('nitrogen', P=100*u.psi, Q=0)
+        source = odh.Source('Test source', fluid, 100*u.L)
+        tube = ht.piping.Pipe(3, SCH=10, L=1*u.m)
+        source.valve_failure(tube, fluid)
+        leaks = [
+            odh.Leak('', 1e-8/u.hr, odh.hole_leak(10*u.mm**2, fluid),
+                     0*u.s, 1),
+            odh.Leak('', 5e-10/u.hr, odh.hole_leak(tube.area, fluid),
+                     0*u.s, 1),
+        ]
+        self.assertEqual(len(leaks), len(source.leaks))
+        for leak1, leak2 in zip(leaks, source.leaks):
+            self.assertAlmostEqual(leak1.failure_rate, leak2.failure_rate)
+            self.assertAlmostEqual(leak1.q_std, leak2.q_std)
+            self.assertAlmostEqual(source.volume/leak1.q_std, leak2.tau)
+
 
 
 class Nu_test(FunctionsTest):
