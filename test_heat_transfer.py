@@ -507,18 +507,14 @@ class CPWrapperTest(unittest.TestCase):
 class ODHTest(FunctionsTest):
     """Set of tests for basic functionality of ODH analysis
     """
-    def test_hole_leak_Crane(self):
-        LHe = ht.ThermState('helium')
-        LHe.update('P', ht.P_NTP, 'Q', Q_('0'))
-        Portable_500L = odh.Source('Portable 500L', LHe, Q_(500, u.L))
-        Portable_500L.dewar_insulation_failure(1054*u('ft^3/min'))
-        fluid = ht.ThermState('water', P=Q_(2, u.psig), T=Q_(60, u.degF))
-        tube = ht.piping.Pipe(3, SCH=80)
+    def test_hole_leak_Crane_7_23(self):
+        fluid = ht.ThermState('water', P=Q_(4.4, u.inHg)+ht.P_NTP,
+                              T=Q_(60, u.degF))
         d_hole = 2 * u.inch
-        area = 3.14159 * d_hole**2 / 4
-        self.assertApproxEqual(131*u.gal/u.min,
-                               odh.hole_leak(tube, area, fluid),
-                               uncertainty=0.2)
+        area = pi * d_hole**2 / 4
+        self.assertApproxEqual(106*u.gal/u.min,
+                               odh.hole_leak(area, fluid),
+                               uncertainty=0.05)
         # Crane gives 131 gal/min for flow
         # difference in equations gives 20 % difference
 
@@ -533,11 +529,18 @@ class ODHTest(FunctionsTest):
         ID = (4*area/pi)**0.5  # Assuming tube ID based on area
         tube = ht.piping.Tube(ID, wall=0*u.m)
         fluid = ht.ThermState('nitrogen', P=P_150, T=T)
-        m_dot = ht.odh.hole_leak(tube, area, fluid)
+        m_dot = ht.odh.hole_leak(area, fluid)
         self.assertApproxEqual(V_flux_150*area, m_dot)
         fluid = ht.ThermState('nitrogen', P=P_15, T=T)
-        m_dot = ht.odh.hole_leak(tube, area, fluid)
+        m_dot = ht.odh.hole_leak(area, fluid)
         self.assertApproxEqual(V_flux_15*area, m_dot)
+
+    def test_pipe_failure(self):
+        fluid = ht.ThermState('nitrogen', P=100*u.psi, Q=0)
+        source = odh.Source('Test source', fluid, 100*u.L)
+        zero_length_tube = ht.piping.Pipe(1/2, SCH=10)
+        self.assertRaises(odh.ODHError,
+                          source.pipe_failure, zero_length_tube, fluid)
 
 
 class Nu_test(FunctionsTest):
