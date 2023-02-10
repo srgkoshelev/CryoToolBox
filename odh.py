@@ -313,9 +313,9 @@ class Source:
         q_std_rupture : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate for flange rupture.
         """
-        self.pipe_failure(pipe, fluid, q_std_rupture, N_welds)
-        self.flange_failure(pipe, fluid, q_std_rupture, N=N_flanges)
-        self.valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
+        self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
+        self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_flanges)
+        self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
 
     # def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
     #     """Add transfer line failure to leaks dict.

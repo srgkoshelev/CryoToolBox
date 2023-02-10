@@ -607,9 +607,7 @@ class ODHTest(FunctionsTest):
         fluid = ht.ThermState('nitrogen', P=100*u.psi, Q=0)
         source = odh.Source('Test source', fluid, 100*u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1*u.m)
-        source.add_pipe_failure(tube, fluid)
-        source.add_flange_failure(tube, fluid)
-        source.add_valve_failure(tube, fluid)
+        source.add_line_failure(tube, fluid, N_welds=1, N_flanges=1, N_valves=1)
         D_t = tube.OD / tube.wall
         leaks = [
             odh.Leak('', 1e-9/u.hr, odh.hole_leak(10*u.mm**2, fluid),
