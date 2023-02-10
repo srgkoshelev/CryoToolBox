@@ -121,6 +121,8 @@ Q_ = ht.Q_
 
 class FunctionsTest(unittest.TestCase):
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
+        if isinstance(data, u.Quantity):
+            calc.ito(data.units)
         assert abs(data-calc) / data < uncertainty, \
             f'Calculated value {calc} is not within {uncertainty:.1%} of data ' + \
             f'value {data}'

@@ -455,12 +455,12 @@ class Source:
         print(f'Printing leaks for {self}')
         print()
         for leak in self.leaks:
-            name, total_failure_rate, q_std, tau, N_events = leak
-            print(name)
-            print(f'Total failure rate: {total_failure_rate:.3g~}')
-            print(f'Leak rate: {q_std:.3g~}')
-            print(f'Event duration: {tau:.3g~}')
-            print(f'Number of events: {N_events}')
+            print(leak.name)
+            # TODO This will break for constant leak
+            print(f'Total failure rate: {leak.failure_rate:.3g~}')
+            print(f'Leak rate: {leak.q_std:.3g~}')
+            print(f'Event duration: {leak.tau:.3g~}')
+            print(f'Number of events: {leak.N_events}')
             print()
 
 
