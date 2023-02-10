@@ -290,49 +290,76 @@ class Source:
             q_std = hole_leak(area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
 
-    def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
-        """Add transfer line failure to leaks dict.
+    def line_failure(self, pipe, fluid, N_welds, N_flanges, N_valves,
+                     q_std_rupture=None):
+        """Add leaks for pipe, weld, flange, and valve failures.
 
-        For a given tube calculate leak parameters as following:
-        - failure rate
-        - standard volumetric flow
-        - duration of the release
-        - number of possible similar events
-        for all failure modes for transfer line listed in Table 1 of
-        FESHM 4240. Note that Rationale for Table 1: “Fermilab Equipment
-        Failure Rate Estimates” clearly states that only bayonet failures
-        are considered for these failure modes. Therefore only bayonet leak and
-        blowout (rupture) are considered. Leak area is not defined in
-        FESHM 4240 and is defined globally as `TRANSFER_LINE_LEAK_AREA`.
-
-        Failure modes are analyzed by `Volume.odh` method.
+        Store failure rate, flow rate and expected time duration of
+        the event for pipe, weld, flange, and valve failures. Based on
+        FESHM 4240. Failure modes are analyzed by `Volume.odh` method.
 
         Parameters
         ----------
-        pipe : piping.PipingElement
-        fluid : cp_wrapper.ThermState
+        pipe : heat_transfer.Pipe
+            Pipe/tube upstream the valve.
+        fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
+        N_welds : int
+            Number of welds on the line.
+        N_flange : int
+            Number of flanges on the line.
+        N_valves : int
+            Number of valves on the line.
         q_std_rupture : ureg.Quantity {length: 3, time: -1}
-            Standard volumetric flow rate for fluid line rupture.
-        N : int
-            Number of bayonets/soft seals on the transfer line.
+            Standard volumetric flow rate for flange rupture.
         """
-        # TODO This should be replaced by flange failure at some point
-        # Leak case
-        name = f'Fluid line gasket leak: {pipe}'
-        failure_rate = TABLE_1['Fluid line']['Leak']
-        area = TRANSFER_LINE_LEAK_AREA
-        q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, N)
-        # Rupture case
-        name = f'Fluid line gasket rupture: {pipe}'
-        failure_rate = TABLE_1['Fluid line']['Rupture']
-        if q_std_rupture is not None:
-            q_std = q_std_rupture
-        else:
-            area = pipe.area
-            q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, N)
+        self.pipe_failure(pipe, fluid, q_std_rupture, N_welds)
+        self.flange_failure(pipe, fluid, q_std_rupture, N=N_flanges)
+        self.valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
+
+    # def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
+    #     """Add transfer line failure to leaks dict.
+
+    #     For a given tube calculate leak parameters as following:
+    #     - failure rate
+    #     - standard volumetric flow
+    #     - duration of the release
+    #     - number of possible similar events
+    #     for all failure modes for transfer line listed in Table 1 of
+    #     FESHM 4240. Note that Rationale for Table 1: “Fermilab Equipment
+    #     Failure Rate Estimates” clearly states that only bayonet failures
+    #     are considered for these failure modes. Therefore only bayonet leak and
+    #     blowout (rupture) are considered. Leak area is not defined in
+    #     FESHM 4240 and is defined globally as `TRANSFER_LINE_LEAK_AREA`.
+
+    #     Failure modes are analyzed by `Volume.odh` method.
+
+    #     Parameters
+    #     ----------
+    #     pipe : piping.PipingElement
+    #     fluid : cp_wrapper.ThermState
+    #         Thermodynamic state of the fluid stored in the source.
+    #     q_std_rupture : ureg.Quantity {length: 3, time: -1}
+    #         Standard volumetric flow rate for fluid line rupture.
+    #     N : int
+    #         Number of bayonets/soft seals on the transfer line.
+    #     """
+    #     # TODO This should be replaced by flange failure at some point
+    #     # Leak case
+    #     name = f'Fluid line gasket leak: {pipe}'
+    #     failure_rate = TABLE_1['Fluid line']['Leak']
+    #     area = TRANSFER_LINE_LEAK_AREA
+    #     q_std = hole_leak(area, fluid)
+    #     self.failure_mode(name, failure_rate, q_std, N)
+    #     # Rupture case
+    #     name = f'Fluid line gasket rupture: {pipe}'
+    #     failure_rate = TABLE_1['Fluid line']['Rupture']
+    #     if q_std_rupture is not None:
+    #         q_std = q_std_rupture
+    #     else:
+    #         area = pipe.area
+    #         q_std = hole_leak(area, fluid)
+    #     self.failure_mode(name, failure_rate, q_std, N)
 
     def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid):
         """Add pressure vessel failure to leaks dict.
