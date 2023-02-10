@@ -372,8 +372,6 @@ class Source:
         ----------
         relief_area : ureg.Quantity {length: 2}
             Vacuum jacket relief area if the vessel has one, None otherwise.
-        fluid : heat_transfer.ThermState
-            Thermodynamic state of the fluid stored in the source.
         """
         # Leak case
         name = 'Pressure vessel leak'
