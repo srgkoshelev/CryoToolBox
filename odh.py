@@ -290,8 +290,8 @@ class Source:
             q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, q_std, N)
 
-    def add_line_failure(self, pipe, fluid, N_welds, N_flanges, N_valves,
-                     q_std_rupture=None):
+    def add_line_failure(self, pipe, fluid, *, N_welds, N_flanges, N_valves,
+                         q_std_rupture=None):
         """Add leaks for pipe, weld, flange, and valve failures.
 
         Store failure rate, flow rate and expected time duration of
@@ -361,7 +361,7 @@ class Source:
     #         q_std = hole_leak(area, fluid)
     #     self.add_failure_mode(name, failure_rate, q_std, N)
 
-    def add_pressure_vessel_failure(self, q_std_rupture, relief_area, fluid):
+    def add_pressure_vessel_failure(self, relief_area=None):
         """Add pressure vessel failure to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -370,8 +370,6 @@ class Source:
 
         Parameters
         ----------
-        q_std_rupture : ureg.Quantity {length: 3, time: -1}
-            Standard volumetric flow rate for pressure vessel rupture.
         relief_area : ureg.Quantity {length: 2}
             Vacuum jacket relief area if the vessel has one, None otherwise.
         fluid : heat_transfer.ThermState
@@ -381,7 +379,7 @@ class Source:
         name = 'Pressure vessel leak'
         area = TABLE_2['Vessel, pressure']['Small leak']['Area']
         failure_rate = TABLE_2['Vessel, pressure']['Small leak']['Failure rate']
-        q_std = hole_leak(area, fluid)
+        q_std = hole_leak(area, self.fluid)
         self.add_failure_mode(name, failure_rate, q_std, 1)
 
         # Rupture case
@@ -392,7 +390,7 @@ class Source:
         else:
             area = relief_area
         failure_rate = TABLE_2['Vessel, pressure']['Failure']
-        q_std = hole_leak(area, fluid)
+        q_std = hole_leak(area, self.fluid)
         self.add_failure_mode(name, failure_rate, q_std, 1)
 
     def add_const_leak(self, name, q_std, N=1):
