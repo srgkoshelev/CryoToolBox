@@ -900,8 +900,8 @@ class Volume:
     #             print(f' Fan rate:             {f_mode.Q_fan:.2~}')
     #             print(f' Fatality prob:        {f_mode.F_i:.0%}')
 
-    def create_doc_tabel(self, sens=None):
-        """Prepare a short table for failure modes and effects.
+    def make_doc_table(self, sens=None):
+        """Make a short table for failure modes and effects to be included to a document.
 
         The report is sorted by fatality rate descending."""
         self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
@@ -921,7 +921,7 @@ class Volume:
             table.append(row)
         return table
 
-    def generate_excel_table(self, filename='ODH_report'):
+    def make_excel_table(self, filename='ODH_report'):
         """Make a table with the calculation results."""
         table = []
         header = ['Source', 'Failure', 'Event failure rate, 1/hr', '# of',
