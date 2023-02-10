@@ -106,7 +106,7 @@ class Source:
         self.sol_PFD = (int(not isol_valve) or
                         TABLE_2['Valve, solenoid']['Failure to operate'])
 
-    def pipe_failure(self, tube, fluid, q_std_rupture=None, N_welds=1):
+    def add_pipe_failure(self, tube, fluid, q_std_rupture=None, N_welds=1):
         """Add pipe failure to the leaks dict.
 
         For a given tube calculate leak parameters as following:
@@ -163,9 +163,9 @@ class Source:
                             ODHError('Leak area cannot be larger'
                                      ' than pipe area.')
                         q_std = hole_leak(area, fluid)
-                    self.failure_mode(name, failure_rate, q_std, N_events)
+                    self.add_failure_mode(name, failure_rate, q_std, N_events)
 
-    def dewar_insulation_failure(self, q_std):
+    def add_dewar_insulation_failure(self, q_std):
         """Add dewar insulation failure to leaks dict.
 
         Store failure rate, flow rate and expected time duration of the
@@ -181,7 +181,7 @@ class Source:
             Thermodynamic state of the fluid stored in the source.
         """
         failure_rate = TABLE_1['Dewar']['Loss of vacuum']
-        self.failure_mode('Dewar insulation failure', failure_rate, q_std, 1)
+        self.add_failure_mode('Dewar insulation failure', failure_rate, q_std, 1)
 
     # def u_tube_failure(self, outer_tube, inner_tube, L, use_rate,
     #                    fluid, N=1):
@@ -216,9 +216,9 @@ class Source:
     #             continue
     #         # If fluid not defined use fluid of the Source
     #         q_std = Source._leak_flow(flow_path, area, fluid)
-#             self.failure_mode(name, failure_rate, q_std, N)
+#             self.add_failure_mode(name, failure_rate, q_std, N)
 
-    def flange_failure(self, pipe, fluid, q_std_rupture=None, N=1):
+    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -243,7 +243,7 @@ class Source:
         failure_rate = table['Leak']['Failure rate']
         area = table['Leak']['Area']
         q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, q_std, N)
         # Rupture
         name = f'Flange rupture: {pipe}'
         failure_rate = table['Rupture']
@@ -252,9 +252,9 @@ class Source:
         else:
             area = pipe.area
             q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, q_std, N)
 
-    def valve_failure(self, pipe, fluid, q_std_rupture=None, N=1):
+    def add_valve_failure(self, pipe, fluid, q_std_rupture=None, N=1):
         """Add valve leak and rupture failure modes to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -279,7 +279,7 @@ class Source:
         # Using area from flange leak for consistency
         area = TABLE_2['Flange, soft gasket']['Leak']['Area']
         q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, q_std, N)
         # Rupture
         name = f'Valve rupture: {pipe}'
         failure_rate = table['Rupture']
@@ -288,9 +288,9 @@ class Source:
         else:
             area = pipe.area
             q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, q_std, N)
 
-    def line_failure(self, pipe, fluid, N_welds, N_flanges, N_valves,
+    def add_line_failure(self, pipe, fluid, N_welds, N_flanges, N_valves,
                      q_std_rupture=None):
         """Add leaks for pipe, weld, flange, and valve failures.
 
@@ -350,7 +350,7 @@ class Source:
     #     failure_rate = TABLE_1['Fluid line']['Leak']
     #     area = TRANSFER_LINE_LEAK_AREA
     #     q_std = hole_leak(area, fluid)
-    #     self.failure_mode(name, failure_rate, q_std, N)
+    #     self.add_failure_mode(name, failure_rate, q_std, N)
     #     # Rupture case
     #     name = f'Fluid line gasket rupture: {pipe}'
     #     failure_rate = TABLE_1['Fluid line']['Rupture']
@@ -359,9 +359,9 @@ class Source:
     #     else:
     #         area = pipe.area
     #         q_std = hole_leak(area, fluid)
-    #     self.failure_mode(name, failure_rate, q_std, N)
+    #     self.add_failure_mode(name, failure_rate, q_std, N)
 
-    def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid):
+    def add_pressure_vessel_failure(self, q_std_rupture, relief_area, fluid):
         """Add pressure vessel failure to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -382,7 +382,7 @@ class Source:
         area = TABLE_2['Vessel, pressure']['Small leak']['Area']
         failure_rate = TABLE_2['Vessel, pressure']['Small leak']['Failure rate']
         q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, 1)
+        self.add_failure_mode(name, failure_rate, q_std, 1)
 
         # Rupture case
         name = 'Pressure vessel rupture'
@@ -393,9 +393,9 @@ class Source:
             area = relief_area
         failure_rate = TABLE_2['Vessel, pressure']['Failure']
         q_std = hole_leak(area, fluid)
-        self.failure_mode(name, failure_rate, q_std, 1)
+        self.add_failure_mode(name, failure_rate, q_std, 1)
 
-    def const_leak(self, name, q_std, N=1):
+    def add_const_leak(self, name, q_std, N=1):
         """Add constant leak to leaks dict.
 
         Store flow rate and expected time duration of the
@@ -415,7 +415,7 @@ class Source:
         tau = self.volume/q_std
         self.leaks.append(ConstLeak(name, q_std*N_events, tau))
 
-    def failure_mode(self, name, failure_rate, q_std, N=1):
+    def add_failure_mode(self, name, failure_rate, q_std, N=1):
         """Add general failure mode to leaks dict.
 
         Store failure rate, flow rate and expected time duration of the

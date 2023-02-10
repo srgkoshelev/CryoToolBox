@@ -542,11 +542,11 @@ class ODHTest(FunctionsTest):
         source = odh.Source('Test source', fluid, 100*u.L)
         zero_length_tube = ht.piping.Pipe(3, SCH=10)
         self.assertRaises(odh.ODHError,
-                          source.pipe_failure, zero_length_tube, fluid)
+                          source.add_pipe_failure, zero_length_tube, fluid)
         N = 2
         tube = ht.piping.Pipe(3, SCH=10, L=N*1*u.m)
         D_t = tube.OD / tube.wall
-        source.pipe_failure(tube, fluid, N_welds=N)
+        source.add_pipe_failure(tube, fluid, N_welds=N)
         leaks = [
             odh.Leak('', N*1e-9/u.hr, odh.hole_leak(10*u.mm**2, fluid),
                      0*u.s, 1),
@@ -572,7 +572,7 @@ class ODHTest(FunctionsTest):
         source = odh.Source('Test source', fluid, 100*u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1*u.m)
         N = 2
-        source.flange_failure(tube, fluid, N=N)
+        source.add_flange_failure(tube, fluid, N=N)
         leaks = [
             odh.Leak('', N*4e-7/u.hr, odh.hole_leak(10*u.mm**2, fluid),
                      0*u.s, 1),
@@ -590,7 +590,7 @@ class ODHTest(FunctionsTest):
         source = odh.Source('Test source', fluid, 100*u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1*u.m)
         N = 2
-        source.valve_failure(tube, fluid, N=N)
+        source.add_valve_failure(tube, fluid, N=N)
         leaks = [
             odh.Leak('', N*1e-8/u.hr, odh.hole_leak(10*u.mm**2, fluid),
                      0*u.s, 1),
@@ -607,9 +607,9 @@ class ODHTest(FunctionsTest):
         fluid = ht.ThermState('nitrogen', P=100*u.psi, Q=0)
         source = odh.Source('Test source', fluid, 100*u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1*u.m)
-        source.pipe_failure(tube, fluid)
-        source.flange_failure(tube, fluid)
-        source.valve_failure(tube, fluid)
+        source.add_pipe_failure(tube, fluid)
+        source.add_flange_failure(tube, fluid)
+        source.add_valve_failure(tube, fluid)
         D_t = tube.OD / tube.wall
         leaks = [
             odh.Leak('', 1e-9/u.hr, odh.hole_leak(10*u.mm**2, fluid),
