@@ -105,7 +105,7 @@ class Source:
         self.sol_PFD = (int(not isol_valve) or
                         TABLE_2['Valve, solenoid']['Failure to operate'])
 
-    def pipe_failure(self, tube, fluid=None, q_std_rupture=None, N_welds=1):
+    def pipe_failure(self, tube, fluid, q_std_rupture=None, N_welds=1):
         """Add pipe failure to the leaks dict.
 
         For a given tube calculate leak parameters as following:
@@ -131,8 +131,6 @@ class Source:
         N_welds : int
             Number of welds on the tube.
         """
-        # If fluid not defined use fluid of the Source
-        fluid = fluid or self.fluid
         # Failure rate coefficients; Piping failure rate is per unit of length,
         # weld is dependent on number of welds, pipe OD and wall thickness
         failure_rate_coeff = {'Piping': (tube.L, 1),
@@ -185,7 +183,7 @@ class Source:
         self.failure_mode('Dewar insulation failure', failure_rate, q_std, 1)
 
     # def u_tube_failure(self, outer_tube, inner_tube, L, use_rate,
-    #                    fluid=None, N=1):
+    #                    fluid, N=1):
     #     """Add U-Tube failure to leaks dict.
 
     #     Store failure rate, flow rate and expected time duration of the
@@ -216,11 +214,10 @@ class Source:
     #                            ' than outer tube area.')
     #             continue
     #         # If fluid not defined use fluid of the Source
-    #         fluid = fluid or self.fluid
     #         q_std = Source._leak_flow(flow_path, area, fluid)
 #             self.failure_mode(name, failure_rate, q_std, N)
 
-    def flange_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
+    def flange_failure(self, pipe, fluid, q_std_rupture=None, N=1):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -238,7 +235,6 @@ class Source:
         N : int
             Number of reinforced seal connections on the pipe.
         """
-        fluid = fluid or self.fluid
         # TODO Make leak and rupture areas adjustable, add info to docstring
         table = TABLE_2['Flange, reinforced gasket']
         # Leak case
@@ -257,7 +253,7 @@ class Source:
             q_std = hole_leak(pipe, area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
 
-    def valve_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
+    def valve_failure(self, pipe, fluid, q_std_rupture=None, N=1):
         """Add valve leak and rupture failure modes to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -275,7 +271,6 @@ class Source:
         N : int
             Number of valves
         """
-        fluid = fluid or self.fluid
         table = TABLE_2['Valve, pneumatic']
         # Leak case
         name = f'Valve leak: {pipe}'
@@ -294,7 +289,7 @@ class Source:
             q_std = hole_leak(pipe, area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
 
-    def transfer_line_failure(self, pipe, fluid=None, q_std_rupture=None, N=1):
+    def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
         """Add transfer line failure to leaks dict.
 
         For a given tube calculate leak parameters as following:
@@ -322,8 +317,6 @@ class Source:
             Number of bayonets/soft seals on the transfer line.
         """
         # TODO This should be replaced by flange failure at some point
-        # If fluid not defined use fluid of the Source
-        fluid = fluid or self.fluid
         # Leak case
         name = f'Fluid line gasket leak: {pipe}'
         failure_rate = TABLE_1['Fluid line']['Leak']
@@ -340,7 +333,7 @@ class Source:
             q_std = hole_leak(pipe, area, fluid)
         self.failure_mode(name, failure_rate, q_std, N)
 
-    def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid=None):
+    def pressure_vessel_failure(self, q_std_rupture, relief_area, fluid):
         """Add pressure vessel failure to leaks dict.
 
         Store failure rate, flow rate and expected time duration of
@@ -356,8 +349,6 @@ class Source:
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         """
-        # If fluid not defined use fluid of the Source
-        fluid = fluid or self.fluid
         # Leak case
         name = 'Pressure vessel leak'
         area = TABLE_2['Vessel, pressure']['Small leak']['Area']
