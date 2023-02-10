@@ -560,6 +560,24 @@ class Volume:
         self.power = build_power
         self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
 
+    def info(self):
+        """
+        Display information on the volume.
+        """
+        print(f'{self.name} with affected volume of {self.volume:,.0f~}.')
+        print(f'Power provided with {self.power.pfd:.3g~} unavailability and '
+              f'{self.power.max_outage:.3g~} max outage period.')
+        if self.vent.Q_fan > 0*ureg.L/ureg.s:
+            vent_action = 'supplying clean air to'
+        else:
+            vent_action = 'drawing contaminated air from'
+        print(f'Ventilation consists of {self.vent.N_fans}x {abs(self.vent.Q_fan):.3g~} each {vent_action} the volume.')
+        if self.vent.const_vent > 0*ureg.L/ureg.s:
+            vent_action = 'supplying clean air to'
+        else:
+            vent_action = 'drawing contaminated air from'
+        print(f'Constant ventilation in the building is {abs(self.vent.const_vent):.3g~} {vent_action} the volume.')
+
     def odh(self, sources, power_outage=False):
         """Calculate ODH fatality rate for given `Source`s.
 
