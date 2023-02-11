@@ -548,18 +548,18 @@ class ODHTest(FunctionsTest):
         D_t = tube.OD / tube.wall
         source.add_pipe_failure(tube, fluid, N_welds=N)
         leaks = [
-            odh.Leak('', N*1e-9/u.hr, odh.hole_leak(10*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', N*1e-10/u.hr, odh.hole_leak(1000*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', N*3e-11/u.hr, odh.hole_leak(tube.area, fluid),
-                     0*u.s, 1),
-            odh.Leak('', N*2e-11*D_t/u.hr, odh.hole_leak(10*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', N*2e-12*D_t/u.hr, odh.hole_leak(1000*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', N*6e-13*D_t/u.hr, odh.hole_leak(tube.area, fluid),
-                     0*u.s, 1),
+            odh.Leak('', N*1e-9/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', N*1e-10/u.hr, fluid,
+                     odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', N*3e-11/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            odh.Leak('', N*2e-11*D_t/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', N*2e-12*D_t/u.hr, fluid,
+                     odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', N*6e-13*D_t/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):
@@ -574,9 +574,9 @@ class ODHTest(FunctionsTest):
         N = 2
         source.add_flange_failure(tube, fluid, N=N)
         leaks = [
-            odh.Leak('', N*4e-7/u.hr, odh.hole_leak(10*u.mm**2, fluid),
+            odh.Leak('', N*4e-7/u.hr, fluid, odh.hole_leak(10*u.mm**2, fluid),
                      0*u.s, 1),
-            odh.Leak('', N*1e-9/u.hr, odh.hole_leak(tube.area, fluid),
+            odh.Leak('', N*1e-9/u.hr, fluid, odh.hole_leak(tube.area, fluid),
                      0*u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
@@ -592,10 +592,10 @@ class ODHTest(FunctionsTest):
         N = 2
         source.add_valve_failure(tube, fluid, N=N)
         leaks = [
-            odh.Leak('', N*1e-8/u.hr, odh.hole_leak(10*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', N*5e-10/u.hr, odh.hole_leak(tube.area, fluid),
-                     0*u.s, 1),
+            odh.Leak('', N*1e-8/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', N*5e-10/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):
@@ -610,26 +610,26 @@ class ODHTest(FunctionsTest):
         source.add_line_failure(tube, fluid, N_welds=1, N_flanges=1, N_valves=1)
         D_t = tube.OD / tube.wall
         leaks = [
-            odh.Leak('', 1e-9/u.hr, odh.hole_leak(10*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 1e-10/u.hr, odh.hole_leak(1000*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 3e-11/u.hr, odh.hole_leak(tube.area, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 2e-11*D_t/u.hr, odh.hole_leak(10*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 2e-12*D_t/u.hr, odh.hole_leak(1000*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 6e-13*D_t/u.hr, odh.hole_leak(tube.area, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 4e-7/u.hr, odh.hole_leak(10*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 1e-9/u.hr, odh.hole_leak(tube.area, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 1e-8/u.hr, odh.hole_leak(10*u.mm**2, fluid),
-                     0*u.s, 1),
-            odh.Leak('', 5e-10/u.hr, odh.hole_leak(tube.area, fluid),
-                     0*u.s, 1),
+            odh.Leak('', 1e-9/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 1e-10/u.hr, fluid,
+                     odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 3e-11/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            odh.Leak('', 2e-11*D_t/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 2e-12*D_t/u.hr, fluid,
+                     odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 6e-13*D_t/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            odh.Leak('', 4e-7/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 1e-9/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            odh.Leak('', 1e-8/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 5e-10/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):

@@ -38,22 +38,24 @@ class ConstLeakTooBig(Exception):
 class ConstLeakNoVent(Exception):
     pass
 
-@ureg.check(None, '1/[time]', '[length]^3/[time]', '[time]', None)
+@ureg.check(None, '1/[time]', None, '[length]^3/[time]', '[time]', None)
 @dataclass
 class Leak:
     """Describe inert gas leak from a Source"""
     name: str
     failure_rate: ureg.Quantity
+    fluid: ThermState
     q_std: ureg.Quantity
     tau: ureg.Quantity
     N_events: int
     _is_const = False
 
 
-@ureg.check(None, '[length]^3/[time]', None)
+@ureg.check(None, None, '[length]^3/[time]', None)
 @dataclass
 class ConstLeak:
     name: str
+    fluid: ThermState
     q_std: ureg.Quantity
     N_events: int
     _is_const = True
@@ -162,7 +164,8 @@ class Source:
                             ODHError('Leak area cannot be larger'
                                      ' than pipe area.')
                         q_std = hole_leak(area, fluid)
-                    self.add_failure_mode(name, failure_rate, q_std, N_events)
+                    self.add_failure_mode(name, failure_rate, fluid, q_std,
+                                          N_events)
 
     def add_dewar_insulation_failure(self, q_std):
         """Add dewar insulation failure to leaks dict.
@@ -176,11 +179,10 @@ class Source:
         q_std : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate of the relief for the case of
             dewar insulation failure.
-        fluid : heat_transfer.ThermState
-            Thermodynamic state of the fluid stored in the source.
         """
         failure_rate = TABLE_1['Dewar']['Loss of vacuum']
-        self.add_failure_mode('Dewar insulation failure', failure_rate, q_std, 1)
+        self.add_failure_mode('Dewar insulation failure', failure_rate,
+                              self.fluid, q_std, 1)
 
     # def u_tube_failure(self, outer_tube, inner_tube, L, use_rate,
     #                    fluid, N=1):
@@ -242,7 +244,7 @@ class Source:
         failure_rate = table['Leak']['Failure rate']
         area = table['Leak']['Area']
         q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
         name = f'Flange rupture: {pipe}'
         failure_rate = table['Rupture']
@@ -251,7 +253,7 @@ class Source:
         else:
             area = pipe.area
             q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
 
     def add_valve_failure(self, pipe, fluid, q_std_rupture=None, N=1):
         """Add valve leak and rupture failure modes to leaks dict.
@@ -278,7 +280,7 @@ class Source:
         # Using area from flange leak for consistency
         area = TABLE_2['Flange, soft gasket']['Leak']['Area']
         q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
         name = f'Valve rupture: {pipe}'
         failure_rate = table['Rupture']
@@ -287,7 +289,7 @@ class Source:
         else:
             area = pipe.area
             q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, q_std, N)
+        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
 
     def add_line_failure(self, pipe, fluid, *, N_welds, N_flanges, N_valves,
                          q_std_rupture=None):
@@ -377,7 +379,7 @@ class Source:
         area = TABLE_2['Vessel, pressure']['Small leak']['Area']
         failure_rate = TABLE_2['Vessel, pressure']['Small leak']['Failure rate']
         q_std = hole_leak(area, self.fluid)
-        self.add_failure_mode(name, failure_rate, q_std, 1)
+        self.add_failure_mode(name, failure_rate, self.fluid, q_std, 1)
 
         # Rupture case
         name = 'Pressure vessel rupture'
@@ -388,9 +390,9 @@ class Source:
             area = relief_area
         failure_rate = TABLE_2['Vessel, pressure']['Failure']
         q_std = hole_leak(area, self.fluid)
-        self.add_failure_mode(name, failure_rate, q_std, 1)
+        self.add_failure_mode(name, failure_rate, self.fluid, q_std, 1)
 
-    def add_const_leak(self, name, q_std, N=1):
+    def add_const_leak(self, name, q_std, fluid=None, N=1):
         """Add constant leak to leaks dict.
 
         Store flow rate and expected time duration of the
@@ -406,10 +408,12 @@ class Source:
         N : int
             Quantity of leaks.
         """
+        if not fluid:
+            fluid = self.fluid
         N_events = N * self.N
-        self.leaks.append(ConstLeak(name, q_std*N_events, N_events))
+        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, N_events))
 
-    def add_failure_mode(self, name, failure_rate, q_std, N=1):
+    def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
         """Add general failure mode to leaks dict.
 
         Store failure rate, flow rate and expected time duration of the
@@ -423,6 +427,8 @@ class Source:
         failure rate : ureg.Quantity {time: -1}
             Failure rate of the failure mode,
             i.e. how often the failure occurs
+        fluid : ThermState
+            Fluid state at the release location.
         q_std : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate.
         N : int
@@ -434,8 +440,8 @@ class Source:
         total_failure_rate.ito(1/ureg.hr)
         # self.leaks.append((name, total_failure_rate, q_std, tau.to(ureg.min),
         #                    N_events))
-        self.leaks.append(Leak(name, total_failure_rate, q_std, tau.to(ureg.min),
-                               N_events))
+        self.leaks.append(Leak(name, total_failure_rate, fluid, q_std,
+                               tau.to(ureg.min), N_events))
 
     @staticmethod
     def combine(name, sources):
@@ -485,14 +491,15 @@ class Source:
             print()
 
 
-@ureg.check(None, None, '1/[time]', None, '1/[time]', '1/[time]',
+@ureg.check(None, None, None, '1/[time]', None, '1/[time]', '1/[time]',
             None, None, '[length]^3/[time]', '[time]',
-            '[length]^3/[time]', None, None)
+            '[length]^3/[time]', None, None, None)
 @dataclass
 class FailureMode:
     """Describes ODH failure modes, a combination of a leak and response to it."""
     name: str
     source: Source
+    fluid: ThermState
     phi: ureg.Quantity
     O2_conc: float
     leak_fr: ureg.Quantity
@@ -504,6 +511,7 @@ class FailureMode:
     Q_fan: ureg.Quantity
     N_fan: int
     N: int
+    is_const: bool
 
 
 @ureg.check(None, '[time]')
@@ -729,6 +737,8 @@ class Volume:
         leak : Leak
             Leak failure rate, volumetric flow rate, event duration, and number
             of events.
+        fluid : ThermState
+            Fluid conditions at the release location.
         Q_fan : ureg.Quantity {length: 3, time: -1}
             Combined volumetric flow of ODH fans for the event.
         N_fans : int
@@ -745,9 +755,9 @@ class Volume:
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
         self.fail_modes.append(
-            FailureMode(leak.name, source, phi_i, O2_conc,
+            FailureMode(leak.name, source, leak.fluid, phi_i, O2_conc,
                         failure_rate, P_i, F_i, power_outage, leak.q_std,
-                        tau_event, Q_fan, N_fans, leak.N_events)
+                        tau_event, Q_fan, N_fans, leak.N_events, leak._is_const)
         )
 
     def _fatality_const_leak(self, source, leak, power_outage):
@@ -926,8 +936,8 @@ class Volume:
     def make_excel_table(self, filename='ODH_report'):
         """Make a table with the calculation results."""
         table = []
-        header = ['Source', 'Failure', 'Event failure rate, 1/hr', '# of',
-                  'Total failure rate, 1/hr', 'Leak rate, SCFM',
+        header = ['Source', 'Failure', 'Fluid', 'Event failure rate, 1/hr',
+                  '# of', 'Total failure rate, 1/hr', 'Leak rate, SCFM',
                   '# fans working', 'Fan rate, SCFM', 'Event duration, min',
                   'Oxygen concentration', 'Fatality prob', 'Case prob',
                   'Fatality rate, 1/hr']
@@ -939,10 +949,15 @@ class Volume:
             if tau == float('inf'):
                 # Handling infinite release
                 tau = str(tau)
+            if f_mode.is_const:
+                event_fr = f_mode.leak_fr
+            else:
+                event_fr = f_mode.leak_fr/f_mode.N
             table.append([
                 f_mode.source.name,
                 f_mode.name,
-                (f_mode.leak_fr/f_mode.N).m_as(1/ureg.hr),
+                str(f_mode.fluid),
+                event_fr.m_as(1/ureg.hr),
                 f_mode.N,
                 f_mode.leak_fr.m_as(1/ureg.hr),
                 f_mode.q_leak.m_as(ureg.ft**3/ureg.min),
@@ -957,14 +972,9 @@ class Volume:
         filename += '.xlsx'
         with xlsxwriter.Workbook(filename, wb_options) as workbook:
             worksheet = workbook.add_worksheet()
-            col_width = [len(x) for x in table[0]]
             for row_n, row in enumerate(table):
                 for col_n, data in enumerate(row):
                     worksheet.write(row_n, col_n, data)
-                    if col_n in (0, 1, 10):
-                        # For source names, failure names
-                        # and 'Total failure rate'
-                        col_width[col_n] = max(col_width[col_n], len(str(data)))
             header_format = workbook.add_format({'bold': True,
                                                  'font_size': 12,
                                                  'bottom': 3})
@@ -973,13 +983,13 @@ class Volume:
             percent_format = workbook.add_format({'num_format': '0%'},)
             number_format = workbook.add_format({'num_format': '0'},)
             worksheet.set_row(0, None, header_format)
-            worksheet.set_column(2, 2, None, sci_format)
-            worksheet.set_column(4, 4, None, sci_format)
-            # worksheet.set_column(5, 5, None, flow_format)
+            worksheet.set_column(3, 3, None, sci_format)
             worksheet.set_column(5, 5, None, sci_format)
-            worksheet.set_column(8, 8, None, sci_format)
-            worksheet.set_column(9, 9, None, percent_format)
-            worksheet.set_column(10, 12, None, sci_format)
+            # worksheet.set_column(5, 5, None, flow_format)
+            worksheet.set_column(6, 6, None, sci_format)
+            worksheet.set_column(9, 9, None, sci_format)
+            worksheet.set_column(10, 10, None, percent_format)
+            worksheet.set_column(11, 13, None, sci_format)
             # Writing total/summary
             N_rows = len(table)
             N_cols = len(table[0])
@@ -989,11 +999,7 @@ class Volume:
             worksheet.write(N_rows+2, N_cols-2, 'ODH class')
             worksheet.write(N_rows+2, N_cols-1, self.odh_class(),
                             number_format)
-            # Autofit column width
-            for col_n, width in enumerate(col_width):
-                adj_width = width - 0.005 * width**2
-                worksheet.set_column(col_n, col_n, adj_width)
-            # Adding usability
+            worksheet.autofit()
             worksheet.conditional_format(
                 1, N_cols-1, N_rows-1, N_cols-1,
                 {'type': '3_color_scale', 'min_color': '#008000',
