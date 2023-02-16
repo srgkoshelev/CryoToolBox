@@ -22,6 +22,7 @@ from .FESHM4240_TABLES import TABLE_1, TABLE_2
 # Data from J. Anderson's analysis
 PFD_ODH = Q_('2 * 10^-3')
 lambda_ODH = 2.3e-6 / ureg.hr
+lambda_power = TABLE_1['Electrical Power Failure']['Time rate']
 TRANSFER_LINE_LEAK_AREA = Q_(10, ureg.mm**2)  # Taken for consistency
 # Min required air intake from Table 6.1, ASHRAE 62-2001
 ASHRAE_MIN_FLOW = 0.06 * ureg.ft**3/(ureg.min*ureg.ft**2)
@@ -100,7 +101,7 @@ class Source:
         temp_state = fluid.copy()
         temp_state.update('T', T_NTP, 'P', P_NTP)
         self.volume = volume*fluid.Dmass/temp_state.Dmass
-        self.volume.ito(ureg.feet**3)
+        self.volume.ito_base_units()
         # By default assume there is no isolation valve
         # that is used by ODH system
         self.isol_valve = isol_valve
@@ -444,7 +445,7 @@ class Source:
                                tau.to(ureg.min), N_events))
 
     @staticmethod
-    def combine(name, sources):
+    def combine(name, fluid, sources):
         """Combine several ODH sources sharing volume.
 
         Can be used for failure modes affecting several sources in parallel.
@@ -453,6 +454,8 @@ class Source:
         ----------
         name : str
             Name of the new combined source.
+        fluid : heat_transfer.ThermState
+            Thermodynamic state of the fluid stored in the source.
         sources : list of Source
             Sources connected together.
 
@@ -461,13 +464,16 @@ class Source:
         Source
             Combined source of inert gas.
         """
-        fluid = ThermState(sources[0].fluid.name, T=T_NTP, P=P_NTP)
-        if all([source.fluid.name == fluid.name for source in sources]):
-            total_volume = sum([source.volume for source in sources])
-            return Source(name, fluid, total_volume)
-        else:
-            ODHError('All volumes should contain the same fluid')
+        if not all([source.fluid.name == fluid.name for source in sources]):
+            ODHError('All volumes should contain the same fluid.')
             return None
+        if sources[0].fluid.name != fluid.name:
+            ODHError('New source should have the same fluid as combined.')
+            return None
+        volume_NTP = sum([source.N*source.volume for source in sources])
+        fluid_NTP = ThermState(fluid.name, P=P_NTP, T=T_NTP)
+        phys_volume = volume_NTP*fluid_NTP.Dmass / fluid.Dmass
+        return Source(name, fluid, phys_volume)
 
     def __repr__(self):
         return f'Source({self.name}, {self.fluid}, {self.volume}, N={self.N}, isol_valve={self.isol_valve})'
@@ -514,11 +520,16 @@ class FailureMode:
     is_const: bool
 
 
-@ureg.check(None, '[time]')
+@ureg.check(None, None, '[time]')
 @dataclass
 class BuildPower:
-    pfd: float = TABLE_1['Electrical Power Failure']['Demand rate']
+    power_pfd: float = TABLE_1['Electrical Power Failure']['Demand rate']
+    backup_pfd: float = 1
     max_outage: ureg.Quantity = float('inf') * ureg.hr
+
+    @property
+    def pfd(self):
+        return self.power_pfd * self.backup_pfd
 
 
 @ureg.check('[length]^3/[time]', None, '[time]', '1/[time]',
@@ -576,7 +587,7 @@ class Volume:
             Volume of the building or part of the building.
         """
         self.name = name
-        self.volume = volume
+        self.volume = volume.to_base_units()
         self.vent = build_vent
         self.power = build_power
         self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
@@ -592,7 +603,7 @@ class Volume:
             vent_action = 'supplying clean air to'
         else:
             vent_action = 'drawing contaminated air from'
-        print(f'Ventilation consists of {self.vent.N_fans}x {abs(self.vent.Q_fan):.3g~} each {vent_action} the volume.')
+        print(f'Ventilation consists of {self.vent.N_fans} fans {abs(self.vent.Q_fan):.3g~} each {vent_action} the volume.')
         if self.vent.const_vent > 0*ureg.L/ureg.s:
             vent_action = 'supplying clean air to'
         else:
@@ -794,8 +805,7 @@ class Volume:
 
         # TODO Replace hard coded value with changeable
         # Constant leak and power failure
-        l_power = TABLE_1['Electrical Power Failure']['Time rate']
-        failure_rate = l_power
+        failure_rate = lambda_power * self.power.backup_pfd
         # Constant leak is assumed to be hazardous only when
         # the isolation valve fails
         P_event = PFD_isol_valve
@@ -943,7 +953,7 @@ class Volume:
                   'Fatality rate, 1/hr']
         # 'Total failure rate', 'ODH protection PFD', 'Building is powered'
         table.append(header)
-        self.fail_modes.sort(key=lambda x: x.source.name)
+        self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
         for f_mode in self.fail_modes:
             tau = f_mode.tau.m_as(ureg.min)
             if tau == float('inf'):
