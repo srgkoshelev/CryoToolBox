@@ -1163,7 +1163,7 @@ def conc_vent(V, R, Q, t):
         C = 0.21*math.e**-(R/V*t)
     elif abs(Q) > R:
         C = 0.21*(1-R/abs(Q)*(1-math.e**-(abs(Q)*t/V)))
-    return C
+    return float(C)
 
 
 def conc_final(V, R, Q):
