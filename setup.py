@@ -8,6 +8,7 @@ setup(
     author_email='srg.koshelev@pm.me',
     url='https://github.com/srgkoshelev/CryoToolBox',
     packages=['CryoToolBox'],
+    include_package_data=True,
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
