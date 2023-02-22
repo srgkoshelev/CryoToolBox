@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='heat_transfer',
+    name='CryoToolBox',
     version='0.1.0',
     description='A Python package for heat transfer and fluid dynamics calculations',
     author='Sergey Koshelev',
     author_email='srg.koshelev@pm.me',
-    url='https://github.com/srgkoshelev/heat_transfer',
-    packages=find_packages('heat_transfer'),
+    url='https://github.com/srgkoshelev/CryoToolBox',
+    packages=find_packages('CryoToolBox'),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
