@@ -1,4 +1,12 @@
 * Introduction
+#+begin_src python
+>>> import heat_transfer as ht
+>>> nitrogen = ht.ThermState('nitrogen', P=500*ht.ureg.kPa, T=300*ht.ureg.K)  # Create nitrogen fluid
+>>> nitrogen.Dmass  # Nitrogen mass density
+<Quantity(5.62019549, 'kilogram / meter ** 3')>
+>>> nitrogen.Dmass.to(ht.ureg.lb/ht.ureg.ft**3)  # Easy unit conversion
+<Quantity(0.350857343, 'pound / foot ** 3')>
+#+end_src
 =heat_transfer= is a Python package for simple heat transfer and hydraulics calculation using [[https://github.com/CoolProp/CoolProp][CoolProp]] back-end and [[https://github.com/hgrecco/pint][Pint]] for unit handling.
 
 Description of package's inner workings can be found [[https://github.com/srgkoshelev/heat_transfer/wiki][here]].
