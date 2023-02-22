@@ -7,7 +7,7 @@ setup(
     author='Sergey Koshelev',
     author_email='srg.koshelev@pm.me',
     url='https://github.com/srgkoshelev/CryoToolBox',
-    packages=find_packages('CryoToolBox'),
+    packages=['CryoToolBox'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
