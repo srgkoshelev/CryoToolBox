@@ -7,7 +7,7 @@ setup(
     author='Sergey Koshelev',
     author_email='srg.koshelev@pm.me',
     url='https://github.com/srgkoshelev/heat_transfer',
-    packages=find_packages(),
+    packages=find_packages('heat_transfer'),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
