@@ -7,6 +7,10 @@ Documentation for the package is located [[https://srgkoshelev.github.io/heat_tr
 *WARNING*: Current version is 0.1.0 with limited functionality. API hasn't stabilized and non-back-compatible changes should be expected.
 * Example
 * Installation
+#+begin_src sh
+  git clone git@github.com:srgkoshelev/heat_transfer.git
+  pip install ./heat_transfer
+#+end_src
 * License
 MIT License
 
