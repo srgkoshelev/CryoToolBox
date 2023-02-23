@@ -16,6 +16,8 @@ Documentation for the package is located [[https://srgkoshelev.github.io/CryoToo
 - *Prerequisites:*
   - Python 3
   - Git
+
+Run the following command in your command line (git shell):
 #+begin_src sh
   pip install git+https://github.com/srgkoshelev/CryoToolBox.git
 #+end_src
