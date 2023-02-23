@@ -1,10 +1,10 @@
 * Introduction
 #+begin_src python
->>> import heat_transfer as ht
->>> nitrogen = ht.ThermState('nitrogen', P=500*ht.ureg.kPa, T=300*ht.ureg.K)  # Create nitrogen fluid
+>>> import CryoToolBox as ctb
+>>> nitrogen = ctb.ThermState('nitrogen', P=500*ctb.ureg.kPa, T=300*ctb.ureg.K)  # Create nitrogen fluid
 >>> nitrogen.Dmass  # Nitrogen mass density
 <Quantity(5.62019549, 'kilogram / meter ** 3')>
->>> nitrogen.Dmass.to(ht.ureg.lb/ht.ureg.ft**3)  # Easy unit conversion
+>>> nitrogen.Dmass.to(ctb.ureg.lb/ctb.ureg.ft**3)  # Easy unit conversion
 <Quantity(0.350857343, 'pound / foot ** 3')>
 #+end_src
 =heat_transfer= is a Python package for simple heat transfer and hydraulics calculation using [[https://github.com/CoolProp/CoolProp][CoolProp]] back-end and [[https://github.com/hgrecco/pint][Pint]] for unit handling.
@@ -16,8 +16,7 @@ Documentation for the package is located [[https://srgkoshelev.github.io/heat_tr
 * Example
 * Installation
 #+begin_src sh
-  git clone git@github.com:srgkoshelev/heat_transfer.git
-  pip install ./heat_transfer
+  pip install git+https://github.com/srgkoshelev/CryoToolBox.git
 #+end_src
 * License
 MIT License
