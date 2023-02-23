@@ -1,7 +1,7 @@
 echo 'Generating docs'
-pdoc --html heat_transfer -o docs
-mv docs/heat_transfer/*.html docs
-rm -rv docs/heat_transfer
+python3 -m pdoc --html CryoToolBox -o docs
+mv docs/CryoToolBox/*.html docs
+rm -rv docs/CryoToolBox
 echo 'Docs generated'
 while true; do
     read -p 'Commit and upload the docs? [y/n]' yn

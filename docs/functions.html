@@ -3,21 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.8.1" />
-<title>heat_transfer.functions API documentation</title>
+<meta name="generator" content="pdoc 0.10.0" />
+<title>CryoToolBox.functions API documentation</title>
 <meta name="description" content="Helpful thermodynamic functions." />
-<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
-<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
-<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
 <style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
 </head>
 <body>
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>heat_transfer.functions</code></h1>
+<h1 class="title">Module <code>CryoToolBox.functions</code></h1>
 </header>
 <section id="section-intro">
 <p>Helpful thermodynamic functions.</p>
@@ -29,13 +31,14 @@
 &#34;&#34;&#34;
 
 from math import log, log10, pi
-from . import ureg, Q_
-from . import Air
-from . import P_NTP
+from .std_conditions import ureg, Q_, T_NTP, P_NTP
+from .constants import AIR
+from .cp_wrapper import ThermState
 from . import cga
 from . import logger
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
+from enum import Enum, auto
 
 E_TNT = Q_(&#39;4850 J/g&#39;)  # TNT equivalent Energy of Explosion (PNNL)
 z_1 = Q_(&#39;200 ft&#39;)  # Scaled distance for debris and missile damage (PNNL)
@@ -46,6 +49,12 @@ sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
 
 
+class NISTError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
 def to_scfma(M_dot_fluid, fluid):
     &#34;&#34;&#34;
     Convert mass flow rate into equivalent flow of air.
@@ -54,7 +63,7 @@ def to_scfma(M_dot_fluid, fluid):
 
     Parameters
     ----------
-    M_dot_fluid : Quantitiy {mass: 1, time: -1}
+    M_dot_fluid : Quantity {mass: 1, time: -1}
         mass flow rate
     fluid : ThermState
 
@@ -63,12 +72,12 @@ def to_scfma(M_dot_fluid, fluid):
     ThermState
         volumetric air flow rate
     &#34;&#34;&#34;
-    C_fluid = fluid.C_gas_constant
-    C_air = Air.C_gas_constant
+    C_fluid = fluid.C_gas_const
+    C_air = AIR.C_gas_const
 
     # Calculation
-    M_dot_air = M_dot_fluid * C_air / C_fluid * Air.MZT / fluid.MZT
-    Q_air = M_dot_air / Air.Dmass
+    M_dot_air = M_dot_fluid * C_air / C_fluid * AIR.MZT / fluid.MZT
+    Q_air = M_dot_air / AIR.Dmass
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air
 
@@ -88,17 +97,115 @@ def from_scfma(Q_air, fluid):
 
     Returns
     -------
-    Quantitiy {mass: 1, time: -1}
+    Quantity {mass: 1, time: -1}
         mass flow rate
     &#34;&#34;&#34;
-    C_fluid = fluid.C_gas_constant
-    C_air = Air.C_gas_constant
+    C_fluid = fluid.C_gas_const
+    C_air = AIR.C_gas_const
 
     # Calculation
-    M_dot_air = Q_air * Air.Dmass
-    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / Air.MZT
+    M_dot_air = Q_air * AIR.Dmass
+    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / AIR.MZT
     M_dot_fluid.ito(ureg.g/ureg.s)
     return M_dot_fluid
+
+
+def to_standard_flow(flow_rate, fluid):
+    &#39;&#39;&#39;
+    Converting volumetric flow at certain conditions or mass flow to
+    flow at NTP.
+    &#39;&#39;&#39;
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    if flow_rate.dimensionality == ureg(&#39;kg/s&#39;).dimensionality:
+        # mass flow, flow conditions are unnecessary
+        q_std = flow_rate / fluid_NTP.Dmass
+    elif flow_rate.dimensionality == ureg(&#39;m^3/s&#39;).dimensionality:
+        # volumetric flow given, converting to standard pressure and
+        # temperature
+        if fluid.Dmass != -float(&#39;Inf&#39;)*ureg.kg/ureg.m**3:
+            # By default ThermState is initialized with all fields == -inf
+            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
+        else:
+            logger.warning(&#39;&#39;&#39;Flow conditions for volumetric flow {:.3~}
+                           are not set. Assuming standard flow at NTP.
+                           &#39;&#39;&#39;.format(flow_rate))
+            q_std = flow_rate
+    else:
+        logger.error(&#39;&#39;&#39;Flow dimensionality is not supported: {:.3~}.
+                       &#39;&#39;&#39;.format(flow_rate.dimensionality))
+    q_std.ito(ureg.ft**3/ureg.min)
+    return q_std
+
+
+def to_mass_flow(Q_std, fluid):
+    &#34;&#34;&#34;
+    Calculate mass flow for given volumetric flow at standard conditions.
+    &#34;&#34;&#34;
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    m_dot = Q_std * fluid_NTP.Dmass
+    return m_dot.to(ureg.g/ureg.s)
+
+
+def m_max(fluid, A):
+    &#34;&#34;&#34;Calculate max isentropic flow at sonic condition
+    (9.46a, Fluid Mechanics, F. White, 2015)
+    &#34;&#34;&#34;
+    C = fluid.C_gas_const
+    P = fluid.P
+    m_max_ = C * A * P * fluid.MZT
+    return m_max_.to_base_units()
+
+
+def PRV_flow(A, Kd, fluid):
+    &#34;&#34;&#34;Calculate mass flow through the relief valve based on
+    BPVC VIII div. 1 UG-131 (e) (2).
+    &#34;&#34;&#34;
+    W_T = m_max(fluid, A)  # Theoretical flow
+    W_a = W_T * Kd  # Actual flow
+    return W_a.to(ureg.g/ureg.s)
+
+
+def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
+    &#34;&#34;&#34;Calculate required relief area for given flow as per
+    API 520 5.6.3/4
+
+    Parameters
+    ----------
+    m_dot : Quantity {mass:1, time:-1}
+        mass flow rate
+    fluid : ThermState at relief conditions
+    P_back : ureg.Quantity {length: -1, mass: 1, time: -2}
+        backpressure
+    K_d : discharge coefficient
+        0.975 - when PRV installed with/without a rupture disk
+        0.62 - for rupture disc only (see 5.11.1.1.2)
+    K_c : capacity correction factor due to backpressure
+        applies to balanced bellows valves only
+    K_c : combination correction factor
+        1 - for no rupture disc installed in combination
+        0.9 - for rupture disc installed in combination
+    &#34;&#34;&#34;
+    W = m_dot.m_as(ureg.lb/ureg.hr)
+    P_1 = fluid.P.m_as(ureg.psi)
+    P_2 = P_back.m_as(ureg.psi)
+    k = fluid.gamma
+    T = fluid.T.m_as(ureg.degR)
+    Z = fluid.compressibility_factor
+    M = fluid.M
+    P_cf = P_1 * (2/(k+1))**(k/(k-1))
+    if P_2 &lt;= P_cf:
+        critical = True  # For future verbose use
+        C = fluid.C.m_as(ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5)
+        A = W / (C*K_d*P_1*K_b*K_c) * (T*Z/M)**0.5
+    else:
+        critical = False
+        r = P_2 / P_1
+        F_2_brack = (1-r**((k-1)/k)) / (1-r)
+        F_2 = (k/(k-1) * r**(2/k) * F_2_brack)**0.5
+        A = W / (735*F_2*K_d*K_c) * (T*Z/(M*P_1*(P_1-P_2)))**0.5
+    return A * ureg.inch**2
 
 
 def theta_heat(fluid, step=0.01):
@@ -106,28 +213,26 @@ def theta_heat(fluid, step=0.01):
     return cga.theta(fluid, step)
 
 
-def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
-           F1_2=1, eps_baffle=0.02, N_baffles=5):
+def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={&#39;N&#39;: 0, &#39;eps&#39;: 0.02}):
     &#34;&#34;&#34;
     Calculate radiative heat load including reduction due to baffles.
     Based on Kaganer &#34;Thermal insulation in cryogenic engineering&#34;, p. 42.
 
     Parameters
     ----------
-    eps_cold : float
-        emissivity of the cold surface
-    eps_hot : float
-        emissivity of the hot surface
-    T_hot : Quality {temperature: 1}
-        temperature of the hot surface
-    T_cold : Quality {temperature: 1}
-        temperature of the cold surface
+    eps_1 : float
+        emissivity of the first surface
+    eps_2 : float
+        emissivity of the second surface
+    T_1 : Quantity {temperature: 1}
+        temperature of the first surface
+    T_2 : Quantity {temperature: 1}
+        temperature of the second surface
     F1_2 : float
         F1_2 = F_cold/F_hot
-    eps_baffle : float
-        emissivity of the baffle, assumed to be same on both sides
-    N_baffles : int
-        number of baffles
+    baffles : dict
+        N - number of baffles
+        eps - emissivity of the baffle, assumed to be same on both sides
 
     Returns
     -------
@@ -137,17 +242,69 @@ def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
             eta : effectiveness of the baffles
     &#34;&#34;&#34;
     # TODO This function will be refactored
-    Eps_mut = 1/(1/eps_cold + F1_2*(1/eps_hot-1))  # Mutual emissivity
-    q0 = Eps_mut*sigma*(T_hot**4 - T_cold**4)*F1_2
-    Eps_baffle_mut = eps_baffle/(2-eps_baffle)
-    eta = (1+N_baffles*Eps_mut/Eps_baffle_mut)**(-1)
+    N_baffles = baffles[&#39;N&#39;]
+    eps_baffle = baffles[&#39;eps&#39;]
+
+    eps_mut = 1/(1/eps_1 + F1_2*(1/eps_2-1))  # Mutual emissivity
+    T_1.ito(ureg.K)
+    T_2.ito(ureg.K)
+    q0 = eps_mut*sigma*(T_2**4 - T_1**4)*F1_2
+    eps_baffle_mut = eps_baffle/(2-eps_baffle)
+    eta = (1+N_baffles*eps_mut/eps_baffle_mut)**(-1)
     q_baffle = eta*q0
-    return {&#39;q0&#39;: q0.to(ureg.W/ureg.m**2),
-            &#39;q_baffle&#39;: q_baffle.to(ureg.W/ureg.m**2),
-            &#39;eta&#39;: eta}
+    return q_baffle.to(ureg.W/ureg.m**2)
 
 
-def Re(fluid, m_dot, D):
+def conduction_1D(A_cross, L, k, dT):
+    &#34;&#34;&#34;Calculate 1-dimensional heat flow rate.
+
+    Parameters
+    ----------
+    A_cross : Quantity {length: 2}
+        cross-sectional area
+    L : Quantity {length: 1}
+        length
+    k : Quantity {length: 1, mass: 1, temperature: -1, time: -3}
+        material thermal conductivity
+    dT : Quantity {temperature: 1}
+        temperature difference
+
+    Returns
+    -------
+    Quantity {length: 2, mass: 1, time: -3}
+        heat flow rate
+    &#34;&#34;&#34;
+
+    q = k * A_cross / L * dT
+    return q.to(ureg.W)
+
+
+def conduction_cyl(D_i, D_o, L, k, dT):
+    &#34;&#34;&#34;Calculate heat flow through cylindrical wall
+
+    Parameters
+    ----------
+    D_i : Quantity {length: 2}
+        inner diameter
+    D_o : Quantity {length: 2}
+        outer diameter
+    L : Quantity {length: 1}
+        length
+    k : Quantity {length: 1, mass: 1, temperature: -1, time: -3}
+        material thermal conductivity
+    dT : Quantity {temperature: 1}
+        temperature difference, T_i - T_o
+
+    Returns
+    -------
+    Quantity {length: 2, mass: 1, time: -3}
+        heat flow rate
+    &#34;&#34;&#34;
+    q = 2 * pi * L * k * dT / log(D_o/D_i)
+    return q.to(ureg.W)
+
+
+def Re(fluid, m_dot, D_H, A_cross):
     &#34;&#34;&#34;
     Calculate Reynolds number.
 
@@ -155,16 +312,18 @@ def Re(fluid, m_dot, D):
     ----------
     fluid : ThermState object describing thermodynamic state (fluid, T, P)
     m_dot : mass flow
-    D : characteristic length/hydraulic diameter
+    D_H : hydraulic diameter of a pipe
+    A_cross : cross-sectional area of a pipe
 
     Returns
     -------
     Reynolds number, dimensionless
     &#34;&#34;&#34;
-    A = pi * D**2 / 4
-    w_flow = m_dot / (fluid.Dmass*A)
-    Re_ = w_flow * D * fluid.Dmass / fluid.viscosity
-    return Re_.to_base_units()
+    rho = fluid.Dmass
+    v = m_dot / (rho*A_cross)
+    mu = fluid.viscosity
+    Re_ = v * D_H * rho / mu
+    return float(Re_)
 
 
 def Pr(fluid):
@@ -199,7 +358,7 @@ def Gr(fluid, T_surf, L_surf):
     nu_fluid = fluid.viscosity/fluid.Dmass  # kinematic viscosity
     beta_exp = fluid.isobaric_expansion_coefficient
     Gr_ = ureg.g_0 * L_surf**3 * beta_exp * abs(T_surf-fluid.T) / nu_fluid**2
-    return Gr_.to(ureg.dimensionless)
+    return float(Gr_)
 
 
 def Ra(fluid, T_surf, L_surf):
@@ -219,46 +378,131 @@ def Ra(fluid, T_surf, L_surf):
     return Gr(fluid, T_surf, L_surf)*fluid.Prandtl
 
 
-def Nu_cyl_hor(fluid, T_cyl, D_cyl):
+def Nu_blend(Nu_lam, Nu_turb, m):
+    &#34;&#34;&#34;Calculate Nu number using blending equation of Churchill and Usagi.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.32).
     &#34;&#34;&#34;
-    Calculate Nusselt number for vertical cylinder.
+    return (Nu_lam**m + Nu_turb**m)**(1/m)
+
+
+def C_t_V(Pr_):
+    &#34;&#34;&#34;Calculate turbulent coefficient C_t for vertical wall.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.24).
+    &#34;&#34;&#34;
+    return (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42
+
+
+def C_l(Pr_):
+    &#34;&#34;&#34;Calculate thin-layer coefficient C_l.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.13).
+    &#34;&#34;&#34;
+    return 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)
+
+
+def Nu_T_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate thin-layer Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33a).
+    &#34;&#34;&#34;
+    return C_l(Pr_) * Ra_**0.25
+
+
+def Nu_l_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate laminar Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33b).
+    &#34;&#34;&#34;
+    return 2 / log(1+2/Nu_T_vplate(Pr_, Ra_))
+
+
+def Nu_t_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate turbulent Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33c).
+    &#34;&#34;&#34;
+    return C_t_V(Pr_) * Ra_**(1/3) / (1+1.4e9*Pr_/Ra_)
+
+
+def Nu_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate Nusselt number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33d).
+    &#34;&#34;&#34;
+    Nu_lam = Nu_l_vplate(Pr_, Ra_)
+    Nu_turb = Nu_t_vplate(Pr_, Ra_)
+    return Nu_blend(Nu_lam, Nu_turb, m=6)
+
+
+def Nu_T_hcyl(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate thin-layer Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45a).
+    &#34;&#34;&#34;
+    return 0.772 * Nu_T_vplate(Pr_, Ra_)
+
+
+def Nu_l_hcyl(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate laminar Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45b).
+    &#34;&#34;&#34;
+    if Ra_ &gt;= 1e-4:
+        f = 0.8
+    else:
+        f = 1 - 0.13/Nu_T_hcyl(Pr_, Ra_)**0.16
+    return 2*f / log(1+2*f/Nu_T_hcyl(Pr_, Ra_))
+
+
+def Nu_t_hcyl(Ra_, C_t_bar):
+    &#34;&#34;&#34;Calculate turbulent Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45c).
+    &#34;&#34;&#34;
+    return C_t_bar * Ra_**(1/3)
+
+
+def C_t_bar_cyl(Pr_):
+    &#34;&#34;&#34;Interpolate value of the turbulent coefficient C_t for isothermal
+    horizontal cylinder (C/L=1).
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) Table 4.2.
+    &#34;&#34;&#34;
+    # Using 0.71 value for 0.7..0.71 Pr rang
+    Pr_values = (0.7, 0.71, 6.0, 100, 2000)
+    C_t_bar_values = (0.103, 0.103, 0.109, 0.097, 0.088)
+    C_t_bar_interp = interp1d(Pr_values, C_t_bar_values)
+    return C_t_bar_interp(Pr_)
+
+
+def Nu_hcyl(Pr_, Ra_, C_t_bar):
+    &#34;&#34;&#34;Calculate Nusselt number for isothermal horizontal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
-    Cho (HHT).
+    Cho (HHT) (4.45d)
 
     Parameters
     ----------
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    T_cyl : surface temperature
-    D_cyl : cylinder diameter
 
     Returns
     -------
     Nusselt number, dimensionless
     &#34;&#34;&#34;
-    Pr_ = fluid.Prandtl
-    Ra_ = Ra(fluid, T_cyl, D_cyl)
-    C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
-    Nu_T = 0.772*C_l*Ra_**(1/4)  # HHT (4.45)
-    f = 1-0.13/Nu_T**0.16
-    Nu_l = 2*f/log(1+2*f*Nu_T)
-    C_t = 0.0002*log(Pr_)**3 - 0.0027*log(Pr_)**2 + 0.0061*log(Pr_) + 0.1054
-    Nu_t = 0.103*Ra_**(1/3)
-    Nu_ = (Nu_l**10 + Nu_t**10)**(1/10)
-    return Nu_.to(ureg.dimensionless)
+    Nu_l = Nu_l_hcyl(Pr_, Ra_)
+    Nu_t = Nu_t_hcyl(Ra_, C_t_bar)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=10)
+    return float(Nu_)
 
 
-def Nu_cyl_vert(fluid, T_cyl, D_cyl, L_cyl):
+def Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl):
+    &#34;&#34;&#34;Calculate laminar Nusselt number for vertical cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.44).
     &#34;&#34;&#34;
-    Calculate Nusselt number for vertical cylinder.
+    zeta = 1.8 * L_cyl/D_cyl / Nu_T_vplate(Pr_, Ra_)
+    return zeta / log(1+zeta) * Nu_l_vplate(Pr_, Ra_)
+
+
+def Nu_vcyl(Pr_, Ra_, D_cyl, L_cyl):
+    &#34;&#34;&#34; Calculate Nusselt number for vertical isothermal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
     Cho (HHT).
 
     Parameters
     ----------
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    T_cyl : surface temperature
+    Pr_ : Prandtl number
+    Ra_ : Rayleigh number
     D_cyl : cylinder diameter
     L_cyl : cylinder length
 
@@ -266,17 +510,10 @@ def Nu_cyl_vert(fluid, T_cyl, D_cyl, L_cyl):
     -------
     Nusselt number, dimensionless
     &#34;&#34;&#34;
-    Pr_ = fluid.Prandtl
-    Ra_ = Ra(fluid, T_cyl, D_cyl)
-    C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
-    C_t_vert = (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42  # HHT (4.24)
-    Nu_T_plate = C_l * Ra_**0.25
-    Nu_l_plate = 2 / log(1+2/Nu_T_plate)  # HHT (4.33)
-    zeta = 1.8 * L_cyl / (D_cyl*Nu_T_plate)   # HHT (4.44)
-    Nu_l = zeta / (log(1+zeta)*Nu_l_plate)
-    Nu_t = C_t_vert*Ra_**(1/3)/(1+1.4e9*Pr_/Ra_)
-    Nu_ = (Nu_l**6 + Nu_t**6)**(1/6)
-    return Nu_.to(ureg.dimensionless)
+    Nu_l = Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl)
+    Nu_t = Nu_t_vplate(Pr_, Ra_)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=6)
+    return float(Nu_)
 
 
 def heat_trans_coef(fluid, Nu, L_surf):
@@ -485,6 +722,27 @@ def _nist_pow_fit(T, coefs):
     return y
 
 
+def _nist_Cu_log_fit(T, coefs):
+    &#34;&#34;&#34;
+    Calculate NIST curve fit for copper thermal conductivity for
+    given coefficients.
+    https://trc.nist.gov/cryogenics/materials/materialproperties.htm
+
+    Parameters
+    ----------
+    T : temperature, K
+    coefs : coefficients from NIST cryo properties database
+
+    Returns
+    -------
+    thermal property (e.g. thermal conductivity)
+    &#34;&#34;&#34;
+    a, b, c, d, e, f, g, h, i = coefs
+    y = (a + c*T**0.5 + e*T + g*T**1.5 + i*T**2) / \
+        (1 + b*T**0.5 + d*T + f*T**1.5 + h*T**2)
+    return 10**y
+
+
 def _nist_quad(T1, T2, fun, coefs):
     &#34;&#34;&#34;
     Calculate average value of the property for given temperature range.
@@ -502,7 +760,7 @@ def _nist_quad(T1, T2, fun, coefs):
     return quad(fun, T1, T2, args=coefs)[0] / (T2-T1)
 
 
-def nist_property(material, prop, T1, T2=None):
+def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
     &#34;&#34;&#34;
     Calculate specific heat capacity using NIST properties database.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
@@ -517,85 +775,164 @@ def nist_property(material, prop, T1, T2=None):
     -------
     specific heat capacity
     &#34;&#34;&#34;
-    coefs = NIST_DATA[material][prop][&#39;coefs&#39;]
-    fun = NIST_DATA[material][prop][&#39;fun&#39;]
-    unit = NIST_DATA[material][prop][&#39;unit&#39;]
-    eq_range = NIST_DATA[material][prop][&#39;range&#39;]
+    if material == Material.OFHC:
+        if RRR_OFHC is None:
+            logger.warning(&#39;RRR for OFHC is not defined. Using RRR=100.&#39;)
+            RRR_OFHC = 100
+        try:
+            coefs = _NIST_DATA[material][prop][&#39;coefs&#39;+str(RRR_OFHC)]
+        except KeyError:
+            raise NISTError(f&#39;No data for RRR {RRR_OFHC}.&#39;
+                            &#39;Use RRR 50, 100, 150, 300 or 500&#39;)
+    else:
+        coefs = _NIST_DATA[material][prop][&#39;coefs&#39;]
+    fun = _NIST_DATA[material][prop][&#39;fun&#39;]
+    unit = _NIST_DATA[material][prop][&#39;unit&#39;]
+    eq_range = _NIST_DATA[material][prop][&#39;range&#39;]
+
     T1 = T1.to(ureg.K).magnitude
-    if prop == &#39;LE&#39;:
-        Tlow = NIST_DATA[material][prop][&#39;Tlow&#39;]
+    if prop == Property.LE:
+        Tlow = _NIST_DATA[material][prop][&#39;Tlow&#39;]
         if T1 &lt; Tlow:
-            f = NIST_DATA[material][prop][&#39;f&#39;] * unit
+            f = _NIST_DATA[material][prop][&#39;f&#39;]
             return f * unit
     if T1 &lt; eq_range[0] or T1 &gt; eq_range[1]:
         raise ValueError(f&#39;Temperature is out of bounds: {T1} for&#39;
                          f&#39; {eq_range[0]}-{eq_range[1]}&#39;
                          &#39;limits.&#39;)
     if T2 is None:
-        result = fun(T1, coefs)
+        value = fun(T1, coefs)
     else:
         T2 = T2.to(ureg.K).magnitude
-        result = _nist_quad(T1, T2, fun, coefs)
-    return result * unit
+        if prop == Property.LE:
+            value_1 = nist_property(material, prop, T1*ureg.K)
+            value_2 = nist_property(material, prop, T2*ureg.K)
+            value = value_2 - value_1
+            return value
+        else:
+            value = _nist_quad(T1, T2, fun, coefs)
+    return value * unit
 
 
-# Temporary storage for NIST data
-# Materials:
-# 304SS - AISI 304 Stainless Steel
-# G10 - G10
-# OFHC - Oxygen-free High thermal conductivity copper
-#
-# Properties
-# TC - thermal conductivity, W/(m*K)
-# SH - specific heat, W/(m*K)
-# EC - expansion coefficient, 1/K
-# LE - linear expansion
-NIST_DATA = {
-    # TODO Implement different TC, etc functions for the same material
-    &#39;304SS&#39;:
+class Material(Enum):
+    &#34;&#34;&#34;Available materials with low temperature with fits NIST.&#34;&#34;&#34;
+    SS304 = auto()  # AISI 304 Stainless Steel
+    AL6061 = auto()  # 6061-T6 Aluminum (UNS A96061)
+    G10 = auto()  # G10
+    PTFE = auto()  # PTFE/Teflon
+    OFHC = auto()  # Oxygen-free High thermal conductivity copper
+
+
+class Property(Enum):
+    &#34;&#34;&#34;Available low temperature properties from NIST.&#34;&#34;&#34;
+    TC = auto()  # TC - thermal conductivity, W/(m*K)
+    SH = auto()  # SH - specific heat, J/(kg*K)
+    EC = auto()  # EC - expansion coefficient, 1/K
+    LE = auto()  # LE - linear expansion, dimensionless
+
+
+_NIST_DATA = {
+    Material.SS304:
     {
-        &#39;TC&#39;: {&#39;coefs&#39;: [-1.4087, 1.3982, 0.2543, -0.6260, 0.2334, 0.4256,
-                         -0.4658, 0.1650, -0.0199],
-               &#39;range&#39;: (1, 300),
-               &#39;fun&#39;: _nist_log_fit,
-               &#39;unit&#39;: ureg.W/(ureg.m*ureg.K)},
-        &#39;LE&#39;: {&#39;coefs&#39;: [-2.9554E2, -3.9811E-1, 9.2683E-3, -2.0261E-5,
-                         1.7127E-8],
-               &#39;range&#39;: (4, 300),
-               &#39;fun&#39;: _nist_pow_fit,
-               &#39;Tlow&#39;: 23,
-               &#39;f&#39;: -300.04,
-               &#39;unit&#39;: 1e-5*ureg.m/ureg.m},
+        Property.TC: {&#39;coefs&#39;: [-1.4087, 1.3982, 0.2543, -0.6260, 0.2334,
+                                0.4256, -0.4658, 0.1650, -0.0199],
+                      &#39;range&#39;: (1, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.W/(ureg.m*ureg.K)},
+        Property.LE: {&#39;coefs&#39;: [-2.9554E2, -3.9811E-1, 9.2683E-3,
+                                -2.0261E-5, 1.7127E-8],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_pow_fit,
+                      &#39;Tlow&#39;: 23,
+                      &#39;f&#39;: -300.04,
+                      &#39;unit&#39;: 1e-5*ureg.m/ureg.m},
+        Property.SH: {&#39;coefs&#39;: [22.0061, -127.5528, 303.647, -381.0098,
+                                274.0328, -112.9212, 24.7593, -2.239153, 0],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.J/(ureg.kg*ureg.K)}
     },
-    &#39;G10&#39;:
+    Material.AL6061:
     {
-        &#39;TC&#39;: {&#39;coefs&#39;: [-4.1236, 13.788, -26.068, 26.272, -14.663, 4.4954,
-                         -0.6905, 0.0397, 0],
-               &#39;range&#39;: (10, 300),
-               &#39;fun&#39;: _nist_log_fit,
-               &#39;unit&#39;: ureg.W/(ureg.m*ureg.K)},
+        Property.TC: {&#39;coefs&#39;: [0.07918, 1.0957, -0.07277, 0.08084, 0.02803,
+                                -0.09464, 0.04179, -0.00571, 0],
+                      &#39;range&#39;: (1, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.W/(ureg.m*ureg.K)},
+        Property.SH: {&#39;coefs&#39;: [46.6467, -314.292, 866.662, -1298.3, 1162.27,
+                                -637.795, 210.351, -38.3094, 2.96344],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.J/(ureg.kg*ureg.K)}
     },
-    &#39;OFHC&#39;:
+    Material.G10:
     {
-        &#39;EC&#39;: {&#39;coefs&#39;: [-17.9081289, 67.131914, -118.809316, 109.9845997,
-                         -53.8696089, 13.30247491, -1.30843441],
-               &#39;range&#39;: (4, 300),
-               &#39;fun&#39;: _nist_log_fit,
-               &#39;unit&#39;: 1e-6/ureg.K},
+        Property.TC: {&#39;coefs&#39;: [-4.1236, 13.788, -26.068, 26.272, -14.663,
+                                4.4954, -0.6905, 0.0397, 0],
+                      &#39;range&#39;: (10, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.W/(ureg.m*ureg.K)},
+        Property.SH: {&#39;coefs&#39;: [-2.4083, 7.6006, -8.2982, 7.3301, -4.2386,
+                                1.4294, -0.24396, 0.015236, 0],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.J/(ureg.kg*ureg.K)}
+    },
+    Material.PTFE:
+    {
+        Property.TC: {&#39;coefs&#39;: [2.7380, -30.677, 89.430, -136.99, 124.69,
+                                -69.556, 23.320, -4.3135, 0.33829],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.W/(ureg.m*ureg.K)},
+        Property.SH: {&#39;coefs&#39;: [31.88256, -166.51949, 352.01879, -393.44232,
+                                259.98072, -104.61429, 24.99276, -3.20792,
+                                0.16503],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: ureg.J/(ureg.kg*ureg.K)},
+        Property.LE: {&#39;coefs&#39;: [-2.125E3, -8.201E-1, 6.161E-2,
+                                -3.171E-4, 6.850E-7],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_pow_fit,
+                      &#39;Tlow&#39;: 0,  # NA
+                      &#39;f&#39;: None,  # NA
+                      &#39;unit&#39;: 1e-5*ureg.m/ureg.m},
+    },
+    Material.OFHC:
+    {
+        Property.EC: {&#39;coefs&#39;: [-17.9081289, 67.131914, -118.809316,
+                                109.9845997, -53.8696089, 13.30247491,
+                                -1.30843441],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_log_fit,
+                      &#39;unit&#39;: 1e-6/ureg.K},
+        Property.TC: {&#39;coefs50&#39;: [1.8743, -0.41538, -0.6018, 0.13294,
+                                  0.26426, -0.0219, -0.051276, 0.0014871,
+                                  0.003723],
+                      &#39;coefs100&#39;: [2.2154, -0.47461, -0.88068, 0.13871,
+                                   0.29505, -0.02043, -0.04831, 0.001281,
+                                   0.003207],
+                      &#39;coefs150&#39;: [2.3797, -0.4918, -0.98615, 0.13942,
+                                   0.30475, -0.019713, -0.046897, 0.0011969,
+                                   0.0029988],
+                      &#39;coefs300&#39;: [1.357, 0.3981, 2.669, -0.1346, -0.6683,
+                                   0.01342, 0.05773, 0.0002147, 0],
+                      &#39;coefs500&#39;: [2.8075, -0.54074, -1.2777, 0.15362,
+                                   0.36444, -0.02105, -0.051727, 0.0012226,
+                                   0.0030964],
+                      &#39;range&#39;: (4, 300),
+                      &#39;fun&#39;: _nist_Cu_log_fit,
+                      &#39;unit&#39;: ureg.W/(ureg.m*ureg.K)},
     },
 }
 
 
-
-
-
-
-
-def stored_energy(Piping):
-    &#34;&#34;&#34;Calculate stored energy in piping using Baker equation.&#34;&#34;&#34;
-    P = Piping.fluid.P
-    V = Piping.volume
-    k = Piping.fluid.gamma
+def stored_energy(fluid, volume):
+    &#34;&#34;&#34;Calculate stored energy in volume using Baker equation.&#34;&#34;&#34;
+    P = fluid.P
+    V = volume
+    k = fluid.gamma
     E_stored = P * V / (k-1) * (1-(P_NTP/P)**((k-1)/k))
     return E_stored.to(ureg.lbf*ureg.ft)
 
@@ -604,9 +941,9 @@ def blast_radius(E_stored):
     &#34;&#34;&#34;Calculate maximum distance for debris, eardrum rupture and
     lung damage based on PNNL paper.&#34;&#34;&#34;
     W_TNT = E_stored / E_TNT  # Energy equivalent in TNT
-    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**0.5
-    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**0.5
-    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**0.5
+    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
+    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
+    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
     return (D_1, D_2, D_3)</code></pre>
 </details>
 </section>
@@ -617,7 +954,75 @@ def blast_radius(E_stored):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="heat_transfer.functions.Bi"><code class="name flex">
+<dt id="CryoToolBox.functions.A_relief_API"><code class="name flex">
+<span>def <span class="ident">A_relief_API</span></span>(<span>m_dot, fluid, *, P_back=&lt;Quantity(14.696, &#x27;pound_force_per_square_inch&#x27;)&gt;, K_d=0.975, K_b=1, K_c=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate required relief area for given flow as per
+API 520 5.6.3/4</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>m_dot</code></strong> :&ensp;<code>Quantity {mass:1, time:-1}</code></dt>
+<dd>mass flow rate</dd>
+<dt><strong><code>fluid</code></strong> :&ensp;<code>ThermState at relief conditions</code></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>P_back</code></strong> :&ensp;<code>ureg.Quantity {length: -1, mass: 1, time: -2}</code></dt>
+<dd>backpressure</dd>
+<dt><strong><code>K_d</code></strong> :&ensp;<code>discharge coefficient</code></dt>
+<dd>0.975 - when PRV installed with/without a rupture disk
+0.62 - for rupture disc only (see 5.11.1.1.2)</dd>
+<dt><strong><code>K_c</code></strong> :&ensp;<code>capacity correction factor due to backpressure</code></dt>
+<dd>applies to balanced bellows valves only</dd>
+<dt><strong><code>K_c</code></strong> :&ensp;<code>combination correction factor</code></dt>
+<dd>1 - for no rupture disc installed in combination
+0.9 - for rupture disc installed in combination</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
+    &#34;&#34;&#34;Calculate required relief area for given flow as per
+    API 520 5.6.3/4
+
+    Parameters
+    ----------
+    m_dot : Quantity {mass:1, time:-1}
+        mass flow rate
+    fluid : ThermState at relief conditions
+    P_back : ureg.Quantity {length: -1, mass: 1, time: -2}
+        backpressure
+    K_d : discharge coefficient
+        0.975 - when PRV installed with/without a rupture disk
+        0.62 - for rupture disc only (see 5.11.1.1.2)
+    K_c : capacity correction factor due to backpressure
+        applies to balanced bellows valves only
+    K_c : combination correction factor
+        1 - for no rupture disc installed in combination
+        0.9 - for rupture disc installed in combination
+    &#34;&#34;&#34;
+    W = m_dot.m_as(ureg.lb/ureg.hr)
+    P_1 = fluid.P.m_as(ureg.psi)
+    P_2 = P_back.m_as(ureg.psi)
+    k = fluid.gamma
+    T = fluid.T.m_as(ureg.degR)
+    Z = fluid.compressibility_factor
+    M = fluid.M
+    P_cf = P_1 * (2/(k+1))**(k/(k-1))
+    if P_2 &lt;= P_cf:
+        critical = True  # For future verbose use
+        C = fluid.C.m_as(ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5)
+        A = W / (C*K_d*P_1*K_b*K_c) * (T*Z/M)**0.5
+    else:
+        critical = False
+        r = P_2 / P_1
+        F_2_brack = (1-r**((k-1)/k)) / (1-r)
+        F_2 = (k/(k-1) * r**(2/k) * F_2_brack)**0.5
+        A = W / (735*F_2*K_d*K_c) * (T*Z/(M*P_1*(P_1-P_2)))**0.5
+    return A * ureg.inch**2</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Bi"><code class="name flex">
 <span>def <span class="ident">Bi</span></span>(<span>k, L_c, h)</span>
 </code></dt>
 <dd>
@@ -661,7 +1066,7 @@ A_s : surface area of the solid</dd>
     return Bi_.to_base_units()</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.C1_cyl"><code class="name flex">
+<dt id="CryoToolBox.functions.C1_cyl"><code class="name flex">
 <span>def <span class="ident">C1_cyl</span></span>(<span>Bi_)</span>
 </code></dt>
 <dd>
@@ -701,7 +1106,64 @@ A_s : surface area of the solid</dd>
     return C1</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.Fo_cyl"><code class="name flex">
+<dt id="CryoToolBox.functions.C_l"><code class="name flex">
+<span>def <span class="ident">C_l</span></span>(<span>Pr_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate thin-layer coefficient C_l.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.13).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def C_l(Pr_):
+    &#34;&#34;&#34;Calculate thin-layer coefficient C_l.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.13).
+    &#34;&#34;&#34;
+    return 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.C_t_V"><code class="name flex">
+<span>def <span class="ident">C_t_V</span></span>(<span>Pr_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate turbulent coefficient C_t for vertical wall.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.24).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def C_t_V(Pr_):
+    &#34;&#34;&#34;Calculate turbulent coefficient C_t for vertical wall.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.24).
+    &#34;&#34;&#34;
+    return (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.C_t_bar_cyl"><code class="name flex">
+<span>def <span class="ident">C_t_bar_cyl</span></span>(<span>Pr_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Interpolate value of the turbulent coefficient C_t for isothermal
+horizontal cylinder (C/L=1).
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) Table 4.2.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def C_t_bar_cyl(Pr_):
+    &#34;&#34;&#34;Interpolate value of the turbulent coefficient C_t for isothermal
+    horizontal cylinder (C/L=1).
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) Table 4.2.
+    &#34;&#34;&#34;
+    # Using 0.71 value for 0.7..0.71 Pr rang
+    Pr_values = (0.7, 0.71, 6.0, 100, 2000)
+    C_t_bar_values = (0.103, 0.103, 0.109, 0.097, 0.088)
+    C_t_bar_interp = interp1d(Pr_values, C_t_bar_values)
+    return C_t_bar_interp(Pr_)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Fo_cyl"><code class="name flex">
 <span>def <span class="ident">Fo_cyl</span></span>(<span>theta, Bi_)</span>
 </code></dt>
 <dd>
@@ -743,7 +1205,7 @@ Approximate solution is applicable when the solid has uniform temperature.</p>
     return Q_(Fo_, ureg.dimensionless)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.Gr"><code class="name flex">
+<dt id="CryoToolBox.functions.Gr"><code class="name flex">
 <span>def <span class="ident">Gr</span></span>(<span>fluid, T_surf, L_surf)</span>
 </code></dt>
 <dd>
@@ -783,26 +1245,69 @@ Approximate solution is applicable when the solid has uniform temperature.</p>
     nu_fluid = fluid.viscosity/fluid.Dmass  # kinematic viscosity
     beta_exp = fluid.isobaric_expansion_coefficient
     Gr_ = ureg.g_0 * L_surf**3 * beta_exp * abs(T_surf-fluid.T) / nu_fluid**2
-    return Gr_.to(ureg.dimensionless)</code></pre>
+    return float(Gr_)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.Nu_cyl_hor"><code class="name flex">
-<span>def <span class="ident">Nu_cyl_hor</span></span>(<span>fluid, T_cyl, D_cyl)</span>
+<dt id="CryoToolBox.functions.Nu_T_hcyl"><code class="name flex">
+<span>def <span class="ident">Nu_T_hcyl</span></span>(<span>Pr_, Ra_)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate Nusselt number for vertical cylinder.
+<div class="desc"><p>Calculate thin-layer Nusselt number for isothermal horizontal cylinder.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45a).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_T_hcyl(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate thin-layer Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45a).
+    &#34;&#34;&#34;
+    return 0.772 * Nu_T_vplate(Pr_, Ra_)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_T_vplate"><code class="name flex">
+<span>def <span class="ident">Nu_T_vplate</span></span>(<span>Pr_, Ra_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate thin-layer Nu number for a vertical isothermal plate.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33a).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_T_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate thin-layer Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33a).
+    &#34;&#34;&#34;
+    return C_l(Pr_) * Ra_**0.25</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_blend"><code class="name flex">
+<span>def <span class="ident">Nu_blend</span></span>(<span>Nu_lam, Nu_turb, m)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate Nu number using blending equation of Churchill and Usagi.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.32).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_blend(Nu_lam, Nu_turb, m):
+    &#34;&#34;&#34;Calculate Nu number using blending equation of Churchill and Usagi.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.32).
+    &#34;&#34;&#34;
+    return (Nu_lam**m + Nu_turb**m)**(1/m)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_hcyl"><code class="name flex">
+<span>def <span class="ident">Nu_hcyl</span></span>(<span>Pr_, Ra_, C_t_bar)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate Nusselt number for isothermal horizontal cylinder.
 Only natural convection currently supported.
 Based on Handbook of heat transfer by Rohsenow, Hartnet,
-Cho (HHT).</p>
+Cho (HHT) (4.45d)</p>
 <h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>fluid</code></strong> :&ensp;<code>ThermState object describing thermodynamic state (fluid, T, P)</code></dt>
-<dd>&nbsp;</dd>
-<dt><strong><code>T_cyl</code></strong> :&ensp;<code>surface temperature</code></dt>
-<dd>&nbsp;</dd>
-<dt><strong><code>D_cyl</code></strong> :&ensp;<code>cylinder diameter</code></dt>
-<dd>&nbsp;</dd>
-</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>Nusselt number, dimensionless</code></dt>
@@ -812,48 +1317,128 @@ Cho (HHT).</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def Nu_cyl_hor(fluid, T_cyl, D_cyl):
-    &#34;&#34;&#34;
-    Calculate Nusselt number for vertical cylinder.
+<pre><code class="python">def Nu_hcyl(Pr_, Ra_, C_t_bar):
+    &#34;&#34;&#34;Calculate Nusselt number for isothermal horizontal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
-    Cho (HHT).
+    Cho (HHT) (4.45d)
 
     Parameters
     ----------
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    T_cyl : surface temperature
-    D_cyl : cylinder diameter
 
     Returns
     -------
     Nusselt number, dimensionless
     &#34;&#34;&#34;
-    Pr_ = fluid.Prandtl
-    Ra_ = Ra(fluid, T_cyl, D_cyl)
-    C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
-    Nu_T = 0.772*C_l*Ra_**(1/4)  # HHT (4.45)
-    f = 1-0.13/Nu_T**0.16
-    Nu_l = 2*f/log(1+2*f*Nu_T)
-    C_t = 0.0002*log(Pr_)**3 - 0.0027*log(Pr_)**2 + 0.0061*log(Pr_) + 0.1054
-    Nu_t = 0.103*Ra_**(1/3)
-    Nu_ = (Nu_l**10 + Nu_t**10)**(1/10)
-    return Nu_.to(ureg.dimensionless)</code></pre>
+    Nu_l = Nu_l_hcyl(Pr_, Ra_)
+    Nu_t = Nu_t_hcyl(Ra_, C_t_bar)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=10)
+    return float(Nu_)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.Nu_cyl_vert"><code class="name flex">
-<span>def <span class="ident">Nu_cyl_vert</span></span>(<span>fluid, T_cyl, D_cyl, L_cyl)</span>
+<dt id="CryoToolBox.functions.Nu_l_hcyl"><code class="name flex">
+<span>def <span class="ident">Nu_l_hcyl</span></span>(<span>Pr_, Ra_)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate Nusselt number for vertical cylinder.
+<div class="desc"><p>Calculate laminar Nusselt number for isothermal horizontal cylinder.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45b).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_l_hcyl(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate laminar Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45b).
+    &#34;&#34;&#34;
+    if Ra_ &gt;= 1e-4:
+        f = 0.8
+    else:
+        f = 1 - 0.13/Nu_T_hcyl(Pr_, Ra_)**0.16
+    return 2*f / log(1+2*f/Nu_T_hcyl(Pr_, Ra_))</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_l_vcyl"><code class="name flex">
+<span>def <span class="ident">Nu_l_vcyl</span></span>(<span>Pr_, Ra_, D_cyl, L_cyl)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate laminar Nusselt number for vertical cylinder.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.44).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl):
+    &#34;&#34;&#34;Calculate laminar Nusselt number for vertical cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.44).
+    &#34;&#34;&#34;
+    zeta = 1.8 * L_cyl/D_cyl / Nu_T_vplate(Pr_, Ra_)
+    return zeta / log(1+zeta) * Nu_l_vplate(Pr_, Ra_)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_l_vplate"><code class="name flex">
+<span>def <span class="ident">Nu_l_vplate</span></span>(<span>Pr_, Ra_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate laminar Nu number for a vertical isothermal plate.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33b).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_l_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate laminar Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33b).
+    &#34;&#34;&#34;
+    return 2 / log(1+2/Nu_T_vplate(Pr_, Ra_))</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_t_hcyl"><code class="name flex">
+<span>def <span class="ident">Nu_t_hcyl</span></span>(<span>Ra_, C_t_bar)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate turbulent Nusselt number for isothermal horizontal cylinder.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45c).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_t_hcyl(Ra_, C_t_bar):
+    &#34;&#34;&#34;Calculate turbulent Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45c).
+    &#34;&#34;&#34;
+    return C_t_bar * Ra_**(1/3)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_t_vplate"><code class="name flex">
+<span>def <span class="ident">Nu_t_vplate</span></span>(<span>Pr_, Ra_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate turbulent Nu number for a vertical isothermal plate.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33c).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_t_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate turbulent Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33c).
+    &#34;&#34;&#34;
+    return C_t_V(Pr_) * Ra_**(1/3) / (1+1.4e9*Pr_/Ra_)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Nu_vcyl"><code class="name flex">
+<span>def <span class="ident">Nu_vcyl</span></span>(<span>Pr_, Ra_, D_cyl, L_cyl)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate Nusselt number for vertical isothermal cylinder.
 Only natural convection currently supported.
 Based on Handbook of heat transfer by Rohsenow, Hartnet,
 Cho (HHT).</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>fluid</code></strong> :&ensp;<code>ThermState object describing thermodynamic state (fluid, T, P)</code></dt>
+<dt><strong><code>Pr_</code></strong> :&ensp;<code>Prandtl number</code></dt>
 <dd>&nbsp;</dd>
-<dt><strong><code>T_cyl</code></strong> :&ensp;<code>surface temperature</code></dt>
+<dt><strong><code>Ra_</code></strong> :&ensp;<code>Rayleigh number</code></dt>
 <dd>&nbsp;</dd>
 <dt><strong><code>D_cyl</code></strong> :&ensp;<code>cylinder diameter</code></dt>
 <dd>&nbsp;</dd>
@@ -869,17 +1454,16 @@ Cho (HHT).</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def Nu_cyl_vert(fluid, T_cyl, D_cyl, L_cyl):
-    &#34;&#34;&#34;
-    Calculate Nusselt number for vertical cylinder.
+<pre><code class="python">def Nu_vcyl(Pr_, Ra_, D_cyl, L_cyl):
+    &#34;&#34;&#34; Calculate Nusselt number for vertical isothermal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
     Cho (HHT).
 
     Parameters
     ----------
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    T_cyl : surface temperature
+    Pr_ : Prandtl number
+    Ra_ : Rayleigh number
     D_cyl : cylinder diameter
     L_cyl : cylinder length
 
@@ -887,20 +1471,51 @@ Cho (HHT).</p>
     -------
     Nusselt number, dimensionless
     &#34;&#34;&#34;
-    Pr_ = fluid.Prandtl
-    Ra_ = Ra(fluid, T_cyl, D_cyl)
-    C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
-    C_t_vert = (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42  # HHT (4.24)
-    Nu_T_plate = C_l * Ra_**0.25
-    Nu_l_plate = 2 / log(1+2/Nu_T_plate)  # HHT (4.33)
-    zeta = 1.8 * L_cyl / (D_cyl*Nu_T_plate)   # HHT (4.44)
-    Nu_l = zeta / (log(1+zeta)*Nu_l_plate)
-    Nu_t = C_t_vert*Ra_**(1/3)/(1+1.4e9*Pr_/Ra_)
-    Nu_ = (Nu_l**6 + Nu_t**6)**(1/6)
-    return Nu_.to(ureg.dimensionless)</code></pre>
+    Nu_l = Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl)
+    Nu_t = Nu_t_vplate(Pr_, Ra_)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=6)
+    return float(Nu_)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.Pr"><code class="name flex">
+<dt id="CryoToolBox.functions.Nu_vplate"><code class="name flex">
+<span>def <span class="ident">Nu_vplate</span></span>(<span>Pr_, Ra_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate Nusselt number for a vertical isothermal plate.
+From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33d).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Nu_vplate(Pr_, Ra_):
+    &#34;&#34;&#34;Calculate Nusselt number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33d).
+    &#34;&#34;&#34;
+    Nu_lam = Nu_l_vplate(Pr_, Ra_)
+    Nu_turb = Nu_t_vplate(Pr_, Ra_)
+    return Nu_blend(Nu_lam, Nu_turb, m=6)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.PRV_flow"><code class="name flex">
+<span>def <span class="ident">PRV_flow</span></span>(<span>A, Kd, fluid)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate mass flow through the relief valve based on
+BPVC VIII div. 1 UG-131 (e) (2).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def PRV_flow(A, Kd, fluid):
+    &#34;&#34;&#34;Calculate mass flow through the relief valve based on
+    BPVC VIII div. 1 UG-131 (e) (2).
+    &#34;&#34;&#34;
+    W_T = m_max(fluid, A)  # Theoretical flow
+    W_a = W_T * Kd  # Actual flow
+    return W_a.to(ureg.g/ureg.s)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.Pr"><code class="name flex">
 <span>def <span class="ident">Pr</span></span>(<span>fluid)</span>
 </code></dt>
 <dd>
@@ -934,7 +1549,7 @@ Cho (HHT).</p>
     return fluid.Prandtl</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.Ra"><code class="name flex">
+<dt id="CryoToolBox.functions.Ra"><code class="name flex">
 <span>def <span class="ident">Ra</span></span>(<span>fluid, T_surf, L_surf)</span>
 </code></dt>
 <dd>
@@ -974,8 +1589,8 @@ Cho (HHT).</p>
     return Gr(fluid, T_surf, L_surf)*fluid.Prandtl</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.Re"><code class="name flex">
-<span>def <span class="ident">Re</span></span>(<span>fluid, m_dot, D)</span>
+<dt id="CryoToolBox.functions.Re"><code class="name flex">
+<span>def <span class="ident">Re</span></span>(<span>fluid, m_dot, D_H, A_cross)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate Reynolds number.</p>
@@ -985,7 +1600,9 @@ Cho (HHT).</p>
 <dd>&nbsp;</dd>
 <dt><strong><code>m_dot</code></strong> :&ensp;<code>mass flow</code></dt>
 <dd>&nbsp;</dd>
-<dt><strong><code>D</code></strong> :&ensp;<code>characteristic length/hydraulic diameter</code></dt>
+<dt><strong><code>D_H</code></strong> :&ensp;<code>hydraulic diameter</code> of <code>a pipe</code></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>A_cross</code></strong> :&ensp;<code>cross-sectional area</code> of <code>a pipe</code></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 id="returns">Returns</h2>
@@ -997,7 +1614,7 @@ Cho (HHT).</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def Re(fluid, m_dot, D):
+<pre><code class="python">def Re(fluid, m_dot, D_H, A_cross):
     &#34;&#34;&#34;
     Calculate Reynolds number.
 
@@ -1005,19 +1622,21 @@ Cho (HHT).</p>
     ----------
     fluid : ThermState object describing thermodynamic state (fluid, T, P)
     m_dot : mass flow
-    D : characteristic length/hydraulic diameter
+    D_H : hydraulic diameter of a pipe
+    A_cross : cross-sectional area of a pipe
 
     Returns
     -------
     Reynolds number, dimensionless
     &#34;&#34;&#34;
-    A = pi * D**2 / 4
-    w_flow = m_dot / (fluid.Dmass*A)
-    Re_ = w_flow * D * fluid.Dmass / fluid.viscosity
-    return Re_.to_base_units()</code></pre>
+    rho = fluid.Dmass
+    v = m_dot / (rho*A_cross)
+    mu = fluid.viscosity
+    Re_ = v * D_H * rho / mu
+    return float(Re_)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.alpha"><code class="name flex">
+<dt id="CryoToolBox.functions.alpha"><code class="name flex">
 <span>def <span class="ident">alpha</span></span>(<span>k, rho, C)</span>
 </code></dt>
 <dd>
@@ -1058,7 +1677,7 @@ Cho (HHT).</p>
     return alpha_.to(ureg.m**2/ureg.s)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.blast_radius"><code class="name flex">
+<dt id="CryoToolBox.functions.blast_radius"><code class="name flex">
 <span>def <span class="ident">blast_radius</span></span>(<span>E_stored)</span>
 </code></dt>
 <dd>
@@ -1072,13 +1691,114 @@ lung damage based on PNNL paper.</p></div>
     &#34;&#34;&#34;Calculate maximum distance for debris, eardrum rupture and
     lung damage based on PNNL paper.&#34;&#34;&#34;
     W_TNT = E_stored / E_TNT  # Energy equivalent in TNT
-    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**0.5
-    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**0.5
-    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**0.5
+    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
+    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
+    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
     return (D_1, D_2, D_3)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.from_scfma"><code class="name flex">
+<dt id="CryoToolBox.functions.conduction_1D"><code class="name flex">
+<span>def <span class="ident">conduction_1D</span></span>(<span>A_cross, L, k, dT)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate 1-dimensional heat flow rate.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>A_cross</code></strong> :&ensp;<code>Quantity {length: 2}</code></dt>
+<dd>cross-sectional area</dd>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
+<dd>length</dd>
+<dt><strong><code>k</code></strong> :&ensp;<code>Quantity {length: 1, mass: 1, temperature: -1, time: -3}</code></dt>
+<dd>material thermal conductivity</dd>
+<dt><strong><code>dT</code></strong> :&ensp;<code>Quantity {temperature: 1}</code></dt>
+<dd>temperature difference</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Quantity {length: 2, mass: 1, time: -3}</code></dt>
+<dd>heat flow rate</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def conduction_1D(A_cross, L, k, dT):
+    &#34;&#34;&#34;Calculate 1-dimensional heat flow rate.
+
+    Parameters
+    ----------
+    A_cross : Quantity {length: 2}
+        cross-sectional area
+    L : Quantity {length: 1}
+        length
+    k : Quantity {length: 1, mass: 1, temperature: -1, time: -3}
+        material thermal conductivity
+    dT : Quantity {temperature: 1}
+        temperature difference
+
+    Returns
+    -------
+    Quantity {length: 2, mass: 1, time: -3}
+        heat flow rate
+    &#34;&#34;&#34;
+
+    q = k * A_cross / L * dT
+    return q.to(ureg.W)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.conduction_cyl"><code class="name flex">
+<span>def <span class="ident">conduction_cyl</span></span>(<span>D_i, D_o, L, k, dT)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate heat flow through cylindrical wall</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D_i</code></strong> :&ensp;<code>Quantity {length: 2}</code></dt>
+<dd>inner diameter</dd>
+<dt><strong><code>D_o</code></strong> :&ensp;<code>Quantity {length: 2}</code></dt>
+<dd>outer diameter</dd>
+<dt><strong><code>L</code></strong> :&ensp;<code>Quantity {length: 1}</code></dt>
+<dd>length</dd>
+<dt><strong><code>k</code></strong> :&ensp;<code>Quantity {length: 1, mass: 1, temperature: -1, time: -3}</code></dt>
+<dd>material thermal conductivity</dd>
+<dt><strong><code>dT</code></strong> :&ensp;<code>Quantity {temperature: 1}</code></dt>
+<dd>temperature difference, T_i - T_o</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Quantity {length: 2, mass: 1, time: -3}</code></dt>
+<dd>heat flow rate</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def conduction_cyl(D_i, D_o, L, k, dT):
+    &#34;&#34;&#34;Calculate heat flow through cylindrical wall
+
+    Parameters
+    ----------
+    D_i : Quantity {length: 2}
+        inner diameter
+    D_o : Quantity {length: 2}
+        outer diameter
+    L : Quantity {length: 1}
+        length
+    k : Quantity {length: 1, mass: 1, temperature: -1, time: -3}
+        material thermal conductivity
+    dT : Quantity {temperature: 1}
+        temperature difference, T_i - T_o
+
+    Returns
+    -------
+    Quantity {length: 2, mass: 1, time: -3}
+        heat flow rate
+    &#34;&#34;&#34;
+    q = 2 * pi * L * k * dT / log(D_o/D_i)
+    return q.to(ureg.W)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.from_scfma"><code class="name flex">
 <span>def <span class="ident">from_scfma</span></span>(<span>Q_air, fluid)</span>
 </code></dt>
 <dd>
@@ -1095,7 +1815,7 @@ Invert function to to_scfma().</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>Quantitiy {mass: 1, time: -1}</code></dt>
+<dt><code>Quantity {mass: 1, time: -1}</code></dt>
 <dd>mass flow rate</dd>
 </dl></div>
 <details class="source">
@@ -1117,20 +1837,20 @@ Invert function to to_scfma().</p>
 
     Returns
     -------
-    Quantitiy {mass: 1, time: -1}
+    Quantity {mass: 1, time: -1}
         mass flow rate
     &#34;&#34;&#34;
-    C_fluid = fluid.C_gas_constant
-    C_air = Air.C_gas_constant
+    C_fluid = fluid.C_gas_const
+    C_air = AIR.C_gas_const
 
     # Calculation
-    M_dot_air = Q_air * Air.Dmass
-    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / Air.MZT
+    M_dot_air = Q_air * AIR.Dmass
+    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / AIR.MZT
     M_dot_fluid.ito(ureg.g/ureg.s)
     return M_dot_fluid</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.heat_trans_coef"><code class="name flex">
+<dt id="CryoToolBox.functions.heat_trans_coef"><code class="name flex">
 <span>def <span class="ident">heat_trans_coef</span></span>(<span>fluid, Nu, L_surf)</span>
 </code></dt>
 <dd>
@@ -1174,8 +1894,28 @@ Invert function to to_scfma().</p>
     return h.to(ureg.W/(ureg.m**2*ureg.K))</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.nist_property"><code class="name flex">
-<span>def <span class="ident">nist_property</span></span>(<span>material, prop, T1, T2=None)</span>
+<dt id="CryoToolBox.functions.m_max"><code class="name flex">
+<span>def <span class="ident">m_max</span></span>(<span>fluid, A)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate max isentropic flow at sonic condition
+(9.46a, Fluid Mechanics, F. White, 2015)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def m_max(fluid, A):
+    &#34;&#34;&#34;Calculate max isentropic flow at sonic condition
+    (9.46a, Fluid Mechanics, F. White, 2015)
+    &#34;&#34;&#34;
+    C = fluid.C_gas_const
+    P = fluid.P
+    m_max_ = C * A * P * fluid.MZT
+    return m_max_.to_base_units()</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.nist_property"><code class="name flex">
+<span>def <span class="ident">nist_property</span></span>(<span>material, prop, T1, T2=None, RRR_OFHC=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate specific heat capacity using NIST properties database.
@@ -1196,7 +1936,7 @@ Invert function to to_scfma().</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def nist_property(material, prop, T1, T2=None):
+<pre><code class="python">def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
     &#34;&#34;&#34;
     Calculate specific heat capacity using NIST properties database.
     https://trc.nist.gov/cryogenics/materials/materialproperties.htm
@@ -1211,50 +1951,66 @@ Invert function to to_scfma().</p>
     -------
     specific heat capacity
     &#34;&#34;&#34;
-    coefs = NIST_DATA[material][prop][&#39;coefs&#39;]
-    fun = NIST_DATA[material][prop][&#39;fun&#39;]
-    unit = NIST_DATA[material][prop][&#39;unit&#39;]
-    eq_range = NIST_DATA[material][prop][&#39;range&#39;]
+    if material == Material.OFHC:
+        if RRR_OFHC is None:
+            logger.warning(&#39;RRR for OFHC is not defined. Using RRR=100.&#39;)
+            RRR_OFHC = 100
+        try:
+            coefs = _NIST_DATA[material][prop][&#39;coefs&#39;+str(RRR_OFHC)]
+        except KeyError:
+            raise NISTError(f&#39;No data for RRR {RRR_OFHC}.&#39;
+                            &#39;Use RRR 50, 100, 150, 300 or 500&#39;)
+    else:
+        coefs = _NIST_DATA[material][prop][&#39;coefs&#39;]
+    fun = _NIST_DATA[material][prop][&#39;fun&#39;]
+    unit = _NIST_DATA[material][prop][&#39;unit&#39;]
+    eq_range = _NIST_DATA[material][prop][&#39;range&#39;]
+
     T1 = T1.to(ureg.K).magnitude
-    if prop == &#39;LE&#39;:
-        Tlow = NIST_DATA[material][prop][&#39;Tlow&#39;]
+    if prop == Property.LE:
+        Tlow = _NIST_DATA[material][prop][&#39;Tlow&#39;]
         if T1 &lt; Tlow:
-            f = NIST_DATA[material][prop][&#39;f&#39;] * unit
+            f = _NIST_DATA[material][prop][&#39;f&#39;]
             return f * unit
     if T1 &lt; eq_range[0] or T1 &gt; eq_range[1]:
         raise ValueError(f&#39;Temperature is out of bounds: {T1} for&#39;
                          f&#39; {eq_range[0]}-{eq_range[1]}&#39;
                          &#39;limits.&#39;)
     if T2 is None:
-        result = fun(T1, coefs)
+        value = fun(T1, coefs)
     else:
         T2 = T2.to(ureg.K).magnitude
-        result = _nist_quad(T1, T2, fun, coefs)
-    return result * unit</code></pre>
+        if prop == Property.LE:
+            value_1 = nist_property(material, prop, T1*ureg.K)
+            value_2 = nist_property(material, prop, T2*ureg.K)
+            value = value_2 - value_1
+            return value
+        else:
+            value = _nist_quad(T1, T2, fun, coefs)
+    return value * unit</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.rad_hl"><code class="name flex">
-<span>def <span class="ident">rad_hl</span></span>(<span>eps_cold=0.55, eps_hot=0.55, T_hot=&lt;Quantity(300, &#x27;kelvin&#x27;)&gt;, T_cold=&lt;Quantity(77, &#x27;kelvin&#x27;)&gt;, F1_2=1, eps_baffle=0.02, N_baffles=5)</span>
+<dt id="CryoToolBox.functions.rad_hl"><code class="name flex">
+<span>def <span class="ident">rad_hl</span></span>(<span>T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02})</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate radiative heat load including reduction due to baffles.
 Based on Kaganer "Thermal insulation in cryogenic engineering", p. 42.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>eps_cold</code></strong> :&ensp;<code>float</code></dt>
-<dd>emissivity of the cold surface</dd>
-<dt><strong><code>eps_hot</code></strong> :&ensp;<code>float</code></dt>
-<dd>emissivity of the hot surface</dd>
-<dt><strong><code>T_hot</code></strong> :&ensp;<code>Quality {temperature: 1}</code></dt>
-<dd>temperature of the hot surface</dd>
-<dt><strong><code>T_cold</code></strong> :&ensp;<code>Quality {temperature: 1}</code></dt>
-<dd>temperature of the cold surface</dd>
+<dt><strong><code>eps_1</code></strong> :&ensp;<code>float</code></dt>
+<dd>emissivity of the first surface</dd>
+<dt><strong><code>eps_2</code></strong> :&ensp;<code>float</code></dt>
+<dd>emissivity of the second surface</dd>
+<dt><strong><code>T_1</code></strong> :&ensp;<code>Quantity {temperature: 1}</code></dt>
+<dd>temperature of the first surface</dd>
+<dt><strong><code>T_2</code></strong> :&ensp;<code>Quantity {temperature: 1}</code></dt>
+<dd>temperature of the second surface</dd>
 <dt><strong><code>F1_2</code></strong> :&ensp;<code>float</code></dt>
 <dd>F1_2 = F_cold/F_hot</dd>
-<dt><strong><code>eps_baffle</code></strong> :&ensp;<code>float</code></dt>
-<dd>emissivity of the baffle, assumed to be same on both sides</dd>
-<dt><strong><code>N_baffles</code></strong> :&ensp;<code>int</code></dt>
-<dd>number of baffles</dd>
+<dt><strong><code>baffles</code></strong> :&ensp;<code>dict</code></dt>
+<dd>N - number of baffles
+eps - emissivity of the baffle, assumed to be same on both sides</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -1267,28 +2023,26 @@ eta : effectiveness of the baffles</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rad_hl(eps_cold=0.55, eps_hot=0.55, T_hot=300*ureg.K, T_cold=77*ureg.K,
-           F1_2=1, eps_baffle=0.02, N_baffles=5):
+<pre><code class="python">def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={&#39;N&#39;: 0, &#39;eps&#39;: 0.02}):
     &#34;&#34;&#34;
     Calculate radiative heat load including reduction due to baffles.
     Based on Kaganer &#34;Thermal insulation in cryogenic engineering&#34;, p. 42.
 
     Parameters
     ----------
-    eps_cold : float
-        emissivity of the cold surface
-    eps_hot : float
-        emissivity of the hot surface
-    T_hot : Quality {temperature: 1}
-        temperature of the hot surface
-    T_cold : Quality {temperature: 1}
-        temperature of the cold surface
+    eps_1 : float
+        emissivity of the first surface
+    eps_2 : float
+        emissivity of the second surface
+    T_1 : Quantity {temperature: 1}
+        temperature of the first surface
+    T_2 : Quantity {temperature: 1}
+        temperature of the second surface
     F1_2 : float
         F1_2 = F_cold/F_hot
-    eps_baffle : float
-        emissivity of the baffle, assumed to be same on both sides
-    N_baffles : int
-        number of baffles
+    baffles : dict
+        N - number of baffles
+        eps - emissivity of the baffle, assumed to be same on both sides
 
     Returns
     -------
@@ -1298,35 +2052,38 @@ eta : effectiveness of the baffles</dd>
             eta : effectiveness of the baffles
     &#34;&#34;&#34;
     # TODO This function will be refactored
-    Eps_mut = 1/(1/eps_cold + F1_2*(1/eps_hot-1))  # Mutual emissivity
-    q0 = Eps_mut*sigma*(T_hot**4 - T_cold**4)*F1_2
-    Eps_baffle_mut = eps_baffle/(2-eps_baffle)
-    eta = (1+N_baffles*Eps_mut/Eps_baffle_mut)**(-1)
+    N_baffles = baffles[&#39;N&#39;]
+    eps_baffle = baffles[&#39;eps&#39;]
+
+    eps_mut = 1/(1/eps_1 + F1_2*(1/eps_2-1))  # Mutual emissivity
+    T_1.ito(ureg.K)
+    T_2.ito(ureg.K)
+    q0 = eps_mut*sigma*(T_2**4 - T_1**4)*F1_2
+    eps_baffle_mut = eps_baffle/(2-eps_baffle)
+    eta = (1+N_baffles*eps_mut/eps_baffle_mut)**(-1)
     q_baffle = eta*q0
-    return {&#39;q0&#39;: q0.to(ureg.W/ureg.m**2),
-            &#39;q_baffle&#39;: q_baffle.to(ureg.W/ureg.m**2),
-            &#39;eta&#39;: eta}</code></pre>
+    return q_baffle.to(ureg.W/ureg.m**2)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.stored_energy"><code class="name flex">
-<span>def <span class="ident">stored_energy</span></span>(<span>Piping)</span>
+<dt id="CryoToolBox.functions.stored_energy"><code class="name flex">
+<span>def <span class="ident">stored_energy</span></span>(<span>fluid, volume)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate stored energy in piping using Baker equation.</p></div>
+<div class="desc"><p>Calculate stored energy in volume using Baker equation.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def stored_energy(Piping):
-    &#34;&#34;&#34;Calculate stored energy in piping using Baker equation.&#34;&#34;&#34;
-    P = Piping.fluid.P
-    V = Piping.volume
-    k = Piping.fluid.gamma
+<pre><code class="python">def stored_energy(fluid, volume):
+    &#34;&#34;&#34;Calculate stored energy in volume using Baker equation.&#34;&#34;&#34;
+    P = fluid.P
+    V = volume
+    k = fluid.gamma
     E_stored = P * V / (k-1) * (1-(P_NTP/P)**((k-1)/k))
     return E_stored.to(ureg.lbf*ureg.ft)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.theta_heat"><code class="name flex">
+<dt id="CryoToolBox.functions.theta_heat"><code class="name flex">
 <span>def <span class="ident">theta_heat</span></span>(<span>fluid, step=0.01)</span>
 </code></dt>
 <dd>
@@ -1340,7 +2097,7 @@ eta : effectiveness of the baffles</dd>
     return cga.theta(fluid, step)</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.theta_temp"><code class="name flex">
+<dt id="CryoToolBox.functions.theta_temp"><code class="name flex">
 <span>def <span class="ident">theta_temp</span></span>(<span>T, T_i, T_inf)</span>
 </code></dt>
 <dd>
@@ -1383,7 +2140,26 @@ conduction and convection.</p>
     return theta_temp_.to_base_units()</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.to_scfma"><code class="name flex">
+<dt id="CryoToolBox.functions.to_mass_flow"><code class="name flex">
+<span>def <span class="ident">to_mass_flow</span></span>(<span>Q_std, fluid)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate mass flow for given volumetric flow at standard conditions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_mass_flow(Q_std, fluid):
+    &#34;&#34;&#34;
+    Calculate mass flow for given volumetric flow at standard conditions.
+    &#34;&#34;&#34;
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    m_dot = Q_std * fluid_NTP.Dmass
+    return m_dot.to(ureg.g/ureg.s)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.to_scfma"><code class="name flex">
 <span>def <span class="ident">to_scfma</span></span>(<span>M_dot_fluid, fluid)</span>
 </code></dt>
 <dd>
@@ -1392,7 +2168,7 @@ Flow through a relief device with invariant Area/discharge coefficient
 (KA).</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>M_dot_fluid</code></strong> :&ensp;<code>Quantitiy {mass: 1, time: -1}</code></dt>
+<dt><strong><code>M_dot_fluid</code></strong> :&ensp;<code>Quantity {mass: 1, time: -1}</code></dt>
 <dd>mass flow rate</dd>
 <dt><strong><code>fluid</code></strong> :&ensp;<code>ThermState</code></dt>
 <dd>&nbsp;</dd>
@@ -1414,7 +2190,7 @@ Flow through a relief device with invariant Area/discharge coefficient
 
     Parameters
     ----------
-    M_dot_fluid : Quantitiy {mass: 1, time: -1}
+    M_dot_fluid : Quantity {mass: 1, time: -1}
         mass flow rate
     fluid : ThermState
 
@@ -1423,17 +2199,55 @@ Flow through a relief device with invariant Area/discharge coefficient
     ThermState
         volumetric air flow rate
     &#34;&#34;&#34;
-    C_fluid = fluid.C_gas_constant
-    C_air = Air.C_gas_constant
+    C_fluid = fluid.C_gas_const
+    C_air = AIR.C_gas_const
 
     # Calculation
-    M_dot_air = M_dot_fluid * C_air / C_fluid * Air.MZT / fluid.MZT
-    Q_air = M_dot_air / Air.Dmass
+    M_dot_air = M_dot_fluid * C_air / C_fluid * AIR.MZT / fluid.MZT
+    Q_air = M_dot_air / AIR.Dmass
     Q_air.ito(ureg.ft**3/ureg.min)
     return Q_air</code></pre>
 </details>
 </dd>
-<dt id="heat_transfer.functions.zeta1_cyl"><code class="name flex">
+<dt id="CryoToolBox.functions.to_standard_flow"><code class="name flex">
+<span>def <span class="ident">to_standard_flow</span></span>(<span>flow_rate, fluid)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converting volumetric flow at certain conditions or mass flow to
+flow at NTP.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_standard_flow(flow_rate, fluid):
+    &#39;&#39;&#39;
+    Converting volumetric flow at certain conditions or mass flow to
+    flow at NTP.
+    &#39;&#39;&#39;
+    fluid_NTP = ThermState(fluid.name)
+    fluid_NTP.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+    if flow_rate.dimensionality == ureg(&#39;kg/s&#39;).dimensionality:
+        # mass flow, flow conditions are unnecessary
+        q_std = flow_rate / fluid_NTP.Dmass
+    elif flow_rate.dimensionality == ureg(&#39;m^3/s&#39;).dimensionality:
+        # volumetric flow given, converting to standard pressure and
+        # temperature
+        if fluid.Dmass != -float(&#39;Inf&#39;)*ureg.kg/ureg.m**3:
+            # By default ThermState is initialized with all fields == -inf
+            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
+        else:
+            logger.warning(&#39;&#39;&#39;Flow conditions for volumetric flow {:.3~}
+                           are not set. Assuming standard flow at NTP.
+                           &#39;&#39;&#39;.format(flow_rate))
+            q_std = flow_rate
+    else:
+        logger.error(&#39;&#39;&#39;Flow dimensionality is not supported: {:.3~}.
+                       &#39;&#39;&#39;.format(flow_rate.dimensionality))
+    q_std.ito(ureg.ft**3/ureg.min)
+    return q_std</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.functions.zeta1_cyl"><code class="name flex">
 <span>def <span class="ident">zeta1_cyl</span></span>(<span>Bi_)</span>
 </code></dt>
 <dd>
@@ -1476,6 +2290,117 @@ Flow through a relief device with invariant Area/discharge coefficient
 </dl>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="CryoToolBox.functions.Material"><code class="flex name class">
+<span>class <span class="ident">Material</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Available materials with low temperature with fits NIST.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Material(Enum):
+    &#34;&#34;&#34;Available materials with low temperature with fits NIST.&#34;&#34;&#34;
+    SS304 = auto()  # AISI 304 Stainless Steel
+    AL6061 = auto()  # 6061-T6 Aluminum (UNS A96061)
+    G10 = auto()  # G10
+    PTFE = auto()  # PTFE/Teflon
+    OFHC = auto()  # Oxygen-free High thermal conductivity copper</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="CryoToolBox.functions.Material.AL6061"><code class="name">var <span class="ident">AL6061</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.functions.Material.G10"><code class="name">var <span class="ident">G10</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.functions.Material.OFHC"><code class="name">var <span class="ident">OFHC</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.functions.Material.PTFE"><code class="name">var <span class="ident">PTFE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.functions.Material.SS304"><code class="name">var <span class="ident">SS304</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="CryoToolBox.functions.NISTError"><code class="flex name class">
+<span>class <span class="ident">NISTError</span></span>
+<span>(</span><span>message)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Common base class for all non-exit exceptions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NISTError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="CryoToolBox.functions.Property"><code class="flex name class">
+<span>class <span class="ident">Property</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Available low temperature properties from NIST.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Property(Enum):
+    &#34;&#34;&#34;Available low temperature properties from NIST.&#34;&#34;&#34;
+    TC = auto()  # TC - thermal conductivity, W/(m*K)
+    SH = auto()  # SH - specific heat, J/(kg*K)
+    EC = auto()  # EC - expansion coefficient, 1/K
+    LE = auto()  # LE - linear expansion, dimensionless</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="CryoToolBox.functions.Property.EC"><code class="name">var <span class="ident">EC</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.functions.Property.LE"><code class="name">var <span class="ident">LE</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.functions.Property.SH"><code class="name">var <span class="ident">SH</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.functions.Property.TC"><code class="name">var <span class="ident">TC</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -1486,40 +2411,83 @@ Flow through a relief device with invariant Area/discharge coefficient
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="heat_transfer" href="index.html">heat_transfer</a></code></li>
+<li><code><a title="CryoToolBox" href="index.html">CryoToolBox</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
-<li><code><a title="heat_transfer.functions.Bi" href="#heat_transfer.functions.Bi">Bi</a></code></li>
-<li><code><a title="heat_transfer.functions.C1_cyl" href="#heat_transfer.functions.C1_cyl">C1_cyl</a></code></li>
-<li><code><a title="heat_transfer.functions.Fo_cyl" href="#heat_transfer.functions.Fo_cyl">Fo_cyl</a></code></li>
-<li><code><a title="heat_transfer.functions.Gr" href="#heat_transfer.functions.Gr">Gr</a></code></li>
-<li><code><a title="heat_transfer.functions.Nu_cyl_hor" href="#heat_transfer.functions.Nu_cyl_hor">Nu_cyl_hor</a></code></li>
-<li><code><a title="heat_transfer.functions.Nu_cyl_vert" href="#heat_transfer.functions.Nu_cyl_vert">Nu_cyl_vert</a></code></li>
-<li><code><a title="heat_transfer.functions.Pr" href="#heat_transfer.functions.Pr">Pr</a></code></li>
-<li><code><a title="heat_transfer.functions.Ra" href="#heat_transfer.functions.Ra">Ra</a></code></li>
-<li><code><a title="heat_transfer.functions.Re" href="#heat_transfer.functions.Re">Re</a></code></li>
-<li><code><a title="heat_transfer.functions.alpha" href="#heat_transfer.functions.alpha">alpha</a></code></li>
-<li><code><a title="heat_transfer.functions.blast_radius" href="#heat_transfer.functions.blast_radius">blast_radius</a></code></li>
-<li><code><a title="heat_transfer.functions.from_scfma" href="#heat_transfer.functions.from_scfma">from_scfma</a></code></li>
-<li><code><a title="heat_transfer.functions.heat_trans_coef" href="#heat_transfer.functions.heat_trans_coef">heat_trans_coef</a></code></li>
-<li><code><a title="heat_transfer.functions.nist_property" href="#heat_transfer.functions.nist_property">nist_property</a></code></li>
-<li><code><a title="heat_transfer.functions.rad_hl" href="#heat_transfer.functions.rad_hl">rad_hl</a></code></li>
-<li><code><a title="heat_transfer.functions.stored_energy" href="#heat_transfer.functions.stored_energy">stored_energy</a></code></li>
-<li><code><a title="heat_transfer.functions.theta_heat" href="#heat_transfer.functions.theta_heat">theta_heat</a></code></li>
-<li><code><a title="heat_transfer.functions.theta_temp" href="#heat_transfer.functions.theta_temp">theta_temp</a></code></li>
-<li><code><a title="heat_transfer.functions.to_scfma" href="#heat_transfer.functions.to_scfma">to_scfma</a></code></li>
-<li><code><a title="heat_transfer.functions.zeta1_cyl" href="#heat_transfer.functions.zeta1_cyl">zeta1_cyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.A_relief_API" href="#CryoToolBox.functions.A_relief_API">A_relief_API</a></code></li>
+<li><code><a title="CryoToolBox.functions.Bi" href="#CryoToolBox.functions.Bi">Bi</a></code></li>
+<li><code><a title="CryoToolBox.functions.C1_cyl" href="#CryoToolBox.functions.C1_cyl">C1_cyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.C_l" href="#CryoToolBox.functions.C_l">C_l</a></code></li>
+<li><code><a title="CryoToolBox.functions.C_t_V" href="#CryoToolBox.functions.C_t_V">C_t_V</a></code></li>
+<li><code><a title="CryoToolBox.functions.C_t_bar_cyl" href="#CryoToolBox.functions.C_t_bar_cyl">C_t_bar_cyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Fo_cyl" href="#CryoToolBox.functions.Fo_cyl">Fo_cyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Gr" href="#CryoToolBox.functions.Gr">Gr</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_T_hcyl" href="#CryoToolBox.functions.Nu_T_hcyl">Nu_T_hcyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_T_vplate" href="#CryoToolBox.functions.Nu_T_vplate">Nu_T_vplate</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_blend" href="#CryoToolBox.functions.Nu_blend">Nu_blend</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_hcyl" href="#CryoToolBox.functions.Nu_hcyl">Nu_hcyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_l_hcyl" href="#CryoToolBox.functions.Nu_l_hcyl">Nu_l_hcyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_l_vcyl" href="#CryoToolBox.functions.Nu_l_vcyl">Nu_l_vcyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_l_vplate" href="#CryoToolBox.functions.Nu_l_vplate">Nu_l_vplate</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_t_hcyl" href="#CryoToolBox.functions.Nu_t_hcyl">Nu_t_hcyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_t_vplate" href="#CryoToolBox.functions.Nu_t_vplate">Nu_t_vplate</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_vcyl" href="#CryoToolBox.functions.Nu_vcyl">Nu_vcyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.Nu_vplate" href="#CryoToolBox.functions.Nu_vplate">Nu_vplate</a></code></li>
+<li><code><a title="CryoToolBox.functions.PRV_flow" href="#CryoToolBox.functions.PRV_flow">PRV_flow</a></code></li>
+<li><code><a title="CryoToolBox.functions.Pr" href="#CryoToolBox.functions.Pr">Pr</a></code></li>
+<li><code><a title="CryoToolBox.functions.Ra" href="#CryoToolBox.functions.Ra">Ra</a></code></li>
+<li><code><a title="CryoToolBox.functions.Re" href="#CryoToolBox.functions.Re">Re</a></code></li>
+<li><code><a title="CryoToolBox.functions.alpha" href="#CryoToolBox.functions.alpha">alpha</a></code></li>
+<li><code><a title="CryoToolBox.functions.blast_radius" href="#CryoToolBox.functions.blast_radius">blast_radius</a></code></li>
+<li><code><a title="CryoToolBox.functions.conduction_1D" href="#CryoToolBox.functions.conduction_1D">conduction_1D</a></code></li>
+<li><code><a title="CryoToolBox.functions.conduction_cyl" href="#CryoToolBox.functions.conduction_cyl">conduction_cyl</a></code></li>
+<li><code><a title="CryoToolBox.functions.from_scfma" href="#CryoToolBox.functions.from_scfma">from_scfma</a></code></li>
+<li><code><a title="CryoToolBox.functions.heat_trans_coef" href="#CryoToolBox.functions.heat_trans_coef">heat_trans_coef</a></code></li>
+<li><code><a title="CryoToolBox.functions.m_max" href="#CryoToolBox.functions.m_max">m_max</a></code></li>
+<li><code><a title="CryoToolBox.functions.nist_property" href="#CryoToolBox.functions.nist_property">nist_property</a></code></li>
+<li><code><a title="CryoToolBox.functions.rad_hl" href="#CryoToolBox.functions.rad_hl">rad_hl</a></code></li>
+<li><code><a title="CryoToolBox.functions.stored_energy" href="#CryoToolBox.functions.stored_energy">stored_energy</a></code></li>
+<li><code><a title="CryoToolBox.functions.theta_heat" href="#CryoToolBox.functions.theta_heat">theta_heat</a></code></li>
+<li><code><a title="CryoToolBox.functions.theta_temp" href="#CryoToolBox.functions.theta_temp">theta_temp</a></code></li>
+<li><code><a title="CryoToolBox.functions.to_mass_flow" href="#CryoToolBox.functions.to_mass_flow">to_mass_flow</a></code></li>
+<li><code><a title="CryoToolBox.functions.to_scfma" href="#CryoToolBox.functions.to_scfma">to_scfma</a></code></li>
+<li><code><a title="CryoToolBox.functions.to_standard_flow" href="#CryoToolBox.functions.to_standard_flow">to_standard_flow</a></code></li>
+<li><code><a title="CryoToolBox.functions.zeta1_cyl" href="#CryoToolBox.functions.zeta1_cyl">zeta1_cyl</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="CryoToolBox.functions.Material" href="#CryoToolBox.functions.Material">Material</a></code></h4>
+<ul class="">
+<li><code><a title="CryoToolBox.functions.Material.AL6061" href="#CryoToolBox.functions.Material.AL6061">AL6061</a></code></li>
+<li><code><a title="CryoToolBox.functions.Material.G10" href="#CryoToolBox.functions.Material.G10">G10</a></code></li>
+<li><code><a title="CryoToolBox.functions.Material.OFHC" href="#CryoToolBox.functions.Material.OFHC">OFHC</a></code></li>
+<li><code><a title="CryoToolBox.functions.Material.PTFE" href="#CryoToolBox.functions.Material.PTFE">PTFE</a></code></li>
+<li><code><a title="CryoToolBox.functions.Material.SS304" href="#CryoToolBox.functions.Material.SS304">SS304</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="CryoToolBox.functions.NISTError" href="#CryoToolBox.functions.NISTError">NISTError</a></code></h4>
+</li>
+<li>
+<h4><code><a title="CryoToolBox.functions.Property" href="#CryoToolBox.functions.Property">Property</a></code></h4>
+<ul class="">
+<li><code><a title="CryoToolBox.functions.Property.EC" href="#CryoToolBox.functions.Property.EC">EC</a></code></li>
+<li><code><a title="CryoToolBox.functions.Property.LE" href="#CryoToolBox.functions.Property.LE">LE</a></code></li>
+<li><code><a title="CryoToolBox.functions.Property.SH" href="#CryoToolBox.functions.Property.SH">SH</a></code></li>
+<li><code><a title="CryoToolBox.functions.Property.TC" href="#CryoToolBox.functions.Property.TC">TC</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-<script>hljs.initHighlightingOnLoad()</script>
 </body>
 </html>

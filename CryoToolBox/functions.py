@@ -2,10 +2,9 @@
 """
 
 from math import log, log10, pi
-from . import ureg, Q_
-from . import AIR
+from .std_conditions import ureg, Q_, T_NTP, P_NTP
+from .constants import AIR
 from .cp_wrapper import ThermState
-from . import T_NTP, P_NTP
 from . import cga
 from . import logger
 from scipy.interpolate import interp1d
@@ -18,6 +17,7 @@ R_scaled = [20, 12, 6, 2] * ureg.m/ureg.kg**(1/3)
 
 sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
+
 
 class NISTError(Exception):
     def __init__(self, message):
@@ -329,7 +329,7 @@ def Gr(fluid, T_surf, L_surf):
     nu_fluid = fluid.viscosity/fluid.Dmass  # kinematic viscosity
     beta_exp = fluid.isobaric_expansion_coefficient
     Gr_ = ureg.g_0 * L_surf**3 * beta_exp * abs(T_surf-fluid.T) / nu_fluid**2
-    return Gr_.to(ureg.dimensionless)
+    return float(Gr_)
 
 
 def Ra(fluid, T_surf, L_surf):
@@ -349,47 +349,131 @@ def Ra(fluid, T_surf, L_surf):
     return Gr(fluid, T_surf, L_surf)*fluid.Prandtl
 
 
-def Nu_cyl_hor(fluid, T_cyl, D_cyl):
+def Nu_blend(Nu_lam, Nu_turb, m):
+    """Calculate Nu number using blending equation of Churchill and Usagi.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.32).
     """
-    Calculate Nusselt number for vertical cylinder.
+    return (Nu_lam**m + Nu_turb**m)**(1/m)
+
+
+def C_t_V(Pr_):
+    """Calculate turbulent coefficient C_t for vertical wall.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.24).
+    """
+    return (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42
+
+
+def C_l(Pr_):
+    """Calculate thin-layer coefficient C_l.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.13).
+    """
+    return 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)
+
+
+def Nu_T_vplate(Pr_, Ra_):
+    """Calculate thin-layer Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33a).
+    """
+    return C_l(Pr_) * Ra_**0.25
+
+
+def Nu_l_vplate(Pr_, Ra_):
+    """Calculate laminar Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33b).
+    """
+    return 2 / log(1+2/Nu_T_vplate(Pr_, Ra_))
+
+
+def Nu_t_vplate(Pr_, Ra_):
+    """Calculate turbulent Nu number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33c).
+    """
+    return C_t_V(Pr_) * Ra_**(1/3) / (1+1.4e9*Pr_/Ra_)
+
+
+def Nu_vplate(Pr_, Ra_):
+    """Calculate Nusselt number for a vertical isothermal plate.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.33d).
+    """
+    Nu_lam = Nu_l_vplate(Pr_, Ra_)
+    Nu_turb = Nu_t_vplate(Pr_, Ra_)
+    return Nu_blend(Nu_lam, Nu_turb, m=6)
+
+
+def Nu_T_hcyl(Pr_, Ra_):
+    """Calculate thin-layer Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45a).
+    """
+    return 0.772 * Nu_T_vplate(Pr_, Ra_)
+
+
+def Nu_l_hcyl(Pr_, Ra_):
+    """Calculate laminar Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45b).
+    """
+    if Ra_ >= 1e-4:
+        f = 0.8
+    else:
+        f = 1 - 0.13/Nu_T_hcyl(Pr_, Ra_)**0.16
+    return 2*f / log(1+2*f/Nu_T_hcyl(Pr_, Ra_))
+
+
+def Nu_t_hcyl(Ra_, C_t_bar):
+    """Calculate turbulent Nusselt number for isothermal horizontal cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.45c).
+    """
+    return C_t_bar * Ra_**(1/3)
+
+
+def C_t_bar_cyl(Pr_):
+    """Interpolate value of the turbulent coefficient C_t for isothermal
+    horizontal cylinder (C/L=1).
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) Table 4.2.
+    """
+    # Using 0.71 value for 0.7..0.71 Pr rang
+    Pr_values = (0.7, 0.71, 6.0, 100, 2000)
+    C_t_bar_values = (0.103, 0.103, 0.109, 0.097, 0.088)
+    C_t_bar_interp = interp1d(Pr_values, C_t_bar_values)
+    return C_t_bar_interp(Pr_)
+
+
+def Nu_hcyl(Pr_, Ra_, C_t_bar):
+    """Calculate Nusselt number for isothermal horizontal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
-    Cho (HHT).
+    Cho (HHT) (4.45d)
 
     Parameters
     ----------
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    T_cyl : surface temperature
-    D_cyl : cylinder diameter
 
     Returns
     -------
     Nusselt number, dimensionless
     """
-    Pr_ = fluid.Prandtl
-    Ra_ = Ra(fluid, T_cyl, D_cyl)
-    C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
-    Nu_T = 0.772*C_l*Ra_**(1/4)  # HHT (4.45)
-    f = 1-0.13/Nu_T**0.16
-    Nu_l = 2*f/log(1+2*f*Nu_T)
-    # TODO Check Nu_t formula - why C_t is not used?
-    C_t = 0.0002*log(Pr_)**3 - 0.0027*log(Pr_)**2 + 0.0061*log(Pr_) + 0.1054
-    Nu_t = 0.103*Ra_**(1/3)
-    Nu_ = (Nu_l**10 + Nu_t**10)**(1/10)
-    return Nu_.to(ureg.dimensionless)
+    Nu_l = Nu_l_hcyl(Pr_, Ra_)
+    Nu_t = Nu_t_hcyl(Ra_, C_t_bar)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=10)
+    return float(Nu_)
 
 
-def Nu_cyl_vert(fluid, T_cyl, D_cyl, L_cyl):
+def Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl):
+    """Calculate laminar Nusselt number for vertical cylinder.
+    From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.44).
     """
-    Calculate Nusselt number for vertical cylinder.
+    zeta = 1.8 * L_cyl/D_cyl / Nu_T_vplate(Pr_, Ra_)
+    return zeta / log(1+zeta) * Nu_l_vplate(Pr_, Ra_)
+
+
+def Nu_vcyl(Pr_, Ra_, D_cyl, L_cyl):
+    """ Calculate Nusselt number for vertical isothermal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
     Cho (HHT).
 
     Parameters
     ----------
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    T_cyl : surface temperature
+    Pr_ : Prandtl number
+    Ra_ : Rayleigh number
     D_cyl : cylinder diameter
     L_cyl : cylinder length
 
@@ -397,17 +481,10 @@ def Nu_cyl_vert(fluid, T_cyl, D_cyl, L_cyl):
     -------
     Nusselt number, dimensionless
     """
-    Pr_ = fluid.Prandtl
-    Ra_ = Ra(fluid, T_cyl, D_cyl)
-    C_l = 0.671/(1+(0.492/Pr_)**(9/16))**(4/9)  # HHT (4.13)
-    C_t_vert = (0.13*Pr_**0.22)/(1+0.61*Pr_**0.81)**0.42  # HHT (4.24)
-    Nu_T_plate = C_l * Ra_**0.25
-    Nu_l_plate = 2 / log(1+2/Nu_T_plate)  # HHT (4.33)
-    zeta = 1.8 * L_cyl / (D_cyl*Nu_T_plate)   # HHT (4.44)
-    Nu_l = zeta / (log(1+zeta)*Nu_l_plate)
-    Nu_t = C_t_vert*Ra_**(1/3)/(1+1.4e9*Pr_/Ra_)
-    Nu_ = (Nu_l**6 + Nu_t**6)**(1/6)
-    return Nu_.to(ureg.dimensionless)
+    Nu_l = Nu_l_vcyl(Pr_, Ra_, D_cyl, L_cyl)
+    Nu_t = Nu_t_vplate(Pr_, Ra_)
+    Nu_ = Nu_blend(Nu_l, Nu_t, m=6)
+    return float(Nu_)
 
 
 def heat_trans_coef(fluid, Nu, L_surf):
@@ -720,7 +797,7 @@ class Material(Enum):
 class Property(Enum):
     """Available low temperature properties from NIST."""
     TC = auto()  # TC - thermal conductivity, W/(m*K)
-    SH = auto()  # SH - specific heat, W/(m*K)
+    SH = auto()  # SH - specific heat, J/(kg*K)
     EC = auto()  # EC - expansion coefficient, 1/K
     LE = auto()  # LE - linear expansion, dimensionless
 

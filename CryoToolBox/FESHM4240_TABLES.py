@@ -1,5 +1,5 @@
 # Defining failure rates as per FESHM 4240 chapter
-from .odh import Q_
+from .std_conditions import Q_
 
 TABLE_1 = {'Compressor':
            {'Leak': Q_('5 * 10^-6 / hr'),

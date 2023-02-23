@@ -6,7 +6,7 @@
 """
 import CoolProp.CoolProp as CP
 from math import inf
-from . import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
+from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
@@ -53,8 +53,8 @@ CP_const_unit = {
     # 'Helmholtzmass': (CP.iHelmholtzmass, ),
     'viscosity': (CP.iviscosity, ureg.Pa*ureg.s),
     'conductivity': (CP.iconductivity, ureg.W/ureg.m/ureg.K),
-    # 'surface_tension': (CP.isurface_tension, ),
-    'Prandtl': (CP.iPrandtl, ureg.dimensionless),
+    'surface_tension': (CP.isurface_tension, ureg.N/ureg.m),
+    'Prandtl': (CP.iPrandtl, None),
     'speed_sound': (CP.ispeed_sound, ureg.m/ureg.s),
     'isothermal_compressibility': (CP.iisothermal_compressibility,
                                    ureg.Pa**-1),
@@ -307,6 +307,11 @@ class ThermState:
         return self._AbstractState.conductivity()
 
     @property
+    @ureg.wraps(CP_const_unit['surface_tension'][1], None)
+    def surface_tension(self):
+        return self._AbstractState.surface_tension()
+
+    @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P_reducing(self):
         return self._AbstractState.p_reducing()
@@ -357,7 +362,6 @@ class ThermState:
         return self._AbstractState.isentropic_expansion_coefficient()
 
     @property
-    @ureg.wraps(CP_const_unit['Prandtl'][1], None)
     def Prandtl(self):
         return self._AbstractState.Prandtl()
 
@@ -516,9 +520,11 @@ class ThermState:
         assert self.is_super_critical is False, (
             'Latent heat is only defined '
             'for subcritical phase')
-        h_liq = self.Hmass
         TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=1*ureg.dimensionless)
+        TempState.update_kw(P=self.P, Q=0)
+        h_liq = TempState.Hmass
+        TempState = self.copy()
+        TempState.update_kw(P=self.P, Q=1)
         h_gas = TempState.Hmass
         return h_gas - h_liq
 
