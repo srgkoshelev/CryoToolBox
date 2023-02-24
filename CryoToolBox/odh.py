@@ -2,8 +2,7 @@
 
 Based on Fermilab ES&H Manual chapter 4240 (see
 https://eshq.fnal.gov/manuals/feshm/)
-
-This package is maintained at https://github.com/srgkoshelev/ODH_analysis"""
+"""
 
 import math
 from scipy.special import binom
