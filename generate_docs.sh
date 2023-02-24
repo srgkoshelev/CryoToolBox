@@ -11,7 +11,7 @@ while true; do
             git commit -m 'Generated docs.'
             git push
             echo 'Committed and pushed upstream.'
-            ;;
+            exit;;
         [Nn]* ) exit;;
         * ) echo "Please answer yes or no.";;
     esac
