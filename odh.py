@@ -540,6 +540,8 @@ class BuildVent:
         Failure rate of the fans in the building.
     const_vent : ureg.Quantity, [length]^3/[time]
         Min volumetric flow required or present in the building.
+    PFD_ODH : float
+        The default value for the oxygen deficiency hazard (ODH) system failure.
 
     Properties
     ----------
@@ -558,6 +560,7 @@ class BuildVent:
     Test_period: ureg.Quantity
     lambda_fan: ureg.Quantity = TABLE_2['Fan']['Failure to run']
     const_vent: ureg.Quantity = 0*ureg.ft**3/ureg.min
+    PFD_ODH: float = PFD_ODH  # Default value for ODH system failure
 
     def fan_flowrates(self):
         # TODO add fans with different volumetric rates (see report as well)
@@ -596,8 +599,6 @@ class Volume:
         The ventilation system of the building or part of the building.
     power : BuildPower
         The power system of the building or part of the building.
-    PFD_ODH : float
-        The default value for the oxygen deficiency hazard (ODH) system failure.
 
     Methods
     -------
@@ -633,7 +634,6 @@ class Volume:
         self.volume = volume.to_base_units()
         self.vent = build_vent
         self.power = build_power
-        self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
 
     def info(self):
         """
@@ -735,7 +735,7 @@ class Volume:
         None
         """
         PFD_isol_valve = source.sol_PFD
-        P_event = (1-self.power.pfd) * self.PFD_ODH * PFD_isol_valve
+        P_event = (1-self.power.pfd) * self.vent.PFD_ODH * PFD_isol_valve
         Q_fan = self.vent.const_vent
         tau_event = min(leak.tau, self.vent.Test_period)
         self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
@@ -762,7 +762,7 @@ class Volume:
         """
         PFD_isol_valve = source.sol_PFD
         # Probability for this group of the events
-        P_group = (1-self.power.pfd) * (1-self.PFD_ODH) * PFD_isol_valve
+        P_group = (1-self.power.pfd) * (1-self.vent.PFD_ODH) * PFD_isol_valve
         tau_event = min(leak.tau, self.vent.Test_period)
         for (P_fan, Q_fan, N_fans) in self.vent.fan_flowrates():
             P_event = P_group * P_fan  # Probability of the particular event
