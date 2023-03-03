@@ -1,7 +1,8 @@
-import CryoToolBox as ht
-from CryoToolBox import odh
+import heat_transfer as ht
+from heat_transfer import odh
 import pprint
 import unittest
+import random
 from math import pi
 from unittest.mock import MagicMock
 

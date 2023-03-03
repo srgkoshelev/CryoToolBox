@@ -1,30 +1,16 @@
 * Introduction
-#+begin_src python
->>> import CryoToolBox as ctb
->>> nitrogen = ctb.ThermState('nitrogen', P=500*ctb.ureg.kPa, T=300*ctb.ureg.K)  # Create nitrogen fluid
->>> nitrogen.Dmass  # Nitrogen mass density
-<Quantity(5.62019549, 'kilogram / meter ** 3')>
->>> nitrogen.Dmass.to(ctb.ureg.lb/ctb.ureg.ft**3)  # Easy unit conversion
-<Quantity(0.350857343, 'pound / foot ** 3')>
-#+end_src
-=CryoToolBox= is a Python package for simple heat transfer and fluid dynamics calculations using [[https://github.com/CoolProp/CoolProp][CoolProp]] back-end and [[https://github.com/hgrecco/pint][Pint]] for unit handling.
+=heat_transfer= is a Python package for simple heat transfer and hydraulics calculation using [[https://github.com/CoolProp/CoolProp][CoolProp]] back-end and [[https://github.com/hgrecco/pint][Pint]] for unit handling.
 
-Documentation for the package is located [[https://srgkoshelev.github.io/CryoToolBox/][here]].
+Description of package's inner workings can be found [[https://github.com/srgkoshelev/heat_transfer/wiki][here]].
 
+Documentation for the package is located [[https://srgkoshelev.github.io/heat_transfer/][here]].
 *WARNING*: Current version is 0.1.0 with limited functionality. API hasn't stabilized and non-back-compatible changes should be expected.
+* Example
 * Installation
-- *Prerequisites:*
-  - Python 3
-  - Git
-
-Run the following command in your command line (git shell):
-#+begin_src sh
-  pip install git+https://github.com/srgkoshelev/CryoToolBox.git
-#+end_src
 * License
 MIT License
 
-Copyright (c) 2023 Sergey Koshelev
+Copyright (c) [year] [fullname]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,7 +1,7 @@
 echo 'Generating docs'
-python3 -m pdoc --html CryoToolBox -o docs
-mv docs/CryoToolBox/*.html docs
-rm -rv docs/CryoToolBox
+pdoc --html heat_transfer -o docs
+mv docs/heat_transfer/*.html docs
+rm -rv docs/heat_transfer
 echo 'Docs generated'
 while true; do
     read -p 'Commit and upload the docs? [y/n]' yn
@@ -11,7 +11,7 @@ while true; do
             git commit -m 'Generated docs.'
             git push
             echo 'Committed and pushed upstream.'
-            exit;;
+            ;;
         [Nn]* ) exit;;
         * ) echo "Please answer yes or no.";;
     esac

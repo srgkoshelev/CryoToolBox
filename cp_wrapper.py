@@ -316,10 +316,11 @@ class ThermState:
     def P_reducing(self):
         return self._AbstractState.p_reducing()
 
-    @property
-    @ureg.wraps(CP_const_unit['P'][1], None)
-    def P_triple(self):
-        return self._AbstractState.ptriple()
+    # Is not supported by CoolProp python wrapper
+    # @property
+    # @ureg.wraps(CP_const_unit['P_triple'][1], None)
+    # def P_triple(self):
+    #     return self._AbstractState.p_triple()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
@@ -332,7 +333,7 @@ class ThermState:
         return self._AbstractState.T_reducing()
 
     @property
-    @ureg.wraps(CP_const_unit['T'][1], None)
+    @ureg.wraps(CP_const_unit['T_triple'][1], None)
     def T_triple(self):
         return self._AbstractState.Ttriple()
 
