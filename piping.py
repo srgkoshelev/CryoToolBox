@@ -1598,10 +1598,25 @@ def volume(piping):
     return result
 
 
-def stored_energy(fluid, piping):
+def piping_stored_energy(fluid, piping):
     """Calculate stored energy of the piping.
 
-    Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
+    Parameters
+    ----------
+    fluid : cp_wrapper.ThermState
+        The fluid state inside the piping.
+    piping : List[PipingElement]
+        The piping elements of the piping.
+
+    Returns
+    -------
+    Quantity
+        The stored energy of the piping in [mass*length^2/time^2].
+
+    Notes
+    -----
+    Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a).
+    """
     volume = 0 * ureg.m**3
     for tube in piping:
         # Smaller of 8*ID and actual length
