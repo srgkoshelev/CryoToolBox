@@ -647,6 +647,13 @@ class ODHTest(FunctionsTest):
         self.assertAlmostEqual(N_leaks*q_leak, source.leaks[0].q_std)
         self.assertEqual(N_leaks, source.leaks[0].N_events)
 
+    def test_PDF_avg(self):
+        # Example from MSA X5000 Safety manual
+        l_dd = 380e-9 / u.hr
+        l_du = 170e-9 / u.hr
+        T_p = 3 * u.month
+        MTTR = 4 * u.hr
+        self.assertApproxEqual(1.88e-4, odh.PFD_avg(l_du, l_dd, T_p, MTTR), uncertainty=1e-2)
 
 class Nu_test(FunctionsTest):
     def test_Nu_vplate(self):

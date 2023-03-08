@@ -1231,3 +1231,57 @@ def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
     m_dot = G_nozzle(fluid) * area * Kd
     q_std = to_standard_flow(m_dot, fluid)
     return q_std
+
+
+def O2_sudden_release(release, volume, escape=True):
+    """Calculate oxygen concentration after a sudden release.
+
+    Parameters
+    ----------
+    release : Quantity [length*3]
+        Standard volume of the inert gas released.
+    volume : Quantity [length^3]
+        Volume of the room, building, or area analyzed.
+    escape : bool, optional
+        If True, mixed air is allowed to escape from considered volume.
+        If False, inert gas is trapped and expels the air outside the considered volume.
+        Default is True.
+
+    Returns
+    -------
+    float
+        Resulting oxygen concentration.
+    """
+    if escape == True:
+        O2_conc = 0.21*volume/(volume+release)
+    else:
+        O2_conc = 0.21*(1-release/volume)
+    return O2_conc
+
+
+def PFD_avg(l_du, l_dd, T_p, MTTR):
+    """
+    Calculate probability of failure on demand based on dangerous detected and dangerous undetected failure rates.
+
+    The equation is taken from MSA Ultima X5000 safety manual.
+
+    Parameters
+    ----------
+    l_du : Quantity [1/time]
+        Dangerous undetected failure rate.
+    l_dd : Quantity [1/time]
+        Dangerous detected failure rate.
+    T_p : Quantity [time]
+        Proof test interval.
+    MTTR : Quantity [time]
+        Mean time to restoration.
+
+    Returns
+    -------
+    float
+        Probability of failure on demand.
+    """
+    PFD_du = l_du * (T_p/2 + MTTR)
+    PFD_dd = l_dd * MTTR
+    PFD = PFD_du + PFD_dd
+    return float(PFD)
