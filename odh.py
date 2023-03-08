@@ -522,7 +522,7 @@ class BuildPower:
 
 
 @ureg.check('[length]^3/[time]', None, '[time]', '1/[time]',
-            '[length]^3/[time]')
+            '[length]^3/[time]', None)
 @dataclass
 class BuildVent:
     """
