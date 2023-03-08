@@ -520,6 +520,10 @@ class BuildPower:
     def pfd(self):
         return self.power_pfd * self.backup_pfd
 
+    def info(self):
+        return (f'Power provided with {self.pfd:.3g~} unavailability and '
+                f'{self.max_outage:.3g~} max outage period.'
+                f'\nPower failure rate is {self.lambda_power:.3e~}.')
 
 @ureg.check('[length]^3/[time]', None, '[time]', '1/[time]',
             '[length]^3/[time]', None)
@@ -575,6 +579,21 @@ class BuildVent:
                 flowrate = self.const_vent
             fan_flowrates.append((P_m_fan_work, flowrate, m))
         return fan_flowrates
+
+    def info(self):
+        if self.Q_fan > 0*ureg.L/ureg.s:
+            vent_action = 'supplying clean air to'
+        else:
+            vent_action = 'drawing contaminated air from'
+        result = [f'Ventilation consists of {self.N_fans} fans {abs(self.Q_fan):,.0f~} each\n  {vent_action} the volume.']
+        if self.const_vent > 0*ureg.L/ureg.s:
+            vent_action = 'supplying clean air to'
+        else:
+            vent_action = 'drawing contaminated air from'
+        result.append(f'Constant ventilation in the building is {abs(self.const_vent):,.1f~}\n  {vent_action} the volume.')
+        result.append(f'ODH system is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.')
+        result.append(f'ODH system unavailability is {self.PFD_ODH:.3e}.')
+        return '\n'.join(result)
 
 
 class Volume:
@@ -640,18 +659,8 @@ class Volume:
         Display information on the volume.
         """
         print(f'{self.name} with affected volume of {self.volume:,.0f~}.')
-        print(f'Power provided with {self.power.pfd:.3g~} unavailability and '
-              f'{self.power.max_outage:.3g~} max outage period.')
-        if self.vent.Q_fan > 0*ureg.L/ureg.s:
-            vent_action = 'supplying clean air to'
-        else:
-            vent_action = 'drawing contaminated air from'
-        print(f'Ventilation consists of {self.vent.N_fans} fans {abs(self.vent.Q_fan):.3g~} each\n{vent_action} the volume.')
-        if self.vent.const_vent > 0*ureg.L/ureg.s:
-            vent_action = 'supplying clean air to'
-        else:
-            vent_action = 'drawing contaminated air from'
-        print(f'Constant ventilation in the building is {abs(self.vent.const_vent):.3g~}\n{vent_action} the volume.')
+        print(self.power.info())
+        print(self.vent.info())
 
     def odh(self, sources, power_outage=False):
         """Calculate ODH fatality rate for given `Source`s.
