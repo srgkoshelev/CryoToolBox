@@ -881,8 +881,8 @@ class Volume:
         tau = math.inf * ureg.s
         O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
         if O2_conc_1fan < 0.195:
-            raise ConstLeakTooBig('Constant leak reduces O2 conecntration to '
-                                  f'{O2_conc_1fan} with at least 1 fan '
+            raise ConstLeakTooBig('Constant leak reduces O2 concentration to '
+                                  f'{O2_conc_1fan:.1%} with at least 1 fan '
                                   f'operational: {leak}')
 
     def _fatality_prob(self, O2_conc):
@@ -909,6 +909,7 @@ class Volume:
             Fi = 10**(6.5-76*O2_conc)
         return Fi
 
+    @property
     def odh_class(self):
         """Calculate ODH class as defined in FESHM 4240.
 
@@ -925,8 +926,7 @@ class Volume:
             return 2
         else:
             # TODO add a custom exception for ODH > 2
-            print('ODH fatality rate is too high. Please, check calculations.')
-            return None
+            raise ODHError('ODH fatality rate is too high. Please, check calculations.')
 
     @property
     def phi(self):
@@ -982,7 +982,7 @@ class Volume:
             row.append(f'{f_mode.N_fan}')
             row.append(f'{f_mode.O2_conc:.0%}')
             row.append(f'{f_mode.tau.m_as(ureg.min):,.1f}')
-            row.append(f'{f_mode.phi.m_as(1/ureg.hr):.2}')
+            row.append(f'{f_mode.phi.m_as(1/ureg.hr):.2e}')
             table.append(row)
         return table
 
@@ -1050,7 +1050,7 @@ class Volume:
             worksheet.write(N_rows+1, N_cols-1,
                             self.phi.m_as(1/ureg.hr))
             worksheet.write(N_rows+2, N_cols-2, 'ODH class')
-            worksheet.write(N_rows+2, N_cols-1, self.odh_class(),
+            worksheet.write(N_rows+2, N_cols-1, self.odh_class,
                             number_format)
             worksheet.autofit()
             worksheet.conditional_format(
@@ -1061,16 +1061,6 @@ class Volume:
 
     def __str__(self):
         return (f'Volume: {self.name}, {self.volume.to(ureg.ft**3):~}')
-
-    # def source_safe(self, source, escape = True):
-    #    """
-    #    Estimate the impact of the Source volume on oxygen concetration. Smaller sources might not be able to drop oxygen concentration to dangerous levels.
-    #    """
-    #    if escape == True:  # if mixed air is allowed to escape within considered volume
-    #        O2_conc = 0.21*self.volume/(self.volume+source.volume)
-    #    else:  # worst case; inert gas is trapped and expells the air outside the considered volume
-    #        O2_conc = 0.21*(1-source.volume/self.volume)
-    #    return self._fatality_prob(O2_conc) == 0
 
 
 def prob_m_of_n(m, n, T, l):
