@@ -126,7 +126,7 @@ class Source:
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid for the release.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
-            Standard volumetric flow rate for flange rupture.
+            Standard volumetric flow rate for pipe rupture.
         N_welds : int
             Number of welds on the tube.
         """
@@ -181,7 +181,8 @@ class Source:
         self.add_failure_mode('Dewar insulation failure', failure_rate,
                               self.fluid, q_std, 1)
 
-    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1):
+    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1,
+                           gasket_type='reinforced'):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -198,15 +199,27 @@ class Source:
             Standard volumetric flow rate for flange rupture.
         N : int
             Number of reinforced seal connections on the pipe.
+        gasket_type : str
+            Type of the gasket in the flange, 'soft' or 'reinforced'.
         """
         # TODO Make leak and rupture areas adjustable, add info to docstring
-        table = TABLE_2['Flange, reinforced gasket']
+        if gasket_type == 'reinforced':
+            table = TABLE_2['Flange, reinforced gasket']
+        if gasket_type == 'soft':
+            table = TABLE_2['Flange, soft gasket']
         # Leak case
-        name = f'Flange leak: {pipe}'
+        name = f'Flange {gasket_type} gasket leak: {pipe}'
         failure_rate = table['Leak']['Failure rate']
         area = table['Leak']['Area']
         q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+        # Blowout for soft gasket
+        if gasket_type == 'soft':
+            name = f'Flange soft gasket blowout: {pipe}'
+            failure_rate = table['Blowout']['Failure rate']
+            area = table['Blowout']['Area']
+            q_std = hole_leak(area, fluid)
+            self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
         name = f'Flange rupture: {pipe}'
         failure_rate = table['Rupture']
@@ -253,7 +266,7 @@ class Source:
             q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
 
-    def add_line_failure(self, pipe, fluid, *, N_welds, N_flanges, N_valves,
+    def add_line_failure(self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves,
                          q_std_rupture=None):
         """Add leaks for pipe, weld, flange, and valve failures.
 
@@ -269,16 +282,23 @@ class Source:
             Thermodynamic state of the fluid stored in the source.
         N_welds : int
             Number of welds on the line.
-        N_flange : int
-            Number of flanges on the line.
+        N_reinforced : int
+            Number of flanges with reinforced, preformed or metal gaskets on the line.
+        N_soft : int
+            Number of flanges with soft gaskets on the line.
         N_valves : int
             Number of valves on the line.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
             Standard volumetric flow rate for flange rupture.
         """
-        self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
-        self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_flanges)
-        self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
+        if N_welds > 0:
+            self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
+        if N_reinforced > 0:
+            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_reinforced, gasket_type='reinforced')
+        if N_soft > 0:
+            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_soft, gasket_type='soft')
+        if N_valves > 0:
+            self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
 
     # def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
     #     """Add transfer line failure to leaks dict.

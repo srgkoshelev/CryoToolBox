@@ -607,25 +607,36 @@ class ODHTest(FunctionsTest):
         fluid = ht.ThermState('nitrogen', P=100*u.psi, Q=0)
         source = odh.Source('Test source', fluid, 100*u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1*u.m)
-        source.add_line_failure(tube, fluid, N_welds=1, N_flanges=1, N_valves=1)
+        source.add_line_failure(tube, fluid, N_welds=1, N_reinforced=1, N_soft=1, N_valves=1)
         D_t = tube.OD / tube.wall
         leaks = [
+            # Piping
             odh.Leak('', 1e-9/u.hr, fluid,
                      odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
             odh.Leak('', 1e-10/u.hr, fluid,
                      odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
             odh.Leak('', 3e-11/u.hr, fluid,
                      odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            # Welds
             odh.Leak('', 2e-11*D_t/u.hr, fluid,
                      odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
             odh.Leak('', 2e-12*D_t/u.hr, fluid,
                      odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
             odh.Leak('', 6e-13*D_t/u.hr, fluid,
                      odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            # Reinforced gasket
             odh.Leak('', 4e-7/u.hr, fluid,
                      odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
             odh.Leak('', 1e-9/u.hr, fluid,
                      odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            # Soft gasket
+            odh.Leak('', 4e-7/u.hr, fluid,
+                     odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 3e-8/u.hr, fluid,
+                     odh.hole_leak(1000*u.mm**2, fluid), 0*u.s, 1),
+            odh.Leak('', 1e-9/u.hr, fluid,
+                     odh.hole_leak(tube.area, fluid), 0*u.s, 1),
+            # Valve
             odh.Leak('', 1e-8/u.hr, fluid,
                      odh.hole_leak(10*u.mm**2, fluid), 0*u.s, 1),
             odh.Leak('', 5e-10/u.hr, fluid,

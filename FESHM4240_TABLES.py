@@ -41,7 +41,7 @@ TABLE_2 = {'Battery':
             'Rupture': Q_('1 * 10 ^-9 / hr')},
            'Flange, soft gasket':
            {'Leak': {'Area': Q_('10 mm^2'), 'Failure rate': Q_('4 * 10^-7 / hr')},
-            'Blowout': Q_('3 * 10 ^-8 / hr'),
+            'Blowout': {'Area': Q_('1000 mm^2'), 'Failure rate': Q_('3 * 10 ^-8 / hr')},
             'Rupture': Q_('1 * 10 ^-9 / hr')},
            'Instrumentation':
            {'Failure to operate': Q_('1 * 10^-6 / hr'),
