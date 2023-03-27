@@ -207,6 +207,8 @@ def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1):
             :q0: heat load without any baffles
     """
 
+    T_1.ito_base_units()
+    T_2.ito_base_units()
     eps_mut = 1/(1/eps_1 + F1_2*(1/eps_2-1))  # Mutual emissivity
     q0 = eps_mut*sigma*(T_2**4 - T_1**4)*F1_2
     return q0.to(ureg.W/ureg.m**2)

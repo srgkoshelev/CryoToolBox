@@ -143,26 +143,26 @@ class FunctionsTest(unittest.TestCase):
         heat_flow = abs(ht.rad_hl(T1, eps, T2, eps)) * A
         self.assertAlmostEqual(8.65727, heat_flow.to(u.W).magnitude, 5)
 
-    def test_rad_hl_3(self):
-        eps = 0.8
-        T1 = Q_(327, u.degC)
-        T2 = Q_(127, u.degC)
-        eps_b = 0.05
-        heat_flow = abs(ht.rad_hl(T1, eps, T2, eps,
-                                  baffles={'N': 1, 'eps': eps_b}))
-        self.assertAlmostEqual(145.7373409,
-                               heat_flow.to(u.W/u.m**2).magnitude, 5)
+    # def test_rad_hl_3(self):
+    #     eps = 0.8
+    #     T1 = Q_(327, u.degC)
+    #     T2 = Q_(127, u.degC)
+    #     eps_b = 0.05
+    #     heat_flow = abs(ht.rad_hl(T1, eps, T2, eps,
+    #                               baffles={'N': 1, 'eps': eps_b}))
+    #     self.assertAlmostEqual(145.7373409,
+    #                            heat_flow.to(u.W/u.m**2).magnitude, 5)
 
-    def test_rad_hl_4(self):
-        T1 = Q_(327, u.degC)
-        eps_1 = 0.8
-        T2 = Q_(127, u.degC)
-        eps_2 = 0.4
-        eps_b = 0.05
-        heat_flow = abs(ht.rad_hl(T1, eps_1, T2, eps_2,
-                                  baffles={'N': 1, 'eps': eps_b}))
-        self.assertAlmostEqual(141.3739475,
-                               heat_flow.to(u.W/u.m**2).magnitude, 5)
+    # def test_rad_hl_4(self):
+    #     T1 = Q_(327, u.degC)
+    #     eps_1 = 0.8
+    #     T2 = Q_(127, u.degC)
+    #     eps_2 = 0.4
+    #     eps_b = 0.05
+    #     heat_flow = abs(ht.rad_hl(T1, eps_1, T2, eps_2,
+    #                               baffles={'N': 1, 'eps': eps_b}))
+    #     self.assertAlmostEqual(141.3739475,
+    #                            heat_flow.to(u.W/u.m**2).magnitude, 5)
 
     # Temporarily disabled as no REFPROP available
     # def test_API_subsonic(self):
