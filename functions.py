@@ -184,7 +184,7 @@ def theta_heat(fluid, step=0.01):
     return cga.theta(fluid, step)
 
 
-def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02}):
+def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1):
     """
     Calculate radiative heat load including reduction due to baffles.
     Based on Kaganer "Thermal insulation in cryogenic engineering", p. 42.
@@ -201,29 +201,15 @@ def rad_hl(T_1, eps_1, T_2, eps_2, F1_2=1, baffles={'N': 0, 'eps': 0.02}):
         temperature of the second surface
     F1_2 : float
         F1_2 = F_cold/F_hot
-    baffles : dict
-        N - number of baffles
-        eps - emissivity of the baffle, assumed to be same on both sides
 
     Returns
     -------
-    dict
             :q0: heat load without any baffles
-            q_baffle : heat load with the baffles
-            eta : effectiveness of the baffles
     """
-    # TODO This function will be refactored
-    N_baffles = baffles['N']
-    eps_baffle = baffles['eps']
 
     eps_mut = 1/(1/eps_1 + F1_2*(1/eps_2-1))  # Mutual emissivity
-    T_1.ito(ureg.K)
-    T_2.ito(ureg.K)
     q0 = eps_mut*sigma*(T_2**4 - T_1**4)*F1_2
-    eps_baffle_mut = eps_baffle/(2-eps_baffle)
-    eta = (1+N_baffles*eps_mut/eps_baffle_mut)**(-1)
-    q_baffle = eta*q0
-    return q_baffle.to(ureg.W/ureg.m**2)
+    return q0.to(ureg.W/ureg.m**2)
 
 
 def conduction_1D(A_cross, L, k, dT):
