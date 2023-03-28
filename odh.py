@@ -182,7 +182,7 @@ class Source:
                               self.fluid, q_std, 1)
 
     def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1,
-                           gasket_type='reinforced'):
+                           gasket_type='reinforced', blowout_area=None):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -201,6 +201,8 @@ class Source:
             Number of reinforced seal connections on the pipe.
         gasket_type : str
             Type of the gasket in the flange, 'soft' or 'reinforced'.
+        blowout_area : Quantity [length^2]
+            Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
         """
         # TODO Make leak and rupture areas adjustable, add info to docstring
         if gasket_type == 'reinforced':
@@ -217,11 +219,11 @@ class Source:
         if gasket_type == 'soft':
             name = f'Flange soft gasket blowout: {pipe}'
             failure_rate = table['Blowout']['Failure rate']
-            area = table['Blowout']['Area']
+            area = blowout_area or table['Blowout']['Area']
             q_std = hole_leak(area, fluid)
             self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
-        name = f'Flange rupture: {pipe}'
+        name = f'Flange {gasket_type} gasket rupture: {pipe}'
         failure_rate = table['Rupture']
         if q_std_rupture is not None:
             q_std = q_std_rupture
@@ -267,7 +269,7 @@ class Source:
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
 
     def add_line_failure(self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves,
-                         q_std_rupture=None):
+                         q_std_rupture=None, blowout_area=None):
         """Add leaks for pipe, weld, flange, and valve failures.
 
         Store failure rate, flow rate and expected time duration of
@@ -290,13 +292,15 @@ class Source:
             Number of valves on the line.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
             Standard volumetric flow rate for flange rupture.
+        blowout_area : Quantity [length^2]
+            Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
         """
         if N_welds > 0:
             self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
         if N_reinforced > 0:
             self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_reinforced, gasket_type='reinforced')
         if N_soft > 0:
-            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_soft, gasket_type='soft')
+            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_soft, gasket_type='soft', blowout_area=blowout_area)
         if N_valves > 0:
             self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
 
