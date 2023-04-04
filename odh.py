@@ -64,15 +64,8 @@ class ConstLeak:
 
 class Source:
     """Source of inert gas
-
-    Attributes
-    ----------
-    sol_PFD : float
-        Probability of failure on demand (PFD) for isolation valve.
-        If the source doesn't have isolating valve
-        the probability is 1.
     """
-    def __init__(self, name, fluid, volume, N=1, isol_valve=False):
+    def __init__(self, name, fluid, volume, N=1, isol_valve_PFD=1):
         """Define the possible source of inert gas.
 
         Parameters
@@ -86,9 +79,10 @@ class Source:
         N : int
             Number of the sources if several similar sources exist,
             e.g. gas bottles.
-        isol_valve : bool
-            Denotes whether the source is protected using a normally closed
-            valve.
+        isol_valve_PFD : float
+            Probability of failure on demand of source isolation valve.
+            If no isolation valve will trigger on ODH alarm, the probability
+            is 1 (default).
         """
         self.name = name
         self.fluid = fluid
@@ -103,9 +97,7 @@ class Source:
         self.volume.ito_base_units()
         # By default assume there is no isolation valve
         # that is used by ODH system
-        self.isol_valve = isol_valve
-        self.sol_PFD = (int(not isol_valve) or
-                        TABLE_2['Valve, solenoid']['Failure to operate'])
+        self.isol_valve_PFD = isol_valve_PFD
 
     def add_pipe_failure(self, tube, fluid, q_std_rupture=None, N_welds=1):
         """Add pipe failure to the leaks dict.
@@ -220,6 +212,7 @@ class Source:
             name = f'Flange soft gasket blowout: {pipe}'
             failure_rate = table['Blowout']['Failure rate']
             area = blowout_area or table['Blowout']['Area']
+            area = min(area, pipe.area)
             q_std = hole_leak(area, fluid)
             self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
@@ -467,7 +460,7 @@ class Source:
 
     def __str__(self):
         return f'{self.name}, ' + \
-            f'{self.volume.to(ureg.ft**3):.3g~} ' + \
+            f'{self.volume:.3g~} ' + \
             f'of {self.fluid.name}'
 
     def print_leaks(self):
@@ -741,7 +734,7 @@ class Volume:
         else:
             PFD_power = self.power.pfd
             tau_event = min(leak.tau, self.power.max_outage)
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.isol_valve_PFD
         P_event = PFD_power * PFD_isol_valve
         Q_fan = 0 * ureg.ft**3/ureg.min
         self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
@@ -760,14 +753,12 @@ class Volume:
         leak : Leak
             Leak failure rate, volumetric flow rate, event duration, and number
             of events.
-        power_outage : bool
-            Shows whether there is a power outage is in effect.
 
         Returns
         -------
         None
         """
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.isol_valve_PFD
         P_event = (1-self.power.pfd) * self.vent.PFD_ODH * PFD_isol_valve
         Q_fan = self.vent.const_vent
         tau_event = min(leak.tau, self.vent.Test_period)
@@ -793,7 +784,7 @@ class Volume:
         -------
         None
         """
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.isol_valve_PFD
         # Probability for this group of the events
         P_group = (1-self.power.pfd) * (1-self.vent.PFD_ODH) * PFD_isol_valve
         tau_event = min(leak.tau, self.vent.Test_period)
@@ -869,7 +860,7 @@ class Volume:
         None
         """
 
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.isol_valve_PFD
         if power_outage:
             tau_outage = source.volume/leak.q_std  # No refills during outage
             Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
