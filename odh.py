@@ -65,7 +65,7 @@ class ConstLeak:
 class Source:
     """Source of inert gas
     """
-    def __init__(self, name, fluid, volume, N=1, isol_valve_PFD=1):
+    def __init__(self, name, fluid, volume, N=1, PFD_isol_valve=1):
         """Define the possible source of inert gas.
 
         Parameters
@@ -79,7 +79,7 @@ class Source:
         N : int
             Number of the sources if several similar sources exist,
             e.g. gas bottles.
-        isol_valve_PFD : float
+        PFD_isol_valve : float
             Probability of failure on demand of source isolation valve.
             If no isolation valve will trigger on ODH alarm, the probability
             is 1 (default).
@@ -97,7 +97,7 @@ class Source:
         self.volume.ito_base_units()
         # By default assume there is no isolation valve
         # that is used by ODH system
-        self.isol_valve_PFD = isol_valve_PFD
+        self.PFD_isol_valve = PFD_isol_valve
 
     def add_pipe_failure(self, tube, fluid, q_std_rupture=None, N_welds=1):
         """Add pipe failure to the leaks dict.
@@ -425,7 +425,7 @@ class Source:
                                tau.to(ureg.min), N_events))
 
     @staticmethod
-    def combine(name, fluid, sources):
+    def combine(name, fluid, sources, N=1, PFD_isol_valve=1):
         """Combine several ODH sources sharing volume.
 
         Can be used for failure modes affecting several sources in parallel.
@@ -438,6 +438,13 @@ class Source:
             Thermodynamic state of the fluid stored in the source.
         sources : list of Source
             Sources connected together.
+        N : int
+            Number of the sources if several similar sources exist,
+            e.g. gas bottles.
+        PFD_isol_valve : float
+            Probability of failure on demand of source isolation valve.
+            If no isolation valve will trigger on ODH alarm, the probability
+            is 1 (default).
 
         Returns
         -------
@@ -453,15 +460,15 @@ class Source:
         volume_NTP = sum([source.N*source.volume for source in sources])
         fluid_NTP = ThermState(fluid.name, P=P_NTP, T=T_NTP)
         phys_volume = volume_NTP*fluid_NTP.Dmass / fluid.Dmass
-        return Source(name, fluid, phys_volume)
+        return Source(name, fluid, phys_volume, N=N, PFD_isol_valve=PFD_isol_valve)
 
     def __repr__(self):
-        return f'Source({self.name}, {self.fluid}, {self.volume}, N={self.N}, isol_valve={self.isol_valve})'
+        return f'Source({self.name!r}, {self.fluid!r}, {self.volume!r}, N={int(self.N)}, PFD_isol_valve={float(self.PFD_isol_valve)})'
 
     def __str__(self):
-        return f'{self.name}, ' + \
-            f'{self.volume:.3g~} ' + \
-            f'of {self.fluid.name}'
+        return (f'{self.name}, '
+            f'{self.volume:,.0f~} '
+            f'of {self.fluid.name}')
 
     def print_leaks(self):
         """Print information on the leaks defined for the source."""
@@ -860,7 +867,7 @@ class Volume:
         None
         """
 
-        PFD_isol_valve = source.isol_valve_PFD
+        PFD_isol_valve = source.PFD_isol_valve
         if power_outage:
             tau_outage = source.volume/leak.q_std  # No refills during outage
             Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
