@@ -391,8 +391,8 @@ class Source:
         """
         if not fluid:
             fluid = self.fluid
-        N_events = N * self.N
-        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, N_events))
+        # N_events = N * self.N
+        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, 1))
 
     def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
         """Add general failure mode to leaks dict.
