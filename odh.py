@@ -801,8 +801,6 @@ class Volume:
         tau_event = min(leak.tau, self.vent.Test_period)
         for (P_fan, Q_fan, N_fans) in self.vent.fan_flowrates():
             P_event = P_group * P_fan  # Probability of the particular event
-            if Q_fan == 0 * ureg.ft**3/ureg.min:
-                Q_fan = self.vent.const_vent
             if N_fans == self.vent.N_fans:
                 scenario = 'Normal operation'
             else:
