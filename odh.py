@@ -919,7 +919,7 @@ class Volume:
         P_event = PFD_isol_valve
         # Event can't go undetected for longer than the test period
         tau_event = self.vent.Test_period
-        scenario = 'Cons leak and 1 fan failure'
+        scenario = 'Const leak and 1 fan failure'
         self._add_failure_mode(P_event, tau_event, failure_rate,
                                source, leak, self.vent.const_vent, 0, False,
                                scenario)
