@@ -873,6 +873,8 @@ def f_Darcy(Re_, eps_r, method='churchill'):
     float
         Darcy friction coefficient
     """
+    if Re_ <= 2100:
+        return 64 / Re_
     if method == 'churchill':
         return churchill(Re_, eps_r)
     elif method == 'serghide':
