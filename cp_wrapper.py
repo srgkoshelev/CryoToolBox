@@ -497,9 +497,9 @@ class ThermState:
         return self._AbstractState.backend_name()
 
     def __str__(self):
-        return f'{self.name.capitalize()} at ' + \
-            f'T: {self.T.to(ureg.K):.3~g~} and ' + \
-            f'P: {self.P.to(ureg.psi):.3g~}.'
+        return (f'{self.name} at '
+            f'T: {self.T.to(ureg.K):.3g~} and '
+            f'P: {self.P.to(ureg.psi):.3g~}')
 
     @property
     def M(self):
