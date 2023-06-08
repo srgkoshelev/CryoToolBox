@@ -391,7 +391,7 @@ class Source:
         """
         if not fluid:
             fluid = self.fluid
-        # N_events = N * self.N
+        N_events = N * self.N
         self.leaks.append(ConstLeak(name, fluid, q_std*N_events, 1))
 
     def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
@@ -889,10 +889,10 @@ class Volume:
 
         # TODO Replace hard coded value with changeable
         # Constant leak and power failure
-        failure_rate = self.power.lambda_power * self.power.backup_pfd
+        failure_rate = self.power.lambda_power
         # Constant leak is assumed to be hazardous only when
         # the isolation valve fails
-        P_event = PFD_isol_valve
+        P_event = PFD_isol_valve * self.power.backup_pfd
         Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
         tau_event = min(self.vent.Test_period, self.power.max_outage)
         scenario = 'Const leak and power failure'
@@ -977,7 +977,7 @@ class Volume:
 
     @property
     def phi(self):
-        return sum((fm.phi for fm in self.fail_modes))
+        return sum((fm.phi for fm in self.fail_modes)).to(1/ureg.hr)
 
     # def report(self, brief=True, sens=None):
     #     """Print a report for failure modes and effects.
