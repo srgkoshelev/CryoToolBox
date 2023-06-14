@@ -850,5 +850,4 @@ class Tubestest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    print("NO REFPROP TESTS PERFORMED!")
     unittest.main()
