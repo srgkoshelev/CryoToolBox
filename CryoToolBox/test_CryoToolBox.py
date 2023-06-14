@@ -314,14 +314,15 @@ class PipingTest(unittest.TestCase):
         v = 240 * u.m/u.s
         T1 = 320 * u.K
         P1 = 170 * u.kPa
-        T01 = 349 * u.K
-        P01 = 230 * u.kPa
         fluid_static = ht.ThermState('air', P=P1, T=T1)
         area = 0.05 * u.m**2  # Assumed value
         M = ht.piping.Mach(fluid_static, v)
         M_exp = 0.67
         self.assertApproxEqual(M_exp, M, uncertainty=0.005)
-        fluid_total = ht.ThermState('air', P=P01, T=T01)
+        P01 = ht.piping.P_total(fluid_static.P, M, fluid_static.gamma)
+        self.assertApproxEqual(230*u.kPa, P01, uncertainty=0.005)
+        fluid_total = ht.ThermState('air', Hmass=fluid_static.Hmass+v**2/2, P=P01)
+        self.assertApproxEqual(349*u.K, fluid_total.T, uncertainty=0.005)
         m_dot = v * area * fluid_static.Dmass
         M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
         self.assertApproxEqual(M_exp, M_total, uncertainty=0.005)
