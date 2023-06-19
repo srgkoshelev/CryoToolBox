@@ -500,7 +500,7 @@ class Elbow(Tube):
         self.angle = angle
         super().__init__(OD, wall, L=0*ureg.m, c=c)
         self.L = R_D*self.ID*angle
-        self.type = 'Tube elbow'
+        self.type = 'Elbow'
 
     def K(self, Re_):
         """
@@ -529,8 +529,8 @@ class Elbow(Tube):
         return (A1*B1*C1+K_frict)*self.N
 
     def __str__(self):
-        return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
-            f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
+        return f'{self.N}x {self.type}, {self.OD:~}x{self.wall:~}, ' + \
+            f'{self.angle.to(ureg.deg):~}, R/D={self.R_D}'
 
 
 class PipeElbow(Elbow, Pipe):
@@ -722,8 +722,8 @@ class Contraction(PipingElement):
         return K_
 
     def __str__(self):
-        return f'{self.type}, {self.theta.to(ureg.deg)} from {self.ID1} ' + \
-            f'to {self.ID2}'
+        return f'{self.type}, {self.theta.to(ureg.deg):~} {self.ID1:~}x' + \
+            f'{self.ID2:~}'
 
     # def __str__(self):
     #     return f'{self.type}'
