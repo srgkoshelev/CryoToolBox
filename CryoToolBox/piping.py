@@ -771,6 +771,10 @@ class PackedBed(PipingElement):
     def area(self):
         return pi * self.ID**2 / 4
 
+    @property
+    def L(self):
+        return self.height
+
     def f(self, Re_s):
         """Calculate packed bed friction factor."""
         return 150/self.Re_mod(Re_s) + 1.75
