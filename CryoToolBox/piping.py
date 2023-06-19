@@ -477,8 +477,6 @@ class Annulus(PipingElement):
 
 class Elbow(Tube):
     """
-    NPS elbow fitting.
-    MRO makes method K from PipeElbow class to override method from Pipe class.
     """
     def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5, N=1,
                  angle=90*ureg.deg):
