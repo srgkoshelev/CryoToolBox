@@ -478,7 +478,7 @@ class Annulus(PipingElement):
 class Elbow(Tube):
     """
     """
-    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5, N=1,
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5,
                  angle=90*ureg.deg):
         """Generate a tube elbow object.
 
@@ -490,13 +490,10 @@ class Elbow(Tube):
             Wall thickness of the tube.
         R_D : ureg.Quantity {length: 1}
             Elbow radius/diameter ratio
-        N : int
-            Number of elbows in the pipeline
         angle : ureg.Quantity {dimensionless}
             Number of elbows in the pipeline
         """
         self.R_D = R_D
-        self.N = N
         self.angle = angle
         super().__init__(OD, wall, L=0*ureg.m, c=c)
         self.L = R_D*self.ID*angle
@@ -526,10 +523,10 @@ class Elbow(Tube):
         C1 = 1  # use different value for non-axis symmetric
         # Friction losses in the elbow
         K_frict = super().K(Re_)
-        return (A1*B1*C1+K_frict)*self.N
+        return A1*B1*C1+K_frict
 
     def __str__(self):
-        return f'{self.N}x {self.type}, {self.OD:~}x{self.wall:~}, ' + \
+        return f'{self.type}, {self.OD:~}x{self.wall:~}, ' + \
             f'{self.angle.to(ureg.deg):~}, R/D={self.R_D}'
 
 
@@ -538,7 +535,7 @@ class PipeElbow(Elbow, Pipe):
     NPS Elbow fitting.
     MRO makes method K from Elbow class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1,
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5,
                  angle=90*ureg.deg):
         """Generate a pipe elbow object.
 
@@ -551,17 +548,15 @@ class PipeElbow(Elbow, Pipe):
             Pipe schedule. Default value is SCH 40 (STD).
         R_D : ureg.Quantity {length: 1}
             Elbow radius/diameter ratio
-        N : int
-            Number of elbows in the pipeline
         angle : ureg.Quantity {dimensionless}
             Number of elbows in the pipeline
         """
         # D_nom and SCH go as positional arguments to Pipe __init__
-        super().__init__(D_nom, SCH, c=c, R_D=R_D, N=N, angle=angle)
+        super().__init__(D_nom, SCH, c=c, R_D=R_D, angle=angle)
         self.type = 'NPS elbow'
 
     def __str__(self):
-        return f'{self.N}x {self.type}, {self.D}" SCH {self.SCH}, ' + \
+        return f'{self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.angle.to(ureg.deg)}, R_D = {self.R_D}'
 
 
@@ -569,8 +564,7 @@ class Tee(Tube):
     """
     Tee fitting.
     """
-    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru',
-                 N=1):
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru'):
         """Generate a tee.
 
         Parameters
@@ -582,8 +576,6 @@ class Tee(Tube):
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances of the inner pipe.
-        N : int
-            Number of tees in the pipeline
         """
         if direction in ['thru', 'through', 'run']:
             self.direction = 'run'
@@ -594,7 +586,6 @@ class Tee(Tube):
                          try "thru" or "branch": {}'''.format(direction))
         L = 0*ureg.m
         super().__init__(OD, wall, L, c)
-        self.N = N
         self.type = 'Tube tee'
 
     def K(self, Re=None):
@@ -603,7 +594,7 @@ class Tee(Tube):
             K_ = 20*self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
             K_ = 60*self.f_T()  # Crane TP-410 p. A-29
-        return self.N * K_
+        return K_
 
     def __str__(self):
         return f'{self.type}, {self.OD}x{self.wall}, {self.direction}'
@@ -614,7 +605,7 @@ class PipeTee(Tee, Pipe):
     NPS Tee fitting.
     MRO makes method K from Tee class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru', N=1):
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru'):
         # D_nom and SCH go as positional arguments to Pipe __init__
         super().__init__(D_nom, SCH, c, direction)
         self.type = 'NPS tee'
