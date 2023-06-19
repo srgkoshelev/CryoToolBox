@@ -766,6 +766,7 @@ class PackedBed(PipingElement):
         self.height = height
         self.D_part = D_part
         self.eps = eps
+        self.type = 'Packed bed'
 
     @property
     def area(self):
@@ -796,6 +797,9 @@ class PackedBed(PipingElement):
         K_ = 2*self.f(Re_s)*self.height*(1-self.eps) / \
             (self.D_part*self.eps**3)
         return K_.to_base_units()
+
+    def __str__(self):
+        return f'{self.type.capitalize()} ID={self.ID:.3g~} L={self.L:.3g~}'
 
 
 
