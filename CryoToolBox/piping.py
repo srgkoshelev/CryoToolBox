@@ -693,8 +693,6 @@ class Contraction(PipingElement):
         ID2 : downstream pipe ID
         theta : contraction angle
         """
-        if ID1 >= ID2:
-            raise ValueError(f'Contraction ID can\' increase: {ID1:.3g~} >= {ID2:.3g~}')
         self.beta = beta(ID1, ID2)
         self.theta = theta
         self.type = 'Contraction'
@@ -741,8 +739,6 @@ class Enlargement(Contraction):
         ID2 : downstream pipe ID
         theta : contraction angle
         """
-        if ID1 <= ID2:
-            raise ValueError(f'Enlargement ID can\' decrease: {ID1:.3g~} >= {ID2:.3g~}')
         super().__init__(ID1, ID2, theta)
         self.type = 'Enlargement'
 
