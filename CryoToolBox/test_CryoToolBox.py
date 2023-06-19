@@ -206,9 +206,9 @@ class PipingTest(unittest.TestCase):
         orifice = ht.piping.Orifice(Q_('1 inch'))
         c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
         annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
-        pipe_tee = ht.piping.PipeTee(Q_('1 inch'), N=2)
-        tee = ht.piping.Tee(Q_('1 inch'), N=2)
-        valve = ht.piping.Valve(Q_('1 inch'), 1)
+        pipe_tee = ht.piping.PipeTee(Q_('1 inch'))
+        tee = ht.piping.Tee(Q_('1 inch'))
+        valve = ht.piping.Valve(Q_('1 inch'), Cv=1)
         # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
         # print(f'Generated {g_valve}')
         # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
@@ -777,9 +777,8 @@ class Tubestest(unittest.TestCase):
         OD = 1*u.inch
         wall = 0.049 * u.inch
         R_D = 1.5
-        N = 1
         angle = 90 * u.degrees
-        elbow = ht.piping.Elbow(OD, wall=wall, R_D=R_D, N=N, angle=angle)
+        elbow = ht.piping.Elbow(OD, wall=wall, R_D=R_D, angle=angle)
         self.assertEqual(elbow.OD, OD)
         self.assertEqual(elbow.wall, wall)
         ID = OD-wall*2
@@ -798,9 +797,8 @@ class Tubestest(unittest.TestCase):
         wall = 0.109 * u.inch
 
         R_D = 1.5
-        N = 1
         angle = 90 * u.degrees
-        elbow = ht.piping.PipeElbow(D_nom, SCH, R_D=R_D, N=N, angle=angle)
+        elbow = ht.piping.PipeElbow(D_nom, SCH, R_D=R_D, angle=angle)
         self.assertEqual(elbow.OD, OD)
         self.assertEqual(elbow.wall, wall)
         ID = OD-wall*2
