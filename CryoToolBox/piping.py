@@ -997,8 +997,7 @@ def dP_incomp(m_dot, fluid, piping):
 
 
 def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
-    '''Calculate mass flow through the piping using initial conditions
-    at the beginning of piping.
+    '''Calculate mass flow through the piping using initial condition the beginning of piping.
 
     Calculation is based on Crane TP-410, p. 1.9.
     Net expansion factor Y is conservatively assumed as 1.
@@ -1255,11 +1254,17 @@ def P_crit(P, M, k):
     return P_c
 
 
-def dP_adiab(m_dot, fluid, pipe):
-    """Calculate pressure drop for isentropic flow given total inlet conditions.
+def dP_adiab(m_dot, fluid, pipe, conditions='total'):
+    """Calculate pressure drop for isentropic flow given inlet conditions.
 
     """
-    M = Mach_total(fluid, m_dot, pipe.area)
+    if conditions == 'total':
+        M = Mach_total(fluid, m_dot, pipe.area)
+    elif conditions == 'static':
+        v = velocity(fluid, m_dot, pipe.area)
+        M = Mach(fluid, v)
+    else:
+        raise ValueError(f'Incorrect conditions for Mach "{conditions}", use total or static.')
     K_limit = K_lim(M, fluid.gamma)
     Re_ = Re(fluid, m_dot, pipe.ID, pipe.area)
     K_pipe = pipe.K(Re_)
@@ -1274,7 +1279,7 @@ def dP_adiab(m_dot, fluid, pipe):
     return fluid.P - P_total_end
 
 
-def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
+def m_dot_adiab(fluid, pipe, P_out=P_NTP, conditions='total'):
     """Calculate mass flow rate through piping for adiabatic compressible
     flow.
 
@@ -1297,12 +1302,12 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
 
     def to_solve(m_dot_):
         m_dot = m_dot_ * ureg.kg/ureg.s
-        if state == 'total':
+        if conditions == 'total':
             try:
                 M1 = Mach_total(fluid, m_dot, pipe.area)
             except HydraulicError:
                 return -1
-        elif state == 'static':
+        elif conditions == 'static':
             v = velocity(fluid, m_dot, pipe.area)
             M1 = Mach(fluid, v)
         P_crit1_ = P_crit(P1, M1, k).m_as(ureg.Pa)
