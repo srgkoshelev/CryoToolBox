@@ -407,9 +407,6 @@ class Orifice(PipingElement):
     def __str__(self):
         return f'Orifice, {self.ID:.3g~}'
 
-    # def __str__(self):
-    #     return f'{self.ID:.3g~} orifice'
-
 
 class ConicOrifice(Orifice):
     """Conic orifice
