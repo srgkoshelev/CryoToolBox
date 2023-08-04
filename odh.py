@@ -616,7 +616,10 @@ class BuildVent:
         else:
             vent_action = 'drawing contaminated air from'
         result.append(f'Constant ventilation in the building is {abs(self.const_vent):,.1f~}\n  {vent_action} the volume.')
-        result.append(f'ODH system is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.')
+        if self.N_fans == 1:
+            result.append(f'ODH fan is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.')
+        elif self.N_fans > 1:
+            result.append(f'ODH fans are tested every {self.Test_period:.1f~} and failure rate of each fan is {self.lambda_fan:.3e~}.')
         result.append(f'ODH system unavailability is {self.PFD_ODH:.3e}.')
         return '\n'.join(result)
 
