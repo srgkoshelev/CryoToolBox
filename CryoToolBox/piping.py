@@ -7,7 +7,7 @@ from math import pi, sin, log, log10, sqrt, tan
 from . import logger
 from .std_conditions import ureg, Q_, P_NTP
 from .functions import AIR
-from .functions import stored_energy
+from .functions import stored_energy as stored_energy_volume
 from .functions import Re
 from .geometry import circle_area
 from . import os, __location__
@@ -1609,4 +1609,4 @@ def stored_energy(fluid, piping):
         length = min(tube.L, 8*tube.ID)
         area = pi * tube.ID**2 / 4
         volume = max(volume, area*length)
-    return stored_energy(fluid, volume)
+    return stored_energy_volume(fluid, volume)
