@@ -73,8 +73,10 @@ class Source:
             Name of the source.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
+        liquid_volume : ureg.Quantity, [length]^3
+            Liquid volume of the source.
         volume : ureg.Quantity, [length]^3
-            Volume of the fluid stored.
+            Standard volume of the fluid contained in the source.
         N : int
             Number of the sources if several similar sources exist,
             e.g. gas bottles.
@@ -92,6 +94,7 @@ class Source:
         # Calculating volume at standard conditions
         temp_state = fluid.copy()
         temp_state.update('T', T_NTP, 'P', P_NTP)
+        self.liquid_volume = volume
         self.volume = volume*fluid.Dmass/temp_state.Dmass
         self.volume.ito_base_units()
         # By default assume there is no isolation valve
