@@ -497,11 +497,14 @@ class ThermState:
 
     def __str__(self):
         if self.Q == 0:
-            return f'Saturated {self.name.lower()} liquid'
+            return (f'saturated {self.name.lower()} liquid '
+                    f'at P: {self.P.to(ureg.bar):.3g~}.')
         elif self.Q == 1:
-            return f'Saturated {self.name.lower()} vapor'
+            return (f'saturated {self.name.lower()} vapor '
+                    f'at P: {self.P.to(ureg.bar):.3g~}.')
         elif self.Q > 0 and self.Q < 1:
-            return f'Two-phase {self.name.lower()}'
+            return (f'two-phase {self.name.lower()} '
+                    f'at P: {self.P.to(ureg.bar):.3g~}.')
         else:
             return (f'{self.name.lower()} at '
                     f'T: {self.T.to(ureg.K):.3g~} and '
