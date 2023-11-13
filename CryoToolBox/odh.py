@@ -854,10 +854,14 @@ class Volume:
         O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, tau_event)
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
+        if leak._is_const == True:
+            N_events = 1
+        else:
+            N_events = leak.N_events
         self.fail_modes.append(
             FailureMode(leak.name, source, leak.fluid, phi_i, O2_conc,
                         failure_rate, P_i, F_i, power_outage, leak.q_std,
-                        tau_event, Q_fan, N_fans, leak.N_events, leak._is_const,
+                        tau_event, Q_fan, N_fans, N_events, leak._is_const,
                         scenario)
         )
 
