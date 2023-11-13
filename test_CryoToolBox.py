@@ -657,7 +657,6 @@ class ODHTest(FunctionsTest):
         source.add_const_leak('Constant leak', fluid, q_leak, N=N_leaks)
         self.assertEqual(1, len(source.leaks))
         self.assertAlmostEqual(N_leaks*q_leak, source.leaks[0].q_std)
-        self.assertEqual(1, source.leaks[0].N_events)
 
 
 class Nu_test(FunctionsTest):

@@ -56,7 +56,7 @@ class ConstLeak:
     name: str
     fluid: ThermState
     q_std: ureg.Quantity
-    N_events: int
+    tau: ureg.Quantity
     _is_const = True
     # TODO Remove once isinstance() issue resolved
 
@@ -394,7 +394,8 @@ class Source:
         if not fluid:
             fluid = self.fluid
         N_events = N * self.N
-        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, 1))
+        tau_event = self.volume / q_std
+        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, tau_event))
 
     def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
         """Add general failure mode to leaks dict.
@@ -884,7 +885,7 @@ class Volume:
 
         PFD_isol_valve = source.PFD_isol_valve
         if power_outage:
-            tau_outage = source.volume/leak.q_std  # No refills during outage
+            tau_outage = leak.tau
             Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
             O2_conc_outage = conc_vent(self.volume, leak.q_std, Q_fan_outage, tau_outage)
             if O2_conc_outage < 0.195:
@@ -892,14 +893,13 @@ class Volume:
                                     f'{source.name} is not mitigated during '
                                     f'power outage in {self.name}.')
 
-        # TODO Replace hard coded value with changeable
         # Constant leak and power failure
         failure_rate = self.power.lambda_power
         # Constant leak is assumed to be hazardous only when
         # the isolation valve fails
         P_event = PFD_isol_valve * self.power.backup_pfd
         Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-        tau_event = min(self.vent.Test_period, self.power.max_outage)
+        tau_event = min([self.vent.Test_period, self.power.max_outage, leak.tau])
         scenario = 'Const leak and power failure'
         self._add_failure_mode(P_event, tau_event, failure_rate,
                                source, leak, Q_fan, 0, False,
