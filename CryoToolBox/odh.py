@@ -1261,12 +1261,8 @@ def conc_after(V, C_e, Q, t, t_e):
 def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
     """Calculate leak flow rate through a hole in a pipe.
 
-    Discharge flow through a hole is calculated using Darcy equation for
-    compressible fluid using expansion factor Y Crane TP 410 2013 eq. 4-15.
-    Resistance coefficient K of the orifice taken from Rennels, Pipe Flow,
-    2012, eq. 13.5.
-    For this calculation the gas is assumed to have no pressure loss on
-    entry. This makes analysis simple and conservative.
+    Discharge flow through a hole is calculated using direct integration
+    method from API 520 Annex B.
 
     Parameters
     ----------
