@@ -869,7 +869,7 @@ class geometry(unittest.TestCase):
         A = pi * D**2 / 4
         self.assertEqual(A, ctb.geometry.circle_area(D))
 
-    def test_circle_area(self):
+    def test_cylinder_volume(self):
         D = 1 * u.inch
         H = 10 * u.inch
         A = pi * D**2 / 4
