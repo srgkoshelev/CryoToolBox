@@ -863,5 +863,19 @@ class Tubestest(unittest.TestCase):
         self.assertEqual(orifice.K(), 1/.61**2)
 
 
+class geometry(unittest.TestCase):
+    def test_circle_area(self):
+        D = 1 * u.inch
+        A = pi * D**2 / 4
+        self.assertEqual(A, ctb.geometry.circle_area(D))
+
+    def test_circle_area(self):
+        D = 1 * u.inch
+        H = 10 * u.inch
+        A = pi * D**2 / 4
+        V = A * H
+        self.assertEqual(V, ctb.geometry.cylinder_volume(D, H))
+
+
 if __name__ == '__main__':
     unittest.main()
