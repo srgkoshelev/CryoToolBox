@@ -911,7 +911,7 @@ class Volume:
 
         # Constant leak and ODH system failure
         failure_rate = lambda_ODH
-        P_event = PFD_isol_valve
+        P_event = 1  # ODH system failure will not trigger isolation valve
         # Event can't go undetected for longer than the test period
         tau_event = self.vent.Test_period
         scenario = 'Const leak and ODH system failure'
