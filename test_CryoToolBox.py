@@ -189,6 +189,9 @@ class FunctionsTest(unittest.TestCase):
     #     A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
     #     self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
+    def test_to_standard_flow(self):
+        self.assertRaises(ValueError, ctb.to_standard_flow, 1*u.inch, ctb.AIR)
+
 
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.

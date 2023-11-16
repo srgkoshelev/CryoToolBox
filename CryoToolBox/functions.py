@@ -103,8 +103,8 @@ def to_standard_flow(flow_rate, fluid):
                            '''.format(flow_rate))
             q_std = flow_rate
     else:
-        logger.error('''Flow dimensionality is not supported: {:.3~}.
-                       '''.format(flow_rate.dimensionality))
+        raise ValueError ('Flow dimensionality is not supported: '
+                     f'{flow_rate.dimensionality}.')
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std
 
