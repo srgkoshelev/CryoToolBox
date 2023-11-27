@@ -765,7 +765,7 @@ class PackedBed(PipingElement):
     ----------
     ID : ureg.Quantity {length: 1}
         Inner diameter of the shell of the packed bed.
-    height : ureg.Quantity {length: 1}
+    L : ureg.Quantity {length: 1}
         Height of the packed bed.
     D_part : ureg.Quantity {length: 1}
         Spherical equivalent particle diameter.
@@ -774,7 +774,7 @@ class PackedBed(PipingElement):
     """
     def __init__(self, ID, height, D_part, eps):
         self.ID = ID
-        self.height = height
+        self.L = height
         self.D_part = D_part
         self.eps = eps
 
