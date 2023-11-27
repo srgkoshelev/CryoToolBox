@@ -800,7 +800,7 @@ class PackedBed(PipingElement):
 
     def K(self, Re_s):
         """Calculate resistance coefficient for the packed bed."""
-        K_ = 2*self.f(Re_s)*self.height*(1-self.eps) / \
+        K_ = 2*self.f(Re_s)*self.L*(1-self.eps) / \
             (self.D_part*self.eps**3)
         return K_.to_base_units()
 
