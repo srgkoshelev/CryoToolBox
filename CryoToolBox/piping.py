@@ -63,6 +63,10 @@ class PipingElement(ABC):
     def K(Re):
         pass
 
+    @abstractmethod
+    def __str__(self):
+        pass
+
 
 class Tube(PipingElement):
     """
@@ -777,6 +781,7 @@ class PackedBed(PipingElement):
         self.L = height
         self.D_part = D_part
         self.eps = eps
+        self.type = 'Packed bed'
 
     @property
     def area(self):
@@ -803,6 +808,10 @@ class PackedBed(PipingElement):
         K_ = 2*self.f(Re_s)*self.L*(1-self.eps) / \
             (self.D_part*self.eps**3)
         return K_.to_base_units()
+
+    def __str__(self):
+        return (f'{self.type} ID={self.ID:.3g~}, L={self.L:.3g~}, '
+                f'eps={self.eps:.3g}, D={self.D_part:.3g~}')
 
 
 
