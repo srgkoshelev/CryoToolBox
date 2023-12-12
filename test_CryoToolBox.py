@@ -490,6 +490,14 @@ class PipingTest(unittest.TestCase):
         dP_ms = ht.piping.dP_Darcy(ms_filter.K(Re_s), rho, U_s_ms)
         self.assertApproxEqual(0.092*u.psi, dP_ms, uncertainty=0.1)
 
+    def test_dP_incomp(self):
+        m_dot = 1 * u.kg/u.s
+        fluid = ctb.AIR
+        piping = [ctb.piping.Pipe(1/2, L=100*u.m)]
+        # Execution below should not produce an error
+        # despite process not being physical
+        ctb.piping.dP_incomp(m_dot, fluid, piping)
+
 
 class CPWrapperTest(unittest.TestCase):
     """Test for additional methods of ThermState class"""
