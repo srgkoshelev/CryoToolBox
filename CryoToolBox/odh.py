@@ -56,7 +56,7 @@ class ConstLeak:
     name: str
     fluid: ThermState
     q_std: ureg.Quantity
-    N_events: int
+    tau: ureg.Quantity
     _is_const = True
     # TODO Remove once isinstance() issue resolved
 
@@ -73,8 +73,10 @@ class Source:
             Name of the source.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
+        liquid_volume : ureg.Quantity, [length]^3
+            Liquid volume of the source.
         volume : ureg.Quantity, [length]^3
-            Volume of the fluid stored.
+            Standard volume of the fluid contained in the source.
         N : int
             Number of the sources if several similar sources exist,
             e.g. gas bottles.
@@ -92,6 +94,7 @@ class Source:
         # Calculating volume at standard conditions
         temp_state = fluid.copy()
         temp_state.update('T', T_NTP, 'P', P_NTP)
+        self.liquid_volume = volume
         self.volume = volume*fluid.Dmass/temp_state.Dmass
         self.volume.ito_base_units()
         # By default assume there is no isolation valve
@@ -391,7 +394,8 @@ class Source:
         if not fluid:
             fluid = self.fluid
         N_events = N * self.N
-        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, 1))
+        tau_event = self.volume / q_std
+        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, tau_event))
 
     def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
         """Add general failure mode to leaks dict.
@@ -850,10 +854,14 @@ class Volume:
         O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, tau_event)
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
+        if leak._is_const == True:
+            N_events = 1
+        else:
+            N_events = leak.N_events
         self.fail_modes.append(
             FailureMode(leak.name, source, leak.fluid, phi_i, O2_conc,
                         failure_rate, P_i, F_i, power_outage, leak.q_std,
-                        tau_event, Q_fan, N_fans, leak.N_events, leak._is_const,
+                        tau_event, Q_fan, N_fans, N_events, leak._is_const,
                         scenario)
         )
 
@@ -881,7 +889,7 @@ class Volume:
 
         PFD_isol_valve = source.PFD_isol_valve
         if power_outage:
-            tau_outage = source.volume/leak.q_std  # No refills during outage
+            tau_outage = leak.tau
             Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
             O2_conc_outage = conc_vent(self.volume, leak.q_std, Q_fan_outage, tau_outage)
             if O2_conc_outage < 0.195:
@@ -889,14 +897,13 @@ class Volume:
                                     f'{source.name} is not mitigated during '
                                     f'power outage in {self.name}.')
 
-        # TODO Replace hard coded value with changeable
         # Constant leak and power failure
         failure_rate = self.power.lambda_power
         # Constant leak is assumed to be hazardous only when
         # the isolation valve fails
         P_event = PFD_isol_valve * self.power.backup_pfd
         Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-        tau_event = min(self.vent.Test_period, self.power.max_outage)
+        tau_event = min([self.vent.Test_period, self.power.max_outage, leak.tau])
         scenario = 'Const leak and power failure'
         self._add_failure_mode(P_event, tau_event, failure_rate,
                                source, leak, Q_fan, 0, False,
@@ -904,7 +911,7 @@ class Volume:
 
         # Constant leak and ODH system failure
         failure_rate = lambda_ODH
-        P_event = PFD_isol_valve
+        P_event = 1  # ODH system failure will not trigger isolation valve
         # Event can't go undetected for longer than the test period
         tau_event = self.vent.Test_period
         scenario = 'Const leak and ODH system failure'
@@ -1254,12 +1261,8 @@ def conc_after(V, C_e, Q, t, t_e):
 def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
     """Calculate leak flow rate through a hole in a pipe.
 
-    Discharge flow through a hole is calculated using Darcy equation for
-    compressible fluid using expansion factor Y Crane TP 410 2013 eq. 4-15.
-    Resistance coefficient K of the orifice taken from Rennels, Pipe Flow,
-    2012, eq. 13.5.
-    For this calculation the gas is assumed to have no pressure loss on
-    entry. This makes analysis simple and conservative.
+    Discharge flow through a hole is calculated using direct integration
+    method from API 520 Annex B.
 
     Parameters
     ----------

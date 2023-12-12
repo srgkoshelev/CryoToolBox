@@ -63,6 +63,10 @@ class PipingElement(ABC):
     def K(Re):
         pass
 
+    @abstractmethod
+    def __str__(self):
+        pass
+
 
 class Tube(PipingElement):
     """
@@ -765,7 +769,7 @@ class PackedBed(PipingElement):
     ----------
     ID : ureg.Quantity {length: 1}
         Inner diameter of the shell of the packed bed.
-    height : ureg.Quantity {length: 1}
+    L : ureg.Quantity {length: 1}
         Height of the packed bed.
     D_part : ureg.Quantity {length: 1}
         Spherical equivalent particle diameter.
@@ -774,9 +778,10 @@ class PackedBed(PipingElement):
     """
     def __init__(self, ID, height, D_part, eps):
         self.ID = ID
-        self.height = height
+        self.L = height
         self.D_part = D_part
         self.eps = eps
+        self.type = 'Packed bed'
 
     @property
     def area(self):
@@ -800,9 +805,13 @@ class PackedBed(PipingElement):
 
     def K(self, Re_s):
         """Calculate resistance coefficient for the packed bed."""
-        K_ = 2*self.f(Re_s)*self.height*(1-self.eps) / \
+        K_ = 2*self.f(Re_s)*self.L*(1-self.eps) / \
             (self.D_part*self.eps**3)
         return K_.to_base_units()
+
+    def __str__(self):
+        return (f'{self.type} ID={self.ID:.3g~}, L={self.L:.3g~}, '
+                f'eps={self.eps:.3g}, D={self.D_part:.3g~}')
 
 
 
