@@ -984,22 +984,7 @@ def dP_incomp(m_dot, fluid, piping):
     rho_0 = fluid.Dmass
     K, area = K_piping(m_dot, fluid, piping)
     w = m_dot / (rho_0*area)
-    dP = dP_Darcy(K, rho_0, w)  # first iteration
-    P_out = P_0 - dP
-    if fluid.Q < 0 or dP/P_0 <= 0.1:  # if q<0 then fluid is a liquid
-        return dP
-    elif dP/P_0 <= 0.4:
-        TempState = fluid.copy()
-        TempState.update('T', T_0, 'P', P_out)
-        rho_out = TempState.Dmass
-        rho_ave = (rho_0+rho_out) / 2
-        # Comprehensive average properties, Rennels 4.2.2.2
-        K_corr = K - rho_ave**2/rho_0**2 + rho_ave**2/rho_out**2
-        w = m_dot/(rho_ave*area)
-        return dP_Darcy(K_corr, rho_ave, w)
-    else:
-        raise HydraulicError(f'Estimated pressure drop {(dP/P_0).to_base_units():.0%~} exceeds 40% limit for'
-                             ' incompressible flow.')
+    return dP_Darcy(K, rho_0, w)
 
 
 def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
