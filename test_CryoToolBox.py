@@ -458,6 +458,16 @@ class PipingTest(unittest.TestCase):
                 1070.512*u.psi,
                 E=E, W=W, Y=Y), uncertainty=0.01)
 
+    def test_piping_design_thick(self):
+        pipe = ctb.piping.Tube(1*u.inch, wall=0.065*u.inch)
+        S = 16700*u.psi
+        E = 0.8
+        W = 1
+        Y = 0.4
+        P_max = ctb.piping.pressure_rating(pipe, S=S, E=E, W=W, Y=Y)
+        t_m = ctb.piping.pressure_design_thick(pipe, P_max, S=S, E=E, W=W, Y=Y)
+        self.assertAlmostEqual(t_m, pipe.wall)
+
     def test_direct_integration(self):
         fluid = ht.ThermState('helium', P=200*u.psi, T=7*u.K)
         self.assertApproxEqual(13920*u.kg/(u.s*u.m**2),
