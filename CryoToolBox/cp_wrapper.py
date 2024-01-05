@@ -664,9 +664,19 @@ class ThermState:
         return self._AbstractState.backend_name()
 
     def __str__(self):
-        return f'{self.name.capitalize()} at ' + \
-            f'T: {self.T.to(ureg.K):.3~g~} and ' + \
-            f'P: {self.P.to(ureg.psi):.3g~}.'
+        if self.Q == 0:
+            return (f'saturated {self.name.lower()} liquid '
+                    f'at P: {self.P.to(ureg.bar):.3g~}.')
+        elif self.Q == 1:
+            return (f'saturated {self.name.lower()} vapor '
+                    f'at P: {self.P.to(ureg.bar):.3g~}.')
+        elif self.Q > 0 and self.Q < 1:
+            return (f'two-phase {self.name.lower()} '
+                    f'at P: {self.P.to(ureg.bar):.3g~}.')
+        else:
+            return (f'{self.name.lower()} at '
+                    f'T: {self.T.to(ureg.K):.3g~} and '
+                    f'P: {self.P.to(ureg.bar):.3g~}.')
 
     @property
     def M(self):
