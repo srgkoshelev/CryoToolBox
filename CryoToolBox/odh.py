@@ -212,9 +212,8 @@ class Source:
         # Blowout for soft gasket
         if gasket_type == 'soft':
             name = f'Flange soft gasket blowout: {pipe}'
-            failure_rate = table['Blowout']['Failure rate']
-            area = blowout_area or table['Blowout']['Area']
-            area = min(area, pipe.area)
+            failure_rate = table['Blowout']
+            area = blowout_area or pipe.area
             q_std = hole_leak(area, fluid)
             self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
