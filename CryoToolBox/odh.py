@@ -215,6 +215,9 @@ class Source:
             failure_rate = table['Blowout']
             area = blowout_area or pipe.area
             q_std = hole_leak(area, fluid)
+            if q_std_rupture is not None:
+                # Blowout flow cannot be greater than rupture flow
+                q_std = min(q_std, q_std_rupture)
             self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
         name = f'Flange {gasket_type} gasket rupture: {pipe}'
