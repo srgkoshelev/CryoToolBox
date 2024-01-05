@@ -9,6 +9,7 @@ from .std_conditions import ureg, Q_, P_NTP
 from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
+from .functions import M_relief_API
 from .geometry import circle_area
 from . import os, __location__
 from pint import set_application_registry
@@ -814,8 +815,6 @@ class PackedBed(PipingElement):
                 f'eps={self.eps:.3g}, D={self.D_part:.3g~}')
 
 
-
-
 class ParallelPlateRelief:
     def __init__(self, Springs, Plate, Supply_pipe):
         """
@@ -823,7 +822,7 @@ class ParallelPlateRelief:
         Parallel Plate relief valve designed by Fermilab
 
         Springs: dictionary containing 'N' - number of springs, 'k' - spring rate, and 'dx_precomp' - pre-compression length
-        Plate: dictionary containing 'OD_plate' - OD of the plate, 'OD_O_ring' - OD of the O-Ring installed, and 'W_plate' - plate weight
+        Plate: dictionary containing 'OD_plate' - OD of the plate, 'ID_O_ring' - ID of the O-Ring installed, 'theta' - reverse angle of the outlet flow, and 'W_plate' - plate weight
         Supply_pipe: Pipe/Tube object of upstream pipe
         """
         self.Springs = Springs
@@ -834,8 +833,8 @@ class ParallelPlateRelief:
         """"
         Calculate set (lift) pressure of the Parallel Plate relief
         """
-        # Before lifting pressure affects area within O-Ring OD
-        A_lift = pi * self.Plate['OD_O_ring']**2 / 4
+        # Before lifting pressure affects area within O-Ring ID
+        A_lift = pi * self.Plate['ID_O_ring']**2 / 4
         F_precomp = self.Springs['N'] * self.Springs['k'] *\
             self.Springs['dx_precomp']
         # Force required to lift the plate
@@ -843,6 +842,51 @@ class ParallelPlateRelief:
         self.F_lift = F_lift
         P_set = F_lift / A_lift
         return P_set.to(ureg.psi)
+    
+    def dx_precomp(self, P_set):
+        """"
+        Calculate set pre-compression length of the Parallel Plate relief
+        """
+        A_lift = pi * self.Plate['ID_O_ring']**2 / 4
+        F_lift = P_set * A_lift
+        self.F_lift = F_lift
+
+        F_precomp = F_lift - self.Plate['W_plate']
+
+        dx_precomp = F_precomp / (self.Springs['N'] * self.Springs['k'])
+        self.Springs['dx_precomp'] = dx_precomp
+        return dx_precomp.to(ureg.inch)
+    
+    ###k_max using the jet flow hitting plate asumption
+    def k_max(self, fluid, Delta_P, P_set = 0.1 * ureg.bar):
+        """
+        Calculate the max spring coefficient to fully open Parallel Plate relief
+        """
+        # compression required to provide vent area equal to supply pipe area
+        dx_open = self.Supply_pipe.area / (pi*self.Plate['OD_plate'])
+
+        # Force at fully open
+        try:
+            self.P_set()
+        except:
+            self.F_lift = self.Plate['W_plate']
+            
+        m_dot = M_relief_API(pipe = self.Supply_pipe, fluid = fluid, P_back = fluid.P - Delta_P, K_d=1)
+        self.m_dot = m_dot
+        try:
+            F_jet = (m_dot ** 2 / fluid.Dmass / self.Supply_pipe.area)*(1 + sin (self.Plate['theta'] * pi / 180 ))
+            self.F_jet = F_jet
+        except:
+            F_jet = m_dot ** 2 / fluid.Dmass / self.Supply_pipe.area
+            self.F_jet = F_jet
+            
+
+        A_lift = pi * self.Plate['ID_O_ring']**2 / 4
+        F_lift = P_set * A_lift
+        self.F_lift = F_lift
+
+        k_max = (self.F_jet - self.F_lift) / (self.Springs['N'] * dx_open)
+        return k_max.to(ureg.lbf/ureg.inch)
 
     def P_open(self):
         """
