@@ -3,7 +3,7 @@
 Contains functions for hydrodynamic calculations. The main source of the
 equations is Crane TP-410.
 """
-from math import pi, sin, log, log10, sqrt, tan
+from math import pi, sin, log, log10, sqrt, tan, exp
 from . import logger
 from .std_conditions import ureg, Q_, P_NTP
 from .functions import AIR
@@ -637,6 +637,126 @@ class Valve(PipingElement):
 
     def __str__(self):
         return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
+
+
+class Control_Valve(PipingElement):
+    """
+    Controlled valve with modified Cv.
+    """
+    def __init__(self, D, Cv, Opening=100, Valve_type="1:100 %"):
+        # TODO DRY
+        self.D = D
+        self._Cv = Cv
+        self._Opening = Opening
+        self.Valve_type= Valve_type #
+        self.OD = None
+        self.ID = self.D
+        self._area = circle_area(D)
+        self.L = None
+        self.type = 'Valve'
+        self.volume = 0 * ureg.ft**3
+
+    @property
+    def area(self):
+        return self._area
+
+    def K(self, Re=None):
+        if self.Valve_type == "1:20 %":
+            Phi = 0.05
+        elif self.Valve_type == "1:50 %":
+            Phi = 0.02
+        elif self.Valve_type == "1:100 %":
+            Phi = 0.01
+        elif self.Valve_type == "1:200 %":
+            Phi = 0.005
+        elif self.Valve_type == "1:1000 %":
+            Phi = 0.001
+        else:
+            Phi = 0.0001
+            
+        if Phi == 0.0001:
+            Cv_mod = (Phi + self._Opening/100)*self._Cv
+        else:
+            Cv_mod = (Phi * exp(self._Opening/100 * log(1 / Phi, 2.7183)))*self._Cv
+
+        # TODO Add Re handling
+        return Cv_to_K(Cv_mod, self.D)
+
+    def __str__(self):
+        return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'  
+    
+
+class Control_Valve_WEKA(PipingElement):
+    """
+    WEKA valve with known Cv.
+    Xt = 0.72 (WEKA)
+    Fl = 0.95 (WEKA)
+    """
+    def __init__(self, D, Cv, Xt = 0.72, Fl = 0.95, Opening=100, Valve_type="1:100 %"):
+        # TODO DRY
+        self.D = D
+        self._Cv = Cv
+        self._Opening = Opening
+        self.Valve_type= Valve_type #
+        self.OD = None
+        self.ID = self.D
+        self._area = circle_area(D)
+        self.L = None
+        self.type = 'Valve'
+        self.volume = 0 * ureg.ft**3
+        self.Xt = Xt
+        self.Fl = Fl
+
+    @property
+    def area(self):
+        return self._area
+    
+    def Cv_mod(self):
+        if self.Valve_type == "1:20 %":
+            Phi = 0.05
+        elif self.Valve_type == "1:50 %":
+            Phi = 0.02
+        elif self.Valve_type == "1:100 %":
+            Phi = 0.01
+        elif self.Valve_type == "1:200 %":
+            Phi = 0.005
+        elif self.Valve_type == "1:1000 %":
+            Phi = 0.001
+        else:
+            Phi = 0.0001
+            
+        if Phi == 0.0001:
+            Cv_mod = (Phi + self._Opening/100)*self._Cv
+        else:
+            Cv_mod = (Phi * exp(self._Opening/100 * log(1 / Phi, 2.7183)))*self._Cv
+
+        # TODO Add Re handling
+        return Cv_mod
+    
+    def K(self, Re=None):
+        if self.Valve_type == "1:20 %":
+            Phi = 0.05
+        elif self.Valve_type == "1:50 %":
+            Phi = 0.02
+        elif self.Valve_type == "1:100 %":
+            Phi = 0.01
+        elif self.Valve_type == "1:200 %":
+            Phi = 0.005
+        elif self.Valve_type == "1:1000 %":
+            Phi = 0.001
+        else:
+            Phi = 0.0001
+            
+        if Phi == 0.0001:
+            Cv_mod = (Phi + self._Opening/100)*self._Cv
+        else:
+            Cv_mod = (Phi * exp(self._Opening/100 * log(1 / Phi, 2.7183)))*self._Cv
+
+        # TODO Add Re handling
+        return Cv_to_K(Cv_mod, self.D)
+
+    def __str__(self):
+        return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'   
 
 
 # class GlobeValve(Pipe):
@@ -1610,3 +1730,70 @@ def stored_energy(fluid, piping):
         area = pi * tube.ID**2 / 4
         volume = max(volume, area*length)
     return stored_energy_volume(fluid, volume)
+
+
+###Mass flow for WEKA control valves
+def m_dot_control_valve(fluid, valve, P_out=P_NTP):
+    '''Calculate mass flow through the control valve using initial conditions
+    at the beginning of piping.
+
+    Expansion factor Y is considered.
+
+    Parameters
+    ----------
+    fluid : ThermState
+        Inlet fluid conditions
+    pipe : Pipe
+    P_out : Quantity {length: -1, mass: 1, time: -2}
+        Outlet pressure
+        
+    Returns
+    -------
+    ureg.Quantity : {mass: 1, time: -1}
+    '''
+    if 'Xt' in valve.__dict__ and valve.Xt != 0:
+        X = (fluid.P-P_out)/fluid.P
+        if fluid.phase == 0:
+            if fluid.P_sat == 0:
+                raise HydraulicError(f'the saturation pressure do not exist')
+            Ff = 0.96 - 0.28*sqrt(fluid.P_sat/fluid.P_critical/1.01325)
+            Fy = valve.Fl*sqrt((fluid.P-Ff*fluid.P_sat/1.01325)/(fluid.P-P_out))
+            if Fy>1:
+                Fy=1
+            else:
+                print("Chocked Flow in the valve, Y =", Fy)
+            m_dot = 31.6*(valve.Cv_mod()/1.16)*Fy*sqrt((fluid.P-P_out).m_as(ureg.bar)*fluid.Dmass.m_as(ureg.kg/ureg.m**3))*1000/3600
+        else:
+            Fk = fluid.gamma/1.4
+            Y = 1-X/(3*Fk*valve.Xt)
+            if Y<0.667:
+                Y=0.667
+                print("Chocked Flow in the valve")
+            m_dot = 31.6*(valve.Cv_mod()/1.16)*Y*sqrt(X*fluid.P.m_as(ureg.bar)*fluid.Dmass.m_as(ureg.kg/ureg.m**3))*1000/3600
+    else:
+        raise HydraulicError(f'the pressure drop ratio of valve do not exist or is equal to zero')
+    return m_dot * ureg.g/ureg.s
+
+
+###Pressure drop for WEKA control valves
+def dP_control_valve(m_dot, fluid, valve):
+    """Calculate pressure drop for controlled valve with Xt and Fl.
+
+    """
+    
+    def to_solve(P_out_gs):
+         #m_dot_w = m_dot.m_as(ureg.g/ureg.s)
+         m_dot_calc = m_dot_control_valve(fluid, valve, P_out=P_out_gs*ureg.bar)
+         return (m_dot.m_as(ureg.g/ureg.s) - m_dot_calc.m_as(ureg.g/ureg.s))**2
+    
+    dP_guess = dP_adiab(m_dot, fluid, valve)
+
+    x0 = fluid.P.m_as(ureg.bar)-dP_guess.m_as(ureg.bar)/2
+    x1 = fluid.P.m_as(ureg.bar)-dP_guess.m_as(ureg.bar)
+
+
+    solution = root_scalar(to_solve, x0=x0, x1=x1)
+    dP = fluid.P - solution.root * ureg.bar
+
+
+    return dP.to(ureg.pascal)
