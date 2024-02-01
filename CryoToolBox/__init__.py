@@ -27,4 +27,5 @@ logger = logging.getLogger(__name__)
 from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 from .functions import *
 from . import piping
+from . import line
 from . import heated_pipe
