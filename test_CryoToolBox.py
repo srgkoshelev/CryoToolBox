@@ -707,9 +707,8 @@ class Nu_test(FunctionsTest):
             (1e-9, 0.2),
             (1e5, 8)
         ]
-        C_t_bar = ht.C_t_bar_cyl(Pr)
         for Ra, Nu in figure_4_17_HHT:
-            self.assertApproxEqual(Nu, ht.Nu_hcyl(Pr, Ra, C_t_bar), 0.1)
+            self.assertApproxEqual(Nu, ht.Nu_hcyl(Pr, Ra), 0.1)
 
     def test_Nu_vcyl(self):
         Pr = 0.7
