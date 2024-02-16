@@ -935,13 +935,13 @@ class Volume:
 
         # Fans operational
         # If fatality is possible with just one fan, raise error
-        Q_1fan = self.vent.Q_fan
+        Q_1fan = max(self.vent.Q_fan, self.vent.const_vent)
         tau = math.inf * ureg.s
         O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
         if O2_conc_1fan < 0.195:
             raise ConstLeakTooBig('Constant leak reduces O2 concentration to '
-                                  f'{O2_conc_1fan:.1%} with at least 1 fan '
-                                  f'operational: {leak}')
+                                  f'{O2_conc_1fan:.1%} with {Q_1fan:.3g~} '
+                                  f'vent rate: {leak}')
 
     def _fatality_prob(self, O2_conc):
         """Calculate fatality probability for given oxygen concentration.
