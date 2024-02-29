@@ -139,7 +139,7 @@ class ThermState:
         """
         # TODO this should check for the fluid name too
         if backend == "HEPROP":
-            self._AbstractState = HepropState
+            self._AbstractState = HepropState()
         else:
             self._AbstractState = CP.AbstractState(backend, fluid)
         if state_parameters:

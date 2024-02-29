@@ -59,12 +59,12 @@ def hecalc(j1, value1, j2, value2, unit, dll, err):
 class HepropState:
     def __init__(self, **state_parameters):
         self.name = 'helium'
-        self.dll, self.err = init_he()
+        # self.dll, self.err = init_he()
         self._heprop = None
         self._heprop_mol = None
 
-    def T_critical():
+    def T_critical(self):
         return 5.1953
 
-    def p_critical():
+    def p_critical(self):
         return 227462.3
