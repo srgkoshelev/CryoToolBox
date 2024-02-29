@@ -936,12 +936,11 @@ class Volume:
         # Fans operational
         # If fatality is possible with just one fan, raise error
         Q_1fan = max(self.vent.Q_fan, self.vent.const_vent)
-        tau = math.inf * ureg.s
-        O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
+        O2_conc_1fan = conc_final(leak.q_std, Q_1fan)
         if O2_conc_1fan < 0.195:
             raise ConstLeakTooBig('Constant leak reduces O2 concentration to '
                                   f'{O2_conc_1fan:.1%} with {Q_1fan:.3g~} '
-                                  f'vent rate: {leak}')
+                                  f'vent rate: {leak.name}')
 
     def _fatality_prob(self, O2_conc):
         """Calculate fatality probability for given oxygen concentration.
@@ -1181,15 +1180,13 @@ def conc_vent(V, R, Q, t):
     return float(C)
 
 
-def conc_final(V, R, Q):
+def conc_final(R, Q):
     """Calculate the final oxygen concentration for continuous flow.
 
     Equivalent to conc_vent(V, R, Q, float('inf')).
 
     Parameters
     ----------
-    V : ureg.Quantity, [length]^3
-        Volume of the confined space.
     R : ureg.Quantity, [length]^3/[time]
         Volumetric spill rate into confined space.
     Q : ureg.Quantity, [length]^3/[time]
