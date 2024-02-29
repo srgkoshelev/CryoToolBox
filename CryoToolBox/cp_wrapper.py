@@ -188,8 +188,11 @@ class ThermState:
         #         else:
         #             self._AbstractState.update(CP.PT_INPUTS, hepak[0][1], hepak[0][2]) ###update all properties in coolprop
         # TODO this will call the code above from the HepropState class
-        self._AbstractState.update(
-            CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
+        if self.backend == 'HEPROP':
+            self._AbstractState.update()
+        else:
+            self._AbstractState.update(
+                CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
 
     @staticmethod
     def prepare_input(name, value):
