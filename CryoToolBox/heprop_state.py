@@ -68,3 +68,6 @@ class HepropState:
 
     def p_critical(self):
         return 227462.3
+
+    def Q(self):
+        return self._heprop[0][0]
