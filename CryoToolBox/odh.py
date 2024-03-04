@@ -1301,14 +1301,14 @@ def O2_sudden_release(release, volume, escape=True):
     escape : bool, optional
         If True, mixed air is allowed to escape from considered volume.
         If False, inert gas is trapped and expels the air outside the considered volume.
-        Default is True.
+        Default is False.
 
     Returns
     -------
     float
         Resulting oxygen concentration.
     """
-    if escape == True:
+    if escape:
         O2_conc = 0.21*volume/(volume+release)
     else:
         O2_conc = 0.21*(1-release/volume)
