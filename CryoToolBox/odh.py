@@ -265,8 +265,9 @@ class Source:
             q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
 
-    def add_line_failure(self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves,
-                         q_std_rupture=None, blowout_area=None):
+    def add_line_failure(self, pipe, fluid, *, N_welds=0, N_reinforced=0,
+                         N_soft=0, N_valves=0, q_std_rupture=None,
+                         blowout_area=None):
         """Add leaks for pipe, weld, flange, and valve failures.
 
         Store failure rate, flow rate and expected time duration of
@@ -280,13 +281,13 @@ class Source:
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         N_welds : int
-            Number of welds on the line.
+            Number of welds on the line. Default is 0.
         N_reinforced : int
-            Number of flanges with reinforced, preformed or metal gaskets on the line.
+            Number of flanges with reinforced, preformed or metal gaskets on the line. Default is 0.
         N_soft : int
-            Number of flanges with soft gaskets on the line.
+            Number of flanges with soft gaskets on the line. Default is 0.
         N_valves : int
-            Number of valves on the line.
+            Number of valves on the line. Default is 0.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
             Standard volumetric flow rate for flange rupture.
         blowout_area : Quantity [length^2]
