@@ -73,16 +73,16 @@ class HepropState:
         return 227462.3
     
     def rhomolar_critical(self):
-        return 0 #value to add
+        return 18130.0
 
     def rhomass_critical(self):
-        return 0 #value to add
+        return 72.56717426
     
     def T(self):
         return self._heprop[0][2]
         
     def rhomolar(self):   
-        return 0 #value to add
+        return self._heprop_mol[0][3]
     
     def rhomass(self):
         return self._heprop[0][3]
@@ -94,10 +94,10 @@ class HepropState:
         return self._heprop[0][0]
     
     def molar_mass(self):
-        return 0 #value to add
+        return 0.004002602 
     
     def gas_constant(self):
-        return 0 #value to add
+        return 8.3144598 
     
     def hmolar(self):
         return self._heprop_mol[0][9]
@@ -133,25 +133,25 @@ class HepropState:
         return self._heprop[0][29]
 
     def p_reducing(self):
-        return 0 #value to add
+        return 0 #value to add, not existing in Coolprop
 
     def ptriple(self):
-        return 0 #value to add
+        return 0 #value to add, not existing in Coolprop
 
     def pmax(self):
-        return 0 #value to add
+        return 2028000000
 
     def T_reducing(self):
-        return 0 #value to add
+        return 5.1953
 
     def Ttriple(self):
-        return 0 #value to add
+        return 2.1768
 
     def Tmax(self):
-        return 0 #value to add
+        return 1500
 
     def Tmin(self):
-        return 0 #value to add  
+        return 0.8 
     
     def isothermal_compressibility(self):
         return self._heprop[0][19]

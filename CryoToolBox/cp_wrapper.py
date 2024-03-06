@@ -242,57 +242,27 @@ class ThermState:
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][2]
-        # else:
         return self._AbstractState.T()
 
-    @property
-    @ureg.wraps(CP_const_unit['P'][1], None)
-    def P_sat(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[1][1]
-        # else:
-        return CP.PropsSI('P','T',self._AbstractState.T(),'Q',0,self.name)
 
     @property
     @ureg.wraps(CP_const_unit['Dmolar_critical'][1], None)
     def Dmolar(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self.Dmass/self.molar_mass
-        # else:
         return self._AbstractState.rhomolar()
 
     @property
     @ureg.wraps(CP_const_unit['Dmass_critical'][1], None)
     def Dmass(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][3]
-        # else:
         return self._AbstractState.rhomass()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][1]
-        # else:
         return self._AbstractState.p()
-
-    @property
-    @ureg.wraps(CP_const_unit['T'][1], None)
-    def T_sat(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[1][2]
-        # else:
-        return CP.PropsSI('T','P',self._AbstractState.p(),'Q',0,self.name)
 
     @property
     @ureg.wraps(CP_const_unit['Q'][1], None)
     def Q(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][0]
-        # else:
         return self._AbstractState.Q()
 
     @property
@@ -313,9 +283,6 @@ class ThermState:
     @property
     # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     Z_ = self._heprop[0][5]
-        # else:
         Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
         return Z_
         # Temporarily unavailable function
@@ -326,89 +293,56 @@ class ThermState:
     @property
     @ureg.wraps(CP_const_unit['Hmolar'][1], None)
     def Hmolar(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop_mol[0][9]
-        # else:
         return self._AbstractState.hmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Hmass'][1], None)
     def Hmass(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][9]
-        # else:
         return self._AbstractState.hmass()
 
     @property
     @ureg.wraps(CP_const_unit['Smolar'][1], None)
     def Smolar(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop_mol[0][8]
-        # else:
         return self._AbstractState.smolar()
 
     @property
     @ureg.wraps(CP_const_unit['Smass'][1], None)
     def Smass(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][8]
-        # else:
         return self._AbstractState.smass()
 
     @property
     @ureg.wraps(CP_const_unit['Cpmolar'][1], None)
     def Cpmolar(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][14]
-        # else:
         return self._AbstractState.cpmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Cpmass'][1], None)
     def Cpmass(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][14]
-        # else:
         return self._AbstractState.cpmass()
 
     @property
     @ureg.wraps(CP_const_unit['Cvmolar'][1], None)
     def Cvmolar(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][15]
-        # else:
         return self._AbstractState.cvmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Cvmass'][1], None)
     def Cvmass(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][15]
-        # else:
         return self._AbstractState.cvmass()
 
     @property
     @ureg.wraps(CP_const_unit['viscosity'][1], None)
     def viscosity(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][25]
-        # else:
         return self._AbstractState.viscosity()
 
     @property
     @ureg.wraps(CP_const_unit['conductivity'][1], None)
     def conductivity(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][26]
-        # else:
         return self._AbstractState.conductivity()
 
     @property
     @ureg.wraps(CP_const_unit['surface_tension'][1], None)
     def surface_tension(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][29]
-        # else:
         return self._AbstractState.surface_tension()
 
     @property
@@ -449,17 +383,11 @@ class ThermState:
     @property
     @ureg.wraps(CP_const_unit['isothermal_compressibility'][1], None)
     def isothermal_compressibility(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][19]
-        # else:
         return self._AbstractState.isothermal_compressibility()
 
     @property
     @ureg.wraps(CP_const_unit['isobaric_expansion_coefficient'][1], None)
     def isobaric_expansion_coefficient(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][17]/self._heprop[0][2]
-        # else:
         return self._AbstractState.isobaric_expansion_coefficient()
 
     @property
@@ -469,18 +397,12 @@ class ThermState:
 
     @property
     def Prandtl(self):
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][27]
-        # else:
         return self._AbstractState.Prandtl()
 
     @property
     @ureg.wraps(CP_const_unit['speed_sound'][1], None)
     def speed_sound(self):
         """Mass fractions of a mixture."""
-        # if self.name == 'Helium' and self._heprop is not None:
-        #     return self._heprop[0][20]
-        # else:
         return self._AbstractState.speed_sound()
 
     def first_partial_deriv(self, Of, Wrt, Constant):
@@ -675,3 +597,15 @@ class ThermState:
         TempState = self.copy()
         TempState.update_kw(P=P, T=T)
         return TempState
+
+    @property
+    def P_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(T=self.T, Q=0)
+        return TempState.P
+    
+    @property
+    def T_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(P=self.P, Q=0)
+        return TempState.T
