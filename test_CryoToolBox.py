@@ -900,9 +900,10 @@ class geometry(unittest.TestCase):
 
 class Heprop(unittest.TestCase):
     def test_create(self):
+        CP_helium_state = ctb.ThermState('helium')
         heprop_state = ctb.ThermState('', backend='HEPROP')
-        self.assertEqual(5.1953*u.K, heprop_state.T_critical)
-        self.assertEqual(227462.3*u.Pa, heprop_state.P_critical)
+        self.assertEqual(CP_helium_state.T_critical, heprop_state.T_critical)
+        self.assertEqual(CP_helium_state.T_critical, heprop_state.P_critical)
 
 
 if __name__ == '__main__':

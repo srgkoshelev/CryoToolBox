@@ -82,7 +82,7 @@ class HepropState:
         return self._heprop[0][2]
         
     def rhomolar(self):   
-        return self._heprop_mol[0][3]
+        return self._heprop[0][3]/0.004002602
     
     def rhomass(self):
         return self._heprop[0][3]
@@ -185,7 +185,22 @@ class HepropState:
         * 6: Twophase.
         * 7: Unknown phase
         """
-        return 0 #value to add + conditions
+        if self._heprop[0][0] <= 0 and self._heprop[0][1] < 227462.3:
+            return 0
+        elif self._heprop[0][2] > 5.1953 and self._heprop[0][1] > 227462.3:
+            return 1
+        elif self._heprop[0][2] > 5.1953 and self._heprop[0][1] < 227462.3:
+            return 2
+        elif self._heprop[0][2] < 5.1953 and self._heprop[0][1] > 227462.3:
+            return 3
+        elif self._heprop[0][2] == 5.1953 and self._heprop[0][1] == 227462.3:
+            return 4
+        elif self._heprop[0][0] >= 1:
+            return 5
+        elif self._heprop[0][0] > 0 and self._heprop[0][0] < 1:
+            return 6        
+        else:
+            return 7 
     
 
 
