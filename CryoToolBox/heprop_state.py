@@ -58,13 +58,10 @@ class HepropState:
     def __init__(self, **state_parameters):
         self.dll, self.err = init_he()
         self._heprop = None
-        self._heprop_mol = None
 
     def update(self, name1, value1, name2, value2):
         hepak = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
-        self._heprop = hepak
-        hepak_mol = hecalc(name1, value1, name2, value2, 3, self.dll, self.err)
-        self._heprop_mol = hepak_mol     
+        self._heprop = hepak   
 
     def T_critical(self):
         return 5.1953
@@ -99,26 +96,29 @@ class HepropState:
     def gas_constant(self):
         return 8.3144598 
     
+    def compressibility_factor(self): 
+        return self._heprop[0][5]
+        
     def hmolar(self):
-        return self._heprop_mol[0][9]
+        return self._heprop[0][9]*0.004002602
     
     def hmass(self):
         return self._heprop[0][9]   
     
     def smolar(self):
-        return self._heprop_mol[0][8]
+        return self._heprop[0][8]*0.004002602
     
     def smass(self):
         return self._heprop[0][8]
 
     def cpmolar(self):
-        return self._heprop_mol[0][14]
+        return self._heprop[0][14]*0.004002602
     
     def cpmass(self):
         return self._heprop[0][14]
     
     def cvmolar(self):
-        return self._heprop_mol[0][15]
+        return self._heprop[0][15]*0.004002602
     
     def cvmass(self):
         return self._heprop[0][15]    
@@ -202,5 +202,5 @@ class HepropState:
         else:
             return 7 
     
-
-
+    def specific_heat_input(self):
+        return self._heprop[0][24]

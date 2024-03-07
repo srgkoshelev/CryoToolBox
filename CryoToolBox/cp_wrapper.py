@@ -283,7 +283,10 @@ class ThermState:
     @property
     # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
-        Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
+        if self.backend == "HEPROP":
+            Z_ = self._AbstractState.compressibility_factor()
+        else:
+            Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
         return Z_
         # Temporarily unavailable function
         # return self._AbstractState.compressibility_factor()
@@ -471,7 +474,10 @@ class ThermState:
         # Because specific volume is not available as function of
         # the AbstractState, density is used instead
         # The resulting function is: -Dmass*(dHmass/dDmass)|p
-        return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
+        if self.backend == "HEPROP":
+            return self._AbstractState.specific_heat_input() * ureg.joule/ureg.kg
+        else:
+            return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
 
     @property
     def gamma(self):
