@@ -166,28 +166,7 @@ class ThermState:
         CP_input_str = name1 + name2
         CP_value1 = self.prepare_input(name1, value1)
         CP_value2 = self.prepare_input(name2, value2)
-        # TODO all this can be moved to HepropState
-        # if self.name == 'Helium':
-        #     hepak = hecalc(name1, CP_value1, name2, CP_value2, 1, self.dll, self.err)
-        #     self._heprop = hepak
-        #     try:
-        #         hepak_satT = hecalc(1, hepak[0][1], 9, 0, 1, self.dll, self.err)
-        #         hepak_satP = hecalc(2, hepak[0][2], 9, 0, 1, self.dll, self.err)
-        #         self._heprop[1][1] = hepak_satP[0][1]
-        #         self._heprop[1][2] = hepak_satT[0][2]
-        #     except:
-        #         self._heprop = hepak
-        #     hepak_mol = hecalc(name1, CP_value1, name2, CP_value2, 3, self.dll, self.err)
-        #     self._heprop_mol = hepak_mol
-        #     try:
-        #         self._AbstractState.update(
-        #             CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
-        #     except:
-        #         if hepak[0][1] < 5100:
-        #             self._AbstractState.update(CP.PT_INPUTS, 5100, hepak[0][2]) ###update all properties in coolprop
-        #         else:
-        #             self._AbstractState.update(CP.PT_INPUTS, hepak[0][1], hepak[0][2]) ###update all properties in coolprop
-        # TODO this will call the code above from the HepropState class
+
         if self.backend == "HEPROP":
             self._AbstractState.update(name1, CP_value1, name2, CP_value2)
         else:
