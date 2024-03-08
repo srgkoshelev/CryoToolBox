@@ -26,7 +26,8 @@ HEPAK_inputs = {
 # Load the HEPAK DLL
 def init_he():
     try:
-        dll = ctypes.WinDLL('./hepak.dll')
+        #dll = ctypes.WinDLL('./hepak.dll')
+        dll = ctypes.CDLL('./hepak.dll')
         err='OK'
     except OSError as el:
         print("Helium dll not present in the folder") ###should raise an error
