@@ -65,74 +65,74 @@ class HepropState:
 
     def update(self, name1, value1, name2, value2):
         hepak = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
-        self._heprop = hepak   
+        self._heprop = hepak
 
     def T_critical(self):
         return 5.1953
 
     def p_critical(self):
         return 227462.3
-    
+
     def rhomolar_critical(self):
         return 18130.0
 
     def rhomass_critical(self):
         return 72.56717426
-    
+
     def T(self):
         return self._heprop[0][2]
-        
-    def rhomolar(self):   
+
+    def rhomolar(self):
         return self._heprop[0][3]/0.004002602
-    
+
     def rhomass(self):
         return self._heprop[0][3]
-    
+
     def p(self):
         return self._heprop[0][1]
-    
+
     def Q(self):
         return self._heprop[0][0]
-    
+
     def molar_mass(self):
-        return 0.004002602 
-    
+        return 0.004002602
+
     def gas_constant(self):
-        return 8.3144598 
-    
-    def compressibility_factor(self): 
+        return 8.3144598
+
+    def compressibility_factor(self):
         return self._heprop[0][5]
-        
+
     def hmolar(self):
-        return self._heprop[0][9]*0.004002602
-    
+        return self._heprop[0][9]*self.molar_mass
+
     def hmass(self):
-        return self._heprop[0][9]   
-    
+        return self._heprop[0][9]
+
     def smolar(self):
-        return self._heprop[0][8]*0.004002602
-    
+        return self._heprop[0][8]*self.molar_mass
+
     def smass(self):
         return self._heprop[0][8]
 
     def cpmolar(self):
-        return self._heprop[0][14]*0.004002602
-    
+        return self._heprop[0][14]*self.molar_mass
+
     def cpmass(self):
         return self._heprop[0][14]
-    
+
     def cvmolar(self):
-        return self._heprop[0][15]*0.004002602
-    
+        return self._heprop[0][15]*self.molar_mass
+
     def cvmass(self):
-        return self._heprop[0][15]    
-    
+        return self._heprop[0][15]
+
     def viscosity(self):
         return self._heprop[0][25]
-    
+
     def conductivity(self):
         return self._heprop[0][26]
-    
+
     def surface_tension(self):
         return self._heprop[0][29]
 
@@ -155,29 +155,29 @@ class HepropState:
         return 1500
 
     def Tmin(self):
-        return 0.8 
-    
+        return 0.8
+
     def isothermal_compressibility(self):
         return self._heprop[0][19]
 
     def isobaric_expansion_coefficient(self):
         return self._heprop[0][17]/self._heprop[0][2]
-    
+
     def isentropic_expansion_coefficient(self):
         return 0 #value to add, I need to verify this part with Heprop
-    
+
     def Prandtl(self):
         return self._heprop[0][27]
-    
+
     def speed_sound(self):
         return self._heprop[0][20]
-    
+
     def name(self):
         return 'helium'
 
     def backend_name(self):
         return 'HEPROP'
-    
+
     def phase(self):
         """
         * 0: Subcritical liquid
@@ -186,25 +186,25 @@ class HepropState:
         * 3: Supercritical liquid (p > pc, T < Tc)
         * 4: At the critical point.
         * 5: Subcritical gas.
-        * 6: Twophase.
+        * 6: Two phase.
         * 7: Unknown phase
         """
-        if self._heprop[0][0] <= 0 and self._heprop[0][1] < 227462.3:
+        if self._heprop[0][0] <= 0 and self._heprop[0][1] < self.p_critical:
             return 0
-        elif self._heprop[0][2] > 5.1953 and self._heprop[0][1] > 227462.3:
+        elif self._heprop[0][2] > self.T_critical and self._heprop[0][1] > self.p_critical:
             return 1
-        elif self._heprop[0][2] > 5.1953 and self._heprop[0][1] < 227462.3:
+        elif self._heprop[0][2] > self.T_critical and self._heprop[0][1] < self.p_critical:
             return 2
-        elif self._heprop[0][2] < 5.1953 and self._heprop[0][1] > 227462.3:
+        elif self._heprop[0][2] < self.T_critical and self._heprop[0][1] > self.p_critical:
             return 3
-        elif self._heprop[0][2] == 5.1953 and self._heprop[0][1] == 227462.3:
+        elif self._heprop[0][2] == self.T_critical and self._heprop[0][1] == self.p_critical:
             return 4
         elif self._heprop[0][0] >= 1:
             return 5
         elif self._heprop[0][0] > 0 and self._heprop[0][0] < 1:
-            return 6        
+            return 6
         else:
-            return 7 
-    
+            return 7
+
     def specific_heat_input(self):
         return self._heprop[0][24]
