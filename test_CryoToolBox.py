@@ -192,6 +192,15 @@ class FunctionsTest(unittest.TestCase):
     def test_to_standard_flow(self):
         self.assertRaises(ValueError, ctb.to_standard_flow, 1*u.inch, ctb.AIR)
 
+    def test_theta(self):
+        # Subcritical test
+        fluid = ctb.ThermState('helium', P=1*u.bar, Q=0.5)
+        self.assertAlmostEqual(4.20982594*u.K, ctb.cga.theta(fluid))
+        # Supercritical test
+        fluid.update_kw(P=20*u.bar, T=10*u.K)
+        self.assertAlmostEqual(11.957373*u.K, ctb.cga.theta(fluid))
+
+
 
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.

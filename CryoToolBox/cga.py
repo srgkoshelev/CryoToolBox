@@ -6,6 +6,7 @@ Pressure relief calculations for CGA S-1.3.
 from . import logger
 from .std_conditions import ureg, Q_
 from .cp_wrapper import CP_const_unit
+from scipy import optimize
 
 
 def P_fr(P_set, factor=1.1):
@@ -24,41 +25,31 @@ def P_fr(P_set, factor=1.1):
     return (factor * P_set.to(ureg.psi)).to(ureg.psig)
 
 
-def theta(fluid, step=0.01):
-    """
-    Calculate latent heat/specific heat input and temperature for flow
-    capacity calculation per CGA S-1.3 2008 6.1.3.
+def theta(fluid):
+    """""Calculate temperature for flow capacity calculation per
+    CGA S-1.3 2008 6.1.3.
 
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    step : temperature step
-    returns : tuple (specific heat, temperature)
+    Parameters
+    ----------
+    fluid : ThermState
+        Object describing thermodynamic state (fluid, T, P).
+
+    Returns
+    -------
+    Quantity {temperature: 1}
     """
     temp_state = fluid.copy()
-    # Only working for pure fluids and pre-defined mixtures
-    if fluid.is_super_critical:
-        logger.warning(f'{fluid.name} is supercritical at {fluid.P:.3~g}'
-                       f' and {fluid.T:.3g~}. Specific heat input will be used.')
-        temp_state.update('P', fluid.P, 'T', fluid.T_min)
-        T_start = temp_state.T
-        T_end = 300*ureg.K
-        cga_criterion = ureg('0 m/J * (m*kg)**0.5')
-        # CGA criterion for calculating temperature of specific heat input
-        T = T_start
-        while T <= T_end:
-            spec_vol = 1/temp_state.Dmass  # specific volume
-            cga_criterion_new = (spec_vol**0.5)/temp_state.specific_heat_input
-            if cga_criterion_new > cga_criterion:
-                cga_criterion = cga_criterion_new
-            else:
-                break  # Function has only one maximum
-            T += step*ureg.K
-            temp_state.update('P', temp_state.P, 'T', T)
-        return (temp_state.specific_heat_input, T)
-    else:
-        logger.warning(f'{fluid.name} is subcritical at {fluid.P:.3~g}. \
-        Latent heat of evaporation will be used')
-        latent_heat = fluid.latent_heat
-        return (latent_heat, temp_state.T)  # saturation temperature
+    if not fluid.is_super_critical:
+        temp_state.update_kw(P=temp_state.P, Q=0)
+        return temp_state.T
+    T2_ = 1000      # K
+    def func(T_):
+        temp_state.update_kw(P=temp_state.P, T=T_*ureg.K)
+        spec_vol = 1/temp_state.Dmass  # specific volume
+        y = -(spec_vol**0.5)/temp_state.specific_heat_input
+        return y.m_as(ureg('0 m/J * (m*kg)**0.5'))
+    T_relief = optimize.fminbound(func, fluid.T_min.m_as(ureg.K), T2_)
+    return T_relief * ureg.K
 
 
 def F(fluid_FR, fluid_PRD):
