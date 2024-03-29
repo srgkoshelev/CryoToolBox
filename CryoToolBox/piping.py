@@ -86,7 +86,7 @@ class Tube(PipingElement):
             Length of the tube.
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
-            allowances.
+            allowances. Default 12.5% of OD.
         eps : ureg.Quantity {length: 1}
             Absolute roughness for the tube. Default value for smooth
             pipe.
@@ -99,8 +99,8 @@ class Tube(PipingElement):
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         # Wall thickness under tolerance is 12.5% as per ASTM A999
-        self.wall_tol = 0.125 * self.wall
-        self.c = c
+        wall_tol = 0.125 * self.wall
+        self.c = c or wall_tol
         self.type = 'Tube'
 
     @property
@@ -1353,7 +1353,7 @@ def piping_stress(tube, P_diff, *, E, W, Y):
     """
     P = P_diff
     D = tube.OD
-    t = tube.wall - tube.wall_tol - tube.c
+    t = tube.wall - tube.c
     S = P / (E*W) * (D/(2*t) - Y)
     return S.to(ureg.psi)
 
@@ -1436,7 +1436,7 @@ def pressure_rating(tube, *, S, E, W, Y):
         Minimum required wall thickness.
     """
     D = tube.OD
-    t = tube.wall - tube.wall_tol - tube.c
+    t = tube.wall - tube.c
     P = 2 * t * S * E * W / (D-2*Y*t)
     return P.to(ureg.psi)
 
@@ -1467,10 +1467,10 @@ def reinforcement_area(header, branch, P_diff, beta=Q_('90 deg'), d_1=None,
 
     """
     D_h = header.OD
-    T_h = header.wall - header.wall_tol
+    T_h = header.wall - header.c
     t_h = pressure_design_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
     D_b = branch.OD
-    T_b = branch.wall - branch.wall_tol
+    T_b = branch.wall - branch.c
     t_b = pressure_design_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
     if d_1 is None:
         d_1 = (D_b - 2*(T_b-branch.c)) / sin(beta)

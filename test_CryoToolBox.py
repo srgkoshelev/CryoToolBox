@@ -192,6 +192,15 @@ class FunctionsTest(unittest.TestCase):
     def test_to_standard_flow(self):
         self.assertRaises(ValueError, ctb.to_standard_flow, 1*u.inch, ctb.AIR)
 
+    def test_theta(self):
+        # Subcritical test
+        fluid = ctb.ThermState('helium', P=1*u.bar, Q=0.5)
+        self.assertAlmostEqual(4.20982594*u.K, ctb.cga.theta(fluid))
+        # Supercritical test
+        fluid.update_kw(P=20*u.bar, T=10*u.K)
+        self.assertAlmostEqual(11.957373*u.K, ctb.cga.theta(fluid))
+
+
 
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.
@@ -458,6 +467,16 @@ class PipingTest(unittest.TestCase):
                 1070.512*u.psi,
                 E=E, W=W, Y=Y), uncertainty=0.01)
 
+    def test_piping_design_thick(self):
+        pipe = ctb.piping.Tube(1*u.inch, wall=0.065*u.inch)
+        S = 16700*u.psi
+        E = 0.8
+        W = 1
+        Y = 0.4
+        P_max = ctb.piping.pressure_rating(pipe, S=S, E=E, W=W, Y=Y)
+        t_m = ctb.piping.pressure_design_thick(pipe, P_max, S=S, E=E, W=W, Y=Y)
+        self.assertAlmostEqual(t_m, pipe.wall)
+
     def test_direct_integration(self):
         fluid = ht.ThermState('helium', P=200*u.psi, T=7*u.K)
         self.assertApproxEqual(13920*u.kg/(u.s*u.m**2),
@@ -697,9 +716,8 @@ class Nu_test(FunctionsTest):
             (1e-9, 0.2),
             (1e5, 8)
         ]
-        C_t_bar = ht.C_t_bar_cyl(Pr)
         for Ra, Nu in figure_4_17_HHT:
-            self.assertApproxEqual(Nu, ht.Nu_hcyl(Pr, Ra, C_t_bar), 0.1)
+            self.assertApproxEqual(Nu, ht.Nu_hcyl(Pr, Ra), 0.1)
 
     def test_Nu_vcyl(self):
         Pr = 0.7
