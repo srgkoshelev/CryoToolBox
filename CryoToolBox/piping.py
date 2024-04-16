@@ -1548,7 +1548,7 @@ def volume(piping):
     return result
 
 
-def stored_energy(fluid, piping):
+def piping_stored_energy(fluid, piping):
     """Calculate stored energy of the piping.
 
     Uses 8 diameters rule as per ASME PCC-2 2018 501-IV-3 (a)."""
