@@ -9,7 +9,7 @@ from .cp_wrapper import CP_const_unit
 from scipy import optimize
 
 
-def P_fr(P_set, factor=1.1):
+def P_FR(P_set, factor=1.1):
     """Calculate flow rating pressure as per CGA S-1.3 2008 5.1.13.
 
     Parameters:
@@ -20,7 +20,7 @@ def P_fr(P_set, factor=1.1):
 
     Returns:
     --------
-    P_fr : flow rating pressure
+    P_FR : flow rating pressure
     """
     return (factor * P_set.to(ureg.psi)).to(ureg.psig)
 
@@ -50,6 +50,31 @@ def theta(fluid):
         return y.m_as(ureg('0 m/J * (m*kg)**0.5'))
     T_relief = optimize.fminbound(func, fluid.T_min.m_as(ureg.K), T2_)
     return T_relief * ureg.K
+
+
+def calculate_fluid_FR(fluid):
+    """Calculate flow rating temperature and pressure.
+    References: CGA S-1.3 2008 5.1.13 and 6.1.3.
+    Parameters:
+    -----------
+    fluid : ThermState
+        Fluid at design temperature and pressure.
+    Returns:
+    --------
+    ThermState
+        Fluid at flow rating pressure and temperature for flow capacity calculation.
+    """
+    P_flow = P_FR(fluid.P)
+    fluid_FR = fluid.copy()
+    fluid_FR.update_kw(P=P_flow, Hmass=fluid.Hmass)
+    if not fluid_FR.is_super_critical:
+        fluid_FR.update_kw(P=fluid_FR.P, Q=0)
+    else:
+        T_flow = theta(fluid_FR)
+        fluid_FR.update_kw(P=P_flow, T=T_flow)
+    return fluid_FR
+
+
 
 
 def F(fluid_FR, fluid_PRD):

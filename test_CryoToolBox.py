@@ -200,6 +200,16 @@ class FunctionsTest(unittest.TestCase):
         fluid.update_kw(P=20*u.bar, T=10*u.K)
         self.assertAlmostEqual(11.957373*u.K, ctb.cga.theta(fluid))
 
+    def test_calculate_fluid_FR(self):
+        # Subcritical test
+        fluid = ctb.ThermState('helium', P=0.9090909090909091*u.bar, Q=0.5)
+        fluid_FR = ctb.cga.calculate_fluid_FR(fluid)
+        self.assertAlmostEqual(4.20982594*u.K, fluid_FR.T)
+        # Supercritical test
+        fluid.update_kw(P=18.18181818181818*u.bar, T=10*u.K)
+        fluid_FR = ctb.cga.calculate_fluid_FR(fluid)
+        self.assertAlmostEqual(11.957373*u.K, fluid_FR.T)
+
 
 
 class PipingTest(unittest.TestCase):
