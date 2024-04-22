@@ -68,7 +68,7 @@ def calculate_fluid_FR(fluid):
     fluid_FR = fluid.copy()
     fluid_FR.update_kw(P=P_flow, Hmass=fluid.Hmass)
     if not fluid_FR.is_super_critical:
-        fluid_FR.update_kw(P=fluid_FR.P, Q=0)
+        fluid_FR.update_kw(P=fluid_FR.P, Q=1)
     else:
         T_flow = theta(fluid_FR)
         fluid_FR.update_kw(P=P_flow, T=T_flow)
@@ -121,10 +121,10 @@ def G_i(fluid_FR, conservative=True):
         v_l = 1/temp_state.Dmass
         temp_state.update_kw(P=temp_state.P, Q=1*ureg.dimensionless)
         v_g = 1/temp_state.Dmass
-        L = fluid_FR.latent_heat * (v_g-v_l)/v_g
+        L = fluid_FR.latent_heat * v_g/(v_g-v_l)
     else:
         L = fluid_FR.latent_heat
-    L, T = theta(fluid_FR)
+    T = theta(fluid_FR)
     C = fluid_FR.C_gas_const
     TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
     # Conservative value for He is 52.5 for P <= 200 psig
@@ -141,5 +141,6 @@ def G_i(fluid_FR, conservative=True):
 def _G_i_us(T, C, L, TZM):
     """Calculate G_i factor in US customary units.
     While the actual value has units, the quantity returned as dimensionless.
+    CGA S-1.3 Notes for Table 1 and Table 2.
     """
     return 73.4 * (1660-T) / (C*L) * TZM

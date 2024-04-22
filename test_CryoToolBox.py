@@ -210,6 +210,16 @@ class FunctionsTest(unittest.TestCase):
         fluid_FR = ctb.cga.calculate_fluid_FR(fluid)
         self.assertAlmostEqual(11.957373*u.K, fluid_FR.T)
 
+    def test_G_i(self):
+        test_fluid = ctb.ThermState('air', P=Q_(100, u.psig), Q=1)
+        self.assertApproxEqual(10.2, ctb.cga.G_i(test_fluid), uncertainty=0.05)
+        test_fluid = ctb.ThermState('hydrogen', P=100*u.psi, Q=1)
+        self.assertApproxEqual(8.272, ctb.cga.G_i(test_fluid), uncertainty=0.01)
+        test_fluid = ctb.ThermState('hydrogen', P=200*u.psi, T=ctb.T_NTP)
+        T = ctb.cga.theta(test_fluid)
+        test_fluid.update_kw(P=test_fluid.P, T=T)
+        self.assertApproxEqual(13.52, ctb.cga.G_i(test_fluid), uncertainty=0.01)
+
 
 
 class PipingTest(unittest.TestCase):
