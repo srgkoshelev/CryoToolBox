@@ -106,6 +106,14 @@ def primary_insulated(fluid_FR, U, A, F=1, conservative=True):
     return Q_a * ureg.ft**3 / ureg.min
 
 
+def relief_fire_liquefied(fluid_FR, A, F=1):
+    """Calculate required relief capacity for liquefied compressed gases,
+    refrigerated fluids, and refrigerated (cryogenic) fluids in uninsulated and
+    insulated containers.
+    CGA S-1.3 2008 6.3.2."""
+    return F * G_u(fluid_FR) * A.m_as(ureg.ft**2)**0.82 * ureg.ft**3/ureg.min
+
+
 def G_i(fluid_FR, conservative=True):
     """Calculate gas factor for insulated containers per
     Notes to Table 1 and Table 2.
