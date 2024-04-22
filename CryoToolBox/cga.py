@@ -9,7 +9,7 @@ from .cp_wrapper import CP_const_unit
 from scipy import optimize
 
 
-def P_FR(P_set, factor=1.1):
+def P_FR(P_set, factor=0.1):
     """Calculate flow rating pressure as per CGA S-1.3 2008 5.1.13.
 
     Parameters:
@@ -22,7 +22,7 @@ def P_FR(P_set, factor=1.1):
     --------
     P_FR : flow rating pressure
     """
-    return (factor * P_set.to(ureg.psi)).to(ureg.psig)
+    return ((1+factor) * P_set.to(ureg.psi)).to(ureg.psig)
 
 
 def theta(fluid):
@@ -52,7 +52,7 @@ def theta(fluid):
     return T_relief * ureg.K
 
 
-def calculate_fluid_FR(fluid):
+def calculate_fluid_FR(fluid, factor=0.1):
     """Calculate flow rating temperature and pressure.
     References: CGA S-1.3 2008 5.1.13 and 6.1.3.
     Parameters:
@@ -64,7 +64,7 @@ def calculate_fluid_FR(fluid):
     ThermState
         Fluid at flow rating pressure and temperature for flow capacity calculation.
     """
-    P_flow = P_FR(fluid.P)
+    P_flow = P_FR(fluid.P, factor=factor)
     fluid_FR = fluid.copy()
     fluid_FR.update_kw(P=P_flow, Hmass=fluid.Hmass)
     if not fluid_FR.is_super_critical:
@@ -113,6 +113,30 @@ def G_i(fluid_FR, conservative=True):
     fluid_FR: fluid at flow rating temperature and pressure
     """
 
+    L_adj = _calculate_Gi_Gu_heat(fluid_FR)
+    T = theta(fluid_FR)
+    C = fluid_FR.C_gas_const
+    TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
+    # Conservative value for He is 52.5 for P <= 200 psig
+    if conservative and fluid_FR.name.lower() == 'helium':
+        return 52.5
+    else:
+        return _G_i_us(T, C, L_adj, TZM)
+
+def G_u(fluid_FR):
+    """Calculate gas factor for insulated containers per
+    Notes to Table 1 and Table 2.
+
+    fluid_FR: fluid at flow rating temperature and pressure
+    """
+    L_adj = _calculate_Gi_Gu_heat(fluid_FR)
+    C = fluid_FR.C_gas_const
+    TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
+    return _G_u_us(C, L_adj, TZM)
+
+def _calculate_Gi_Gu_heat(fluid_FR):
+    """Calculate adjusted value for latent heat/specific heat input based on
+    Notes for Tables 1 and 2 of CGA S-1.3 2008."""
     if fluid_FR.P >= fluid_FR.P_critical:
         L = fluid_FR.specific_heat_input  # L is replaced by theta
     elif fluid_FR.P >= 0.4*fluid_FR.P_critical:
@@ -124,15 +148,7 @@ def G_i(fluid_FR, conservative=True):
         L = fluid_FR.latent_heat * v_g/(v_g-v_l)
     else:
         L = fluid_FR.latent_heat
-    T = theta(fluid_FR)
-    C = fluid_FR.C_gas_const
-    TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
-    # Conservative value for He is 52.5 for P <= 200 psig
-    if conservative and fluid_FR.name.lower() == 'helium':
-        return 52.5
-    else:
-        return _G_i_us(T, C, L, TZM)
-
+    return L
 
 @ureg.wraps(None, (ureg.degR,
                    CP_const_unit['C_us'][1],
@@ -144,3 +160,14 @@ def _G_i_us(T, C, L, TZM):
     CGA S-1.3 Notes for Table 1 and Table 2.
     """
     return 73.4 * (1660-T) / (C*L) * TZM
+
+
+@ureg.wraps(None, (CP_const_unit['C_us'][1],
+                   ureg.BTU/ureg.lb,
+                   ureg.degR**0.5))
+def _G_u_us(C, L, TZM):
+    """Calculate G_i factor in US customary units.
+    While the actual value has units, the quantity returned as dimensionless.
+    CGA S-1.3 Notes for Table 1 and Table 2.
+    """
+    return 633_000/ (C*L) * TZM

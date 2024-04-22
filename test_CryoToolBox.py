@@ -220,6 +220,12 @@ class FunctionsTest(unittest.TestCase):
         test_fluid.update_kw(P=test_fluid.P, T=T)
         self.assertApproxEqual(13.52, ctb.cga.G_i(test_fluid), uncertainty=0.01)
 
+    def test_G_u(self):
+        test_fluid = ctb.ThermState('air', P=Q_(100, u.psig), Q=1)
+        self.assertApproxEqual(59, ctb.cga.G_u(test_fluid), uncertainty=0.05)
+        test_fluid = ctb.ThermState('air', P=Q_(200, u.psig), Q=1)
+        self.assertApproxEqual(69, ctb.cga.G_u(test_fluid), uncertainty=0.05)
+
 
 
 class PipingTest(unittest.TestCase):
