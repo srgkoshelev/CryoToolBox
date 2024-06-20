@@ -5,6 +5,7 @@
 
 """
 import CoolProp.CoolProp as CP
+from .heprop_state import HepropState
 from math import inf
 from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 
@@ -22,6 +23,8 @@ CP_const_unit = {
     'P_reducing': (CP.iP_reducing, ureg.Pa),
     'T_triple': (CP.iT_triple, ureg.K),
     'P_triple': (CP.iP_triple, ureg.Pa),
+    'T_sat': (None, ureg.K),
+    'P_sat': (None, ureg.Pa),
     'T_min': (CP.iT_min, ureg.K),
     'T_max': (CP.iT_max, ureg.K),
     'P_max': (CP.iP_max, ureg.Pa),
@@ -134,7 +137,13 @@ class ThermState:
         Available backends: HEOS (opensource), REFPROP.
         See http://www.coolprop.org/coolprop/REFPROP.html for details.
         """
-        self._AbstractState = CP.AbstractState(backend, fluid)
+        # TODO this should check for the fluid name too
+        if backend == "HEPROP":
+            if fluid.lower() != 'helium':
+                raise ValueError(f'Only helium fluid can be used with HEPROP backend: {fluid}')
+            self._AbstractState = HepropState()
+        else:
+            self._AbstractState = CP.AbstractState(backend, fluid)
         if state_parameters:
             self.update_kw(**state_parameters)
 
@@ -159,8 +168,12 @@ class ThermState:
         CP_input_str = name1 + name2
         CP_value1 = self.prepare_input(name1, value1)
         CP_value2 = self.prepare_input(name2, value2)
-        self._AbstractState.update(
-            CP_inputs[CP_input_str], CP_value1, CP_value2)
+
+        if self.backend == "HEPROP":
+            self._AbstractState.update(name1, CP_value1, name2, CP_value2)
+        else:
+            self._AbstractState.update(
+                CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
 
     @staticmethod
     def prepare_input(name, value):
@@ -196,6 +209,7 @@ class ThermState:
     def P_critical(self):
         return self._AbstractState.p_critical()
 
+
     @property
     @ureg.wraps(CP_const_unit['Dmolar_critical'][1], None)
     def Dmolar_critical(self):
@@ -210,6 +224,7 @@ class ThermState:
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T(self):
         return self._AbstractState.T()
+
 
     @property
     @ureg.wraps(CP_const_unit['Dmolar_critical'][1], None)
@@ -249,8 +264,11 @@ class ThermState:
     @property
     # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
-        Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
-        return Z_.m_as(ureg.dimensionless)
+        if self.backend == "HEPROP":
+            Z_ = self._AbstractState.compressibility_factor()
+        else:
+            Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
+        return Z_
         # Temporarily unavailable function
         # return self._AbstractState.compressibility_factor()
     # Useful shorthand
@@ -357,7 +375,7 @@ class ThermState:
         return self._AbstractState.isobaric_expansion_coefficient()
 
     @property
-    @ureg.wraps(CP_const_unit['isentropic_expansion_coefficient'][1], None)
+    @ureg.wraps(CP_const_unit['isentropic_expansion_coefficient'][1], None) ### not existing with coolprop issues
     def isentropic_expansion_coefficient(self):
         return self._AbstractState.isentropic_expansion_coefficient()
 
@@ -432,7 +450,10 @@ class ThermState:
         # Because specific volume is not available as function of
         # the AbstractState, density is used instead
         # The resulting function is: -Dmass*(dHmass/dDmass)|p
-        return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
+        if self.backend == "HEPROP":
+            return self._AbstractState.specific_heat_input() * ureg.joule/ureg.kg
+        else:
+            return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
 
     @property
     def gamma(self):
@@ -558,3 +579,15 @@ class ThermState:
         TempState = self.copy()
         TempState.update_kw(P=P, T=T)
         return TempState
+
+    @property
+    def P_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(T=self.T, Q=0)
+        return TempState.P
+
+    @property
+    def T_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(P=self.P, Q=0)
+        return TempState.T
