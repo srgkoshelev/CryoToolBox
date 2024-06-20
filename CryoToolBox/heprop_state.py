@@ -104,25 +104,25 @@ class HepropState:
         return self._heprop[0][5]
 
     def hmolar(self):
-        return self._heprop[0][9]*self.molar_mass
+        return self._heprop[0][9]*self.molar_mass()
 
     def hmass(self):
         return self._heprop[0][9]
 
     def smolar(self):
-        return self._heprop[0][8]*self.molar_mass
+        return self._heprop[0][8]*self.molar_mass()
 
     def smass(self):
         return self._heprop[0][8]
 
     def cpmolar(self):
-        return self._heprop[0][14]*self.molar_mass
+        return self._heprop[0][14]*self.molar_mass()
 
     def cpmass(self):
         return self._heprop[0][14]
 
     def cvmolar(self):
-        return self._heprop[0][15]*self.molar_mass
+        return self._heprop[0][15]*self.molar_mass()
 
     def cvmass(self):
         return self._heprop[0][15]
