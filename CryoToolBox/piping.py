@@ -51,7 +51,7 @@ def _load_table(table_name):
 NPS_table = _load_table('NPS_table.yaml')
 COPPER_TABLE = _load_table('copper_table.yaml')
 
-ReinforcementAreaResult = namedtuple('ReinforcementAreaResult', ['A1', 'A2', 'A3', 'A_avail', 'd2'])
+ReinforcementAreaResult = namedtuple('ReinforcementAreaResult', ['A1', 'A2', 'A3', 'd2', 'safe'])
 
 
 class PipingElement(ABC):
@@ -1523,6 +1523,12 @@ def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'), d1
     tmh = pressure_req_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
     c = header.c
     th = tmh - c
+    result = _reinforcement_area(P_diff, Dh, Th, th, c, branch, d1, beta, Tr, S,
+                                 E, W, Y)
+    return result
+
+def _reinforcement_area(P_diff, Dh, Th, th, c, branch, d1, beta,
+                        Tr, S, E, W, Y):
     Db = branch.OD
     Tb = branch.T
     tmb = pressure_req_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
@@ -1530,23 +1536,35 @@ def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'), d1
     tb = tmb - C
     if d1 is None:
         d1 = (Db - 2*(Tb-C)) / sin(beta)
-    d2 = half_width(d1, Th, c, Tb, C, Dh)
+    d2 = _half_width(d1, Th, c, Tb, C, Dh)
     A1 = th * d1 * (2-sin(beta))
     A2 = (2*d2-d1) * (Th - th - c)
     L4 = min(2.5*(Th-c), 2.5*(Tb-C)+Tr)
     A3 = 2 * L4 * (Tb-tb-C)/sin(beta)
     # TODO Add handling of different allowable stresses for header and branch
     # A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * branch.S / header.S
-    A_avail = A2 + A3  # Available reinforcement area without weld seam
-    return ReinforcementAreaResult(A1, A2, A3, A_avail, d2)
+    return ReinforcementAreaResult(A1, A2, A3, d2, A2+A3>A1)
 
-
-def half_width(d1, Th, c, Tb, C, Dh):
+def _half_width(d1, Th, c, Tb, C, Dh):
     """
     Calculate 'half width' of reinforcement zone per B31.3 304.3.3.
     """
     d2_a = (Tb-C) + (Th-c) + d1/2
     return min(max(d1, d2_a), Dh)
+
+
+def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg'), d1=None,
+                                 Tr=Q_('0 in'), *, S, E, W, Y):
+    """
+
+    Tp : ureg.Quantity {length: 1}
+        Plate thickness measured or minimum in accordance with purchase specification.
+    tp : ureg.Quantity {length: 1}
+        Pressure design thickness of the plate.
+    """
+    result = _reinforcement_area(P_diff, float('inf'), Tp, tp, c, branch, d1, beta, Tr, S,
+                                 E, W, Y)
+    return result
 
 
 def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
