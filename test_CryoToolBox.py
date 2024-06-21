@@ -2,7 +2,8 @@ import CryoToolBox as ctb
 from CryoToolBox import odh
 import pprint
 import unittest
-from math import pi
+import doctest
+from math import pi, sin
 from unittest.mock import MagicMock
 
 pp = pprint.PrettyPrinter()
@@ -11,6 +12,9 @@ ht = ctb
 u = ht.ureg
 Q_ = ht.Q_
 
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(ctb.piping))
+    return tests
 
 class RefPropTest(unittest.TestCase):
     """Verify fluid properties are calculated accurately.
@@ -477,30 +481,14 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(1, ht.piping.M_Klim(
             0, air.gamma))
 
-    def test_piping_stress(self):
-        OD = 1.75*u.inch
-        ID = 1.625*u.inch
-        wall = (OD - ID) / 2
-        tube = ht.piping.Tube(OD, wall=wall)
-        S = 16700*u.psi
-        E = 1
-        W = 1
-        Y = 0.4
-        self.assertApproxEqual(
-            S,
-            ht.piping.piping_stress(
-                tube,
-                1070.512*u.psi,
-                E=E, W=W, Y=Y), uncertainty=0.01)
-
-    def test_piping_design_thick(self):
+    def test_piping_req_thick(self):
         pipe = ctb.piping.Tube(1*u.inch, wall=0.065*u.inch)
         S = 16700*u.psi
         E = 0.8
         W = 1
         Y = 0.4
         P_max = ctb.piping.pressure_rating(pipe, S=S, E=E, W=W, Y=Y)
-        t_m = ctb.piping.pressure_design_thick(pipe, P_max, S=S, E=E, W=W, Y=Y)
+        t_m = ctb.piping.pressure_req_thick(pipe, P_max, S=S, E=E, W=W, Y=Y)
         self.assertAlmostEqual(t_m, pipe.wall)
 
     def test_direct_integration(self):
@@ -542,6 +530,25 @@ class PipingTest(unittest.TestCase):
         # Execution below should not produce an error
         # despite process not being physical
         ctb.piping.dP_incomp(m_dot, fluid, piping)
+
+    def test_reinforcement_area(self):
+        P = Q_(350, u.psig)
+        S = 16_700 * u.psi
+        E = 1
+        W = 1
+        Y = 0.4
+
+        th = 0.458 * u.inch
+        Th = 0.5 * u.inch
+        ch = 0.01 * u.inch
+
+        branch = ctb.piping.Pipe(1, SCH=10)
+        Db = branch.OD
+        Tb = branch.wall
+        cb = branch.c
+        beta = 90 * u.deg
+        d1 = Db - 2*(Tb - cb)/sin(beta)
+        A1 = th * d1 * (2-sin(beta))
 
 
 class CPWrapperTest(unittest.TestCase):

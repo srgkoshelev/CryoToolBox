@@ -82,6 +82,8 @@ class Tube(PipingElement):
             Outer diameter of the tube.
         wall : ureg.Quantity {length: 1}
             Wall thickness of the tube.
+        T : ureg.Quantity {length: 1}
+            Minimum wall thickness considering manufacturer's minus tolerance.
         L : ureg.Quantity {length: 1}
             Length of the tube.
         c : ureg.Quantity {length: 1}
@@ -98,6 +100,7 @@ class Tube(PipingElement):
         self.eps = eps
         # Wall thickness under tolerance is 12.5% as per ASTM A999
         self.wall_tol = 0.125 * self.wall
+        self.T = wall - self.wall_tol
         self.c = c
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
@@ -140,9 +143,7 @@ class Tube(PipingElement):
 
     def pressure_design_thick(self, P_int, P_ext=P_NTP, *, S, E, W, Y):
         """Calculate pressure design thickness for given pressure and pipe
-        material.
-
-        Based on B31.3 304.1.
+        material based on B31.3 304.1.
 
         Parameters
         ----------
@@ -1351,6 +1352,7 @@ def piping_stress(tube, P_diff, *, E, W, Y):
     ureg.Quantity {mass: 1, length: -1, time: -2}
         Piping stress
     """
+    logger.warning('Deprecated.')
     P = P_diff
     D = tube.OD
     t = tube.wall - tube.c
@@ -1359,26 +1361,70 @@ def piping_stress(tube, P_diff, *, E, W, Y):
 
 
 def pressure_design_thick(tube, P_diff, I=1, *, S, E, W, Y):
-    """Calculate pressure design thickness for given pressure and pipe material.
+    logger.warning('Deprecated, use pressure_req_thick function instead.')
+    return pressure_req_thick(tube, P_diff, I, S=S, E=E, W=W, Y=Y)
 
-    Based on B31.3 304.1.
+
+def pressure_req_thick(tube, P_diff, I=1, *, S, E, W, Y):
+    """
+    Calculate minimum required thickness for given pressure and tube and material
+    based on B31.3 304.1.
 
     Parameters
     ----------
+    tube : Tube
     P_diff : ureg.Quantity {length: -1, mass: 1, time: -2}
-        Differential internal pressure, absolute
+        Differential internal pressure.
+    I : float, optional
+       Pipe bend coefficient per 304.2.1; for a straight pipe equals 1.
+    S : ureg.Quantity {length: -1, mass: 1, time: -2}
+        Stress value for material from Table A-1A/A-1B.
+    E : float
+        Quality factor from Table A-1A/A-1B.
+    W : float
+        Weld joint strength reduction factor in accordance with 302.3.5(e).
+    Y : float
+        Coefficient from Table 304.1.1.
 
     Returns
     -------
     ureg.Quantity {length: 1}
         Minimum required wall thickness.
+
+    Notes
+    -----
+    The formula for calculating the pressure design thickness is:
+
+    .. math:: t = \\frac{P D}{2 (S E W/I + P Y)}
+
+    where:
+      - \( t \) is the minimum required wall thickness,
+      - \( P \) is the differential internal pressure,
+      - \( D \) is the outside diameter of the tube,
+      - \( S \) is the allowable stress of the material,
+      - \( E \) is the quality factor,
+      - \( W \) is the weld joint strength reduction factor,
+      - \( I \) is the pipe bend coefficient.
+      - \( Y \) is the coefficient from Table 304.1.1.
+
+    If the calculated thickness \( t \) is greater than or equal to \( D/6 \) or if \( P/(S E) \) is greater than 0.385, the design thickness must be calculated in accordance with B31.3 304.1.2 (b).
+
+    Examples
+    --------
+    >>> import CryoToolBox as ctb
+    >>> u = ctb.ureg
+    >>> tube = ctb.piping.Tube(4*u.inch, wall=0.065*u.inch, c=0.125*u.inch)
+    >>> P_diff = 200 * u.psi
+    >>> S = 20000 * u.psi
+    >>> E = 0.85
+    >>> W = 1.0
+    >>> Y = 0.4
+    >>> pressure_req_thick(tube, P_diff, 1, S=S, E=E, W=W, Y=Y)
+    <Quantity(0.148419204, 'inch')>
     """
     D = tube.OD
-    # d = tube.ID
     P = P_diff
     t = P * D / (2*(S*E*W/I + P*Y))
-    # TODO add 3b equation handling:
-    # t = P * (d+2*c) / (2*(S*E*W-P*(1-Y)))
     if (t >= D/6) or (P/(S*E)) > 0.385:
         logger.error('Calculate design thickness in accordance \
         with B31.3 304.1.2 (b)')
@@ -1466,12 +1512,14 @@ def reinforcement_area(header, branch, P_diff, beta=Q_('90 deg'), d_1=None,
     None
 
     """
-    D_h = header.OD
-    T_h = header.wall - header.c
-    t_h = pressure_design_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
-    D_b = branch.OD
-    T_b = branch.wall - branch.c
-    t_b = pressure_design_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
+    Dh = header.OD
+    Th = header.wall - header.wall_tol
+    tmh = pressure_design_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
+    th = tmh - header.c
+    Db = branch.OD
+    Tb = branch.wall - branch.wall_tol
+    tmb = pressure_design_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
+    tb = tmb - branch.c
     if d_1 is None:
         d_1 = (D_b - 2*(T_b-branch.c)) / sin(beta)
     c = max(header.c, branch.c)  # Max allowance is used for calculation
