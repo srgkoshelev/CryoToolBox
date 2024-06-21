@@ -559,6 +559,7 @@ class PipingTest(unittest.TestCase):
         self.assertAlmostEqual(A1.to(u.mm**2), 222*u.mm**2, delta=0.5*u.mm**2)
         self.assertAlmostEqual(A2.to(u.mm**2), 285*u.mm**2, delta=1*u.mm**2)
         self.assertAlmostEqual(A3.to(u.mm**2), 24*u.mm**2, delta=0.5*u.mm**2)
+        self.assertAlmostEqual(d2.to(u.mm), 108.8*u.mm, delta=0.05*u.mm)
 
 
 class CPWrapperTest(unittest.TestCase):
