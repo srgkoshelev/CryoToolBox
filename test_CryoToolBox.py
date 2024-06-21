@@ -532,23 +532,33 @@ class PipingTest(unittest.TestCase):
         ctb.piping.dP_incomp(m_dot, fluid, piping)
 
     def test_reinforcement_area(self):
-        P = Q_(350, u.psig)
-        S = 16_700 * u.psi
+        # H301 Example 1
+        header = ctb.piping.Pipe(8, c=2.5*u.mm)
+        branch = ctb.piping.Pipe(4, c=2.5*u.mm)
+        P_des = 2068 * u.kPa
+        S = 110 * u.MPa
         E = 1
         W = 1
         Y = 0.4
-
-        th = 0.458 * u.inch
-        Th = 0.5 * u.inch
-        ch = 0.01 * u.inch
-
-        branch = ctb.piping.Pipe(1, SCH=10)
-        Db = branch.OD
-        Tb = branch.wall
-        cb = branch.c
-        beta = 90 * u.deg
-        d1 = Db - 2*(Tb - cb)/sin(beta)
-        A1 = th * d1 * (2-sin(beta))
+        self.assertAlmostEqual(header.T, 7.16*u.mm, delta=0.005*u.mm)
+        self.assertAlmostEqual(branch.T, 5.27*u.mm, delta=0.005*u.mm)
+        result = ctb.piping.calculate_branch_reinforcement(header,
+                                                         branch,
+                                                         P_des,
+                                                         S=S,
+                                                         E=E,
+                                                         W=W,
+                                                         Y=Y)
+        tmh = ctb.piping.pressure_req_thick(header, P_des, S=S, E=E, W=W, Y=Y).to(u.mm)
+        self.assertAlmostEqual(tmh-header.c,
+                               2.04*u.mm, delta=0.005*u.mm)
+        tmb = ctb.piping.pressure_req_thick(branch, P_des, S=S, E=E, W=W, Y=Y).to(u.mm)
+        self.assertAlmostEqual(tmb-header.c,
+                               1.07*u.mm, delta=0.005*u.mm)
+        A1, A2, A3, A_avail, d2 = result
+        self.assertAlmostEqual(A1.to(u.mm**2), 222*u.mm**2, delta=0.5*u.mm**2)
+        self.assertAlmostEqual(A2.to(u.mm**2), 285*u.mm**2, delta=1*u.mm**2)
+        self.assertAlmostEqual(A3.to(u.mm**2), 24*u.mm**2, delta=0.5*u.mm**2)
 
 
 class CPWrapperTest(unittest.TestCase):

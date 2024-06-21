@@ -15,6 +15,7 @@ from pint import set_application_registry
 from serialize import load
 from scipy.optimize import root_scalar
 from collections.abc import MutableSequence
+from collections import namedtuple
 from abc import ABC, abstractmethod
 from scipy.integrate import quad
 
@@ -49,6 +50,8 @@ def _load_table(table_name):
 
 NPS_table = _load_table('NPS_table.yaml')
 COPPER_TABLE = _load_table('copper_table.yaml')
+
+ReinforcementAreaResult = namedtuple('ReinforcementAreaResult', ['A1', 'A2', 'A3', 'A_avail', 'd2'])
 
 
 class PipingElement(ABC):
@@ -1487,8 +1490,8 @@ def pressure_rating(tube, *, S, E, W, Y):
     return P.to(ureg.psi)
 
 
-def reinforcement_area(header, branch, P_diff, beta=Q_('90 deg'), d_1=None,
-                       T_r=Q_('0 in'), *, S, E, W, Y):
+def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'), d1=None,
+                                 Tr=Q_('0 in'), *, S, E, W, Y):
     """Calculate reinforcement and available area for given branch pipe and
     reinforcing ring thickness, Tr.
 
@@ -1502,9 +1505,9 @@ def reinforcement_area(header, branch, P_diff, beta=Q_('90 deg'), d_1=None,
         Differential internal pressure in pipe and branch
     beta : ureg.Quantity {dimensionless}
         Smaller angle between axes of branch and run
-    d_1 : ureg.Quantity {length: 1}
+    d1 : ureg.Quantity {length: 1}
         Effective length removed from pipe at branch (opening for branch)
-    T_r : ureg.Quantity {length: 1}
+    Tr : ureg.Quantity {length: 1}
         Minimum thickness of reinforcing ring
 
     Returns
@@ -1512,35 +1515,38 @@ def reinforcement_area(header, branch, P_diff, beta=Q_('90 deg'), d_1=None,
     None
 
     """
-    Dh = header.OD
-    Th = header.wall - header.wall_tol
-    tmh = pressure_design_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
-    th = tmh - header.c
-    Db = branch.OD
-    Tb = branch.wall - branch.wall_tol
-    tmb = pressure_design_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
-    tb = tmb - branch.c
-    if d_1 is None:
-        d_1 = (D_b - 2*(T_b-branch.c)) / sin(beta)
-    c = max(header.c, branch.c)  # Max allowance is used for calculation
     # B31.3 has no specification which allowance to use
-    d_2 = half_width(d_1, T_b, T_h, c, D_h)
-    A_1 = t_h * d_1 * (2-sin(beta))
-    A_2 = (2*d_2-d_1) * (T_h - t_h - c)
-    # height of reinforcement zone outside of run pipe
-    L_4 = min(2.5*(T_h-c), 2.5*(T_b-c))
-    A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta)
+    # Using header allowance for header
+    # and branch allowance for branch
+    Dh = header.OD
+    Th = header.T
+    tmh = pressure_req_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
+    c = header.c
+    th = tmh - c
+    Db = branch.OD
+    Tb = branch.T
+    tmb = pressure_req_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
+    C = branch.c
+    tb = tmb - C
+    if d1 is None:
+        d1 = (Db - 2*(Tb-C)) / sin(beta)
+    d2 = half_width(d1, Th, c, Tb, C, Dh)
+    A1 = th * d1 * (2-sin(beta))
+    A2 = (2*d2-d1) * (Th - th - c)
+    L4 = min(2.5*(Th-c), 2.5*(Tb-C)+Tr)
+    A3 = 2 * L4 * (Tb-tb-C)/sin(beta)
+    # TODO Add handling of different allowable stresses for header and branch
     # A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * branch.S / header.S
-    A_avail = A_2 + A_3  # Ignoring welding reinforcement
-    return (A_1.to(ureg.inch**2), A_avail.to(ureg.inch**2))
+    A_avail = A2 + A3  # Available reinforcement area without weld seam
+    return ReinforcementAreaResult(A1, A2, A3, A_avail, d2)
 
 
-def half_width(d_1, T_b, T_h, c, D_h):
+def half_width(d1, Th, c, Tb, C, Dh):
     """
     Calculate 'half width' of reinforcement zone per B31.3 304.3.3.
     """
-    d_2_a = (T_b-c) + (T_h-c) + d_1/2
-    return min(max(d_1, d_2_a), D_h)
+    d2_a = (Tb-C) + (Th-c) + d1/2
+    return min(max(d1, d2_a), Dh)
 
 
 def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
