@@ -932,5 +932,31 @@ class geometry(unittest.TestCase):
         self.assertEqual(V, ctb.geometry.cylinder_volume(D, H))
 
 
+class Heprop(unittest.TestCase):
+    def test_fluid_name(self):
+        self.assertRaises(ValueError, ctb.ThermState, 'nitrogen', T= 300*u.K, P=1*u.bar, backend='HEPROP')
+
+    def test_create(self):
+        CP_helium_state = ctb.ThermState('helium', T= 300*u.K, P=1*u.bar)
+        heprop_state = ctb.ThermState('helium', T= 300*u.K, P=1*u.bar, backend='HEPROP')
+        self.assertAlmostEqual(CP_helium_state.T_critical / heprop_state.T_critical, 1, delta=0.01)
+        self.assertAlmostEqual(CP_helium_state.P_critical / heprop_state.P_critical, 1, delta=0.01)
+        self.assertAlmostEqual(CP_helium_state.Dmass / heprop_state.Dmass, 1, delta=0.01)
+        self.assertAlmostEqual(CP_helium_state.Dmolar / heprop_state.Dmolar, 1, delta=0.01)
+        CP_helium_state_2 = ctb.ThermState('helium', T= 100*u.K, P=1*u.bar)
+        heprop_state_2 = ctb.ThermState('helium', T= 100*u.K, P=1*u.bar, backend='HEPROP')
+        self.assertAlmostEqual((CP_helium_state.Smass - CP_helium_state_2.Smass) / (heprop_state.Smass - heprop_state_2.Smass), 1, delta=0.01)
+        self.assertAlmostEqual((CP_helium_state.Smolar - CP_helium_state_2.Smolar)/ (heprop_state.Smolar - heprop_state_2.Smolar), 1, delta=0.01)
+        self.assertAlmostEqual((CP_helium_state.Hmass - CP_helium_state_2.Hmass) / (heprop_state.Hmass - heprop_state_2.Hmass), 1, delta=0.01)
+        self.assertAlmostEqual((CP_helium_state.Hmolar - CP_helium_state_2.Hmolar)/ (heprop_state.Hmolar - heprop_state_2.Hmolar), 1, delta=0.01)
+        self.assertAlmostEqual(CP_helium_state.viscosity / heprop_state.viscosity, 1, delta=0.001)
+        self.assertAlmostEqual(CP_helium_state.conductivity / heprop_state.conductivity, 1, delta=0.001)
+        self.assertAlmostEqual(CP_helium_state.Prandtl / heprop_state.Prandtl, 1, delta=0.001)
+        self.assertAlmostEqual(CP_helium_state.isothermal_compressibility / heprop_state.isothermal_compressibility, 1, delta=0.001)
+        self.assertAlmostEqual(CP_helium_state.isobaric_expansion_coefficient / heprop_state.isobaric_expansion_coefficient, 1, delta=0.001)
+        self.assertAlmostEqual(CP_helium_state.specific_heat_input / heprop_state.specific_heat_input, 1, delta=0.001)
+        self.assertAlmostEqual(CP_helium_state.compressibility_factor / heprop_state.compressibility_factor, 1, delta=0.001)
+
+
 if __name__ == '__main__':
     unittest.main()
