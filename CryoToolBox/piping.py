@@ -1393,9 +1393,9 @@ def pressure_req_thick(tube, P_diff, I=1, *, S, E, W, Y):
 
     Notes
     -----
-    The formula for calculating the pressure design thickness is:
+    The formula for calculating the required thickness is:
 
-    .. math:: t = \\frac{P D}{2 (S E W/I + P Y)}
+    .. math:: t_m = \\frac{P D}{2 (S E W/I + P Y)} + c
 
     where:
       - \( t \) is the minimum required wall thickness,
@@ -1482,7 +1482,7 @@ def pressure_rating(tube, *, S, E, W, Y):
         Minimum required wall thickness.
     """
     D = tube.OD
-    t = tube.wall - tube.c
+    t = tube.T - tube.c
     P = 2 * t * S * E * W / (D-2*Y*t)
     return P.to(ureg.psi)
 

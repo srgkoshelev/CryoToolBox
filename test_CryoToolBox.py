@@ -489,7 +489,7 @@ class PipingTest(unittest.TestCase):
         Y = 0.4
         P_max = ctb.piping.pressure_rating(pipe, S=S, E=E, W=W, Y=Y)
         t_m = ctb.piping.pressure_req_thick(pipe, P_max, S=S, E=E, W=W, Y=Y)
-        self.assertAlmostEqual(t_m, pipe.wall)
+        self.assertAlmostEqual(t_m, pipe.T)
 
     def test_direct_integration(self):
         fluid = ht.ThermState('helium', P=200*u.psi, T=7*u.K)
