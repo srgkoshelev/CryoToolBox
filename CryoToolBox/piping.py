@@ -955,14 +955,21 @@ def K_piping(m_dot, fluid, piping):
     """
     K0 = 0*ureg.dimensionless
     try:
-        A0 = piping[0].area  # using area of the first element as base
-    except IndexError:
+        try:
+            A0 = piping[0].area  # using area of the first element as base
+            for element in piping:
+                Re_ = Re(fluid, m_dot, element.ID, element.area)
+                K_el = element.K(Re_) * (A0/element.area)**2
+                K0 += K_el
+        except:
+            A0 = piping.area    #if the piping component has only one element
+            Re_ = Re(fluid, m_dot, piping.ID, piping.area)
+            K_el = piping.K(Re_) * (A0/piping.area)**2
+            K0 = K_el
+    except:
         raise IndexError('Piping has no elements! '
-                            'Use Piping.add to add sections to piping.')
-    for element in piping:
-        Re_ = Re(fluid, m_dot, element.ID, element.area)
-        K_el = element.K(Re_) * (A0/element.area)**2
-        K0 += K_el
+                            'Use Piping.add to add sections to piping.')    
+
     return (K0.to_base_units(), A0)
 
 
