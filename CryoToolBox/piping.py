@@ -1562,8 +1562,8 @@ def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg')
     tp : ureg.Quantity {length: 1}
         Pressure design thickness of the plate.
     """
-    result = _reinforcement_area(P_diff, float('inf'), Tp, tp, c, branch, d1, beta, Tr, S,
-                                 E, W, Y)
+    result = _reinforcement_area(P_diff, float('inf')*ureg.m, Tp, tp, c, branch,
+                                 d1, beta, Tr, S, E, W, Y)
     return result
 
 
