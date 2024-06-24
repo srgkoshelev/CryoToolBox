@@ -75,7 +75,7 @@ class Tube(PipingElement):
     """
     Tube, requires OD and wall thickness specified
     """
-    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m,
+    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m, wall_tol=None,
                  eps=0.0018*ureg.inch):
         """Generate tube object.
 
@@ -91,7 +91,7 @@ class Tube(PipingElement):
             Length of the tube.
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
-            allowances. Default 12.5% of OD.
+            allowances. Default is 0 m.
         eps : ureg.Quantity {length: 1}
             Absolute roughness for the tube. Default value for smooth
             pipe.
@@ -102,7 +102,7 @@ class Tube(PipingElement):
         self.L = L
         self.eps = eps
         # Wall thickness under tolerance is 12.5% as per ASTM A999
-        self.wall_tol = 0.125 * self.wall
+        self.wall_tol = wall_tol or (0.125*self.wall)
         self.T = wall - self.wall_tol
         self.c = c
         # c = Q_('0.5 mm') for unspecified machined surfaces
@@ -223,7 +223,7 @@ class Pipe(Tube):
         wall = NPS_table[D].get(SCH)
         if wall is None:
             raise PipingError(f'SCH {SCH} not available for pipe size {D}.')
-        super().__init__(OD, wall, L, c, eps)
+        super().__init__(OD, wall, L=L, c=c, eps=eps)
         self.D = D
         self.type = 'NPS pipe'
 
