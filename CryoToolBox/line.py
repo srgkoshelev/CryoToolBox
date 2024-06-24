@@ -9,7 +9,7 @@ from . import piping
 #from . import heated_pipe
 import numpy as np
 from .std_conditions import ureg
-from scipy.optimize import fsolve
+#from scipy.optimize import fsolve
 from math import pi
 
 class Line:
@@ -90,10 +90,9 @@ class Line:
             D = comp.ID
         self.P_out = fluid_temp.P
         
-    def dP_ht_line(self, fluid, mFlow_in):    
+    def dP_ht_line(self, fluid, mFlow_in):    #with temp variation
             
         fluid_temp = fluid.copy()
-        #H = fluid_temp.Hmass  #enthalpy of the fluid
         self.P_out_comp = np.zeros(np.size(self.compList)) * ureg.bar
         self.T_out_comp = np.zeros(np.size(self.compList)) * ureg.K
         self.T_p_in_comp = np.zeros(np.size(self.compList)) * ureg.K
@@ -119,7 +118,7 @@ class Line:
                     Tw_i, Tw_o, dP, Q = heated_pipe.pipe_heat(comp, fluid_temp, mFlow_in) #change to dP, and dH
                     self.T_p_in_comp[i] = Tw_i.m_as(ureg.K) * ureg.K
                     self.T_p_out_comp[i] = Tw_o.m_as(ureg.K) * ureg.K
-                    #self.Q_out_comp[i] = Q.m_as(u.K) * u.K       #to modify
+                    self.Q_out_comp[i] = Q.m_as(ureg.W/ureg.m**2) * ureg.W/ureg.m**2       #to modify
                     dH = Q * comp.ID * comp.L * pi
                 except:
                     dP = piping.dP_isot(mFlow_in, fluid_temp, comp)
