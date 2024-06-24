@@ -531,8 +531,7 @@ class PipingTest(unittest.TestCase):
         # despite process not being physical
         ctb.piping.dP_incomp(m_dot, fluid, piping)
 
-    def test_reinforcement_area(self):
-        # H301 Example 1
+    def test_reinforcement_area_H301(self):
         header = ctb.piping.Pipe(8, c=2.5*u.mm)
         branch = ctb.piping.Pipe(4, c=2.5*u.mm)
         P_des = 2068 * u.kPa
@@ -553,14 +552,48 @@ class PipingTest(unittest.TestCase):
         self.assertAlmostEqual(tmh-header.c,
                                2.04*u.mm, delta=0.005*u.mm)
         tmb = ctb.piping.pressure_req_thick(branch, P_des, S=S, E=E, W=W, Y=Y).to(u.mm)
-        self.assertAlmostEqual(tmb-header.c,
+        self.assertAlmostEqual(tmb-branch.c,
                                1.07*u.mm, delta=0.005*u.mm)
-        A1, A2, A3, d2, safe = result
+        A1, A2, A3, A4, d2, safe = result
         self.assertAlmostEqual(A1.to(u.mm**2), 222*u.mm**2, delta=0.5*u.mm**2)
         self.assertAlmostEqual(A2.to(u.mm**2), 285*u.mm**2, delta=1*u.mm**2)
         self.assertAlmostEqual(A3.to(u.mm**2), 24*u.mm**2, delta=0.5*u.mm**2)
         self.assertAlmostEqual(d2.to(u.mm), 108.8*u.mm, delta=0.05*u.mm)
         self.assertAlmostEqual(safe, True)
+
+    def test_reinforcement_area_H313(self):
+        header = ctb.piping.Pipe(16, SCH=40, c=0.1*u.inch)
+        branch = ctb.piping.Pipe(6, SCH=40, c=0.1*u.inch)
+        beta = 60 * u.deg
+        Lr = 12 * u.inch
+        Tr = 0.5 * u.inch
+        P_des = Q_(500, u.psi)
+        E = 1
+        W = 1
+        Y = 0.4
+        S = 14.4 * u.kpsi
+        self.assertAlmostEqual(header.T, 0.438*u.inch, delta=0.001*u.inch)
+        self.assertAlmostEqual(branch.T, 0.245*u.inch, delta=0.001*u.inch)
+        tmh = ctb.piping.pressure_req_thick(header, P_des, S=S, E=E, W=W, Y=Y).to(u.inch)
+        self.assertAlmostEqual(tmh-header.c, 0.274*u.inch, delta=0.001*u.inch)
+        tmb = ctb.piping.pressure_req_thick(branch, P_des, S=S, E=E, W=W, Y=Y).to(u.inch)
+        self.assertAlmostEqual(tmb-header.c, 0.113*u.inch, delta=0.001*u.inch)
+        result = ctb.piping.calculate_branch_reinforcement(header,
+                                                           branch,
+                                                           P_des,
+                                                           beta=beta,
+                                                           Tr=Tr,
+                                                           Lr=Lr,
+                                                           S=S,
+                                                           E=E,
+                                                           W=W,
+                                                           Y=Y)
+        A1, A2, A3, A4, d2, safe = result
+        self.assertAlmostEqual(A1.to(u.inch**2), 2.27*u.inch**2, delta=0.01*u.inch**2)
+        self.assertAlmostEqual(A2.to(u.inch**2), 0.468*u.inch**2, delta=0.005*u.inch**2)
+        self.assertAlmostEqual(A3.to(u.inch**2), 0.062*u.inch**2, delta=0.001*u.inch**2)
+        self.assertAlmostEqual(A4.to(u.inch**2), 2.175*u.inch**2, delta=0.001*u.inch**2)
+
 
 
 class CPWrapperTest(unittest.TestCase):

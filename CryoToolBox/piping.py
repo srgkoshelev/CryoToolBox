@@ -51,7 +51,7 @@ def _load_table(table_name):
 NPS_table = _load_table('NPS_table.yaml')
 COPPER_TABLE = _load_table('copper_table.yaml')
 
-ReinforcementAreaResult = namedtuple('ReinforcementAreaResult', ['A1', 'A2', 'A3', 'd2', 'safe'])
+ReinforcementAreaResult = namedtuple('ReinforcementAreaResult', ['A1', 'A2', 'A3', 'A4', 'd2', 'safe'])
 
 
 class PipingElement(ABC):
@@ -1426,14 +1426,14 @@ def pressure_req_thick(tube, P_diff, I=1, *, S, E, W, Y):
     <Quantity(0.148419204, 'inch')>
     """
     D = tube.OD
-    P = P_diff
+    P = P_diff.to_base_units()
     t = P * D / (2*(S*E*W/I + P*Y))
     if (t >= D/6) or (P/(S*E)) > 0.385:
         logger.error('Calculate design thickness in accordance \
         with B31.3 304.1.2 (b)')
         return None
     tm = t + tube.c
-    return tm
+    return tm.to(ureg.inch)
 
 
 def I_intrados(R1, D):
@@ -1490,8 +1490,9 @@ def pressure_rating(tube, *, S, E, W, Y):
     return P.to(ureg.psi)
 
 
-def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'), d1=None,
-                                 Tr=Q_('0 in'), *, S, E, W, Y):
+def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'),
+                                   Tr=Q_('0 in'), Lr=Q_('0 in'), d1=None,
+                                   *, S, E, W, Y):
     """Calculate reinforcement and available area for given branch pipe and
     reinforcing ring thickness, Tr.
 
@@ -1509,6 +1510,8 @@ def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'), d1
         Effective length removed from pipe at branch (opening for branch)
     Tr : ureg.Quantity {length: 1}
         Minimum thickness of reinforcing ring
+    Lr : ureg.Quantity {length: 1}
+        Length of reinforcing ring along the run pipe.
 
     Returns
     -------
@@ -1523,12 +1526,12 @@ def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'), d1
     tmh = pressure_req_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
     c = header.c
     th = tmh - c
-    result = _reinforcement_area(P_diff, Dh, Th, th, c, branch, d1, beta, Tr, S,
-                                 E, W, Y)
+    result = _reinforcement_area(P_diff, Dh, Th, th, c, branch, beta, Tr, Lr, d1,
+                                 S, E, W, Y)
     return result
 
-def _reinforcement_area(P_diff, Dh, Th, th, c, branch, d1, beta,
-                        Tr, S, E, W, Y):
+def _reinforcement_area(P_diff, Dh, Th, th, c, branch, beta, Tr, Lr, d1, S, E,
+                        W, Y):
     Db = branch.OD
     Tb = branch.T
     tmb = pressure_req_thick(branch, P_diff, S=S, E=E, W=W, Y=Y)
@@ -1543,7 +1546,9 @@ def _reinforcement_area(P_diff, Dh, Th, th, c, branch, d1, beta,
     A3 = 2 * L4 * (Tb-tb-C)/sin(beta)
     # TODO Add handling of different allowable stresses for header and branch
     # A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * branch.S / header.S
-    return ReinforcementAreaResult(A1, A2, A3, d2, A2+A3>A1)
+    # TODO Add reinforcement area due to welds
+    A4 = Tr * (Lr-Db/sin(beta))
+    return ReinforcementAreaResult(A1, A2, A3, A4, d2, A2+A3+A4>A1)
 
 def _half_width(d1, Th, c, Tb, C, Dh):
     """
@@ -1553,8 +1558,9 @@ def _half_width(d1, Th, c, Tb, C, Dh):
     return min(max(d1, d2_a), Dh)
 
 
-def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg'), d1=None,
-                                 Tr=Q_('0 in'), *, S, E, W, Y):
+def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg'),
+                                 Tr=Q_('0 in'), Lr=Q_('0 in'), d1=None,
+                                    *, S, E, W, Y):
     """
 
     Tp : ureg.Quantity {length: 1}
@@ -1563,7 +1569,7 @@ def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg')
         Pressure design thickness of the plate.
     """
     result = _reinforcement_area(P_diff, float('inf')*ureg.m, Tp, tp, c, branch,
-                                 d1, beta, Tr, S, E, W, Y)
+                                 beta, Tr, Lr, d1, S, E, W, Y)
     return result
 
 
