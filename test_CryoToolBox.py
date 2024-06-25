@@ -958,5 +958,81 @@ class Heprop(unittest.TestCase):
         self.assertAlmostEqual(CP_helium_state.compressibility_factor / heprop_state.compressibility_factor, 1, delta=0.001)
 
 
+class Heated_pipe(unittest.TestCase):
+
+    def test_create(self):
+        OD = Q_('2 inch')   #Outer Diameter (here in inch)
+        SCH = 10
+        L = 2 * u.m  #Length (here in meter)
+        eps=0.000045 * u.m   #pipe rugosity (here Stainless Steel)
+        m_dot = Q_('550. g/s')  #mass flow (here in g/s)
+        pipe = ht.piping.Pipe(OD, SCH, L, eps)   #NPS pipe class
+        ######
+        fluid = ctb.ThermState('nitrogen', T= 200 * u.K, P=2 * u.bar)   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 6073, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 712.1, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 712.1, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_isot(m_dot, fluid, pipe), 1, delta=0.06)
+        ######
+        fluid = ctb.ThermState('helium', T= 200 * u.K, P=2 * u.bar, backend = "HEPROP")   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 42876, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 3682, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 3682, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_isot(m_dot, fluid, pipe), 1, delta=0.06)
+        ######
+        fluid = ctb.ThermState('argon', T= 200 * u.K, P=2 * u.bar)   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 4270, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 373.1, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 373.1, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_isot(m_dot, fluid, pipe), 1, delta=0.06)
+        ######
+        m_dot = Q_('5. g/s')  #mass flow (here in g/s)
+        fluid = ctb.ThermState('nitrogen', T= 200 * u.K, P=2 * u.bar)   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 0.8645, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 10.33, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 10.33, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_isot(m_dot, fluid, pipe), 1, delta=0.1)
+        ######
+        fluid = ctb.ThermState('helium', T= 200 * u.K, P=2 * u.bar, backend = "HEPROP")   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 6.327, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 55.24, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 55.24, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_isot(m_dot, fluid, pipe), 1, delta=0.1)
+        ######
+        fluid = ctb.ThermState('argon', T= 200 * u.K, P=2 * u.bar)   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 0.6382, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 5.625, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 5.625, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_isot(m_dot, fluid, pipe), 1, delta=0.1)
+        ######
+        m_dot = Q_('50. g/s')  #mass flow (here in g/s)
+        fluid = ctb.ThermState('nitrogen', T= 77 * u.K, P=2 * u.bar)   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 0.3835, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 108.4, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 108.4, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_incomp(m_dot, fluid, pipe).to(u.Pa), 1, delta=0.1)
+        ######
+        fluid = ctb.ThermState('helium', T= 4.2 * u.K, P=2 * u.bar, backend = "HEPROP")    #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 1.339, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 268.3, 1, delta=0.03)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 268.3, 1, delta=0.03)
+        self.assertAlmostEqual(dP / ctb.piping.dP_incomp(m_dot, fluid, pipe).to(u.Pa), 1, delta=0.1)
+        ######
+        fluid = ctb.ThermState('argon', T= 85 * u.K, P=2 * u.bar)   #Fluid state
+        dP, h_T, h_Q = ctb.heated_pipe.dP_Pipe(m_dot, fluid, pipe)
+        self.assertAlmostEqual(dP.m_as(u.Pa) / 0.2538, 1, delta=0.01)
+        self.assertAlmostEqual(h_T.m_as(u.W/u.K/u.m**2) / 57.57, 1, delta=0.01)
+        self.assertAlmostEqual(h_Q.m_as(u.W/u.K/u.m**2) / 57.57, 1, delta=0.01)
+        self.assertAlmostEqual(dP / ctb.piping.dP_incomp(m_dot, fluid, pipe).to(u.Pa), 1, delta=0.1)
+
+
 if __name__ == '__main__':
     unittest.main()
