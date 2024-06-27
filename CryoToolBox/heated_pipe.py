@@ -189,7 +189,7 @@ def ht_def(pipe):
             pipe.T_ext.m_as(ureg.K)
         except:
             pipe.T_ext = 293 * ureg.K
-        pipe.ht_status = 5
+        pipe.ht_status = 4
         
     ###Other
     else: 
