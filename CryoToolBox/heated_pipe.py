@@ -12,6 +12,13 @@ from .functions import heat_trans_coef, Ra, Nu_vcyl, Nu_hcyl, Pr
 from .cp_wrapper import ThermState
 from .piping import Mach, Mach_total, K_lim, ChokedFlow, HydraulicError, velocity, dP_Darcy, dP_adiab, Pipe, Tube, CopperTube
 
+class pipe_isolation:
+    ###  class to define the necessary isolation imputs
+    def __init__(self, k, OD, T_ext = 293 * ureg.K):
+        self.k = k
+        self.OD = OD
+        self.T_ext = T_ext
+
 def laminar_flow(Re_, Pr_, L_ID):
     # Non dimentional calcul of the Nusselt and fiction factor in pipe in laminar flow following Section 5.2.4 of Nellis and Klein (2020)
     # Verify the input conditions     
@@ -404,8 +411,8 @@ def pipe_heat(pipe, fluid, m_dot):
         Tw_i, Tw_o, Q = pipe_insulated(fluid, pipe, m_dot, dP, h_T)
                 
     else :
-        Q = 0 * ureg.W/ ureg.m ** 2
-        Tw_i = Tw_o = fluid.T
+        pipe.Q_def = Q = 0 * ureg.W/ ureg.m ** 2
+        Tw_i, Tw_o = pipe_Q_def(fluid, pipe, m_dot, dP, h_Q)
 
     return Tw_i.to(ureg.K), Tw_o.to(ureg.K), dP.to(ureg.bar), Q.to(ureg.W/ ureg.m ** 2)
 
