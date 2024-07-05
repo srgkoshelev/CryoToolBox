@@ -192,10 +192,6 @@ def ht_def(pipe):
             pipe.isolation.OD.m_as(ureg.m)
         except:
             raise ValueError(f"the isolation (k, OD) is not properly defined in component {pipe}" )
-        try:
-            pipe.T_ext.m_as(ureg.K)
-        except:
-            pipe.T_ext = 293 * ureg.K
         pipe.ht_status = 4
         
     ###Other
@@ -346,9 +342,9 @@ def pipe_insulated(fluid, pipe, m_dot, dP, h_T):
     while res>0.0001:   
         
         def find_Tw_o(x):
-            T1 = ( pipe.isolation.k * (pipe.T_ext - x * ureg.K) / h_T / pipe.ID / log(pipe.isolation.OD/pipe.OD) ) + T_avg
-            if T1 > pipe.T_ext:
-                T1 = pipe.T_ext
+            T1 = ( pipe.isolation.k * (pipe.isolation.T_ext - x * ureg.K) / h_T / pipe.ID / log(pipe.isolation.OD/pipe.OD) ) + T_avg
+            if T1 > pipe.isolation.T_ext:
+                T1 = pipe.isolation.T_ext
             if T1 < T_avg:
                 T1 = T_avg
             k = k_pipe(pipe, T1, x * ureg.K)
@@ -360,9 +356,9 @@ def pipe_insulated(fluid, pipe, m_dot, dP, h_T):
         
         fact = (pipe.isolation.OD.m_as(ureg.m) - pipe.OD.m_as(ureg.m)) / pipe.isolation.k.m_as(ureg.W/ureg.m/ureg.K)
         fact = min(1/2, fact)  # Use min for the upper limit      
-        T_v2 = minimize(find_Tw_o, x0=pipe.T_ext.m_as(ureg.K) - (pipe.T_ext.m_as(ureg.K) - T_avg.m_as(ureg.K)) * fact, bounds=[(T_avg.m_as(ureg.K), pipe.T_ext.m_as(ureg.K))])
+        T_v2 = minimize(find_Tw_o, x0=pipe.isolation.T_ext.m_as(ureg.K) - (pipe.isolation.T_ext.m_as(ureg.K) - T_avg.m_as(ureg.K)) * fact, bounds=[(T_avg.m_as(ureg.K), pipe.isolation.T_ext.m_as(ureg.K))])
         Tw_o = T_v2.x[0] * ureg.K      
-        Tw_i = (( pipe.isolation.k * (pipe.T_ext - Tw_o) / h_T / pipe.ID / log(pipe.isolation.OD/pipe.OD) ) + T_avg)
+        Tw_i = (( pipe.isolation.k * (pipe.isolation.T_ext - Tw_o) / h_T / pipe.ID / log(pipe.isolation.OD/pipe.OD) ) + T_avg)
         
         ####### Second part identical
         dT = T_avg - Tw_i
