@@ -97,7 +97,7 @@ class Line:
         self.T_out_comp = np.zeros(np.size(self.compList)) * ureg.K
         self.Tw_i_comp = np.zeros(np.size(self.compList)) * ureg.K
         self.Tw_o_comp = np.zeros(np.size(self.compList)) * ureg.K
-        self.Q_out_comp = np.zeros(np.size(self.compList)) * ureg.dimensionless
+        self.Q_out_comp = np.zeros(np.size(self.compList)) * ureg.W/ureg.m**2
         i = 0  
         D = 0
         for comp in self.compList:
@@ -119,7 +119,7 @@ class Line:
                     self.Tw_i_comp[i] = Tw_i.m_as(ureg.K) * ureg.K
                     self.Tw_o_comp[i] = Tw_o.m_as(ureg.K) * ureg.K
                     self.Q_out_comp[i] = Q.m_as(ureg.W/ureg.m**2) * ureg.W/ureg.m**2       #to modify
-                    dH = Q * comp.ID * comp.L * pi
+                    dH = Q * comp.ID * comp.L * pi / mFlow_in
                 except:
                     dP = piping.dP_isot(mFlow_in, fluid_temp, comp)
                     dH = 0*ureg.J/ureg.kg
