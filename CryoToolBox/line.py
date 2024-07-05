@@ -29,8 +29,8 @@ class Line:
         self.P_out_comp = None          # outlet pressure for each components
         self.T_out      = None          # outlet temperature for the line
         self.T_out_comp = None          # outlet temperature for each components
-        self.T_p_in_comp = None
-        self.T_p_out_comp = None
+        self.Tw_i_comp = None
+        self.Tw_o_comp = None
 
             
     def dP_isot_line(self, fluid, mFlow_in):    #without temperature variation
@@ -95,8 +95,8 @@ class Line:
         fluid_temp = fluid.copy()
         self.P_out_comp = np.zeros(np.size(self.compList)) * ureg.bar
         self.T_out_comp = np.zeros(np.size(self.compList)) * ureg.K
-        self.T_p_in_comp = np.zeros(np.size(self.compList)) * ureg.K
-        self.T_p_out_comp = np.zeros(np.size(self.compList)) * ureg.K
+        self.Tw_i_comp = np.zeros(np.size(self.compList)) * ureg.K
+        self.Tw_o_comp = np.zeros(np.size(self.compList)) * ureg.K
         self.Q_out_comp = np.zeros(np.size(self.compList)) * ureg.dimensionless
         i = 0  
         D = 0
@@ -116,8 +116,8 @@ class Line:
             else:
                 try:
                     Tw_i, Tw_o, dP, Q = heated_pipe.pipe_heat(comp, fluid_temp, mFlow_in) #change to dP, and dH
-                    self.T_p_in_comp[i] = Tw_i.m_as(ureg.K) * ureg.K
-                    self.T_p_out_comp[i] = Tw_o.m_as(ureg.K) * ureg.K
+                    self.Tw_i_comp[i] = Tw_i.m_as(ureg.K) * ureg.K
+                    self.Tw_o_comp[i] = Tw_o.m_as(ureg.K) * ureg.K
                     self.Q_out_comp[i] = Q.m_as(ureg.W/ureg.m**2) * ureg.W/ureg.m**2       #to modify
                     dH = Q * comp.ID * comp.L * pi
                 except:
