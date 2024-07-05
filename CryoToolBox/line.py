@@ -6,7 +6,7 @@ Created on Wed Feb 22 15:10:00 2023
 """
 
 from . import piping
-#from . import heated_pipe
+from . import heated_pipe
 import numpy as np
 from .std_conditions import ureg
 #from scipy.optimize import fsolve
