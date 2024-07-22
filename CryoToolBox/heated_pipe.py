@@ -23,7 +23,7 @@ def laminar_flow(Re_, Pr_, L_ID):
     # Non dimentional calcul of the Nusselt and fiction factor in pipe in laminar flow following Section 5.2.4 of Nellis and Klein (2020)
     # Verify the input conditions     
     if Pr_ < 0.1:
-        raise ValueError(f'Prandtl number (Pr) must be > 0.1. The value is {Pr}')
+        raise ValueError(f'Prandtl number (Pr) must be > 0.1. The value is {Pr_}')
         
     #Inverse Graetz numbers verification
     GZ = L_ID / (Re_ * Pr_)
@@ -44,7 +44,7 @@ def turbulent_flow(Re_, Pr_, L_ID, eps):
     # Non dimentional calcul of the Nusselt and fiction factor in pipe in turbulent flow following Section 5.2.3 of Nellis and Klein (2020)
     # Verify the input conditions
     if Pr_ < 0.004 or Pr_ > 2000:
-        raise ValueError(f'Prandtl number (Pr) must be between 0.004 and 2000. The value is {Pr}')
+        raise ValueError(f'Prandtl number (Pr) must be between 0.004 and 2000. The value is {Pr_}')
     if L_ID <= 1:  
         if L_ID < 0:  ###not inferior to zero - make no sense
             raise ValueError('L/ID ratio < 0. Not possible')
