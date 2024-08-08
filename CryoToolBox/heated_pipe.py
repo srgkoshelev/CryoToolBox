@@ -174,11 +174,11 @@ def ht_def(pipe):
         pipe.ht_status = 3
         
     ###Ambiant/external temperature defined 
-    elif hasattr(pipe, 'T_ext') and pipe.T_ext != None :
-        try: 
-            pipe.T_ext.m_as(ureg.K)
-        except:
-            raise ValueError(f"the T_ext is not properly defined in component {pipe}" )
+    elif hasattr(pipe, 'h_type') and pipe.h_type != None :
+        # try: 
+        #     pipe.T_ext.m_as(ureg.K)
+        # except:
+        #     raise ValueError(f"the T_ext is not properly defined in component {pipe}" )
         try:
             pipe.safety_fact 
         except:
@@ -234,22 +234,24 @@ def pipe_Tw_def(fluid, pipe, m_dot, dP, h_T):
     res = 1
     j = 0
     
+    def find_Tw_i(x, T_avg):
+        k = k_pipe(pipe, Tw_o, x * ureg.K)
+        dT1 = x * ureg.K - Tw_o
+        dQ = (conduction_cyl(pipe.ID.to(ureg.m), pipe.OD.to(ureg.m), pipe.L.to(ureg.m), k, dT1)).m_as(ureg.watt)
+        dT2 = T_avg - x * ureg.K
+        dH = (h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14).m_as(ureg.watt)
+        return (dH ** 2 - dQ ** 2)
+    
     while res>0.0001:                 
-        def find_Tw_i(x):
-            k = k_pipe(pipe, Tw_o, x * ureg.K)
-            dT1 = x * ureg.K - Tw_o
-            dQ = (conduction_cyl(pipe.ID.to(ureg.m), pipe.OD.to(ureg.m), pipe.L.to(ureg.m), k, dT1)).m_as(ureg.watt)
-            dT2 = T_avg - x * ureg.K
-            dH = (h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14).m_as(ureg.watt)
-            return (dH ** 2 - dQ ** 2)
+
         if fluid.T < Tw_o:
             bracket = [T_avg.m_as(ureg.K), Tw_o.m_as(ureg.K)-0.00001]  # Limits search range
         else:
             bracket = [Tw_o.m_as(ureg.K)+0.00001, T_avg.m_as(ureg.K)]
-        solution = root_scalar(find_Tw_i, x0 = T_avg.m_as(ureg.K), x1 = (Tw_o.m_as(ureg.K) + T_avg.m_as(ureg.K))/2, bracket=bracket)
+        solution = root_scalar(find_Tw_i, x0 = T_avg.m_as(ureg.K), x1 = (Tw_o.m_as(ureg.K) + T_avg.m_as(ureg.K))/2, args=(T_avg), bracket=bracket)
         Tw_i = solution.root * ureg.K   
         
-        ####### Second part identical
+        ####### Second part identical, function T_avg could be done
         dT = T_avg - Tw_i
         dH = - h_T * dT * pipe.ID * pipe.L * 3.14 / m_dot
         fluid_temp.update('P', fluid.P - dP,'Hmass', H + dH.to(ureg.J/ureg.kg))
@@ -299,7 +301,8 @@ def pipe_h_ext(fluid, pipe, m_dot, dP, h_T):
             dT2 = T_avg - T1
             dH = - (h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14).m_as(ureg.watt)
             return (dH - dQ) ** 2
-        T_v2 = minimize(find_Tw_o, x0=(fluid2.T + T_avg) / 2, bounds=[(T_avg.m_as(ureg.K), pipe.T_ext.m_as(ureg.K))])   
+        
+        T_v2 = minimize(find_Tw_o, x0=(fluid2.T + T_avg) / 2, bounds=[(T_avg.m_as(ureg.K) + 0.001, pipe.T_ext.m_as(ureg.K) - 0.001)])   
         Tw_o = T_v2.x[0] * ureg.K    
 
         h_ext = h_ext_(fluid2, pipe, Tw_o)
