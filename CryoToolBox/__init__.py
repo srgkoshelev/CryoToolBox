@@ -4,7 +4,6 @@ calculation using [CoolProp](https://github.com/CoolProp/CoolProp) and
 [Pint](https://github.com/hgrecco/pint) for unit handling.
 
 Provides:
-
 1. Thermal properties via open source HEOS or REFPROP back-end.
 2. Convenient calculation using a thermodynamic state `cp_wrapper.ThermState`.
 3. Seemless use of units for all calculations.
