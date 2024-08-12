@@ -27,15 +27,13 @@ calculation using [CoolProp](https://github.com/CoolProp/CoolProp) and
 <p><code><a title="CryoToolBox" href="#CryoToolBox">CryoToolBox</a></code> is a Python module for simple heat transfer and hydraulics
 calculation using <a href="https://github.com/CoolProp/CoolProp">CoolProp</a> and
 <a href="https://github.com/hgrecco/pint">Pint</a> for unit handling.</p>
-<h2 id="provides">Provides</h2>
-<ol>
-<li>Thermal properties via open source HEOS or REFPROP back-end.</li>
-<li>Convenient calculation using a thermodynamic state <code><a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a></code>.</li>
-<li>Seemless use of units for all calculations.</li>
-<li>Useful thermodynamic and hydraulic functions.</li>
-<li>Relief valve sizing functions.</li>
-<li>Oxygen deficiency analysis utilities.</li>
-</ol>
+<p>Provides:
+1. Thermal properties via open source HEOS or REFPROP back-end.
+2. Convenient calculation using a thermodynamic state <code><a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a></code>.
+3. Seemless use of units for all calculations.
+4. Useful thermodynamic and hydraulic functions.
+5. Relief valve sizing functions.
+6. Oxygen deficiency analysis utilities.</p>
 <p>CryoToolBox provides utility functions for variety of engineering
 calculations, including fluid dynamic, heat transfer, and oxygen
 deficiency analyses. The setup is simple:</p>
@@ -158,6 +156,9 @@ import os
 __location__ = os.path.dirname(os.path.abspath(__file__))
 logging.config.fileConfig(os.path.join(__location__, &#39;logging.ini&#39;))
 logger = logging.getLogger(__name__)
+
+# pdoc docformat
+__docformat__ = &#34;numpy&#34;
 
 
 from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD

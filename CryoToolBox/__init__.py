@@ -23,6 +23,9 @@ __location__ = os.path.dirname(os.path.abspath(__file__))
 logging.config.fileConfig(os.path.join(__location__, 'logging.ini'))
 logger = logging.getLogger(__name__)
 
+# pdoc docformat
+__docformat__ = "numpy"
+
 
 from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 from .functions import *
