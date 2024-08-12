@@ -132,8 +132,8 @@ def to_standard_flow(flow_rate, fluid):
                            &#39;&#39;&#39;.format(flow_rate))
             q_std = flow_rate
     else:
-        logger.error(&#39;&#39;&#39;Flow dimensionality is not supported: {:.3~}.
-                       &#39;&#39;&#39;.format(flow_rate.dimensionality))
+        raise ValueError (&#39;Flow dimensionality is not supported: &#39;
+                     f&#39;{flow_rate.dimensionality}.&#39;)
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std
 
@@ -466,7 +466,7 @@ def C_t_bar_cyl(Pr_):
     return C_t_bar_interp(Pr_)
 
 
-def Nu_hcyl(Pr_, Ra_, C_t_bar):
+def Nu_hcyl(Pr_, Ra_):
     &#34;&#34;&#34;Calculate Nusselt number for isothermal horizontal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
@@ -480,6 +480,7 @@ def Nu_hcyl(Pr_, Ra_, C_t_bar):
     Nusselt number, dimensionless
     &#34;&#34;&#34;
     Nu_l = Nu_l_hcyl(Pr_, Ra_)
+    C_t_bar = C_t_bar_cyl(Pr_)
     Nu_t = Nu_t_hcyl(Ra_, C_t_bar)
     Nu_ = Nu_blend(Nu_l, Nu_t, m=10)
     return float(Nu_)
@@ -1300,7 +1301,7 @@ From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.32).</p></div>
 </details>
 </dd>
 <dt id="CryoToolBox.functions.Nu_hcyl"><code class="name flex">
-<span>def <span class="ident">Nu_hcyl</span></span>(<span>Pr_, Ra_, C_t_bar)</span>
+<span>def <span class="ident">Nu_hcyl</span></span>(<span>Pr_, Ra_)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate Nusselt number for isothermal horizontal cylinder.
@@ -1317,7 +1318,7 @@ Cho (HHT) (4.45d)</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def Nu_hcyl(Pr_, Ra_, C_t_bar):
+<pre><code class="python">def Nu_hcyl(Pr_, Ra_):
     &#34;&#34;&#34;Calculate Nusselt number for isothermal horizontal cylinder.
     Only natural convection currently supported.
     Based on Handbook of heat transfer by Rohsenow, Hartnet,
@@ -1331,6 +1332,7 @@ Cho (HHT) (4.45d)</p>
     Nusselt number, dimensionless
     &#34;&#34;&#34;
     Nu_l = Nu_l_hcyl(Pr_, Ra_)
+    C_t_bar = C_t_bar_cyl(Pr_)
     Nu_t = Nu_t_hcyl(Ra_, C_t_bar)
     Nu_ = Nu_blend(Nu_l, Nu_t, m=10)
     return float(Nu_)</code></pre>
@@ -2241,8 +2243,8 @@ flow at NTP.</p></div>
                            &#39;&#39;&#39;.format(flow_rate))
             q_std = flow_rate
     else:
-        logger.error(&#39;&#39;&#39;Flow dimensionality is not supported: {:.3~}.
-                       &#39;&#39;&#39;.format(flow_rate.dimensionality))
+        raise ValueError (&#39;Flow dimensionality is not supported: &#39;
+                     f&#39;{flow_rate.dimensionality}.&#39;)
     q_std.ito(ureg.ft**3/ureg.min)
     return q_std</code></pre>
 </details>

@@ -87,22 +87,15 @@ class ConstLeak:
     name: str
     fluid: ThermState
     q_std: ureg.Quantity
-    N_events: int
+    tau: ureg.Quantity
     _is_const = True
     # TODO Remove once isinstance() issue resolved
 
 
 class Source:
     &#34;&#34;&#34;Source of inert gas
-
-    Attributes
-    ----------
-    sol_PFD : float
-        Probability of failure on demand (PFD) for isolation valve.
-        If the source doesn&#39;t have isolating valve
-        the probability is 1.
     &#34;&#34;&#34;
-    def __init__(self, name, fluid, volume, N=1, isol_valve=False):
+    def __init__(self, name, fluid, volume, N=1, PFD_isol_valve=1):
         &#34;&#34;&#34;Define the possible source of inert gas.
 
         Parameters
@@ -111,14 +104,17 @@ class Source:
             Name of the source.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
+        liquid_volume : ureg.Quantity, [length]^3
+            Liquid volume of the source.
         volume : ureg.Quantity, [length]^3
-            Volume of the fluid stored.
+            Standard volume of the fluid contained in the source.
         N : int
             Number of the sources if several similar sources exist,
             e.g. gas bottles.
-        isol_valve : bool
-            Denotes whether the source is protected using a normally closed
-            valve.
+        PFD_isol_valve : float
+            Probability of failure on demand of source isolation valve.
+            If no isolation valve will trigger on ODH alarm, the probability
+            is 1 (default).
         &#34;&#34;&#34;
         self.name = name
         self.fluid = fluid
@@ -129,13 +125,12 @@ class Source:
         # Calculating volume at standard conditions
         temp_state = fluid.copy()
         temp_state.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+        self.liquid_volume = volume
         self.volume = volume*fluid.Dmass/temp_state.Dmass
         self.volume.ito_base_units()
         # By default assume there is no isolation valve
         # that is used by ODH system
-        self.isol_valve = isol_valve
-        self.sol_PFD = (int(not isol_valve) or
-                        TABLE_2[&#39;Valve, solenoid&#39;][&#39;Failure to operate&#39;])
+        self.PFD_isol_valve = PFD_isol_valve
 
     def add_pipe_failure(self, tube, fluid, q_std_rupture=None, N_welds=1):
         &#34;&#34;&#34;Add pipe failure to the leaks dict.
@@ -156,7 +151,7 @@ class Source:
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid for the release.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
-            Standard volumetric flow rate for flange rupture.
+            Standard volumetric flow rate for pipe rupture.
         N_welds : int
             Number of welds on the tube.
         &#34;&#34;&#34;
@@ -211,7 +206,8 @@ class Source:
         self.add_failure_mode(&#39;Dewar insulation failure&#39;, failure_rate,
                               self.fluid, q_std, 1)
 
-    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1):
+    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1,
+                           gasket_type=&#39;reinforced&#39;, blowout_area=None):
         &#34;&#34;&#34;Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -228,17 +224,34 @@ class Source:
             Standard volumetric flow rate for flange rupture.
         N : int
             Number of reinforced seal connections on the pipe.
+        gasket_type : str
+            Type of the gasket in the flange, &#39;soft&#39; or &#39;reinforced&#39;.
+        blowout_area : Quantity [length^2]
+            Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
         &#34;&#34;&#34;
         # TODO Make leak and rupture areas adjustable, add info to docstring
-        table = TABLE_2[&#39;Flange, reinforced gasket&#39;]
+        if gasket_type == &#39;reinforced&#39;:
+            table = TABLE_2[&#39;Flange, reinforced gasket&#39;]
+        if gasket_type == &#39;soft&#39;:
+            table = TABLE_2[&#39;Flange, soft gasket&#39;]
         # Leak case
-        name = f&#39;Flange leak: {pipe}&#39;
+        name = f&#39;Flange {gasket_type} gasket leak: {pipe}&#39;
         failure_rate = table[&#39;Leak&#39;][&#39;Failure rate&#39;]
         area = table[&#39;Leak&#39;][&#39;Area&#39;]
         q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+        # Blowout for soft gasket
+        if gasket_type == &#39;soft&#39;:
+            name = f&#39;Flange soft gasket blowout: {pipe}&#39;
+            failure_rate = table[&#39;Blowout&#39;]
+            area = blowout_area or pipe.area
+            q_std = hole_leak(area, fluid)
+            if q_std_rupture is not None:
+                # Blowout flow cannot be greater than rupture flow
+                q_std = min(q_std, q_std_rupture)
+            self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
-        name = f&#39;Flange rupture: {pipe}&#39;
+        name = f&#39;Flange {gasket_type} gasket rupture: {pipe}&#39;
         failure_rate = table[&#39;Rupture&#39;]
         if q_std_rupture is not None:
             q_std = q_std_rupture
@@ -283,8 +296,8 @@ class Source:
             q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
 
-    def add_line_failure(self, pipe, fluid, *, N_welds, N_flanges, N_valves,
-                         q_std_rupture=None):
+    def add_line_failure(self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves,
+                         q_std_rupture=None, blowout_area=None):
         &#34;&#34;&#34;Add leaks for pipe, weld, flange, and valve failures.
 
         Store failure rate, flow rate and expected time duration of
@@ -299,16 +312,25 @@ class Source:
             Thermodynamic state of the fluid stored in the source.
         N_welds : int
             Number of welds on the line.
-        N_flange : int
-            Number of flanges on the line.
+        N_reinforced : int
+            Number of flanges with reinforced, preformed or metal gaskets on the line.
+        N_soft : int
+            Number of flanges with soft gaskets on the line.
         N_valves : int
             Number of valves on the line.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
             Standard volumetric flow rate for flange rupture.
+        blowout_area : Quantity [length^2]
+            Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
         &#34;&#34;&#34;
-        self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
-        self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_flanges)
-        self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
+        if N_welds &gt; 0:
+            self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
+        if N_reinforced &gt; 0:
+            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_reinforced, gasket_type=&#39;reinforced&#39;)
+        if N_soft &gt; 0:
+            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_soft, gasket_type=&#39;soft&#39;, blowout_area=blowout_area)
+        if N_valves &gt; 0:
+            self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
 
     # def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
     #     &#34;&#34;&#34;Add transfer line failure to leaks dict.
@@ -405,7 +427,8 @@ class Source:
         if not fluid:
             fluid = self.fluid
         N_events = N * self.N
-        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, N_events))
+        tau_event = self.volume / q_std
+        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, tau_event))
 
     def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
         &#34;&#34;&#34;Add general failure mode to leaks dict.
@@ -438,7 +461,7 @@ class Source:
                                tau.to(ureg.min), N_events))
 
     @staticmethod
-    def combine(name, fluid, sources):
+    def combine(name, fluid, sources, N=1, PFD_isol_valve=1):
         &#34;&#34;&#34;Combine several ODH sources sharing volume.
 
         Can be used for failure modes affecting several sources in parallel.
@@ -451,6 +474,13 @@ class Source:
             Thermodynamic state of the fluid stored in the source.
         sources : list of Source
             Sources connected together.
+        N : int
+            Number of the sources if several similar sources exist,
+            e.g. gas bottles.
+        PFD_isol_valve : float
+            Probability of failure on demand of source isolation valve.
+            If no isolation valve will trigger on ODH alarm, the probability
+            is 1 (default).
 
         Returns
         -------
@@ -466,15 +496,15 @@ class Source:
         volume_NTP = sum([source.N*source.volume for source in sources])
         fluid_NTP = ThermState(fluid.name, P=P_NTP, T=T_NTP)
         phys_volume = volume_NTP*fluid_NTP.Dmass / fluid.Dmass
-        return Source(name, fluid, phys_volume)
+        return Source(name, fluid, phys_volume, N=N, PFD_isol_valve=PFD_isol_valve)
 
     def __repr__(self):
-        return f&#39;Source({self.name}, {self.fluid}, {self.volume}, N={self.N}, isol_valve={self.isol_valve})&#39;
+        return f&#39;Source({self.name!r}, {self.fluid!r}, {self.volume!r}, N={int(self.N)}, PFD_isol_valve={float(self.PFD_isol_valve)})&#39;
 
     def __str__(self):
-        return f&#39;{self.name}, &#39; + \
-            f&#39;{self.volume.to(ureg.ft**3):.3g~} &#39; + \
-            f&#39;of {self.fluid.name}&#39;
+        return (f&#39;{self.name}, &#39;
+            f&#39;{self.volume:,.0f~} &#39;
+            f&#39;of {self.fluid.name}&#39;)
 
     def print_leaks(self):
         &#34;&#34;&#34;Print information on the leaks defined for the source.&#34;&#34;&#34;
@@ -492,7 +522,7 @@ class Source:
 
 @ureg.check(None, None, None, &#39;1/[time]&#39;, None, &#39;1/[time]&#39;, &#39;1/[time]&#39;,
             None, None, &#39;[length]^3/[time]&#39;, &#39;[time]&#39;,
-            &#39;[length]^3/[time]&#39;, None, None, None)
+            &#39;[length]^3/[time]&#39;, None, None, None, None)
 @dataclass
 class FailureMode:
     &#34;&#34;&#34;Describes ODH failure modes, a combination of a leak and response to it.&#34;&#34;&#34;
@@ -511,6 +541,7 @@ class FailureMode:
     N_fan: int
     N: int
     is_const: bool
+    scenario: str
 
 
 @ureg.check(None, None, &#39;1/[time]&#39;, &#39;[time]&#39;)
@@ -550,9 +581,13 @@ class BuildPower:
     def pfd(self):
         return self.power_pfd * self.backup_pfd
 
+    def info(self):
+        return (f&#39;Power provided with {self.pfd:.3g~} unavailability and &#39;
+                f&#39;{self.max_outage:.3g~} max outage period.&#39;
+                f&#39;\nPower failure rate is {self.lambda_power:.3e~}.&#39;)
 
 @ureg.check(&#39;[length]^3/[time]&#39;, None, &#39;[time]&#39;, &#39;1/[time]&#39;,
-            &#39;[length]^3/[time]&#39;)
+            &#39;[length]^3/[time]&#39;, None)
 @dataclass
 class BuildVent:
     &#34;&#34;&#34;
@@ -570,6 +605,8 @@ class BuildVent:
         Failure rate of the fans in the building.
     const_vent : ureg.Quantity, [length]^3/[time]
         Min volumetric flow required or present in the building.
+    PFD_ODH : float
+        The default value for the oxygen deficiency hazard (ODH) system failure.
 
     Properties
     ----------
@@ -588,6 +625,7 @@ class BuildVent:
     Test_period: ureg.Quantity
     lambda_fan: ureg.Quantity = TABLE_2[&#39;Fan&#39;][&#39;Failure to run&#39;]
     const_vent: ureg.Quantity = 0*ureg.ft**3/ureg.min
+    PFD_ODH: float = PFD_ODH  # Default value for ODH system failure
 
     def fan_flowrates(self):
         # TODO add fans with different volumetric rates (see report as well)
@@ -602,6 +640,24 @@ class BuildVent:
                 flowrate = self.const_vent
             fan_flowrates.append((P_m_fan_work, flowrate, m))
         return fan_flowrates
+
+    def info(self):
+        if self.Q_fan &gt; 0*ureg.L/ureg.s:
+            vent_action = &#39;supplying clean air to&#39;
+        else:
+            vent_action = &#39;drawing contaminated air from&#39;
+        result = [f&#39;Ventilation consists of {self.N_fans} fans {abs(self.Q_fan):,.0f~} each\n  {vent_action} the volume.&#39;]
+        if self.const_vent &gt; 0*ureg.L/ureg.s:
+            vent_action = &#39;supplying clean air to&#39;
+        else:
+            vent_action = &#39;drawing contaminated air from&#39;
+        result.append(f&#39;Constant ventilation in the building is {abs(self.const_vent):,.1f~}\n  {vent_action} the volume.&#39;)
+        if self.N_fans == 1:
+            result.append(f&#39;ODH fan is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.&#39;)
+        elif self.N_fans &gt; 1:
+            result.append(f&#39;ODH fans are tested every {self.Test_period:.1f~} and failure rate of each fan is {self.lambda_fan:.3e~}.&#39;)
+        result.append(f&#39;ODH system unavailability is {self.PFD_ODH:.3e}.&#39;)
+        return &#39;\n&#39;.join(result)
 
 
 class Volume:
@@ -626,8 +682,6 @@ class Volume:
         The ventilation system of the building or part of the building.
     power : BuildPower
         The power system of the building or part of the building.
-    PFD_ODH : float
-        The default value for the oxygen deficiency hazard (ODH) system failure.
 
     Methods
     -------
@@ -663,25 +717,14 @@ class Volume:
         self.volume = volume.to_base_units()
         self.vent = build_vent
         self.power = build_power
-        self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
 
     def info(self):
         &#34;&#34;&#34;
         Display information on the volume.
         &#34;&#34;&#34;
         print(f&#39;{self.name} with affected volume of {self.volume:,.0f~}.&#39;)
-        print(f&#39;Power provided with {self.power.pfd:.3g~} unavailability and &#39;
-              f&#39;{self.power.max_outage:.3g~} max outage period.&#39;)
-        if self.vent.Q_fan &gt; 0*ureg.L/ureg.s:
-            vent_action = &#39;supplying clean air to&#39;
-        else:
-            vent_action = &#39;drawing contaminated air from&#39;
-        print(f&#39;Ventilation consists of {self.vent.N_fans} fans {abs(self.vent.Q_fan):.3g~} each\n{vent_action} the volume.&#39;)
-        if self.vent.const_vent &gt; 0*ureg.L/ureg.s:
-            vent_action = &#39;supplying clean air to&#39;
-        else:
-            vent_action = &#39;drawing contaminated air from&#39;
-        print(f&#39;Constant ventilation in the building is {abs(self.vent.const_vent):.3g~}\n{vent_action} the volume.&#39;)
+        print(self.power.info())
+        print(self.vent.info())
 
     def odh(self, sources, power_outage=False):
         &#34;&#34;&#34;Calculate ODH fatality rate for given `Source`s.
@@ -735,14 +778,16 @@ class Volume:
         if power_outage:
             PFD_power = 1
             tau_event = leak.tau
+            scenario = &#39;Planned power outage&#39;
         else:
             PFD_power = self.power.pfd
             tau_event = min(leak.tau, self.power.max_outage)
-        PFD_isol_valve = source.sol_PFD
+            scenario = &#39;Power failure&#39;
+        PFD_isol_valve = source.PFD_isol_valve
         P_event = PFD_power * PFD_isol_valve
         Q_fan = 0 * ureg.ft**3/ureg.min
         self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
-                               leak, Q_fan, 0, power_outage)
+                               leak, Q_fan, 0, power_outage, scenario)
 
     def _fatality_no_odh(self, source, leak):
         &#34;&#34;&#34;Calculate fatality rate in the event of ODH system failure.
@@ -757,19 +802,18 @@ class Volume:
         leak : Leak
             Leak failure rate, volumetric flow rate, event duration, and number
             of events.
-        power_outage : bool
-            Shows whether there is a power outage is in effect.
 
         Returns
         -------
         None
         &#34;&#34;&#34;
-        PFD_isol_valve = source.sol_PFD
-        P_event = (1-self.power.pfd) * self.PFD_ODH * PFD_isol_valve
+        PFD_isol_valve = source.PFD_isol_valve
+        P_event = (1-self.power.pfd) * self.vent.PFD_ODH * PFD_isol_valve
         Q_fan = self.vent.const_vent
         tau_event = min(leak.tau, self.vent.Test_period)
+        scenario = &#39;ODH system failure&#39;
         self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
-                               leak, Q_fan, 0, False)
+                               leak, Q_fan, 0, False, scenario)
 
     def _fatality_with_fans(self, source, leak):
         &#34;&#34;&#34;Calculate fatality rate for any number of fans operational.
@@ -790,20 +834,22 @@ class Volume:
         -------
         None
         &#34;&#34;&#34;
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.PFD_isol_valve
         # Probability for this group of the events
-        P_group = (1-self.power.pfd) * (1-self.PFD_ODH) * PFD_isol_valve
+        P_group = (1-self.power.pfd) * (1-self.vent.PFD_ODH) * PFD_isol_valve
         tau_event = min(leak.tau, self.vent.Test_period)
         for (P_fan, Q_fan, N_fans) in self.vent.fan_flowrates():
             P_event = P_group * P_fan  # Probability of the particular event
-            if Q_fan == 0 * ureg.ft**3/ureg.min:
-                Q_fan = self.vent.const_vent
+            if N_fans == self.vent.N_fans:
+                scenario = &#39;Normal operation&#39;
+            else:
+                scenario = &#39;Fan failure&#39;
             self._add_failure_mode(P_event, tau_event,
                                    leak.failure_rate, source, leak, Q_fan,
-                                   N_fans, False)
+                                   N_fans, False, scenario)
 
     def _add_failure_mode(self, P_event, tau_event, failure_rate, source, leak,
-                          Q_fan, N_fans, power_outage):
+                          Q_fan, N_fans, power_outage, scenario):
         &#34;&#34;&#34;Add a failure mode.
 
         Parameters
@@ -829,6 +875,9 @@ class Volume:
             Number of fans operational during the event.
         power_outage : bool
             Shows whether there is a power outage is in effect.
+        scenario: str
+            Name of the response scenario, e.g., power failure, ODH system failure,
+            normal operation.
 
         Returns
         -------
@@ -838,10 +887,15 @@ class Volume:
         O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, tau_event)
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
+        if leak._is_const == True:
+            N_events = 1
+        else:
+            N_events = leak.N_events
         self.fail_modes.append(
             FailureMode(leak.name, source, leak.fluid, phi_i, O2_conc,
                         failure_rate, P_i, F_i, power_outage, leak.q_std,
-                        tau_event, Q_fan, N_fans, leak.N_events, leak._is_const)
+                        tau_event, Q_fan, N_fans, N_events, leak._is_const,
+                        scenario)
         )
 
     def _fatality_const_leak(self, source, leak, power_outage):
@@ -866,9 +920,9 @@ class Volume:
         None
         &#34;&#34;&#34;
 
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.PFD_isol_valve
         if power_outage:
-            tau_outage = source.volume/leak.q_std  # No refills during outage
+            tau_outage = leak.tau
             Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
             O2_conc_outage = conc_vent(self.volume, leak.q_std, Q_fan_outage, tau_outage)
             if O2_conc_outage &lt; 0.195:
@@ -876,25 +930,28 @@ class Volume:
                                     f&#39;{source.name} is not mitigated during &#39;
                                     f&#39;power outage in {self.name}.&#39;)
 
-        # TODO Replace hard coded value with changeable
         # Constant leak and power failure
-        failure_rate = self.power.lambda_power * self.power.backup_pfd
+        failure_rate = self.power.lambda_power
         # Constant leak is assumed to be hazardous only when
         # the isolation valve fails
-        P_event = PFD_isol_valve
+        P_event = PFD_isol_valve * self.power.backup_pfd
         Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-        tau_event = min(self.vent.Test_period, self.power.max_outage)
+        tau_event = min([self.vent.Test_period, self.power.max_outage, leak.tau])
+        scenario = &#39;Const leak and power failure&#39;
         self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, Q_fan, 0, False)
+                               source, leak, Q_fan, 0, False,
+                               scenario)
 
         # Constant leak and ODH system failure
         failure_rate = lambda_ODH
-        P_event = PFD_isol_valve
+        P_event = 1  # ODH system failure will not trigger isolation valve
         # Event can&#39;t go undetected for longer than the test period
         tau_event = self.vent.Test_period
+        scenario = &#39;Const leak and ODH system failure&#39;
         # Ventilation is available on ODH system failure
         self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, self.vent.const_vent, 0, False)
+                               source, leak, self.vent.const_vent, 0, False,
+                               scenario)
 
         # Fan failure
         # If at least 1 fan is down, all fans are considered non-operational
@@ -902,18 +959,19 @@ class Volume:
         P_event = PFD_isol_valve
         # Event can&#39;t go undetected for longer than the test period
         tau_event = self.vent.Test_period
+        scenario = &#39;Const leak and 1 fan failure&#39;
         self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, self.vent.const_vent, 0, False)
+                               source, leak, self.vent.const_vent, 0, False,
+                               scenario)
 
         # Fans operational
         # If fatality is possible with just one fan, raise error
-        Q_1fan = self.vent.Q_fan
-        tau = math.inf * ureg.s
-        O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
+        Q_1fan = max(self.vent.Q_fan, self.vent.const_vent)
+        O2_conc_1fan = conc_final(leak.q_std, Q_1fan)
         if O2_conc_1fan &lt; 0.195:
-            raise ConstLeakTooBig(&#39;Constant leak reduces O2 conecntration to &#39;
-                                  f&#39;{O2_conc_1fan} with at least 1 fan &#39;
-                                  f&#39;operational: {leak}&#39;)
+            raise ConstLeakTooBig(&#39;Constant leak reduces O2 concentration to &#39;
+                                  f&#39;{O2_conc_1fan:.1%} with {Q_1fan:.3g~} &#39;
+                                  f&#39;vent rate: {leak.name}&#39;)
 
     def _fatality_prob(self, O2_conc):
         &#34;&#34;&#34;Calculate fatality probability for given oxygen concentration.
@@ -939,6 +997,7 @@ class Volume:
             Fi = 10**(6.5-76*O2_conc)
         return Fi
 
+    @property
     def odh_class(self):
         &#34;&#34;&#34;Calculate ODH class as defined in FESHM 4240.
 
@@ -955,12 +1014,11 @@ class Volume:
             return 2
         else:
             # TODO add a custom exception for ODH &gt; 2
-            print(&#39;ODH fatality rate is too high. Please, check calculations.&#39;)
-            return None
+            raise ODHError(&#39;ODH fatality rate is too high. Please, check calculations.&#39;)
 
     @property
     def phi(self):
-        return sum((fm.phi for fm in self.fail_modes))
+        return sum((fm.phi for fm in self.fail_modes)).to(1/ureg.hr)
 
     # def report(self, brief=True, sens=None):
     #     &#34;&#34;&#34;Print a report for failure modes and effects.
@@ -1012,7 +1070,7 @@ class Volume:
             row.append(f&#39;{f_mode.N_fan}&#39;)
             row.append(f&#39;{f_mode.O2_conc:.0%}&#39;)
             row.append(f&#39;{f_mode.tau.m_as(ureg.min):,.1f}&#39;)
-            row.append(f&#39;{f_mode.phi.m_as(1/ureg.hr):.2}&#39;)
+            row.append(f&#39;{f_mode.phi.m_as(1/ureg.hr):.2e}&#39;)
             table.append(row)
         return table
 
@@ -1022,7 +1080,7 @@ class Volume:
         header = [&#39;Source&#39;, &#39;Failure&#39;, &#39;Fluid&#39;, &#39;Event failure rate, 1/hr&#39;,
                   &#39;# of&#39;, &#39;Total failure rate, 1/hr&#39;, &#39;Leak rate, SCFM&#39;,
                   &#39;# fans working&#39;, &#39;Fan rate, SCFM&#39;, &#39;Event duration, min&#39;,
-                  &#39;Oxygen concentration&#39;, &#39;Fatality prob&#39;, &#39;Case prob&#39;,
+                  &#39;Oxygen concentration&#39;, &#39;Fatality prob&#39;, &#39;Scenario&#39;, &#39;Scenario prob&#39;,
                   &#39;Fatality rate, 1/hr&#39;]
         # &#39;Total failure rate&#39;, &#39;ODH protection PFD&#39;, &#39;Building is powered&#39;
         table.append(header)
@@ -1049,6 +1107,7 @@ class Volume:
                 tau,
                 f_mode.O2_conc,
                 f_mode.F_i,
+                f_mode.scenario,
                 f_mode.P_i/f_mode.leak_fr,
                 f_mode.phi.m_as(1/ureg.hr)])
         wb_options = {}
@@ -1072,7 +1131,8 @@ class Volume:
             worksheet.set_column(6, 6, None, sci_format)
             worksheet.set_column(9, 9, None, sci_format)
             worksheet.set_column(10, 10, None, percent_format)
-            worksheet.set_column(11, 13, None, sci_format)
+            worksheet.set_column(11, 11, None, sci_format)
+            worksheet.set_column(13, 14, None, sci_format)
             # Writing total/summary
             N_rows = len(table)
             N_cols = len(table[0])
@@ -1080,7 +1140,7 @@ class Volume:
             worksheet.write(N_rows+1, N_cols-1,
                             self.phi.m_as(1/ureg.hr))
             worksheet.write(N_rows+2, N_cols-2, &#39;ODH class&#39;)
-            worksheet.write(N_rows+2, N_cols-1, self.odh_class(),
+            worksheet.write(N_rows+2, N_cols-1, self.odh_class,
                             number_format)
             worksheet.autofit()
             worksheet.conditional_format(
@@ -1091,16 +1151,6 @@ class Volume:
 
     def __str__(self):
         return (f&#39;Volume: {self.name}, {self.volume.to(ureg.ft**3):~}&#39;)
-
-    # def source_safe(self, source, escape = True):
-    #    &#34;&#34;&#34;
-    #    Estimate the impact of the Source volume on oxygen concetration. Smaller sources might not be able to drop oxygen concentration to dangerous levels.
-    #    &#34;&#34;&#34;
-    #    if escape == True:  # if mixed air is allowed to escape within considered volume
-    #        O2_conc = 0.21*self.volume/(self.volume+source.volume)
-    #    else:  # worst case; inert gas is trapped and expells the air outside the considered volume
-    #        O2_conc = 0.21*(1-source.volume/self.volume)
-    #    return self._fatality_prob(O2_conc) == 0
 
 
 def prob_m_of_n(m, n, T, l):
@@ -1161,15 +1211,13 @@ def conc_vent(V, R, Q, t):
     return float(C)
 
 
-def conc_final(V, R, Q):
+def conc_final(R, Q):
     &#34;&#34;&#34;Calculate the final oxygen concentration for continuous flow.
 
     Equivalent to conc_vent(V, R, Q, float(&#39;inf&#39;)).
 
     Parameters
     ----------
-    V : ureg.Quantity, [length]^3
-        Volume of the confined space.
     R : ureg.Quantity, [length]^3/[time]
         Volumetric spill rate into confined space.
     Q : ureg.Quantity, [length]^3/[time]
@@ -1243,12 +1291,8 @@ def conc_after(V, C_e, Q, t, t_e):
 def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
     &#34;&#34;&#34;Calculate leak flow rate through a hole in a pipe.
 
-    Discharge flow through a hole is calculated using Darcy equation for
-    compressible fluid using expansion factor Y Crane TP 410 2013 eq. 4-15.
-    Resistance coefficient K of the orifice taken from Rennels, Pipe Flow,
-    2012, eq. 13.5.
-    For this calculation the gas is assumed to have no pressure loss on
-    entry. This makes analysis simple and conservative.
+    Discharge flow through a hole is calculated using direct integration
+    method from API 520 Annex B.
 
     Parameters
     ----------
@@ -1270,7 +1314,61 @@ def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
     &#34;&#34;&#34;
     m_dot = G_nozzle(fluid) * area * Kd
     q_std = to_standard_flow(m_dot, fluid)
-    return q_std</code></pre>
+    return q_std
+
+
+def O2_sudden_release(release, volume, escape=True):
+    &#34;&#34;&#34;Calculate oxygen concentration after a sudden release.
+
+    Parameters
+    ----------
+    release : Quantity [length*3]
+        Standard volume of the inert gas released.
+    volume : Quantity [length^3]
+        Volume of the room, building, or area analyzed.
+    escape : bool, optional
+        If True, mixed air is allowed to escape from considered volume.
+        If False, inert gas is trapped and expels the air outside the considered volume.
+        Default is False.
+
+    Returns
+    -------
+    float
+        Resulting oxygen concentration.
+    &#34;&#34;&#34;
+    if escape:
+        O2_conc = 0.21*volume/(volume+release)
+    else:
+        O2_conc = 0.21*(1-release/volume)
+    return O2_conc
+
+
+def PFD_avg(l_du, l_dd, T_p, MTTR):
+    &#34;&#34;&#34;
+    Calculate probability of failure on demand based on dangerous detected and dangerous undetected failure rates.
+
+    The equation is taken from MSA Ultima X5000 safety manual.
+
+    Parameters
+    ----------
+    l_du : Quantity [1/time]
+        Dangerous undetected failure rate.
+    l_dd : Quantity [1/time]
+        Dangerous detected failure rate.
+    T_p : Quantity [time]
+        Proof test interval.
+    MTTR : Quantity [time]
+        Mean time to restoration.
+
+    Returns
+    -------
+    float
+        Probability of failure on demand.
+    &#34;&#34;&#34;
+    PFD_du = l_du * (T_p/2 + MTTR)
+    PFD_dd = l_dd * MTTR
+    PFD = PFD_du + PFD_dd
+    return float(PFD)</code></pre>
 </details>
 </section>
 <section>
@@ -1280,6 +1378,111 @@ def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="CryoToolBox.odh.O2_sudden_release"><code class="name flex">
+<span>def <span class="ident">O2_sudden_release</span></span>(<span>release, volume, escape=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate oxygen concentration after a sudden release.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>release</code></strong> :&ensp;<code>Quantity [length*3]</code></dt>
+<dd>Standard volume of the inert gas released.</dd>
+<dt><strong><code>volume</code></strong> :&ensp;<code>Quantity [length^3]</code></dt>
+<dd>Volume of the room, building, or area analyzed.</dd>
+<dt><strong><code>escape</code></strong> :&ensp;<code>bool</code>, optional</dt>
+<dd>If True, mixed air is allowed to escape from considered volume.
+If False, inert gas is trapped and expels the air outside the considered volume.
+Default is False.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Resulting oxygen concentration.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def O2_sudden_release(release, volume, escape=True):
+    &#34;&#34;&#34;Calculate oxygen concentration after a sudden release.
+
+    Parameters
+    ----------
+    release : Quantity [length*3]
+        Standard volume of the inert gas released.
+    volume : Quantity [length^3]
+        Volume of the room, building, or area analyzed.
+    escape : bool, optional
+        If True, mixed air is allowed to escape from considered volume.
+        If False, inert gas is trapped and expels the air outside the considered volume.
+        Default is False.
+
+    Returns
+    -------
+    float
+        Resulting oxygen concentration.
+    &#34;&#34;&#34;
+    if escape:
+        O2_conc = 0.21*volume/(volume+release)
+    else:
+        O2_conc = 0.21*(1-release/volume)
+    return O2_conc</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.odh.PFD_avg"><code class="name flex">
+<span>def <span class="ident">PFD_avg</span></span>(<span>l_du, l_dd, T_p, MTTR)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate probability of failure on demand based on dangerous detected and dangerous undetected failure rates.</p>
+<p>The equation is taken from MSA Ultima X5000 safety manual.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>l_du</code></strong> :&ensp;<code>Quantity [1/time]</code></dt>
+<dd>Dangerous undetected failure rate.</dd>
+<dt><strong><code>l_dd</code></strong> :&ensp;<code>Quantity [1/time]</code></dt>
+<dd>Dangerous detected failure rate.</dd>
+<dt><strong><code>T_p</code></strong> :&ensp;<code>Quantity [time]</code></dt>
+<dd>Proof test interval.</dd>
+<dt><strong><code>MTTR</code></strong> :&ensp;<code>Quantity [time]</code></dt>
+<dd>Mean time to restoration.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Probability of failure on demand.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def PFD_avg(l_du, l_dd, T_p, MTTR):
+    &#34;&#34;&#34;
+    Calculate probability of failure on demand based on dangerous detected and dangerous undetected failure rates.
+
+    The equation is taken from MSA Ultima X5000 safety manual.
+
+    Parameters
+    ----------
+    l_du : Quantity [1/time]
+        Dangerous undetected failure rate.
+    l_dd : Quantity [1/time]
+        Dangerous detected failure rate.
+    T_p : Quantity [time]
+        Proof test interval.
+    MTTR : Quantity [time]
+        Mean time to restoration.
+
+    Returns
+    -------
+    float
+        Probability of failure on demand.
+    &#34;&#34;&#34;
+    PFD_du = l_du * (T_p/2 + MTTR)
+    PFD_dd = l_dd * MTTR
+    PFD = PFD_du + PFD_dd
+    return float(PFD)</code></pre>
+</details>
+</dd>
 <dt id="CryoToolBox.odh.conc_after"><code class="name flex">
 <span>def <span class="ident">conc_after</span></span>(<span>V, C_e, Q, t, t_e)</span>
 </code></dt>
@@ -1342,15 +1545,13 @@ air outside.</dd>
 </details>
 </dd>
 <dt id="CryoToolBox.odh.conc_final"><code class="name flex">
-<span>def <span class="ident">conc_final</span></span>(<span>V, R, Q)</span>
+<span>def <span class="ident">conc_final</span></span>(<span>R, Q)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the final oxygen concentration for continuous flow.</p>
 <p>Equivalent to conc_vent(V, R, Q, float('inf')).</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>V</code></strong> :&ensp;<code>ureg.Quantity, [length]^3</code></dt>
-<dd>Volume of the confined space.</dd>
 <dt><strong><code>R</code></strong> :&ensp;<code>ureg.Quantity, [length]^3/[time]</code></dt>
 <dd>Volumetric spill rate into confined space.</dd>
 <dt><strong><code>Q</code></strong> :&ensp;<code>ureg.Quantity, [length]^3/[time]</code></dt>
@@ -1367,15 +1568,13 @@ air outside.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def conc_final(V, R, Q):
+<pre><code class="python">def conc_final(R, Q):
     &#34;&#34;&#34;Calculate the final oxygen concentration for continuous flow.
 
     Equivalent to conc_vent(V, R, Q, float(&#39;inf&#39;)).
 
     Parameters
     ----------
-    V : ureg.Quantity, [length]^3
-        Volume of the confined space.
     R : ureg.Quantity, [length]^3/[time]
         Volumetric spill rate into confined space.
     Q : ureg.Quantity, [length]^3/[time]
@@ -1462,12 +1661,8 @@ air outside.</dd>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate leak flow rate through a hole in a pipe.</p>
-<p>Discharge flow through a hole is calculated using Darcy equation for
-compressible fluid using expansion factor Y Crane TP 410 2013 eq. 4-15.
-Resistance coefficient K of the orifice taken from Rennels, Pipe Flow,
-2012, eq. 13.5.
-For this calculation the gas is assumed to have no pressure loss on
-entry. This makes analysis simple and conservative.</p>
+<p>Discharge flow through a hole is calculated using direct integration
+method from API 520 Annex B.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>area</code></strong> :&ensp;<code>ureg.Quantity, [length]^2</code></dt>
@@ -1492,12 +1687,8 @@ For uneven holes 0.62 provides a good approximation.</dd>
 <pre><code class="python">def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
     &#34;&#34;&#34;Calculate leak flow rate through a hole in a pipe.
 
-    Discharge flow through a hole is calculated using Darcy equation for
-    compressible fluid using expansion factor Y Crane TP 410 2013 eq. 4-15.
-    Resistance coefficient K of the orifice taken from Rennels, Pipe Flow,
-    2012, eq. 13.5.
-    For this calculation the gas is assumed to have no pressure loss on
-    entry. This makes analysis simple and conservative.
+    Discharge flow through a hole is calculated using direct integration
+    method from API 520 Annex B.
 
     Parameters
     ----------
@@ -1581,7 +1772,7 @@ For uneven holes 0.62 provides a good approximation.</dd>
 <dl>
 <dt id="CryoToolBox.odh.BuildPower"><code class="flex name class">
 <span>class <span class="ident">BuildPower</span></span>
-<span>(</span><span>power_pfd: float = &lt;Quantity(0.0003, &#x27;dimensionless&#x27;)&gt;, backup_pfd: float = 1, lambda_power: pint.quantity.build_quantity_class.<locals>.Quantity = &lt;Quantity(0.0001, &#x27;1 / hour&#x27;)&gt;, max_outage: pint.quantity.build_quantity_class.<locals>.Quantity = &lt;Quantity(inf, &#x27;hour&#x27;)&gt;)</span>
+<span>(</span><span>power_pfd: float = &lt;Quantity(0.0003, &#x27;dimensionless&#x27;)&gt;, backup_pfd: float = 1, lambda_power: pint.Quantity = &lt;Quantity(0.0001, &#x27;1 / hour&#x27;)&gt;, max_outage: pint.Quantity = &lt;Quantity(inf, &#x27;hour&#x27;)&gt;)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Dataclass representing the electrical power failure scenario of a building.</p>
@@ -1642,7 +1833,12 @@ class BuildPower:
 
     @property
     def pfd(self):
-        return self.power_pfd * self.backup_pfd</code></pre>
+        return self.power_pfd * self.backup_pfd
+
+    def info(self):
+        return (f&#39;Power provided with {self.pfd:.3g~} unavailability and &#39;
+                f&#39;{self.max_outage:.3g~} max outage period.&#39;
+                f&#39;\nPower failure rate is {self.lambda_power:.3e~}.&#39;)</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
@@ -1650,11 +1846,11 @@ class BuildPower:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.BuildPower.lambda_power"><code class="name">var <span class="ident">lambda_power</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.BuildPower.lambda_power"><code class="name">var <span class="ident">lambda_power</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.BuildPower.max_outage"><code class="name">var <span class="ident">max_outage</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.BuildPower.max_outage"><code class="name">var <span class="ident">max_outage</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1678,10 +1874,28 @@ def pfd(self):
 </details>
 </dd>
 </dl>
+<h3>Methods</h3>
+<dl>
+<dt id="CryoToolBox.odh.BuildPower.info"><code class="name flex">
+<span>def <span class="ident">info</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def info(self):
+    return (f&#39;Power provided with {self.pfd:.3g~} unavailability and &#39;
+            f&#39;{self.max_outage:.3g~} max outage period.&#39;
+            f&#39;\nPower failure rate is {self.lambda_power:.3e~}.&#39;)</code></pre>
+</details>
+</dd>
+</dl>
 </dd>
 <dt id="CryoToolBox.odh.BuildVent"><code class="flex name class">
 <span>class <span class="ident">BuildVent</span></span>
-<span>(</span><span>Q_fan: pint.quantity.build_quantity_class.<locals>.Quantity, N_fans: int, Test_period: pint.quantity.build_quantity_class.<locals>.Quantity, lambda_fan: pint.quantity.build_quantity_class.<locals>.Quantity = &lt;Quantity(9e-06, &#x27;1 / hour&#x27;)&gt;, const_vent: pint.quantity.build_quantity_class.<locals>.Quantity = &lt;Quantity(0.0, &#x27;foot ** 3 / minute&#x27;)&gt;)</span>
+<span>(</span><span>Q_fan: pint.Quantity, N_fans: int, Test_period: pint.Quantity, lambda_fan: pint.Quantity = &lt;Quantity(9e-06, &#x27;1 / hour&#x27;)&gt;, const_vent: pint.Quantity = &lt;Quantity(0.0, &#x27;foot ** 3 / minute&#x27;)&gt;, PFD_ODH: float = &lt;Quantity(0.002, &#x27;dimensionless&#x27;)&gt;)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Dataclass representing the ventilation system of a building.</p>
@@ -1697,6 +1911,8 @@ def pfd(self):
 <dd>Failure rate of the fans in the building.</dd>
 <dt><strong><code>const_vent</code></strong> :&ensp;<code>ureg.Quantity, [length]^3/[time]</code></dt>
 <dd>Min volumetric flow required or present in the building.</dd>
+<dt><strong><code>PFD_ODH</code></strong> :&ensp;<code>float</code></dt>
+<dd>The default value for the oxygen deficiency hazard (ODH) system failure.</dd>
 </dl>
 <h2 id="properties">Properties</h2>
 <p>None</p>
@@ -1710,7 +1926,7 @@ volumetric flow.</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@ureg.check(&#39;[length]^3/[time]&#39;, None, &#39;[time]&#39;, &#39;1/[time]&#39;,
-            &#39;[length]^3/[time]&#39;)
+            &#39;[length]^3/[time]&#39;, None)
 @dataclass
 class BuildVent:
     &#34;&#34;&#34;
@@ -1728,6 +1944,8 @@ class BuildVent:
         Failure rate of the fans in the building.
     const_vent : ureg.Quantity, [length]^3/[time]
         Min volumetric flow required or present in the building.
+    PFD_ODH : float
+        The default value for the oxygen deficiency hazard (ODH) system failure.
 
     Properties
     ----------
@@ -1746,6 +1964,7 @@ class BuildVent:
     Test_period: ureg.Quantity
     lambda_fan: ureg.Quantity = TABLE_2[&#39;Fan&#39;][&#39;Failure to run&#39;]
     const_vent: ureg.Quantity = 0*ureg.ft**3/ureg.min
+    PFD_ODH: float = PFD_ODH  # Default value for ODH system failure
 
     def fan_flowrates(self):
         # TODO add fans with different volumetric rates (see report as well)
@@ -1759,7 +1978,25 @@ class BuildVent:
             if flowrate == Q_(&#39;0 m**3/min&#39;):
                 flowrate = self.const_vent
             fan_flowrates.append((P_m_fan_work, flowrate, m))
-        return fan_flowrates</code></pre>
+        return fan_flowrates
+
+    def info(self):
+        if self.Q_fan &gt; 0*ureg.L/ureg.s:
+            vent_action = &#39;supplying clean air to&#39;
+        else:
+            vent_action = &#39;drawing contaminated air from&#39;
+        result = [f&#39;Ventilation consists of {self.N_fans} fans {abs(self.Q_fan):,.0f~} each\n  {vent_action} the volume.&#39;]
+        if self.const_vent &gt; 0*ureg.L/ureg.s:
+            vent_action = &#39;supplying clean air to&#39;
+        else:
+            vent_action = &#39;drawing contaminated air from&#39;
+        result.append(f&#39;Constant ventilation in the building is {abs(self.const_vent):,.1f~}\n  {vent_action} the volume.&#39;)
+        if self.N_fans == 1:
+            result.append(f&#39;ODH fan is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.&#39;)
+        elif self.N_fans &gt; 1:
+            result.append(f&#39;ODH fans are tested every {self.Test_period:.1f~} and failure rate of each fan is {self.lambda_fan:.3e~}.&#39;)
+        result.append(f&#39;ODH system unavailability is {self.PFD_ODH:.3e}.&#39;)
+        return &#39;\n&#39;.join(result)</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
@@ -1767,19 +2004,23 @@ class BuildVent:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.BuildVent.Q_fan"><code class="name">var <span class="ident">Q_fan</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.BuildVent.PFD_ODH"><code class="name">var <span class="ident">PFD_ODH</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.BuildVent.Test_period"><code class="name">var <span class="ident">Test_period</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.BuildVent.Q_fan"><code class="name">var <span class="ident">Q_fan</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.BuildVent.const_vent"><code class="name">var <span class="ident">const_vent</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.BuildVent.Test_period"><code class="name">var <span class="ident">Test_period</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.BuildVent.lambda_fan"><code class="name">var <span class="ident">lambda_fan</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.BuildVent.const_vent"><code class="name">var <span class="ident">const_vent</span> : pint.Quantity</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.odh.BuildVent.lambda_fan"><code class="name">var <span class="ident">lambda_fan</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1810,14 +2051,42 @@ class BuildVent:
     return fan_flowrates</code></pre>
 </details>
 </dd>
+<dt id="CryoToolBox.odh.BuildVent.info"><code class="name flex">
+<span>def <span class="ident">info</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def info(self):
+    if self.Q_fan &gt; 0*ureg.L/ureg.s:
+        vent_action = &#39;supplying clean air to&#39;
+    else:
+        vent_action = &#39;drawing contaminated air from&#39;
+    result = [f&#39;Ventilation consists of {self.N_fans} fans {abs(self.Q_fan):,.0f~} each\n  {vent_action} the volume.&#39;]
+    if self.const_vent &gt; 0*ureg.L/ureg.s:
+        vent_action = &#39;supplying clean air to&#39;
+    else:
+        vent_action = &#39;drawing contaminated air from&#39;
+    result.append(f&#39;Constant ventilation in the building is {abs(self.const_vent):,.1f~}\n  {vent_action} the volume.&#39;)
+    if self.N_fans == 1:
+        result.append(f&#39;ODH fan is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.&#39;)
+    elif self.N_fans &gt; 1:
+        result.append(f&#39;ODH fans are tested every {self.Test_period:.1f~} and failure rate of each fan is {self.lambda_fan:.3e~}.&#39;)
+    result.append(f&#39;ODH system unavailability is {self.PFD_ODH:.3e}.&#39;)
+    return &#39;\n&#39;.join(result)</code></pre>
+</details>
+</dd>
 </dl>
 </dd>
 <dt id="CryoToolBox.odh.ConstLeak"><code class="flex name class">
 <span>class <span class="ident">ConstLeak</span></span>
-<span>(</span><span>name: str, fluid: <a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a>, q_std: pint.quantity.build_quantity_class.<locals>.Quantity, N_events: int)</span>
+<span>(</span><span>name: str, fluid: <a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a>, q_std: pint.Quantity, tau: pint.Quantity)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>ConstLeak(name: str, fluid: CryoToolBox.cp_wrapper.ThermState, q_std: pint.quantity.build_quantity_class.<locals>.Quantity, N_events: int)</p></div>
+<div class="desc"><p>ConstLeak(name: str, fluid: CryoToolBox.cp_wrapper.ThermState, q_std: pint.Quantity, tau: pint.Quantity)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1828,16 +2097,12 @@ class ConstLeak:
     name: str
     fluid: ThermState
     q_std: ureg.Quantity
-    N_events: int
+    tau: ureg.Quantity
     _is_const = True
     # TODO Remove once isinstance() issue resolved</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
-<dt id="CryoToolBox.odh.ConstLeak.N_events"><code class="name">var <span class="ident">N_events</span> : int</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt id="CryoToolBox.odh.ConstLeak.fluid"><code class="name">var <span class="ident">fluid</span> : <a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a></code></dt>
 <dd>
 <div class="desc"></div>
@@ -1846,7 +2111,11 @@ class ConstLeak:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.ConstLeak.q_std"><code class="name">var <span class="ident">q_std</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.ConstLeak.q_std"><code class="name">var <span class="ident">q_std</span> : pint.Quantity</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.odh.ConstLeak.tau"><code class="name">var <span class="ident">tau</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1892,7 +2161,7 @@ class ConstLeak:
 </dd>
 <dt id="CryoToolBox.odh.FailureMode"><code class="flex name class">
 <span>class <span class="ident">FailureMode</span></span>
-<span>(</span><span>name: str, source: <a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source</a>, fluid: <a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a>, phi: pint.quantity.build_quantity_class.<locals>.Quantity, O2_conc: float, leak_fr: pint.quantity.build_quantity_class.<locals>.Quantity, P_i: pint.quantity.build_quantity_class.<locals>.Quantity, F_i: float, outage: bool, q_leak: pint.quantity.build_quantity_class.<locals>.Quantity, tau: pint.quantity.build_quantity_class.<locals>.Quantity, Q_fan: pint.quantity.build_quantity_class.<locals>.Quantity, N_fan: int, N: int, is_const: bool)</span>
+<span>(</span><span>name: str, source: <a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source</a>, fluid: <a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a>, phi: pint.Quantity, O2_conc: float, leak_fr: pint.Quantity, P_i: pint.Quantity, F_i: float, outage: bool, q_leak: pint.Quantity, tau: pint.Quantity, Q_fan: pint.Quantity, N_fan: int, N: int, is_const: bool, scenario: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Describes ODH failure modes, a combination of a leak and response to it.</p></div>
@@ -1902,7 +2171,7 @@ class ConstLeak:
 </summary>
 <pre><code class="python">@ureg.check(None, None, None, &#39;1/[time]&#39;, None, &#39;1/[time]&#39;, &#39;1/[time]&#39;,
             None, None, &#39;[length]^3/[time]&#39;, &#39;[time]&#39;,
-            &#39;[length]^3/[time]&#39;, None, None, None)
+            &#39;[length]^3/[time]&#39;, None, None, None, None)
 @dataclass
 class FailureMode:
     &#34;&#34;&#34;Describes ODH failure modes, a combination of a leak and response to it.&#34;&#34;&#34;
@@ -1920,7 +2189,8 @@ class FailureMode:
     Q_fan: ureg.Quantity
     N_fan: int
     N: int
-    is_const: bool</code></pre>
+    is_const: bool
+    scenario: str</code></pre>
 </details>
 <h3>Class variables</h3>
 <dl>
@@ -1940,11 +2210,11 @@ class FailureMode:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.FailureMode.P_i"><code class="name">var <span class="ident">P_i</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.FailureMode.P_i"><code class="name">var <span class="ident">P_i</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.FailureMode.Q_fan"><code class="name">var <span class="ident">Q_fan</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.FailureMode.Q_fan"><code class="name">var <span class="ident">Q_fan</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1956,7 +2226,7 @@ class FailureMode:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.FailureMode.leak_fr"><code class="name">var <span class="ident">leak_fr</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.FailureMode.leak_fr"><code class="name">var <span class="ident">leak_fr</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1968,11 +2238,15 @@ class FailureMode:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.FailureMode.phi"><code class="name">var <span class="ident">phi</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.FailureMode.phi"><code class="name">var <span class="ident">phi</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.FailureMode.q_leak"><code class="name">var <span class="ident">q_leak</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.FailureMode.q_leak"><code class="name">var <span class="ident">q_leak</span> : pint.Quantity</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.odh.FailureMode.scenario"><code class="name">var <span class="ident">scenario</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1980,7 +2254,7 @@ class FailureMode:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.FailureMode.tau"><code class="name">var <span class="ident">tau</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.FailureMode.tau"><code class="name">var <span class="ident">tau</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1988,7 +2262,7 @@ class FailureMode:
 </dd>
 <dt id="CryoToolBox.odh.Leak"><code class="flex name class">
 <span>class <span class="ident">Leak</span></span>
-<span>(</span><span>name: str, failure_rate: pint.quantity.build_quantity_class.<locals>.Quantity, fluid: <a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a>, q_std: pint.quantity.build_quantity_class.<locals>.Quantity, tau: pint.quantity.build_quantity_class.<locals>.Quantity, N_events: int)</span>
+<span>(</span><span>name: str, failure_rate: pint.Quantity, fluid: <a title="CryoToolBox.cp_wrapper.ThermState" href="cp_wrapper.html#CryoToolBox.cp_wrapper.ThermState">ThermState</a>, q_std: pint.Quantity, tau: pint.Quantity, N_events: int)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Describe inert gas leak from a Source</p></div>
@@ -2014,7 +2288,7 @@ class Leak:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.Leak.failure_rate"><code class="name">var <span class="ident">failure_rate</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.Leak.failure_rate"><code class="name">var <span class="ident">failure_rate</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2026,11 +2300,11 @@ class Leak:
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.Leak.q_std"><code class="name">var <span class="ident">q_std</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.Leak.q_std"><code class="name">var <span class="ident">q_std</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.odh.Leak.tau"><code class="name">var <span class="ident">tau</span> : pint.quantity.build_quantity_class.<locals>.Quantity</code></dt>
+<dt id="CryoToolBox.odh.Leak.tau"><code class="name">var <span class="ident">tau</span> : pint.Quantity</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2057,17 +2331,10 @@ class Leak:
 </dd>
 <dt id="CryoToolBox.odh.Source"><code class="flex name class">
 <span>class <span class="ident">Source</span></span>
-<span>(</span><span>name, fluid, volume, N=1, isol_valve=False)</span>
+<span>(</span><span>name, fluid, volume, N=1, PFD_isol_valve=1)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Source of inert gas</p>
-<h2 id="attributes">Attributes</h2>
-<dl>
-<dt><strong><code>sol_PFD</code></strong> :&ensp;<code>float</code></dt>
-<dd>Probability of failure on demand (PFD) for isolation valve.
-If the source doesn't have isolating valve
-the probability is 1.</dd>
-</dl>
 <p>Define the possible source of inert gas.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -2075,14 +2342,17 @@ the probability is 1.</dd>
 <dd>Name of the source.</dd>
 <dt><strong><code>fluid</code></strong> :&ensp;<code>heat_transfer.ThermState</code></dt>
 <dd>Thermodynamic state of the fluid stored in the source.</dd>
+<dt><strong><code>liquid_volume</code></strong> :&ensp;<code>ureg.Quantity, [length]^3</code></dt>
+<dd>Liquid volume of the source.</dd>
 <dt><strong><code>volume</code></strong> :&ensp;<code>ureg.Quantity, [length]^3</code></dt>
-<dd>Volume of the fluid stored.</dd>
+<dd>Standard volume of the fluid contained in the source.</dd>
 <dt><strong><code>N</code></strong> :&ensp;<code>int</code></dt>
 <dd>Number of the sources if several similar sources exist,
 e.g. gas bottles.</dd>
-<dt><strong><code>isol_valve</code></strong> :&ensp;<code>bool</code></dt>
-<dd>Denotes whether the source is protected using a normally closed
-valve.</dd>
+<dt><strong><code>PFD_isol_valve</code></strong> :&ensp;<code>float</code></dt>
+<dd>Probability of failure on demand of source isolation valve.
+If no isolation valve will trigger on ODH alarm, the probability
+is 1 (default).</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -2090,15 +2360,8 @@ valve.</dd>
 </summary>
 <pre><code class="python">class Source:
     &#34;&#34;&#34;Source of inert gas
-
-    Attributes
-    ----------
-    sol_PFD : float
-        Probability of failure on demand (PFD) for isolation valve.
-        If the source doesn&#39;t have isolating valve
-        the probability is 1.
     &#34;&#34;&#34;
-    def __init__(self, name, fluid, volume, N=1, isol_valve=False):
+    def __init__(self, name, fluid, volume, N=1, PFD_isol_valve=1):
         &#34;&#34;&#34;Define the possible source of inert gas.
 
         Parameters
@@ -2107,14 +2370,17 @@ valve.</dd>
             Name of the source.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
+        liquid_volume : ureg.Quantity, [length]^3
+            Liquid volume of the source.
         volume : ureg.Quantity, [length]^3
-            Volume of the fluid stored.
+            Standard volume of the fluid contained in the source.
         N : int
             Number of the sources if several similar sources exist,
             e.g. gas bottles.
-        isol_valve : bool
-            Denotes whether the source is protected using a normally closed
-            valve.
+        PFD_isol_valve : float
+            Probability of failure on demand of source isolation valve.
+            If no isolation valve will trigger on ODH alarm, the probability
+            is 1 (default).
         &#34;&#34;&#34;
         self.name = name
         self.fluid = fluid
@@ -2125,13 +2391,12 @@ valve.</dd>
         # Calculating volume at standard conditions
         temp_state = fluid.copy()
         temp_state.update(&#39;T&#39;, T_NTP, &#39;P&#39;, P_NTP)
+        self.liquid_volume = volume
         self.volume = volume*fluid.Dmass/temp_state.Dmass
         self.volume.ito_base_units()
         # By default assume there is no isolation valve
         # that is used by ODH system
-        self.isol_valve = isol_valve
-        self.sol_PFD = (int(not isol_valve) or
-                        TABLE_2[&#39;Valve, solenoid&#39;][&#39;Failure to operate&#39;])
+        self.PFD_isol_valve = PFD_isol_valve
 
     def add_pipe_failure(self, tube, fluid, q_std_rupture=None, N_welds=1):
         &#34;&#34;&#34;Add pipe failure to the leaks dict.
@@ -2152,7 +2417,7 @@ valve.</dd>
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid for the release.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
-            Standard volumetric flow rate for flange rupture.
+            Standard volumetric flow rate for pipe rupture.
         N_welds : int
             Number of welds on the tube.
         &#34;&#34;&#34;
@@ -2207,7 +2472,8 @@ valve.</dd>
         self.add_failure_mode(&#39;Dewar insulation failure&#39;, failure_rate,
                               self.fluid, q_std, 1)
 
-    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1):
+    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1,
+                           gasket_type=&#39;reinforced&#39;, blowout_area=None):
         &#34;&#34;&#34;Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -2224,17 +2490,34 @@ valve.</dd>
             Standard volumetric flow rate for flange rupture.
         N : int
             Number of reinforced seal connections on the pipe.
+        gasket_type : str
+            Type of the gasket in the flange, &#39;soft&#39; or &#39;reinforced&#39;.
+        blowout_area : Quantity [length^2]
+            Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
         &#34;&#34;&#34;
         # TODO Make leak and rupture areas adjustable, add info to docstring
-        table = TABLE_2[&#39;Flange, reinforced gasket&#39;]
+        if gasket_type == &#39;reinforced&#39;:
+            table = TABLE_2[&#39;Flange, reinforced gasket&#39;]
+        if gasket_type == &#39;soft&#39;:
+            table = TABLE_2[&#39;Flange, soft gasket&#39;]
         # Leak case
-        name = f&#39;Flange leak: {pipe}&#39;
+        name = f&#39;Flange {gasket_type} gasket leak: {pipe}&#39;
         failure_rate = table[&#39;Leak&#39;][&#39;Failure rate&#39;]
         area = table[&#39;Leak&#39;][&#39;Area&#39;]
         q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+        # Blowout for soft gasket
+        if gasket_type == &#39;soft&#39;:
+            name = f&#39;Flange soft gasket blowout: {pipe}&#39;
+            failure_rate = table[&#39;Blowout&#39;]
+            area = blowout_area or pipe.area
+            q_std = hole_leak(area, fluid)
+            if q_std_rupture is not None:
+                # Blowout flow cannot be greater than rupture flow
+                q_std = min(q_std, q_std_rupture)
+            self.add_failure_mode(name, failure_rate, fluid, q_std, N)
         # Rupture
-        name = f&#39;Flange rupture: {pipe}&#39;
+        name = f&#39;Flange {gasket_type} gasket rupture: {pipe}&#39;
         failure_rate = table[&#39;Rupture&#39;]
         if q_std_rupture is not None:
             q_std = q_std_rupture
@@ -2279,8 +2562,8 @@ valve.</dd>
             q_std = hole_leak(area, fluid)
         self.add_failure_mode(name, failure_rate, fluid, q_std, N)
 
-    def add_line_failure(self, pipe, fluid, *, N_welds, N_flanges, N_valves,
-                         q_std_rupture=None):
+    def add_line_failure(self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves,
+                         q_std_rupture=None, blowout_area=None):
         &#34;&#34;&#34;Add leaks for pipe, weld, flange, and valve failures.
 
         Store failure rate, flow rate and expected time duration of
@@ -2295,16 +2578,25 @@ valve.</dd>
             Thermodynamic state of the fluid stored in the source.
         N_welds : int
             Number of welds on the line.
-        N_flange : int
-            Number of flanges on the line.
+        N_reinforced : int
+            Number of flanges with reinforced, preformed or metal gaskets on the line.
+        N_soft : int
+            Number of flanges with soft gaskets on the line.
         N_valves : int
             Number of valves on the line.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
             Standard volumetric flow rate for flange rupture.
+        blowout_area : Quantity [length^2]
+            Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
         &#34;&#34;&#34;
-        self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
-        self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_flanges)
-        self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
+        if N_welds &gt; 0:
+            self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
+        if N_reinforced &gt; 0:
+            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_reinforced, gasket_type=&#39;reinforced&#39;)
+        if N_soft &gt; 0:
+            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_soft, gasket_type=&#39;soft&#39;, blowout_area=blowout_area)
+        if N_valves &gt; 0:
+            self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
 
     # def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
     #     &#34;&#34;&#34;Add transfer line failure to leaks dict.
@@ -2401,7 +2693,8 @@ valve.</dd>
         if not fluid:
             fluid = self.fluid
         N_events = N * self.N
-        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, N_events))
+        tau_event = self.volume / q_std
+        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, tau_event))
 
     def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
         &#34;&#34;&#34;Add general failure mode to leaks dict.
@@ -2434,7 +2727,7 @@ valve.</dd>
                                tau.to(ureg.min), N_events))
 
     @staticmethod
-    def combine(name, fluid, sources):
+    def combine(name, fluid, sources, N=1, PFD_isol_valve=1):
         &#34;&#34;&#34;Combine several ODH sources sharing volume.
 
         Can be used for failure modes affecting several sources in parallel.
@@ -2447,6 +2740,13 @@ valve.</dd>
             Thermodynamic state of the fluid stored in the source.
         sources : list of Source
             Sources connected together.
+        N : int
+            Number of the sources if several similar sources exist,
+            e.g. gas bottles.
+        PFD_isol_valve : float
+            Probability of failure on demand of source isolation valve.
+            If no isolation valve will trigger on ODH alarm, the probability
+            is 1 (default).
 
         Returns
         -------
@@ -2462,15 +2762,15 @@ valve.</dd>
         volume_NTP = sum([source.N*source.volume for source in sources])
         fluid_NTP = ThermState(fluid.name, P=P_NTP, T=T_NTP)
         phys_volume = volume_NTP*fluid_NTP.Dmass / fluid.Dmass
-        return Source(name, fluid, phys_volume)
+        return Source(name, fluid, phys_volume, N=N, PFD_isol_valve=PFD_isol_valve)
 
     def __repr__(self):
-        return f&#39;Source({self.name}, {self.fluid}, {self.volume}, N={self.N}, isol_valve={self.isol_valve})&#39;
+        return f&#39;Source({self.name!r}, {self.fluid!r}, {self.volume!r}, N={int(self.N)}, PFD_isol_valve={float(self.PFD_isol_valve)})&#39;
 
     def __str__(self):
-        return f&#39;{self.name}, &#39; + \
-            f&#39;{self.volume.to(ureg.ft**3):.3g~} &#39; + \
-            f&#39;of {self.fluid.name}&#39;
+        return (f&#39;{self.name}, &#39;
+            f&#39;{self.volume:,.0f~} &#39;
+            f&#39;of {self.fluid.name}&#39;)
 
     def print_leaks(self):
         &#34;&#34;&#34;Print information on the leaks defined for the source.&#34;&#34;&#34;
@@ -2488,7 +2788,7 @@ valve.</dd>
 <h3>Static methods</h3>
 <dl>
 <dt id="CryoToolBox.odh.Source.combine"><code class="name flex">
-<span>def <span class="ident">combine</span></span>(<span>name, fluid, sources)</span>
+<span>def <span class="ident">combine</span></span>(<span>name, fluid, sources, N=1, PFD_isol_valve=1)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Combine several ODH sources sharing volume.</p>
@@ -2501,6 +2801,13 @@ valve.</dd>
 <dd>Thermodynamic state of the fluid stored in the source.</dd>
 <dt><strong><code>sources</code></strong> :&ensp;<code>list</code> of <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source</a></code></dt>
 <dd>Sources connected together.</dd>
+<dt><strong><code>N</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of the sources if several similar sources exist,
+e.g. gas bottles.</dd>
+<dt><strong><code>PFD_isol_valve</code></strong> :&ensp;<code>float</code></dt>
+<dd>Probability of failure on demand of source isolation valve.
+If no isolation valve will trigger on ODH alarm, the probability
+is 1 (default).</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -2512,7 +2819,7 @@ valve.</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def combine(name, fluid, sources):
+def combine(name, fluid, sources, N=1, PFD_isol_valve=1):
     &#34;&#34;&#34;Combine several ODH sources sharing volume.
 
     Can be used for failure modes affecting several sources in parallel.
@@ -2525,6 +2832,13 @@ def combine(name, fluid, sources):
         Thermodynamic state of the fluid stored in the source.
     sources : list of Source
         Sources connected together.
+    N : int
+        Number of the sources if several similar sources exist,
+        e.g. gas bottles.
+    PFD_isol_valve : float
+        Probability of failure on demand of source isolation valve.
+        If no isolation valve will trigger on ODH alarm, the probability
+        is 1 (default).
 
     Returns
     -------
@@ -2540,7 +2854,7 @@ def combine(name, fluid, sources):
     volume_NTP = sum([source.N*source.volume for source in sources])
     fluid_NTP = ThermState(fluid.name, P=P_NTP, T=T_NTP)
     phys_volume = volume_NTP*fluid_NTP.Dmass / fluid.Dmass
-    return Source(name, fluid, phys_volume)</code></pre>
+    return Source(name, fluid, phys_volume, N=N, PFD_isol_valve=PFD_isol_valve)</code></pre>
 </details>
 </dd>
 </dl>
@@ -2590,7 +2904,8 @@ Failure modes are analyzed by <code><a title="CryoToolBox.odh.Volume.odh" href="
     if not fluid:
         fluid = self.fluid
     N_events = N * self.N
-    self.leaks.append(ConstLeak(name, fluid, q_std*N_events, N_events))</code></pre>
+    tau_event = self.volume / q_std
+    self.leaks.append(ConstLeak(name, fluid, q_std*N_events, tau_event))</code></pre>
 </details>
 </dd>
 <dt id="CryoToolBox.odh.Source.add_dewar_insulation_failure"><code class="name flex">
@@ -2687,7 +3002,7 @@ Failure modes are analyzed by <code><a title="CryoToolBox.odh.Volume.odh" href="
 </details>
 </dd>
 <dt id="CryoToolBox.odh.Source.add_flange_failure"><code class="name flex">
-<span>def <span class="ident">add_flange_failure</span></span>(<span>self, pipe, fluid, q_std_rupture=None, N=1)</span>
+<span>def <span class="ident">add_flange_failure</span></span>(<span>self, pipe, fluid, q_std_rupture=None, N=1, gasket_type='reinforced', blowout_area=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Add reinforced or preformed gasket flange failure
@@ -2705,12 +3020,17 @@ Failure modes are analyzed by <code><a title="CryoToolBox.odh.Volume.odh" href="
 <dd>Standard volumetric flow rate for flange rupture.</dd>
 <dt><strong><code>N</code></strong> :&ensp;<code>int</code></dt>
 <dd>Number of reinforced seal connections on the pipe.</dd>
+<dt><strong><code>gasket_type</code></strong> :&ensp;<code>str</code></dt>
+<dd>Type of the gasket in the flange, 'soft' or 'reinforced'.</dd>
+<dt><strong><code>blowout_area</code></strong> :&ensp;<code>Quantity [length^2]</code></dt>
+<dd>Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1):
+<pre><code class="python">def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1,
+                       gasket_type=&#39;reinforced&#39;, blowout_area=None):
     &#34;&#34;&#34;Add reinforced or preformed gasket flange failure
     to leaks dict.
 
@@ -2727,17 +3047,34 @@ Failure modes are analyzed by <code><a title="CryoToolBox.odh.Volume.odh" href="
         Standard volumetric flow rate for flange rupture.
     N : int
         Number of reinforced seal connections on the pipe.
+    gasket_type : str
+        Type of the gasket in the flange, &#39;soft&#39; or &#39;reinforced&#39;.
+    blowout_area : Quantity [length^2]
+        Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
     &#34;&#34;&#34;
     # TODO Make leak and rupture areas adjustable, add info to docstring
-    table = TABLE_2[&#39;Flange, reinforced gasket&#39;]
+    if gasket_type == &#39;reinforced&#39;:
+        table = TABLE_2[&#39;Flange, reinforced gasket&#39;]
+    if gasket_type == &#39;soft&#39;:
+        table = TABLE_2[&#39;Flange, soft gasket&#39;]
     # Leak case
-    name = f&#39;Flange leak: {pipe}&#39;
+    name = f&#39;Flange {gasket_type} gasket leak: {pipe}&#39;
     failure_rate = table[&#39;Leak&#39;][&#39;Failure rate&#39;]
     area = table[&#39;Leak&#39;][&#39;Area&#39;]
     q_std = hole_leak(area, fluid)
     self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+    # Blowout for soft gasket
+    if gasket_type == &#39;soft&#39;:
+        name = f&#39;Flange soft gasket blowout: {pipe}&#39;
+        failure_rate = table[&#39;Blowout&#39;]
+        area = blowout_area or pipe.area
+        q_std = hole_leak(area, fluid)
+        if q_std_rupture is not None:
+            # Blowout flow cannot be greater than rupture flow
+            q_std = min(q_std, q_std_rupture)
+        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
     # Rupture
-    name = f&#39;Flange rupture: {pipe}&#39;
+    name = f&#39;Flange {gasket_type} gasket rupture: {pipe}&#39;
     failure_rate = table[&#39;Rupture&#39;]
     if q_std_rupture is not None:
         q_std = q_std_rupture
@@ -2748,7 +3085,7 @@ Failure modes are analyzed by <code><a title="CryoToolBox.odh.Volume.odh" href="
 </details>
 </dd>
 <dt id="CryoToolBox.odh.Source.add_line_failure"><code class="name flex">
-<span>def <span class="ident">add_line_failure</span></span>(<span>self, pipe, fluid, *, N_welds, N_flanges, N_valves, q_std_rupture=None)</span>
+<span>def <span class="ident">add_line_failure</span></span>(<span>self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves, q_std_rupture=None, blowout_area=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Add leaks for pipe, weld, flange, and valve failures.</p>
@@ -2763,19 +3100,23 @@ FESHM 4240. Failure modes are analyzed by <code><a title="CryoToolBox.odh.Volume
 <dd>Thermodynamic state of the fluid stored in the source.</dd>
 <dt><strong><code>N_welds</code></strong> :&ensp;<code>int</code></dt>
 <dd>Number of welds on the line.</dd>
-<dt><strong><code>N_flange</code></strong> :&ensp;<code>int</code></dt>
-<dd>Number of flanges on the line.</dd>
+<dt><strong><code>N_reinforced</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of flanges with reinforced, preformed or metal gaskets on the line.</dd>
+<dt><strong><code>N_soft</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of flanges with soft gaskets on the line.</dd>
 <dt><strong><code>N_valves</code></strong> :&ensp;<code>int</code></dt>
 <dd>Number of valves on the line.</dd>
 <dt><strong><code>q_std_rupture</code></strong> :&ensp;<code>ureg.Quantity, [length]^3/[time]</code></dt>
 <dd>Standard volumetric flow rate for flange rupture.</dd>
+<dt><strong><code>blowout_area</code></strong> :&ensp;<code>Quantity [length^2]</code></dt>
+<dd>Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_line_failure(self, pipe, fluid, *, N_welds, N_flanges, N_valves,
-                     q_std_rupture=None):
+<pre><code class="python">def add_line_failure(self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves,
+                     q_std_rupture=None, blowout_area=None):
     &#34;&#34;&#34;Add leaks for pipe, weld, flange, and valve failures.
 
     Store failure rate, flow rate and expected time duration of
@@ -2790,16 +3131,25 @@ FESHM 4240. Failure modes are analyzed by <code><a title="CryoToolBox.odh.Volume
         Thermodynamic state of the fluid stored in the source.
     N_welds : int
         Number of welds on the line.
-    N_flange : int
-        Number of flanges on the line.
+    N_reinforced : int
+        Number of flanges with reinforced, preformed or metal gaskets on the line.
+    N_soft : int
+        Number of flanges with soft gaskets on the line.
     N_valves : int
         Number of valves on the line.
     q_std_rupture : ureg.Quantity, [length]^3/[time]
         Standard volumetric flow rate for flange rupture.
+    blowout_area : Quantity [length^2]
+        Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
     &#34;&#34;&#34;
-    self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
-    self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_flanges)
-    self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)</code></pre>
+    if N_welds &gt; 0:
+        self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
+    if N_reinforced &gt; 0:
+        self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_reinforced, gasket_type=&#39;reinforced&#39;)
+    if N_soft &gt; 0:
+        self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_soft, gasket_type=&#39;soft&#39;, blowout_area=blowout_area)
+    if N_valves &gt; 0:
+        self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)</code></pre>
 </details>
 </dd>
 <dt id="CryoToolBox.odh.Source.add_pipe_failure"><code class="name flex">
@@ -2822,7 +3172,7 @@ FESHM 4240.</p>
 <dt><strong><code>fluid</code></strong> :&ensp;<code>heat_transfer.ThermState</code></dt>
 <dd>Thermodynamic state of the fluid for the release.</dd>
 <dt><strong><code>q_std_rupture</code></strong> :&ensp;<code>ureg.Quantity, [length]^3/[time]</code></dt>
-<dd>Standard volumetric flow rate for flange rupture.</dd>
+<dd>Standard volumetric flow rate for pipe rupture.</dd>
 <dt><strong><code>N_welds</code></strong> :&ensp;<code>int</code></dt>
 <dd>Number of welds on the tube.</dd>
 </dl></div>
@@ -2849,7 +3199,7 @@ FESHM 4240.</p>
     fluid : heat_transfer.ThermState
         Thermodynamic state of the fluid for the release.
     q_std_rupture : ureg.Quantity, [length]^3/[time]
-        Standard volumetric flow rate for flange rupture.
+        Standard volumetric flow rate for pipe rupture.
     N_welds : int
         Number of welds on the tube.
     &#34;&#34;&#34;
@@ -3045,8 +3395,6 @@ inert gas leaks.</p>
 <dd>The ventilation system of the building or part of the building.</dd>
 <dt><strong><code>power</code></strong> :&ensp;<code><a title="CryoToolBox.odh.BuildPower" href="#CryoToolBox.odh.BuildPower">BuildPower</a></code></dt>
 <dd>The power system of the building or part of the building.</dd>
-<dt><strong><code>PFD_ODH</code></strong> :&ensp;<code>float</code></dt>
-<dd>The default value for the oxygen deficiency hazard (ODH) system failure.</dd>
 </dl>
 <h2 id="methods">Methods</h2>
 <p>info()
@@ -3101,8 +3449,6 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         The ventilation system of the building or part of the building.
     power : BuildPower
         The power system of the building or part of the building.
-    PFD_ODH : float
-        The default value for the oxygen deficiency hazard (ODH) system failure.
 
     Methods
     -------
@@ -3138,25 +3484,14 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         self.volume = volume.to_base_units()
         self.vent = build_vent
         self.power = build_power
-        self.PFD_ODH = PFD_ODH  # Default value for ODH system failure
 
     def info(self):
         &#34;&#34;&#34;
         Display information on the volume.
         &#34;&#34;&#34;
         print(f&#39;{self.name} with affected volume of {self.volume:,.0f~}.&#39;)
-        print(f&#39;Power provided with {self.power.pfd:.3g~} unavailability and &#39;
-              f&#39;{self.power.max_outage:.3g~} max outage period.&#39;)
-        if self.vent.Q_fan &gt; 0*ureg.L/ureg.s:
-            vent_action = &#39;supplying clean air to&#39;
-        else:
-            vent_action = &#39;drawing contaminated air from&#39;
-        print(f&#39;Ventilation consists of {self.vent.N_fans} fans {abs(self.vent.Q_fan):.3g~} each\n{vent_action} the volume.&#39;)
-        if self.vent.const_vent &gt; 0*ureg.L/ureg.s:
-            vent_action = &#39;supplying clean air to&#39;
-        else:
-            vent_action = &#39;drawing contaminated air from&#39;
-        print(f&#39;Constant ventilation in the building is {abs(self.vent.const_vent):.3g~}\n{vent_action} the volume.&#39;)
+        print(self.power.info())
+        print(self.vent.info())
 
     def odh(self, sources, power_outage=False):
         &#34;&#34;&#34;Calculate ODH fatality rate for given `Source`s.
@@ -3210,14 +3545,16 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         if power_outage:
             PFD_power = 1
             tau_event = leak.tau
+            scenario = &#39;Planned power outage&#39;
         else:
             PFD_power = self.power.pfd
             tau_event = min(leak.tau, self.power.max_outage)
-        PFD_isol_valve = source.sol_PFD
+            scenario = &#39;Power failure&#39;
+        PFD_isol_valve = source.PFD_isol_valve
         P_event = PFD_power * PFD_isol_valve
         Q_fan = 0 * ureg.ft**3/ureg.min
         self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
-                               leak, Q_fan, 0, power_outage)
+                               leak, Q_fan, 0, power_outage, scenario)
 
     def _fatality_no_odh(self, source, leak):
         &#34;&#34;&#34;Calculate fatality rate in the event of ODH system failure.
@@ -3232,19 +3569,18 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         leak : Leak
             Leak failure rate, volumetric flow rate, event duration, and number
             of events.
-        power_outage : bool
-            Shows whether there is a power outage is in effect.
 
         Returns
         -------
         None
         &#34;&#34;&#34;
-        PFD_isol_valve = source.sol_PFD
-        P_event = (1-self.power.pfd) * self.PFD_ODH * PFD_isol_valve
+        PFD_isol_valve = source.PFD_isol_valve
+        P_event = (1-self.power.pfd) * self.vent.PFD_ODH * PFD_isol_valve
         Q_fan = self.vent.const_vent
         tau_event = min(leak.tau, self.vent.Test_period)
+        scenario = &#39;ODH system failure&#39;
         self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
-                               leak, Q_fan, 0, False)
+                               leak, Q_fan, 0, False, scenario)
 
     def _fatality_with_fans(self, source, leak):
         &#34;&#34;&#34;Calculate fatality rate for any number of fans operational.
@@ -3265,20 +3601,22 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         -------
         None
         &#34;&#34;&#34;
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.PFD_isol_valve
         # Probability for this group of the events
-        P_group = (1-self.power.pfd) * (1-self.PFD_ODH) * PFD_isol_valve
+        P_group = (1-self.power.pfd) * (1-self.vent.PFD_ODH) * PFD_isol_valve
         tau_event = min(leak.tau, self.vent.Test_period)
         for (P_fan, Q_fan, N_fans) in self.vent.fan_flowrates():
             P_event = P_group * P_fan  # Probability of the particular event
-            if Q_fan == 0 * ureg.ft**3/ureg.min:
-                Q_fan = self.vent.const_vent
+            if N_fans == self.vent.N_fans:
+                scenario = &#39;Normal operation&#39;
+            else:
+                scenario = &#39;Fan failure&#39;
             self._add_failure_mode(P_event, tau_event,
                                    leak.failure_rate, source, leak, Q_fan,
-                                   N_fans, False)
+                                   N_fans, False, scenario)
 
     def _add_failure_mode(self, P_event, tau_event, failure_rate, source, leak,
-                          Q_fan, N_fans, power_outage):
+                          Q_fan, N_fans, power_outage, scenario):
         &#34;&#34;&#34;Add a failure mode.
 
         Parameters
@@ -3304,6 +3642,9 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
             Number of fans operational during the event.
         power_outage : bool
             Shows whether there is a power outage is in effect.
+        scenario: str
+            Name of the response scenario, e.g., power failure, ODH system failure,
+            normal operation.
 
         Returns
         -------
@@ -3313,10 +3654,15 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, tau_event)
         F_i = self._fatality_prob(O2_conc)
         phi_i = P_i*F_i
+        if leak._is_const == True:
+            N_events = 1
+        else:
+            N_events = leak.N_events
         self.fail_modes.append(
             FailureMode(leak.name, source, leak.fluid, phi_i, O2_conc,
                         failure_rate, P_i, F_i, power_outage, leak.q_std,
-                        tau_event, Q_fan, N_fans, leak.N_events, leak._is_const)
+                        tau_event, Q_fan, N_fans, N_events, leak._is_const,
+                        scenario)
         )
 
     def _fatality_const_leak(self, source, leak, power_outage):
@@ -3341,9 +3687,9 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         None
         &#34;&#34;&#34;
 
-        PFD_isol_valve = source.sol_PFD
+        PFD_isol_valve = source.PFD_isol_valve
         if power_outage:
-            tau_outage = source.volume/leak.q_std  # No refills during outage
+            tau_outage = leak.tau
             Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
             O2_conc_outage = conc_vent(self.volume, leak.q_std, Q_fan_outage, tau_outage)
             if O2_conc_outage &lt; 0.195:
@@ -3351,25 +3697,28 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
                                     f&#39;{source.name} is not mitigated during &#39;
                                     f&#39;power outage in {self.name}.&#39;)
 
-        # TODO Replace hard coded value with changeable
         # Constant leak and power failure
-        failure_rate = self.power.lambda_power * self.power.backup_pfd
+        failure_rate = self.power.lambda_power
         # Constant leak is assumed to be hazardous only when
         # the isolation valve fails
-        P_event = PFD_isol_valve
+        P_event = PFD_isol_valve * self.power.backup_pfd
         Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-        tau_event = min(self.vent.Test_period, self.power.max_outage)
+        tau_event = min([self.vent.Test_period, self.power.max_outage, leak.tau])
+        scenario = &#39;Const leak and power failure&#39;
         self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, Q_fan, 0, False)
+                               source, leak, Q_fan, 0, False,
+                               scenario)
 
         # Constant leak and ODH system failure
         failure_rate = lambda_ODH
-        P_event = PFD_isol_valve
+        P_event = 1  # ODH system failure will not trigger isolation valve
         # Event can&#39;t go undetected for longer than the test period
         tau_event = self.vent.Test_period
+        scenario = &#39;Const leak and ODH system failure&#39;
         # Ventilation is available on ODH system failure
         self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, self.vent.const_vent, 0, False)
+                               source, leak, self.vent.const_vent, 0, False,
+                               scenario)
 
         # Fan failure
         # If at least 1 fan is down, all fans are considered non-operational
@@ -3377,18 +3726,19 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         P_event = PFD_isol_valve
         # Event can&#39;t go undetected for longer than the test period
         tau_event = self.vent.Test_period
+        scenario = &#39;Const leak and 1 fan failure&#39;
         self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, self.vent.const_vent, 0, False)
+                               source, leak, self.vent.const_vent, 0, False,
+                               scenario)
 
         # Fans operational
         # If fatality is possible with just one fan, raise error
-        Q_1fan = self.vent.Q_fan
-        tau = math.inf * ureg.s
-        O2_conc_1fan = conc_vent(self.volume, leak.q_std, Q_1fan, tau)
+        Q_1fan = max(self.vent.Q_fan, self.vent.const_vent)
+        O2_conc_1fan = conc_final(leak.q_std, Q_1fan)
         if O2_conc_1fan &lt; 0.195:
-            raise ConstLeakTooBig(&#39;Constant leak reduces O2 conecntration to &#39;
-                                  f&#39;{O2_conc_1fan} with at least 1 fan &#39;
-                                  f&#39;operational: {leak}&#39;)
+            raise ConstLeakTooBig(&#39;Constant leak reduces O2 concentration to &#39;
+                                  f&#39;{O2_conc_1fan:.1%} with {Q_1fan:.3g~} &#39;
+                                  f&#39;vent rate: {leak.name}&#39;)
 
     def _fatality_prob(self, O2_conc):
         &#34;&#34;&#34;Calculate fatality probability for given oxygen concentration.
@@ -3414,6 +3764,7 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
             Fi = 10**(6.5-76*O2_conc)
         return Fi
 
+    @property
     def odh_class(self):
         &#34;&#34;&#34;Calculate ODH class as defined in FESHM 4240.
 
@@ -3430,12 +3781,11 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
             return 2
         else:
             # TODO add a custom exception for ODH &gt; 2
-            print(&#39;ODH fatality rate is too high. Please, check calculations.&#39;)
-            return None
+            raise ODHError(&#39;ODH fatality rate is too high. Please, check calculations.&#39;)
 
     @property
     def phi(self):
-        return sum((fm.phi for fm in self.fail_modes))
+        return sum((fm.phi for fm in self.fail_modes)).to(1/ureg.hr)
 
     # def report(self, brief=True, sens=None):
     #     &#34;&#34;&#34;Print a report for failure modes and effects.
@@ -3487,7 +3837,7 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
             row.append(f&#39;{f_mode.N_fan}&#39;)
             row.append(f&#39;{f_mode.O2_conc:.0%}&#39;)
             row.append(f&#39;{f_mode.tau.m_as(ureg.min):,.1f}&#39;)
-            row.append(f&#39;{f_mode.phi.m_as(1/ureg.hr):.2}&#39;)
+            row.append(f&#39;{f_mode.phi.m_as(1/ureg.hr):.2e}&#39;)
             table.append(row)
         return table
 
@@ -3497,7 +3847,7 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
         header = [&#39;Source&#39;, &#39;Failure&#39;, &#39;Fluid&#39;, &#39;Event failure rate, 1/hr&#39;,
                   &#39;# of&#39;, &#39;Total failure rate, 1/hr&#39;, &#39;Leak rate, SCFM&#39;,
                   &#39;# fans working&#39;, &#39;Fan rate, SCFM&#39;, &#39;Event duration, min&#39;,
-                  &#39;Oxygen concentration&#39;, &#39;Fatality prob&#39;, &#39;Case prob&#39;,
+                  &#39;Oxygen concentration&#39;, &#39;Fatality prob&#39;, &#39;Scenario&#39;, &#39;Scenario prob&#39;,
                   &#39;Fatality rate, 1/hr&#39;]
         # &#39;Total failure rate&#39;, &#39;ODH protection PFD&#39;, &#39;Building is powered&#39;
         table.append(header)
@@ -3524,6 +3874,7 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
                 tau,
                 f_mode.O2_conc,
                 f_mode.F_i,
+                f_mode.scenario,
                 f_mode.P_i/f_mode.leak_fr,
                 f_mode.phi.m_as(1/ureg.hr)])
         wb_options = {}
@@ -3547,7 +3898,8 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
             worksheet.set_column(6, 6, None, sci_format)
             worksheet.set_column(9, 9, None, sci_format)
             worksheet.set_column(10, 10, None, percent_format)
-            worksheet.set_column(11, 13, None, sci_format)
+            worksheet.set_column(11, 11, None, sci_format)
+            worksheet.set_column(13, 14, None, sci_format)
             # Writing total/summary
             N_rows = len(table)
             N_cols = len(table[0])
@@ -3555,7 +3907,7 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
             worksheet.write(N_rows+1, N_cols-1,
                             self.phi.m_as(1/ureg.hr))
             worksheet.write(N_rows+2, N_cols-2, &#39;ODH class&#39;)
-            worksheet.write(N_rows+2, N_cols-1, self.odh_class(),
+            worksheet.write(N_rows+2, N_cols-1, self.odh_class,
                             number_format)
             worksheet.autofit()
             worksheet.conditional_format(
@@ -3565,20 +3917,42 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
             worksheet.freeze_panes(1, 0)
 
     def __str__(self):
-        return (f&#39;Volume: {self.name}, {self.volume.to(ureg.ft**3):~}&#39;)
-
-    # def source_safe(self, source, escape = True):
-    #    &#34;&#34;&#34;
-    #    Estimate the impact of the Source volume on oxygen concetration. Smaller sources might not be able to drop oxygen concentration to dangerous levels.
-    #    &#34;&#34;&#34;
-    #    if escape == True:  # if mixed air is allowed to escape within considered volume
-    #        O2_conc = 0.21*self.volume/(self.volume+source.volume)
-    #    else:  # worst case; inert gas is trapped and expells the air outside the considered volume
-    #        O2_conc = 0.21*(1-source.volume/self.volume)
-    #    return self._fatality_prob(O2_conc) == 0</code></pre>
+        return (f&#39;Volume: {self.name}, {self.volume.to(ureg.ft**3):~}&#39;)</code></pre>
 </details>
 <h3>Instance variables</h3>
 <dl>
+<dt id="CryoToolBox.odh.Volume.odh_class"><code class="name">var <span class="ident">odh_class</span></code></dt>
+<dd>
+<div class="desc"><p>Calculate ODH class as defined in FESHM 4240.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>ODH class.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def odh_class(self):
+    &#34;&#34;&#34;Calculate ODH class as defined in FESHM 4240.
+
+    Returns
+    -------
+    int
+        ODH class.
+    &#34;&#34;&#34;
+    if self.phi &lt; 1e-7/ureg.hr:
+        return 0
+    elif self.phi &lt; 1e-5/ureg.hr:
+        return 1
+    elif self.phi &lt; 1e-3/ureg.hr:
+        return 2
+    else:
+        # TODO add a custom exception for ODH &gt; 2
+        raise ODHError(&#39;ODH fatality rate is too high. Please, check calculations.&#39;)</code></pre>
+</details>
+</dd>
 <dt id="CryoToolBox.odh.Volume.phi"><code class="name">var <span class="ident">phi</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -3588,7 +3962,7 @@ a <code><a title="CryoToolBox.odh.Source" href="#CryoToolBox.odh.Source">Source<
 </summary>
 <pre><code class="python">@property
 def phi(self):
-    return sum((fm.phi for fm in self.fail_modes))</code></pre>
+    return sum((fm.phi for fm in self.fail_modes)).to(1/ureg.hr)</code></pre>
 </details>
 </dd>
 </dl>
@@ -3608,18 +3982,8 @@ def phi(self):
     Display information on the volume.
     &#34;&#34;&#34;
     print(f&#39;{self.name} with affected volume of {self.volume:,.0f~}.&#39;)
-    print(f&#39;Power provided with {self.power.pfd:.3g~} unavailability and &#39;
-          f&#39;{self.power.max_outage:.3g~} max outage period.&#39;)
-    if self.vent.Q_fan &gt; 0*ureg.L/ureg.s:
-        vent_action = &#39;supplying clean air to&#39;
-    else:
-        vent_action = &#39;drawing contaminated air from&#39;
-    print(f&#39;Ventilation consists of {self.vent.N_fans} fans {abs(self.vent.Q_fan):.3g~} each\n{vent_action} the volume.&#39;)
-    if self.vent.const_vent &gt; 0*ureg.L/ureg.s:
-        vent_action = &#39;supplying clean air to&#39;
-    else:
-        vent_action = &#39;drawing contaminated air from&#39;
-    print(f&#39;Constant ventilation in the building is {abs(self.vent.const_vent):.3g~}\n{vent_action} the volume.&#39;)</code></pre>
+    print(self.power.info())
+    print(self.vent.info())</code></pre>
 </details>
 </dd>
 <dt id="CryoToolBox.odh.Volume.make_doc_table"><code class="name flex">
@@ -3649,7 +4013,7 @@ def phi(self):
         row.append(f&#39;{f_mode.N_fan}&#39;)
         row.append(f&#39;{f_mode.O2_conc:.0%}&#39;)
         row.append(f&#39;{f_mode.tau.m_as(ureg.min):,.1f}&#39;)
-        row.append(f&#39;{f_mode.phi.m_as(1/ureg.hr):.2}&#39;)
+        row.append(f&#39;{f_mode.phi.m_as(1/ureg.hr):.2e}&#39;)
         table.append(row)
     return table</code></pre>
 </details>
@@ -3669,7 +4033,7 @@ def phi(self):
     header = [&#39;Source&#39;, &#39;Failure&#39;, &#39;Fluid&#39;, &#39;Event failure rate, 1/hr&#39;,
               &#39;# of&#39;, &#39;Total failure rate, 1/hr&#39;, &#39;Leak rate, SCFM&#39;,
               &#39;# fans working&#39;, &#39;Fan rate, SCFM&#39;, &#39;Event duration, min&#39;,
-              &#39;Oxygen concentration&#39;, &#39;Fatality prob&#39;, &#39;Case prob&#39;,
+              &#39;Oxygen concentration&#39;, &#39;Fatality prob&#39;, &#39;Scenario&#39;, &#39;Scenario prob&#39;,
               &#39;Fatality rate, 1/hr&#39;]
     # &#39;Total failure rate&#39;, &#39;ODH protection PFD&#39;, &#39;Building is powered&#39;
     table.append(header)
@@ -3696,6 +4060,7 @@ def phi(self):
             tau,
             f_mode.O2_conc,
             f_mode.F_i,
+            f_mode.scenario,
             f_mode.P_i/f_mode.leak_fr,
             f_mode.phi.m_as(1/ureg.hr)])
     wb_options = {}
@@ -3719,7 +4084,8 @@ def phi(self):
         worksheet.set_column(6, 6, None, sci_format)
         worksheet.set_column(9, 9, None, sci_format)
         worksheet.set_column(10, 10, None, percent_format)
-        worksheet.set_column(11, 13, None, sci_format)
+        worksheet.set_column(11, 11, None, sci_format)
+        worksheet.set_column(13, 14, None, sci_format)
         # Writing total/summary
         N_rows = len(table)
         N_cols = len(table[0])
@@ -3727,7 +4093,7 @@ def phi(self):
         worksheet.write(N_rows+1, N_cols-1,
                         self.phi.m_as(1/ureg.hr))
         worksheet.write(N_rows+2, N_cols-2, &#39;ODH class&#39;)
-        worksheet.write(N_rows+2, N_cols-1, self.odh_class(),
+        worksheet.write(N_rows+2, N_cols-1, self.odh_class,
                         number_format)
         worksheet.autofit()
         worksheet.conditional_format(
@@ -3793,40 +4159,6 @@ Default is no outage.</dd>
                 self._fatality_const_leak(source, leak, power_outage)</code></pre>
 </details>
 </dd>
-<dt id="CryoToolBox.odh.Volume.odh_class"><code class="name flex">
-<span>def <span class="ident">odh_class</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Calculate ODH class as defined in FESHM 4240.</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>int</code></dt>
-<dd>ODH class.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def odh_class(self):
-    &#34;&#34;&#34;Calculate ODH class as defined in FESHM 4240.
-
-    Returns
-    -------
-    int
-        ODH class.
-    &#34;&#34;&#34;
-    if self.phi &lt; 1e-7/ureg.hr:
-        return 0
-    elif self.phi &lt; 1e-5/ureg.hr:
-        return 1
-    elif self.phi &lt; 1e-3/ureg.hr:
-        return 2
-    else:
-        # TODO add a custom exception for ODH &gt; 2
-        print(&#39;ODH fatality rate is too high. Please, check calculations.&#39;)
-        return None</code></pre>
-</details>
-</dd>
 </dl>
 </dd>
 </dl>
@@ -3844,7 +4176,9 @@ Default is no outage.</dd>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
+<ul class="two-column">
+<li><code><a title="CryoToolBox.odh.O2_sudden_release" href="#CryoToolBox.odh.O2_sudden_release">O2_sudden_release</a></code></li>
+<li><code><a title="CryoToolBox.odh.PFD_avg" href="#CryoToolBox.odh.PFD_avg">PFD_avg</a></code></li>
 <li><code><a title="CryoToolBox.odh.conc_after" href="#CryoToolBox.odh.conc_after">conc_after</a></code></li>
 <li><code><a title="CryoToolBox.odh.conc_final" href="#CryoToolBox.odh.conc_final">conc_final</a></code></li>
 <li><code><a title="CryoToolBox.odh.conc_vent" href="#CryoToolBox.odh.conc_vent">conc_vent</a></code></li>
@@ -3856,8 +4190,9 @@ Default is no outage.</dd>
 <ul>
 <li>
 <h4><code><a title="CryoToolBox.odh.BuildPower" href="#CryoToolBox.odh.BuildPower">BuildPower</a></code></h4>
-<ul class="">
+<ul class="two-column">
 <li><code><a title="CryoToolBox.odh.BuildPower.backup_pfd" href="#CryoToolBox.odh.BuildPower.backup_pfd">backup_pfd</a></code></li>
+<li><code><a title="CryoToolBox.odh.BuildPower.info" href="#CryoToolBox.odh.BuildPower.info">info</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildPower.lambda_power" href="#CryoToolBox.odh.BuildPower.lambda_power">lambda_power</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildPower.max_outage" href="#CryoToolBox.odh.BuildPower.max_outage">max_outage</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildPower.pfd" href="#CryoToolBox.odh.BuildPower.pfd">pfd</a></code></li>
@@ -3868,20 +4203,22 @@ Default is no outage.</dd>
 <h4><code><a title="CryoToolBox.odh.BuildVent" href="#CryoToolBox.odh.BuildVent">BuildVent</a></code></h4>
 <ul class="two-column">
 <li><code><a title="CryoToolBox.odh.BuildVent.N_fans" href="#CryoToolBox.odh.BuildVent.N_fans">N_fans</a></code></li>
+<li><code><a title="CryoToolBox.odh.BuildVent.PFD_ODH" href="#CryoToolBox.odh.BuildVent.PFD_ODH">PFD_ODH</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildVent.Q_fan" href="#CryoToolBox.odh.BuildVent.Q_fan">Q_fan</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildVent.Test_period" href="#CryoToolBox.odh.BuildVent.Test_period">Test_period</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildVent.const_vent" href="#CryoToolBox.odh.BuildVent.const_vent">const_vent</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildVent.fan_flowrates" href="#CryoToolBox.odh.BuildVent.fan_flowrates">fan_flowrates</a></code></li>
+<li><code><a title="CryoToolBox.odh.BuildVent.info" href="#CryoToolBox.odh.BuildVent.info">info</a></code></li>
 <li><code><a title="CryoToolBox.odh.BuildVent.lambda_fan" href="#CryoToolBox.odh.BuildVent.lambda_fan">lambda_fan</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="CryoToolBox.odh.ConstLeak" href="#CryoToolBox.odh.ConstLeak">ConstLeak</a></code></h4>
 <ul class="">
-<li><code><a title="CryoToolBox.odh.ConstLeak.N_events" href="#CryoToolBox.odh.ConstLeak.N_events">N_events</a></code></li>
 <li><code><a title="CryoToolBox.odh.ConstLeak.fluid" href="#CryoToolBox.odh.ConstLeak.fluid">fluid</a></code></li>
 <li><code><a title="CryoToolBox.odh.ConstLeak.name" href="#CryoToolBox.odh.ConstLeak.name">name</a></code></li>
 <li><code><a title="CryoToolBox.odh.ConstLeak.q_std" href="#CryoToolBox.odh.ConstLeak.q_std">q_std</a></code></li>
+<li><code><a title="CryoToolBox.odh.ConstLeak.tau" href="#CryoToolBox.odh.ConstLeak.tau">tau</a></code></li>
 </ul>
 </li>
 <li>
@@ -3906,6 +4243,7 @@ Default is no outage.</dd>
 <li><code><a title="CryoToolBox.odh.FailureMode.outage" href="#CryoToolBox.odh.FailureMode.outage">outage</a></code></li>
 <li><code><a title="CryoToolBox.odh.FailureMode.phi" href="#CryoToolBox.odh.FailureMode.phi">phi</a></code></li>
 <li><code><a title="CryoToolBox.odh.FailureMode.q_leak" href="#CryoToolBox.odh.FailureMode.q_leak">q_leak</a></code></li>
+<li><code><a title="CryoToolBox.odh.FailureMode.scenario" href="#CryoToolBox.odh.FailureMode.scenario">scenario</a></code></li>
 <li><code><a title="CryoToolBox.odh.FailureMode.source" href="#CryoToolBox.odh.FailureMode.source">source</a></code></li>
 <li><code><a title="CryoToolBox.odh.FailureMode.tau" href="#CryoToolBox.odh.FailureMode.tau">tau</a></code></li>
 </ul>

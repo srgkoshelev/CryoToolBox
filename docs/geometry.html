@@ -34,7 +34,79 @@ from math import pi
 
 
 def circle_area(D):
-    return pi * D**2 / 4</code></pre>
+    &#34;&#34;&#34;
+    Calculate the area of a circle.
+
+    Parameters
+    ----------
+    D : ureg.Quantity {length: 1}
+        The diameter of the circle.
+
+    Returns
+    -------
+    ureg.Quantity {length: 2}
+        The area of the circle.
+
+    Notes
+    -----
+    The formula for calculating the area of a circle is:
+
+    .. math:: A = \\frac{\\pi D^2}{4}
+
+    where:
+      - \( A \) is the area of the circle,
+      - \( D \) is the diameter of the circle,
+      - \( \\pi \) is a mathematical constant, approximately 3.14159.
+
+    Examples
+    --------
+    &gt;&gt;&gt; circle_area(4 * ureg.meter)
+    &lt;Quantity(12.566370614359172, &#39;meter ** 2&#39;)&gt;
+
+    &gt;&gt;&gt; circle_area(2.5 * ureg.inch)
+    &lt;Quantity(4.908738521234052, &#39;inch ** 2&#39;)&gt;
+
+    &#34;&#34;&#34;
+    return pi * D**2 / 4
+
+def cylinder_volume(D, H):
+    &#34;&#34;&#34;
+    Calculate the volume of a cylinder.
+
+    Parameters
+    ----------
+    D : ureg.Quantity {length: 1}
+        The diameter of the cylinder.
+    H : ureg.Quantity {length: 1}
+        The height of the cylinder.
+
+    Returns
+    -------
+    Quantity
+        The volume of the cylinder.
+
+    Notes
+    -----
+    The formula for calculating the volume of a cylinder is:
+
+    .. math:: V = \\frac{\\pi D^2 H}{4}
+
+    where:
+      - \( V \) is the volume of the cylinder,
+      - \( D \) is the diameter of the cylinder,
+      - \( H \) is the height of the cylinder,
+      - \( \\pi \) is a mathematical constant, approximately 3.14159.
+
+    Examples
+    --------
+    &gt;&gt;&gt; cylinder_volume(4 * ureg.meter, 6 * ureg.meter)
+    &lt;Quantity(75.39822368615503, &#39;meter ** 3&#39;)&gt;
+
+    &gt;&gt;&gt; cylinder_volume(2.5 * ureg.inch, 8 * ureg.inch)
+    &lt;Quantity(19.634954084936208, &#39;inch ** 3&#39;)&gt;
+
+    &#34;&#34;&#34;
+    return pi * D**2 * H / 4</code></pre>
 </details>
 </section>
 <section>
@@ -48,13 +120,148 @@ def circle_area(D):
 <span>def <span class="ident">circle_area</span></span>(<span>D)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Calculate the area of a circle.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D</code></strong> :&ensp;<code>ureg.Quantity {length: 1}</code></dt>
+<dd>The diameter of the circle.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>ureg.Quantity {length: 2}</code></dt>
+<dd>The area of the circle.</dd>
+</dl>
+<h2 id="notes">Notes</h2>
+<p>The formula for calculating the area of a circle is:</p>
+<p>[
+]
+where:
+- ( A ) is the area of the circle,
+- ( D ) is the diameter of the circle,
+- ( \pi ) is a mathematical constant, approximately 3.14159.</p>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; circle_area(4 * ureg.meter)
+&lt;Quantity(12.566370614359172, 'meter ** 2')&gt;
+</code></pre>
+<pre><code class="language-python-repl">&gt;&gt;&gt; circle_area(2.5 * ureg.inch)
+&lt;Quantity(4.908738521234052, 'inch ** 2')&gt;
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def circle_area(D):
+    &#34;&#34;&#34;
+    Calculate the area of a circle.
+
+    Parameters
+    ----------
+    D : ureg.Quantity {length: 1}
+        The diameter of the circle.
+
+    Returns
+    -------
+    ureg.Quantity {length: 2}
+        The area of the circle.
+
+    Notes
+    -----
+    The formula for calculating the area of a circle is:
+
+    .. math:: A = \\frac{\\pi D^2}{4}
+
+    where:
+      - \( A \) is the area of the circle,
+      - \( D \) is the diameter of the circle,
+      - \( \\pi \) is a mathematical constant, approximately 3.14159.
+
+    Examples
+    --------
+    &gt;&gt;&gt; circle_area(4 * ureg.meter)
+    &lt;Quantity(12.566370614359172, &#39;meter ** 2&#39;)&gt;
+
+    &gt;&gt;&gt; circle_area(2.5 * ureg.inch)
+    &lt;Quantity(4.908738521234052, &#39;inch ** 2&#39;)&gt;
+
+    &#34;&#34;&#34;
     return pi * D**2 / 4</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.geometry.cylinder_volume"><code class="name flex">
+<span>def <span class="ident">cylinder_volume</span></span>(<span>D, H)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the volume of a cylinder.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>D</code></strong> :&ensp;<code>ureg.Quantity {length: 1}</code></dt>
+<dd>The diameter of the cylinder.</dd>
+<dt><strong><code>H</code></strong> :&ensp;<code>ureg.Quantity {length: 1}</code></dt>
+<dd>The height of the cylinder.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Quantity</code></dt>
+<dd>The volume of the cylinder.</dd>
+</dl>
+<h2 id="notes">Notes</h2>
+<p>The formula for calculating the volume of a cylinder is:</p>
+<p>[
+]
+where:
+- ( V ) is the volume of the cylinder,
+- ( D ) is the diameter of the cylinder,
+- ( H ) is the height of the cylinder,
+- ( \pi ) is a mathematical constant, approximately 3.14159.</p>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; cylinder_volume(4 * ureg.meter, 6 * ureg.meter)
+&lt;Quantity(75.39822368615503, 'meter ** 3')&gt;
+</code></pre>
+<pre><code class="language-python-repl">&gt;&gt;&gt; cylinder_volume(2.5 * ureg.inch, 8 * ureg.inch)
+&lt;Quantity(19.634954084936208, 'inch ** 3')&gt;
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cylinder_volume(D, H):
+    &#34;&#34;&#34;
+    Calculate the volume of a cylinder.
+
+    Parameters
+    ----------
+    D : ureg.Quantity {length: 1}
+        The diameter of the cylinder.
+    H : ureg.Quantity {length: 1}
+        The height of the cylinder.
+
+    Returns
+    -------
+    Quantity
+        The volume of the cylinder.
+
+    Notes
+    -----
+    The formula for calculating the volume of a cylinder is:
+
+    .. math:: V = \\frac{\\pi D^2 H}{4}
+
+    where:
+      - \( V \) is the volume of the cylinder,
+      - \( D \) is the diameter of the cylinder,
+      - \( H \) is the height of the cylinder,
+      - \( \\pi \) is a mathematical constant, approximately 3.14159.
+
+    Examples
+    --------
+    &gt;&gt;&gt; cylinder_volume(4 * ureg.meter, 6 * ureg.meter)
+    &lt;Quantity(75.39822368615503, &#39;meter ** 3&#39;)&gt;
+
+    &gt;&gt;&gt; cylinder_volume(2.5 * ureg.inch, 8 * ureg.inch)
+    &lt;Quantity(19.634954084936208, &#39;inch ** 3&#39;)&gt;
+
+    &#34;&#34;&#34;
+    return pi * D**2 * H / 4</code></pre>
 </details>
 </dd>
 </dl>
@@ -76,6 +283,7 @@ def circle_area(D):
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="CryoToolBox.geometry.circle_area" href="#CryoToolBox.geometry.circle_area">circle_area</a></code></li>
+<li><code><a title="CryoToolBox.geometry.cylinder_volume" href="#CryoToolBox.geometry.cylinder_volume">cylinder_volume</a></code></li>
 </ul>
 </li>
 </ul>

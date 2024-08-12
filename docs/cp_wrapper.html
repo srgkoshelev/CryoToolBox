@@ -38,6 +38,7 @@
 
 &#34;&#34;&#34;
 import CoolProp.CoolProp as CP
+from .heprop_state import HepropState
 from math import inf
 from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 
@@ -55,6 +56,8 @@ CP_const_unit = {
     &#39;P_reducing&#39;: (CP.iP_reducing, ureg.Pa),
     &#39;T_triple&#39;: (CP.iT_triple, ureg.K),
     &#39;P_triple&#39;: (CP.iP_triple, ureg.Pa),
+    &#39;T_sat&#39;: (None, ureg.K),
+    &#39;P_sat&#39;: (None, ureg.Pa),
     &#39;T_min&#39;: (CP.iT_min, ureg.K),
     &#39;T_max&#39;: (CP.iT_max, ureg.K),
     &#39;P_max&#39;: (CP.iP_max, ureg.Pa),
@@ -167,7 +170,13 @@ class ThermState:
         Available backends: HEOS (opensource), REFPROP.
         See http://www.coolprop.org/coolprop/REFPROP.html for details.
         &#34;&#34;&#34;
-        self._AbstractState = CP.AbstractState(backend, fluid)
+        # TODO this should check for the fluid name too
+        if backend == &#34;HEPROP&#34;:
+            if fluid.lower() != &#39;helium&#39;:
+                raise ValueError(f&#39;Only helium fluid can be used with HEPROP backend: {fluid}&#39;)
+            self._AbstractState = HepropState()
+        else:
+            self._AbstractState = CP.AbstractState(backend, fluid)
         if state_parameters:
             self.update_kw(**state_parameters)
 
@@ -192,8 +201,12 @@ class ThermState:
         CP_input_str = name1 + name2
         CP_value1 = self.prepare_input(name1, value1)
         CP_value2 = self.prepare_input(name2, value2)
-        self._AbstractState.update(
-            CP_inputs[CP_input_str], CP_value1, CP_value2)
+
+        if self.backend == &#34;HEPROP&#34;:
+            self._AbstractState.update(name1, CP_value1, name2, CP_value2)
+        else:
+            self._AbstractState.update(
+                CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
 
     @staticmethod
     def prepare_input(name, value):
@@ -229,6 +242,7 @@ class ThermState:
     def P_critical(self):
         return self._AbstractState.p_critical()
 
+
     @property
     @ureg.wraps(CP_const_unit[&#39;Dmolar_critical&#39;][1], None)
     def Dmolar_critical(self):
@@ -243,6 +257,7 @@ class ThermState:
     @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
     def T(self):
         return self._AbstractState.T()
+
 
     @property
     @ureg.wraps(CP_const_unit[&#39;Dmolar_critical&#39;][1], None)
@@ -282,8 +297,11 @@ class ThermState:
     @property
     # @ureg.wraps(CP_const_unit[&#39;Z&#39;][1], None)
     def compressibility_factor(self):
-        Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
-        return Z_.m_as(ureg.dimensionless)
+        if self.backend == &#34;HEPROP&#34;:
+            Z_ = self._AbstractState.compressibility_factor()
+        else:
+            Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
+        return Z_
         # Temporarily unavailable function
         # return self._AbstractState.compressibility_factor()
     # Useful shorthand
@@ -390,7 +408,7 @@ class ThermState:
         return self._AbstractState.isobaric_expansion_coefficient()
 
     @property
-    @ureg.wraps(CP_const_unit[&#39;isentropic_expansion_coefficient&#39;][1], None)
+    @ureg.wraps(CP_const_unit[&#39;isentropic_expansion_coefficient&#39;][1], None) ### not existing with coolprop issues
     def isentropic_expansion_coefficient(self):
         return self._AbstractState.isentropic_expansion_coefficient()
 
@@ -454,12 +472,7 @@ class ThermState:
     @property
     def is_super_critical(self):
         &#34;&#34;&#34;Return True if state is supercritical.&#34;&#34;&#34;
-        if self.phase in [1, 2, 3, 4]:
-            return True
-        elif self.phase in [0, 4, 5, 6]:
-            return False
-        else:
-            raise ValueError(&#39;Phase is unknown&#39;)
+        return self.phase == 1
 
     @property
     def specific_heat_input(self):
@@ -470,7 +483,10 @@ class ThermState:
         # Because specific volume is not available as function of
         # the AbstractState, density is used instead
         # The resulting function is: -Dmass*(dHmass/dDmass)|p
-        return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)
+        if self.backend == &#34;HEPROP&#34;:
+            return self._AbstractState.specific_heat_input() * ureg.joule/ureg.kg
+        else:
+            return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)
 
     @property
     def gamma(self):
@@ -529,9 +545,19 @@ class ThermState:
         return self._AbstractState.backend_name()
 
     def __str__(self):
-        return f&#39;{self.name.capitalize()} at &#39; + \
-            f&#39;T: {self.T.to(ureg.K):.3~g~} and &#39; + \
-            f&#39;P: {self.P.to(ureg.psi):.3g~}.&#39;
+        if self.Q == 0:
+            return (f&#39;saturated {self.name.lower()} liquid &#39;
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+        elif self.Q == 1:
+            return (f&#39;saturated {self.name.lower()} vapor &#39;
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+        elif self.Q &gt; 0 and self.Q &lt; 1:
+            return (f&#39;two-phase {self.name.lower()} &#39;
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+        else:
+            return (f&#39;{self.name.lower()} at &#39;
+                    f&#39;T: {self.T.to(ureg.K):.3g~} and &#39;
+                    f&#39;P: {self.P.to(ureg.bar):.3g~}.&#39;)
 
     @property
     def M(self):
@@ -585,7 +611,19 @@ class ThermState:
             raise ValueError(f&#39;Conditions {conditions!r} are not defined.&#39;)
         TempState = self.copy()
         TempState.update_kw(P=P, T=T)
-        return TempState</code></pre>
+        return TempState
+
+    @property
+    def P_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(T=self.T, Q=0)
+        return TempState.P
+
+    @property
+    def T_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(P=self.P, Q=0)
+        return TempState.T</code></pre>
 </details>
 </section>
 <section>
@@ -614,7 +652,13 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         Available backends: HEOS (opensource), REFPROP.
         See http://www.coolprop.org/coolprop/REFPROP.html for details.
         &#34;&#34;&#34;
-        self._AbstractState = CP.AbstractState(backend, fluid)
+        # TODO this should check for the fluid name too
+        if backend == &#34;HEPROP&#34;:
+            if fluid.lower() != &#39;helium&#39;:
+                raise ValueError(f&#39;Only helium fluid can be used with HEPROP backend: {fluid}&#39;)
+            self._AbstractState = HepropState()
+        else:
+            self._AbstractState = CP.AbstractState(backend, fluid)
         if state_parameters:
             self.update_kw(**state_parameters)
 
@@ -639,8 +683,12 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         CP_input_str = name1 + name2
         CP_value1 = self.prepare_input(name1, value1)
         CP_value2 = self.prepare_input(name2, value2)
-        self._AbstractState.update(
-            CP_inputs[CP_input_str], CP_value1, CP_value2)
+
+        if self.backend == &#34;HEPROP&#34;:
+            self._AbstractState.update(name1, CP_value1, name2, CP_value2)
+        else:
+            self._AbstractState.update(
+                CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
 
     @staticmethod
     def prepare_input(name, value):
@@ -676,6 +724,7 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
     def P_critical(self):
         return self._AbstractState.p_critical()
 
+
     @property
     @ureg.wraps(CP_const_unit[&#39;Dmolar_critical&#39;][1], None)
     def Dmolar_critical(self):
@@ -690,6 +739,7 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
     @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
     def T(self):
         return self._AbstractState.T()
+
 
     @property
     @ureg.wraps(CP_const_unit[&#39;Dmolar_critical&#39;][1], None)
@@ -729,8 +779,11 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
     @property
     # @ureg.wraps(CP_const_unit[&#39;Z&#39;][1], None)
     def compressibility_factor(self):
-        Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
-        return Z_.m_as(ureg.dimensionless)
+        if self.backend == &#34;HEPROP&#34;:
+            Z_ = self._AbstractState.compressibility_factor()
+        else:
+            Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
+        return Z_
         # Temporarily unavailable function
         # return self._AbstractState.compressibility_factor()
     # Useful shorthand
@@ -837,7 +890,7 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         return self._AbstractState.isobaric_expansion_coefficient()
 
     @property
-    @ureg.wraps(CP_const_unit[&#39;isentropic_expansion_coefficient&#39;][1], None)
+    @ureg.wraps(CP_const_unit[&#39;isentropic_expansion_coefficient&#39;][1], None) ### not existing with coolprop issues
     def isentropic_expansion_coefficient(self):
         return self._AbstractState.isentropic_expansion_coefficient()
 
@@ -901,12 +954,7 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
     @property
     def is_super_critical(self):
         &#34;&#34;&#34;Return True if state is supercritical.&#34;&#34;&#34;
-        if self.phase in [1, 2, 3, 4]:
-            return True
-        elif self.phase in [0, 4, 5, 6]:
-            return False
-        else:
-            raise ValueError(&#39;Phase is unknown&#39;)
+        return self.phase == 1
 
     @property
     def specific_heat_input(self):
@@ -917,7 +965,10 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         # Because specific volume is not available as function of
         # the AbstractState, density is used instead
         # The resulting function is: -Dmass*(dHmass/dDmass)|p
-        return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)
+        if self.backend == &#34;HEPROP&#34;:
+            return self._AbstractState.specific_heat_input() * ureg.joule/ureg.kg
+        else:
+            return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)
 
     @property
     def gamma(self):
@@ -976,9 +1027,19 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         return self._AbstractState.backend_name()
 
     def __str__(self):
-        return f&#39;{self.name.capitalize()} at &#39; + \
-            f&#39;T: {self.T.to(ureg.K):.3~g~} and &#39; + \
-            f&#39;P: {self.P.to(ureg.psi):.3g~}.&#39;
+        if self.Q == 0:
+            return (f&#39;saturated {self.name.lower()} liquid &#39;
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+        elif self.Q == 1:
+            return (f&#39;saturated {self.name.lower()} vapor &#39;
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+        elif self.Q &gt; 0 and self.Q &lt; 1:
+            return (f&#39;two-phase {self.name.lower()} &#39;
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+        else:
+            return (f&#39;{self.name.lower()} at &#39;
+                    f&#39;T: {self.T.to(ureg.K):.3g~} and &#39;
+                    f&#39;P: {self.P.to(ureg.bar):.3g~}.&#39;)
 
     @property
     def M(self):
@@ -1032,7 +1093,19 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
             raise ValueError(f&#39;Conditions {conditions!r} are not defined.&#39;)
         TempState = self.copy()
         TempState.update_kw(P=P, T=T)
-        return TempState</code></pre>
+        return TempState
+
+    @property
+    def P_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(T=self.T, Q=0)
+        return TempState.P
+
+    @property
+    def T_sat(self):
+        TempState = self.copy()
+        TempState.update_kw(P=self.P, Q=0)
+        return TempState.T</code></pre>
 </details>
 <h3>Static methods</h3>
 <dl>
@@ -1362,6 +1435,20 @@ def P_reducing(self):
     return self._AbstractState.p_reducing()</code></pre>
 </details>
 </dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.P_sat"><code class="name">var <span class="ident">P_sat</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def P_sat(self):
+    TempState = self.copy()
+    TempState.update_kw(T=self.T, Q=0)
+    return TempState.P</code></pre>
+</details>
+</dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.P_triple"><code class="name">var <span class="ident">P_triple</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -1491,6 +1578,20 @@ def T_reducing(self):
     return self._AbstractState.T_reducing()</code></pre>
 </details>
 </dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T_sat"><code class="name">var <span class="ident">T_sat</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def T_sat(self):
+    TempState = self.copy()
+    TempState.update_kw(P=self.P, Q=0)
+    return TempState.T</code></pre>
+</details>
+</dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.T_triple"><code class="name">var <span class="ident">T_triple</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -1514,8 +1615,11 @@ def T_triple(self):
 <pre><code class="python">@property
 # @ureg.wraps(CP_const_unit[&#39;Z&#39;][1], None)
 def compressibility_factor(self):
-    Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
-    return Z_.m_as(ureg.dimensionless)
+    if self.backend == &#34;HEPROP&#34;:
+        Z_ = self._AbstractState.compressibility_factor()
+    else:
+        Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
+    return Z_
     # Temporarily unavailable function
     # return self._AbstractState.compressibility_factor()</code></pre>
 </details>
@@ -1545,8 +1649,11 @@ def backend(self):
 <pre><code class="python">@property
 # @ureg.wraps(CP_const_unit[&#39;Z&#39;][1], None)
 def compressibility_factor(self):
-    Z_ = self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)
-    return Z_.m_as(ureg.dimensionless)
+    if self.backend == &#34;HEPROP&#34;:
+        Z_ = self._AbstractState.compressibility_factor()
+    else:
+        Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
+    return Z_
     # Temporarily unavailable function
     # return self._AbstractState.compressibility_factor()</code></pre>
 </details>
@@ -1608,12 +1715,7 @@ def gas_constant(self):
 <pre><code class="python">@property
 def is_super_critical(self):
     &#34;&#34;&#34;Return True if state is supercritical.&#34;&#34;&#34;
-    if self.phase in [1, 2, 3, 4]:
-        return True
-    elif self.phase in [0, 4, 5, 6]:
-        return False
-    else:
-        raise ValueError(&#39;Phase is unknown&#39;)</code></pre>
+    return self.phase == 1</code></pre>
 </details>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.isentropic_expansion_coefficient"><code class="name">var <span class="ident">isentropic_expansion_coefficient</span></code></dt>
@@ -1624,7 +1726,7 @@ def is_super_critical(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-@ureg.wraps(CP_const_unit[&#39;isentropic_expansion_coefficient&#39;][1], None)
+@ureg.wraps(CP_const_unit[&#39;isentropic_expansion_coefficient&#39;][1], None) ### not existing with coolprop issues
 def isentropic_expansion_coefficient(self):
     return self._AbstractState.isentropic_expansion_coefficient()</code></pre>
 </details>
@@ -1795,7 +1897,10 @@ def specific_heat_input(self):
     # Because specific volume is not available as function of
     # the AbstractState, density is used instead
     # The resulting function is: -Dmass*(dHmass/dDmass)|p
-    return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)</code></pre>
+    if self.backend == &#34;HEPROP&#34;:
+        return self._AbstractState.specific_heat_input() * ureg.joule/ureg.kg
+    else:
+        return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)</code></pre>
 </details>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.speed_sound"><code class="name">var <span class="ident">speed_sound</span></code></dt>
@@ -1964,8 +2069,12 @@ def viscosity(self):
     CP_input_str = name1 + name2
     CP_value1 = self.prepare_input(name1, value1)
     CP_value2 = self.prepare_input(name2, value2)
-    self._AbstractState.update(
-        CP_inputs[CP_input_str], CP_value1, CP_value2)</code></pre>
+
+    if self.backend == &#34;HEPROP&#34;:
+        self._AbstractState.update(name1, CP_value1, name2, CP_value2)
+    else:
+        self._AbstractState.update(
+            CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop</code></pre>
 </details>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.update_kw"><code class="name flex">
@@ -2033,6 +2142,7 @@ def viscosity(self):
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.P_critical" href="#CryoToolBox.cp_wrapper.ThermState.P_critical">P_critical</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.P_max" href="#CryoToolBox.cp_wrapper.ThermState.P_max">P_max</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.P_reducing" href="#CryoToolBox.cp_wrapper.ThermState.P_reducing">P_reducing</a></code></li>
+<li><code><a title="CryoToolBox.cp_wrapper.ThermState.P_sat" href="#CryoToolBox.cp_wrapper.ThermState.P_sat">P_sat</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.P_triple" href="#CryoToolBox.cp_wrapper.ThermState.P_triple">P_triple</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.Prandtl" href="#CryoToolBox.cp_wrapper.ThermState.Prandtl">Prandtl</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.Q" href="#CryoToolBox.cp_wrapper.ThermState.Q">Q</a></code></li>
@@ -2043,6 +2153,7 @@ def viscosity(self):
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.T_max" href="#CryoToolBox.cp_wrapper.ThermState.T_max">T_max</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.T_min" href="#CryoToolBox.cp_wrapper.ThermState.T_min">T_min</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.T_reducing" href="#CryoToolBox.cp_wrapper.ThermState.T_reducing">T_reducing</a></code></li>
+<li><code><a title="CryoToolBox.cp_wrapper.ThermState.T_sat" href="#CryoToolBox.cp_wrapper.ThermState.T_sat">T_sat</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.T_triple" href="#CryoToolBox.cp_wrapper.ThermState.T_triple">T_triple</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.Z" href="#CryoToolBox.cp_wrapper.ThermState.Z">Z</a></code></li>
 <li><code><a title="CryoToolBox.cp_wrapper.ThermState.backend" href="#CryoToolBox.cp_wrapper.ThermState.backend">backend</a></code></li>

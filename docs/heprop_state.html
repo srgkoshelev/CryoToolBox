@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>CryoToolBox.heprop_state API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>CryoToolBox.heprop_state</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import numpy as np
+import ctypes
+
+
+HEPAK_inputs = {
+    &#39;P&#39;: 1,
+    &#39;T&#39;: 2,
+    &#39;D&#39;: 3,
+    &#39;V&#39;: 4,
+    &#39;S&#39;: 5,
+    &#39;Smass&#39;: 5,
+    &#39;H&#39;: 6,
+    &#39;Hmass&#39;: 6,
+    &#39;U&#39;: 7,
+    &#39;G&#39;: 8,
+    &#39;X&#39;: 9,
+    &#39;Q&#39;: 9,
+    &#39;dT&#39;: 10,
+    &#39;M&#39;: 11,
+    &#39;2&#39;: 12,
+    &#39;sL&#39;: 13,
+    &#39;sV&#39;: 14,
+    &#39;L&#39;: 15
+}
+
+# Load the HEPAK DLL
+def init_he():
+    try:
+        #dll = ctypes.WinDLL(&#39;./hepak.dll&#39;)
+        dll = ctypes.CDLL(&#39;./hepak.dll&#39;)
+        err=&#39;OK&#39;
+    except OSError as el:
+        print(&#34;Helium dll not present in the folder&#34;) ###should raise an error
+        dll = None
+        err=&#39;No&#39;
+    return dll, err
+
+def hecalc(j1, value1, j2, value2, unit, dll, err):
+    if isinstance(j1, str):
+            j1_ptr = ctypes.c_int(HEPAK_inputs[j1])
+    else:
+        j1_ptr = ctypes.c_int(j1)
+    value1_ptr = ctypes.c_double(value1)
+    if isinstance(j2, str):
+        j2_ptr = ctypes.c_int(HEPAK_inputs[j2])
+    else:
+        j2_ptr = ctypes.c_int(j2)
+    value2_ptr = ctypes.c_double(value2)
+    unit_ptr = ctypes.c_int(unit)
+    PROP2 = np.zeros((3,42), dtype=np.float64)
+    ID = ctypes.c_int()
+    if err == &#39;OK&#39;:
+        try:
+            dll.HEPROP(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+        except:
+            dll.heprop_(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+        idi = ID.value
+    return PROP2 if err == &#39;OK&#39; else None
+
+
+class HepropState:
+    def __init__(self, **state_parameters):
+        self.dll, self.err = init_he()
+        self._heprop = None
+
+    def update(self, name1, value1, name2, value2):
+        hepak = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
+        self._heprop = hepak
+
+    def T_critical(self):
+        return 5.1953
+
+    def p_critical(self):
+        return 227462.3
+
+    def rhomolar_critical(self):
+        return 18130.0
+
+    def rhomass_critical(self):
+        return 72.56717426
+
+    def T(self):
+        return self._heprop[0][2]
+
+    def rhomolar(self):
+        return self._heprop[0][3]/0.004002602
+
+    def rhomass(self):
+        return self._heprop[0][3]
+
+    def p(self):
+        return self._heprop[0][1]
+
+    def Q(self):
+        return self._heprop[0][0]
+
+    def molar_mass(self):
+        return 0.004002602
+
+    def gas_constant(self):
+        return 8.3144598
+
+    def compressibility_factor(self):
+        return self._heprop[0][5]
+
+    def hmolar(self):
+        return self._heprop[0][9]*self.molar_mass()
+
+    def hmass(self):
+        return self._heprop[0][9]
+
+    def smolar(self):
+        return self._heprop[0][8]*self.molar_mass()
+
+    def smass(self):
+        return self._heprop[0][8]
+
+    def cpmolar(self):
+        return self._heprop[0][14]*self.molar_mass()
+
+    def cpmass(self):
+        return self._heprop[0][14]
+
+    def cvmolar(self):
+        return self._heprop[0][15]*self.molar_mass()
+
+    def cvmass(self):
+        return self._heprop[0][15]
+
+    def viscosity(self):
+        return self._heprop[0][25]
+
+    def conductivity(self):
+        return self._heprop[0][26]
+
+    def surface_tension(self):
+        return self._heprop[0][29]
+
+    def p_reducing(self):
+        return 0 #value to add, not existing in Coolprop
+
+    def ptriple(self):
+        return 0 #value to add, not existing in Coolprop
+
+    def pmax(self):
+        return 2028000000
+
+    def T_reducing(self):
+        return 5.1953
+
+    def Ttriple(self):
+        return 2.1768
+
+    def Tmax(self):
+        return 1500
+
+    def Tmin(self):
+        return 0.8
+
+    def isothermal_compressibility(self):
+        return self._heprop[0][19]
+
+    def isobaric_expansion_coefficient(self):
+        return self._heprop[0][17]/self._heprop[0][2]
+
+    def isentropic_expansion_coefficient(self):
+        return 0 #value to add, I need to verify this part with Heprop
+
+    def Prandtl(self):
+        return self._heprop[0][27]
+
+    def speed_sound(self):
+        return self._heprop[0][20]
+
+    def name(self):
+        return &#39;helium&#39;
+
+    def backend_name(self):
+        return &#39;HEPROP&#39;
+
+    def phase(self):
+        &#34;&#34;&#34;
+        * 0: Subcritical liquid
+        * 1: Supercritical (p &gt; pc, T &gt; Tc)
+        * 2: Supercritical gas (p &lt; pc, T &gt; Tc)
+        * 3: Supercritical liquid (p &gt; pc, T &lt; Tc)
+        * 4: At the critical point.
+        * 5: Subcritical gas.
+        * 6: Two phase.
+        * 7: Unknown phase
+        &#34;&#34;&#34;
+        if self._heprop[0][0] &lt;= 0 and self._heprop[0][1] &lt; self.p_critical:
+            return 0
+        elif self._heprop[0][2] &gt; self.T_critical and self._heprop[0][1] &gt; self.p_critical:
+            return 1
+        elif self._heprop[0][2] &gt; self.T_critical and self._heprop[0][1] &lt; self.p_critical:
+            return 2
+        elif self._heprop[0][2] &lt; self.T_critical and self._heprop[0][1] &gt; self.p_critical:
+            return 3
+        elif self._heprop[0][2] == self.T_critical and self._heprop[0][1] == self.p_critical:
+            return 4
+        elif self._heprop[0][0] &gt;= 1:
+            return 5
+        elif self._heprop[0][0] &gt; 0 and self._heprop[0][0] &lt; 1:
+            return 6
+        else:
+            return 7
+
+    def specific_heat_input(self):
+        return self._heprop[0][24]</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="CryoToolBox.heprop_state.hecalc"><code class="name flex">
+<span>def <span class="ident">hecalc</span></span>(<span>j1, value1, j2, value2, unit, dll, err)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def hecalc(j1, value1, j2, value2, unit, dll, err):
+    if isinstance(j1, str):
+            j1_ptr = ctypes.c_int(HEPAK_inputs[j1])
+    else:
+        j1_ptr = ctypes.c_int(j1)
+    value1_ptr = ctypes.c_double(value1)
+    if isinstance(j2, str):
+        j2_ptr = ctypes.c_int(HEPAK_inputs[j2])
+    else:
+        j2_ptr = ctypes.c_int(j2)
+    value2_ptr = ctypes.c_double(value2)
+    unit_ptr = ctypes.c_int(unit)
+    PROP2 = np.zeros((3,42), dtype=np.float64)
+    ID = ctypes.c_int()
+    if err == &#39;OK&#39;:
+        try:
+            dll.HEPROP(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+        except:
+            dll.heprop_(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+        idi = ID.value
+    return PROP2 if err == &#39;OK&#39; else None</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.init_he"><code class="name flex">
+<span>def <span class="ident">init_he</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_he():
+    try:
+        #dll = ctypes.WinDLL(&#39;./hepak.dll&#39;)
+        dll = ctypes.CDLL(&#39;./hepak.dll&#39;)
+        err=&#39;OK&#39;
+    except OSError as el:
+        print(&#34;Helium dll not present in the folder&#34;) ###should raise an error
+        dll = None
+        err=&#39;No&#39;
+    return dll, err</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="CryoToolBox.heprop_state.HepropState"><code class="flex name class">
+<span>class <span class="ident">HepropState</span></span>
+<span>(</span><span>**state_parameters)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class HepropState:
+    def __init__(self, **state_parameters):
+        self.dll, self.err = init_he()
+        self._heprop = None
+
+    def update(self, name1, value1, name2, value2):
+        hepak = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
+        self._heprop = hepak
+
+    def T_critical(self):
+        return 5.1953
+
+    def p_critical(self):
+        return 227462.3
+
+    def rhomolar_critical(self):
+        return 18130.0
+
+    def rhomass_critical(self):
+        return 72.56717426
+
+    def T(self):
+        return self._heprop[0][2]
+
+    def rhomolar(self):
+        return self._heprop[0][3]/0.004002602
+
+    def rhomass(self):
+        return self._heprop[0][3]
+
+    def p(self):
+        return self._heprop[0][1]
+
+    def Q(self):
+        return self._heprop[0][0]
+
+    def molar_mass(self):
+        return 0.004002602
+
+    def gas_constant(self):
+        return 8.3144598
+
+    def compressibility_factor(self):
+        return self._heprop[0][5]
+
+    def hmolar(self):
+        return self._heprop[0][9]*self.molar_mass()
+
+    def hmass(self):
+        return self._heprop[0][9]
+
+    def smolar(self):
+        return self._heprop[0][8]*self.molar_mass()
+
+    def smass(self):
+        return self._heprop[0][8]
+
+    def cpmolar(self):
+        return self._heprop[0][14]*self.molar_mass()
+
+    def cpmass(self):
+        return self._heprop[0][14]
+
+    def cvmolar(self):
+        return self._heprop[0][15]*self.molar_mass()
+
+    def cvmass(self):
+        return self._heprop[0][15]
+
+    def viscosity(self):
+        return self._heprop[0][25]
+
+    def conductivity(self):
+        return self._heprop[0][26]
+
+    def surface_tension(self):
+        return self._heprop[0][29]
+
+    def p_reducing(self):
+        return 0 #value to add, not existing in Coolprop
+
+    def ptriple(self):
+        return 0 #value to add, not existing in Coolprop
+
+    def pmax(self):
+        return 2028000000
+
+    def T_reducing(self):
+        return 5.1953
+
+    def Ttriple(self):
+        return 2.1768
+
+    def Tmax(self):
+        return 1500
+
+    def Tmin(self):
+        return 0.8
+
+    def isothermal_compressibility(self):
+        return self._heprop[0][19]
+
+    def isobaric_expansion_coefficient(self):
+        return self._heprop[0][17]/self._heprop[0][2]
+
+    def isentropic_expansion_coefficient(self):
+        return 0 #value to add, I need to verify this part with Heprop
+
+    def Prandtl(self):
+        return self._heprop[0][27]
+
+    def speed_sound(self):
+        return self._heprop[0][20]
+
+    def name(self):
+        return &#39;helium&#39;
+
+    def backend_name(self):
+        return &#39;HEPROP&#39;
+
+    def phase(self):
+        &#34;&#34;&#34;
+        * 0: Subcritical liquid
+        * 1: Supercritical (p &gt; pc, T &gt; Tc)
+        * 2: Supercritical gas (p &lt; pc, T &gt; Tc)
+        * 3: Supercritical liquid (p &gt; pc, T &lt; Tc)
+        * 4: At the critical point.
+        * 5: Subcritical gas.
+        * 6: Two phase.
+        * 7: Unknown phase
+        &#34;&#34;&#34;
+        if self._heprop[0][0] &lt;= 0 and self._heprop[0][1] &lt; self.p_critical:
+            return 0
+        elif self._heprop[0][2] &gt; self.T_critical and self._heprop[0][1] &gt; self.p_critical:
+            return 1
+        elif self._heprop[0][2] &gt; self.T_critical and self._heprop[0][1] &lt; self.p_critical:
+            return 2
+        elif self._heprop[0][2] &lt; self.T_critical and self._heprop[0][1] &gt; self.p_critical:
+            return 3
+        elif self._heprop[0][2] == self.T_critical and self._heprop[0][1] == self.p_critical:
+            return 4
+        elif self._heprop[0][0] &gt;= 1:
+            return 5
+        elif self._heprop[0][0] &gt; 0 and self._heprop[0][0] &lt; 1:
+            return 6
+        else:
+            return 7
+
+    def specific_heat_input(self):
+        return self._heprop[0][24]</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="CryoToolBox.heprop_state.HepropState.Prandtl"><code class="name flex">
+<span>def <span class="ident">Prandtl</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Prandtl(self):
+    return self._heprop[0][27]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.Q"><code class="name flex">
+<span>def <span class="ident">Q</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Q(self):
+    return self._heprop[0][0]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.T"><code class="name flex">
+<span>def <span class="ident">T</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def T(self):
+    return self._heprop[0][2]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.T_critical"><code class="name flex">
+<span>def <span class="ident">T_critical</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def T_critical(self):
+    return 5.1953</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.T_reducing"><code class="name flex">
+<span>def <span class="ident">T_reducing</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def T_reducing(self):
+    return 5.1953</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.Tmax"><code class="name flex">
+<span>def <span class="ident">Tmax</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Tmax(self):
+    return 1500</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.Tmin"><code class="name flex">
+<span>def <span class="ident">Tmin</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Tmin(self):
+    return 0.8</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.Ttriple"><code class="name flex">
+<span>def <span class="ident">Ttriple</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def Ttriple(self):
+    return 2.1768</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.backend_name"><code class="name flex">
+<span>def <span class="ident">backend_name</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def backend_name(self):
+    return &#39;HEPROP&#39;</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.compressibility_factor"><code class="name flex">
+<span>def <span class="ident">compressibility_factor</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def compressibility_factor(self):
+    return self._heprop[0][5]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.conductivity"><code class="name flex">
+<span>def <span class="ident">conductivity</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def conductivity(self):
+    return self._heprop[0][26]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.cpmass"><code class="name flex">
+<span>def <span class="ident">cpmass</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cpmass(self):
+    return self._heprop[0][14]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.cpmolar"><code class="name flex">
+<span>def <span class="ident">cpmolar</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cpmolar(self):
+    return self._heprop[0][14]*self.molar_mass()</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.cvmass"><code class="name flex">
+<span>def <span class="ident">cvmass</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cvmass(self):
+    return self._heprop[0][15]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.cvmolar"><code class="name flex">
+<span>def <span class="ident">cvmolar</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cvmolar(self):
+    return self._heprop[0][15]*self.molar_mass()</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.gas_constant"><code class="name flex">
+<span>def <span class="ident">gas_constant</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def gas_constant(self):
+    return 8.3144598</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.hmass"><code class="name flex">
+<span>def <span class="ident">hmass</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def hmass(self):
+    return self._heprop[0][9]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.hmolar"><code class="name flex">
+<span>def <span class="ident">hmolar</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def hmolar(self):
+    return self._heprop[0][9]*self.molar_mass()</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.isentropic_expansion_coefficient"><code class="name flex">
+<span>def <span class="ident">isentropic_expansion_coefficient</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isentropic_expansion_coefficient(self):
+    return 0 #value to add, I need to verify this part with Heprop</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.isobaric_expansion_coefficient"><code class="name flex">
+<span>def <span class="ident">isobaric_expansion_coefficient</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isobaric_expansion_coefficient(self):
+    return self._heprop[0][17]/self._heprop[0][2]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.isothermal_compressibility"><code class="name flex">
+<span>def <span class="ident">isothermal_compressibility</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isothermal_compressibility(self):
+    return self._heprop[0][19]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.molar_mass"><code class="name flex">
+<span>def <span class="ident">molar_mass</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def molar_mass(self):
+    return 0.004002602</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.name"><code class="name flex">
+<span>def <span class="ident">name</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def name(self):
+    return &#39;helium&#39;</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.p"><code class="name flex">
+<span>def <span class="ident">p</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def p(self):
+    return self._heprop[0][1]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.p_critical"><code class="name flex">
+<span>def <span class="ident">p_critical</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def p_critical(self):
+    return 227462.3</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.p_reducing"><code class="name flex">
+<span>def <span class="ident">p_reducing</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def p_reducing(self):
+    return 0 #value to add, not existing in Coolprop</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.phase"><code class="name flex">
+<span>def <span class="ident">phase</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><ul>
+<li>0: Subcritical liquid</li>
+<li>1: Supercritical (p &gt; pc, T &gt; Tc)</li>
+<li>2: Supercritical gas (p &lt; pc, T &gt; Tc)</li>
+<li>3: Supercritical liquid (p &gt; pc, T &lt; Tc)</li>
+<li>4: At the critical point.</li>
+<li>5: Subcritical gas.</li>
+<li>6: Two phase.</li>
+<li>7: Unknown phase</li>
+</ul></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def phase(self):
+    &#34;&#34;&#34;
+    * 0: Subcritical liquid
+    * 1: Supercritical (p &gt; pc, T &gt; Tc)
+    * 2: Supercritical gas (p &lt; pc, T &gt; Tc)
+    * 3: Supercritical liquid (p &gt; pc, T &lt; Tc)
+    * 4: At the critical point.
+    * 5: Subcritical gas.
+    * 6: Two phase.
+    * 7: Unknown phase
+    &#34;&#34;&#34;
+    if self._heprop[0][0] &lt;= 0 and self._heprop[0][1] &lt; self.p_critical:
+        return 0
+    elif self._heprop[0][2] &gt; self.T_critical and self._heprop[0][1] &gt; self.p_critical:
+        return 1
+    elif self._heprop[0][2] &gt; self.T_critical and self._heprop[0][1] &lt; self.p_critical:
+        return 2
+    elif self._heprop[0][2] &lt; self.T_critical and self._heprop[0][1] &gt; self.p_critical:
+        return 3
+    elif self._heprop[0][2] == self.T_critical and self._heprop[0][1] == self.p_critical:
+        return 4
+    elif self._heprop[0][0] &gt;= 1:
+        return 5
+    elif self._heprop[0][0] &gt; 0 and self._heprop[0][0] &lt; 1:
+        return 6
+    else:
+        return 7</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.pmax"><code class="name flex">
+<span>def <span class="ident">pmax</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pmax(self):
+    return 2028000000</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.ptriple"><code class="name flex">
+<span>def <span class="ident">ptriple</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ptriple(self):
+    return 0 #value to add, not existing in Coolprop</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.rhomass"><code class="name flex">
+<span>def <span class="ident">rhomass</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rhomass(self):
+    return self._heprop[0][3]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.rhomass_critical"><code class="name flex">
+<span>def <span class="ident">rhomass_critical</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rhomass_critical(self):
+    return 72.56717426</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.rhomolar"><code class="name flex">
+<span>def <span class="ident">rhomolar</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rhomolar(self):
+    return self._heprop[0][3]/0.004002602</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.rhomolar_critical"><code class="name flex">
+<span>def <span class="ident">rhomolar_critical</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rhomolar_critical(self):
+    return 18130.0</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.smass"><code class="name flex">
+<span>def <span class="ident">smass</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def smass(self):
+    return self._heprop[0][8]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.smolar"><code class="name flex">
+<span>def <span class="ident">smolar</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def smolar(self):
+    return self._heprop[0][8]*self.molar_mass()</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.specific_heat_input"><code class="name flex">
+<span>def <span class="ident">specific_heat_input</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def specific_heat_input(self):
+    return self._heprop[0][24]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.speed_sound"><code class="name flex">
+<span>def <span class="ident">speed_sound</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def speed_sound(self):
+    return self._heprop[0][20]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.surface_tension"><code class="name flex">
+<span>def <span class="ident">surface_tension</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def surface_tension(self):
+    return self._heprop[0][29]</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self, name1, value1, name2, value2)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self, name1, value1, name2, value2):
+    hepak = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
+    self._heprop = hepak</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.heprop_state.HepropState.viscosity"><code class="name flex">
+<span>def <span class="ident">viscosity</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def viscosity(self):
+    return self._heprop[0][25]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="CryoToolBox" href="index.html">CryoToolBox</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="CryoToolBox.heprop_state.hecalc" href="#CryoToolBox.heprop_state.hecalc">hecalc</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.init_he" href="#CryoToolBox.heprop_state.init_he">init_he</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="CryoToolBox.heprop_state.HepropState" href="#CryoToolBox.heprop_state.HepropState">HepropState</a></code></h4>
+<ul class="">
+<li><code><a title="CryoToolBox.heprop_state.HepropState.Prandtl" href="#CryoToolBox.heprop_state.HepropState.Prandtl">Prandtl</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.Q" href="#CryoToolBox.heprop_state.HepropState.Q">Q</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.T" href="#CryoToolBox.heprop_state.HepropState.T">T</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.T_critical" href="#CryoToolBox.heprop_state.HepropState.T_critical">T_critical</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.T_reducing" href="#CryoToolBox.heprop_state.HepropState.T_reducing">T_reducing</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.Tmax" href="#CryoToolBox.heprop_state.HepropState.Tmax">Tmax</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.Tmin" href="#CryoToolBox.heprop_state.HepropState.Tmin">Tmin</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.Ttriple" href="#CryoToolBox.heprop_state.HepropState.Ttriple">Ttriple</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.backend_name" href="#CryoToolBox.heprop_state.HepropState.backend_name">backend_name</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.compressibility_factor" href="#CryoToolBox.heprop_state.HepropState.compressibility_factor">compressibility_factor</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.conductivity" href="#CryoToolBox.heprop_state.HepropState.conductivity">conductivity</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.cpmass" href="#CryoToolBox.heprop_state.HepropState.cpmass">cpmass</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.cpmolar" href="#CryoToolBox.heprop_state.HepropState.cpmolar">cpmolar</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.cvmass" href="#CryoToolBox.heprop_state.HepropState.cvmass">cvmass</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.cvmolar" href="#CryoToolBox.heprop_state.HepropState.cvmolar">cvmolar</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.gas_constant" href="#CryoToolBox.heprop_state.HepropState.gas_constant">gas_constant</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.hmass" href="#CryoToolBox.heprop_state.HepropState.hmass">hmass</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.hmolar" href="#CryoToolBox.heprop_state.HepropState.hmolar">hmolar</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.isentropic_expansion_coefficient" href="#CryoToolBox.heprop_state.HepropState.isentropic_expansion_coefficient">isentropic_expansion_coefficient</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.isobaric_expansion_coefficient" href="#CryoToolBox.heprop_state.HepropState.isobaric_expansion_coefficient">isobaric_expansion_coefficient</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.isothermal_compressibility" href="#CryoToolBox.heprop_state.HepropState.isothermal_compressibility">isothermal_compressibility</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.molar_mass" href="#CryoToolBox.heprop_state.HepropState.molar_mass">molar_mass</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.name" href="#CryoToolBox.heprop_state.HepropState.name">name</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.p" href="#CryoToolBox.heprop_state.HepropState.p">p</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.p_critical" href="#CryoToolBox.heprop_state.HepropState.p_critical">p_critical</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.p_reducing" href="#CryoToolBox.heprop_state.HepropState.p_reducing">p_reducing</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.phase" href="#CryoToolBox.heprop_state.HepropState.phase">phase</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.pmax" href="#CryoToolBox.heprop_state.HepropState.pmax">pmax</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.ptriple" href="#CryoToolBox.heprop_state.HepropState.ptriple">ptriple</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.rhomass" href="#CryoToolBox.heprop_state.HepropState.rhomass">rhomass</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.rhomass_critical" href="#CryoToolBox.heprop_state.HepropState.rhomass_critical">rhomass_critical</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.rhomolar" href="#CryoToolBox.heprop_state.HepropState.rhomolar">rhomolar</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.rhomolar_critical" href="#CryoToolBox.heprop_state.HepropState.rhomolar_critical">rhomolar_critical</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.smass" href="#CryoToolBox.heprop_state.HepropState.smass">smass</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.smolar" href="#CryoToolBox.heprop_state.HepropState.smolar">smolar</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.specific_heat_input" href="#CryoToolBox.heprop_state.HepropState.specific_heat_input">specific_heat_input</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.speed_sound" href="#CryoToolBox.heprop_state.HepropState.speed_sound">speed_sound</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.surface_tension" href="#CryoToolBox.heprop_state.HepropState.surface_tension">surface_tension</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.update" href="#CryoToolBox.heprop_state.HepropState.update">update</a></code></li>
+<li><code><a title="CryoToolBox.heprop_state.HepropState.viscosity" href="#CryoToolBox.heprop_state.HepropState.viscosity">viscosity</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

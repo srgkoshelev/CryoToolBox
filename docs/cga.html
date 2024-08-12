@@ -37,9 +37,10 @@ Pressure relief calculations for CGA S-1.3.
 from . import logger
 from .std_conditions import ureg, Q_
 from .cp_wrapper import CP_const_unit
+from scipy import optimize
 
 
-def P_fr(P_set, factor=1.1):
+def P_FR(P_set, factor=0.1):
     &#34;&#34;&#34;Calculate flow rating pressure as per CGA S-1.3 2008 5.1.13.
 
     Parameters:
@@ -50,46 +51,61 @@ def P_fr(P_set, factor=1.1):
 
     Returns:
     --------
-    P_fr : flow rating pressure
+    P_FR : flow rating pressure
     &#34;&#34;&#34;
-    return (factor * P_set.to(ureg.psi)).to(ureg.psig)
+    return ((1+factor) * P_set.to(ureg.psi)).to(ureg.psig)
 
 
-def theta(fluid, step=0.01):
-    &#34;&#34;&#34;
-    Calculate latent heat/specific heat input and temperature for flow
-    capacity calculation per CGA S-1.3 2008 6.1.3.
+def theta(fluid):
+    &#34;&#34;&#34;&#34;&#34;Calculate temperature for flow capacity calculation per
+    CGA S-1.3 2008 6.1.3.
 
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    step : temperature step
-    returns : tuple (specific heat, temperature)
+    Parameters
+    ----------
+    fluid : ThermState
+        Object describing thermodynamic state (fluid, T, P).
+
+    Returns
+    -------
+    Quantity {temperature: 1}
     &#34;&#34;&#34;
     temp_state = fluid.copy()
-    # Only working for pure fluids and pre-defined mixtures
-    if fluid.is_super_critical:
-        logger.warning(f&#39;{fluid.name} is supercritical at {fluid.P:.3~g}&#39;
-                       f&#39; and {fluid.T:.3g~}. Specific heat input will be used.&#39;)
-        temp_state.update(&#39;P&#39;, fluid.P, &#39;T&#39;, fluid.T_min)
-        T_start = temp_state.T
-        T_end = 300*ureg.K
-        cga_criterion = ureg(&#39;0 m/J * (m*kg)**0.5&#39;)
-        # CGA criterion for calculating temperature of specific heat input
-        T = T_start
-        while T &lt;= T_end:
-            spec_vol = 1/temp_state.Dmass  # specific volume
-            cga_criterion_new = (spec_vol**0.5)/temp_state.specific_heat_input
-            if cga_criterion_new &gt; cga_criterion:
-                cga_criterion = cga_criterion_new
-            else:
-                break  # Function has only one maximum
-            T += step*ureg.K
-            temp_state.update(&#39;P&#39;, temp_state.P, &#39;T&#39;, T)
-        return (temp_state.specific_heat_input, T)
+    if not fluid.is_super_critical:
+        temp_state.update_kw(P=temp_state.P, Q=0)
+        return temp_state.T
+    T2_ = 1000      # K
+    def func(T_):
+        temp_state.update_kw(P=temp_state.P, T=T_*ureg.K)
+        spec_vol = 1/temp_state.Dmass  # specific volume
+        y = -(spec_vol**0.5)/temp_state.specific_heat_input
+        return y.m_as(ureg(&#39;0 m/J * (m*kg)**0.5&#39;))
+    T_relief = optimize.fminbound(func, fluid.T_min.m_as(ureg.K), T2_)
+    return T_relief * ureg.K
+
+
+def calculate_fluid_FR(fluid, factor=0.1):
+    &#34;&#34;&#34;Calculate flow rating temperature and pressure.
+    References: CGA S-1.3 2008 5.1.13 and 6.1.3.
+    Parameters:
+    -----------
+    fluid : ThermState
+        Fluid at design temperature and pressure.
+    Returns:
+    --------
+    ThermState
+        Fluid at flow rating pressure and temperature for flow capacity calculation.
+    &#34;&#34;&#34;
+    P_flow = P_FR(fluid.P, factor=factor)
+    fluid_FR = fluid.copy()
+    fluid_FR.update_kw(P=P_flow, Hmass=fluid.Hmass)
+    if not fluid_FR.is_super_critical:
+        fluid_FR.update_kw(P=fluid_FR.P, Q=1)
     else:
-        logger.warning(f&#39;{fluid.name} is subcritical at {fluid.P:.3~g}. \
-        Latent heat of evaporation will be used&#39;)
-        latent_heat = fluid.latent_heat
-        return (latent_heat, temp_state.T)  # saturation temperature
+        T_flow = theta(fluid_FR)
+        fluid_FR.update_kw(P=P_flow, T=T_flow)
+    return fluid_FR
+
+
 
 
 def F(fluid_FR, fluid_PRD):
@@ -121,6 +137,14 @@ def primary_insulated(fluid_FR, U, A, F=1, conservative=True):
     return Q_a * ureg.ft**3 / ureg.min
 
 
+def relief_fire_liquefied(fluid_FR, A, F=1):
+    &#34;&#34;&#34;Calculate required relief capacity for liquefied compressed gases,
+    refrigerated fluids, and refrigerated (cryogenic) fluids in uninsulated and
+    insulated containers.
+    CGA S-1.3 2008 6.3.2.&#34;&#34;&#34;
+    return F * G_u(fluid_FR) * A.m_as(ureg.ft**2)**0.82 * ureg.ft**3/ureg.min
+
+
 def G_i(fluid_FR, conservative=True):
     &#34;&#34;&#34;Calculate gas factor for insulated containers per
     Notes to Table 1 and Table 2.
@@ -128,6 +152,30 @@ def G_i(fluid_FR, conservative=True):
     fluid_FR: fluid at flow rating temperature and pressure
     &#34;&#34;&#34;
 
+    L_adj = _calculate_Gi_Gu_heat(fluid_FR)
+    T = theta(fluid_FR)
+    C = fluid_FR.C_gas_const
+    TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
+    # Conservative value for He is 52.5 for P &lt;= 200 psig
+    if conservative and fluid_FR.name.lower() == &#39;helium&#39;:
+        return 52.5
+    else:
+        return _G_i_us(T, C, L_adj, TZM)
+
+def G_u(fluid_FR):
+    &#34;&#34;&#34;Calculate gas factor for insulated containers per
+    Notes to Table 1 and Table 2.
+
+    fluid_FR: fluid at flow rating temperature and pressure
+    &#34;&#34;&#34;
+    L_adj = _calculate_Gi_Gu_heat(fluid_FR)
+    C = fluid_FR.C_gas_const
+    TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
+    return _G_u_us(C, L_adj, TZM)
+
+def _calculate_Gi_Gu_heat(fluid_FR):
+    &#34;&#34;&#34;Calculate adjusted value for latent heat/specific heat input based on
+    Notes for Tables 1 and 2 of CGA S-1.3 2008.&#34;&#34;&#34;
     if fluid_FR.P &gt;= fluid_FR.P_critical:
         L = fluid_FR.specific_heat_input  # L is replaced by theta
     elif fluid_FR.P &gt;= 0.4*fluid_FR.P_critical:
@@ -136,18 +184,10 @@ def G_i(fluid_FR, conservative=True):
         v_l = 1/temp_state.Dmass
         temp_state.update_kw(P=temp_state.P, Q=1*ureg.dimensionless)
         v_g = 1/temp_state.Dmass
-        L = fluid_FR.latent_heat * (v_g-v_l)/v_g
+        L = fluid_FR.latent_heat * v_g/(v_g-v_l)
     else:
         L = fluid_FR.latent_heat
-    L, T = theta(fluid_FR)
-    C = fluid_FR.C_gas_const
-    TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
-    # Conservative value for He is 52.5 for P &lt;= 200 psig
-    if conservative and fluid_FR.name.lower() == &#39;helium&#39;:
-        return 52.5
-    else:
-        return _G_i_us(T, C, L, TZM)
-
+    return L
 
 @ureg.wraps(None, (ureg.degR,
                    CP_const_unit[&#39;C_us&#39;][1],
@@ -156,8 +196,20 @@ def G_i(fluid_FR, conservative=True):
 def _G_i_us(T, C, L, TZM):
     &#34;&#34;&#34;Calculate G_i factor in US customary units.
     While the actual value has units, the quantity returned as dimensionless.
+    CGA S-1.3 Notes for Table 1 and Table 2.
     &#34;&#34;&#34;
-    return 73.4 * (1660-T) / (C*L) * TZM</code></pre>
+    return 73.4 * (1660-T) / (C*L) * TZM
+
+
+@ureg.wraps(None, (CP_const_unit[&#39;C_us&#39;][1],
+                   ureg.BTU/ureg.lb,
+                   ureg.degR**0.5))
+def _G_u_us(C, L, TZM):
+    &#34;&#34;&#34;Calculate G_i factor in US customary units.
+    While the actual value has units, the quantity returned as dimensionless.
+    CGA S-1.3 Notes for Table 1 and Table 2.
+    &#34;&#34;&#34;
+    return 633_000/ (C*L) * TZM</code></pre>
 </details>
 </section>
 <section>
@@ -212,29 +264,42 @@ Notes to Table 1 and Table 2.</p>
     fluid_FR: fluid at flow rating temperature and pressure
     &#34;&#34;&#34;
 
-    if fluid_FR.P &gt;= fluid_FR.P_critical:
-        L = fluid_FR.specific_heat_input  # L is replaced by theta
-    elif fluid_FR.P &gt;= 0.4*fluid_FR.P_critical:
-        temp_state = fluid_FR.copy()
-        temp_state.update_kw(P=temp_state.P, Q=0*ureg.dimensionless)
-        v_l = 1/temp_state.Dmass
-        temp_state.update_kw(P=temp_state.P, Q=1*ureg.dimensionless)
-        v_g = 1/temp_state.Dmass
-        L = fluid_FR.latent_heat * (v_g-v_l)/v_g
-    else:
-        L = fluid_FR.latent_heat
-    L, T = theta(fluid_FR)
+    L_adj = _calculate_Gi_Gu_heat(fluid_FR)
+    T = theta(fluid_FR)
     C = fluid_FR.C_gas_const
     TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
     # Conservative value for He is 52.5 for P &lt;= 200 psig
     if conservative and fluid_FR.name.lower() == &#39;helium&#39;:
         return 52.5
     else:
-        return _G_i_us(T, C, L, TZM)</code></pre>
+        return _G_i_us(T, C, L_adj, TZM)</code></pre>
 </details>
 </dd>
-<dt id="CryoToolBox.cga.P_fr"><code class="name flex">
-<span>def <span class="ident">P_fr</span></span>(<span>P_set, factor=1.1)</span>
+<dt id="CryoToolBox.cga.G_u"><code class="name flex">
+<span>def <span class="ident">G_u</span></span>(<span>fluid_FR)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate gas factor for insulated containers per
+Notes to Table 1 and Table 2.</p>
+<p>fluid_FR: fluid at flow rating temperature and pressure</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def G_u(fluid_FR):
+    &#34;&#34;&#34;Calculate gas factor for insulated containers per
+    Notes to Table 1 and Table 2.
+
+    fluid_FR: fluid at flow rating temperature and pressure
+    &#34;&#34;&#34;
+    L_adj = _calculate_Gi_Gu_heat(fluid_FR)
+    C = fluid_FR.C_gas_const
+    TZM = 1 / fluid_FR.MZT  # sqrt(T*Z/M)
+    return _G_u_us(C, L_adj, TZM)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.cga.P_FR"><code class="name flex">
+<span>def <span class="ident">P_FR</span></span>(<span>P_set, factor=0.1)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate flow rating pressure as per CGA S-1.3 2008 5.1.13.</p>
@@ -243,12 +308,12 @@ Notes to Table 1 and Table 2.</p>
 factor : pressure increase factor as per BPVC VIII Div. 1, UG-125
 Common factors: 1.1, 1.21 (fire)</p>
 <h2 id="returns">Returns:</h2>
-<p>P_fr : flow rating pressure</p></div>
+<p>P_FR : flow rating pressure</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def P_fr(P_set, factor=1.1):
+<pre><code class="python">def P_FR(P_set, factor=0.1):
     &#34;&#34;&#34;Calculate flow rating pressure as per CGA S-1.3 2008 5.1.13.
 
     Parameters:
@@ -259,9 +324,50 @@ Common factors: 1.1, 1.21 (fire)</p>
 
     Returns:
     --------
-    P_fr : flow rating pressure
+    P_FR : flow rating pressure
     &#34;&#34;&#34;
-    return (factor * P_set.to(ureg.psi)).to(ureg.psig)</code></pre>
+    return ((1+factor) * P_set.to(ureg.psi)).to(ureg.psig)</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.cga.calculate_fluid_FR"><code class="name flex">
+<span>def <span class="ident">calculate_fluid_FR</span></span>(<span>fluid, factor=0.1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate flow rating temperature and pressure.
+References: CGA S-1.3 2008 5.1.13 and 6.1.3.
+Parameters:</p>
+<hr>
+<p>fluid : ThermState
+Fluid at design temperature and pressure.
+Returns:</p>
+<hr>
+<p>ThermState
+Fluid at flow rating pressure and temperature for flow capacity calculation.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calculate_fluid_FR(fluid, factor=0.1):
+    &#34;&#34;&#34;Calculate flow rating temperature and pressure.
+    References: CGA S-1.3 2008 5.1.13 and 6.1.3.
+    Parameters:
+    -----------
+    fluid : ThermState
+        Fluid at design temperature and pressure.
+    Returns:
+    --------
+    ThermState
+        Fluid at flow rating pressure and temperature for flow capacity calculation.
+    &#34;&#34;&#34;
+    P_flow = P_FR(fluid.P, factor=factor)
+    fluid_FR = fluid.copy()
+    fluid_FR.update_kw(P=P_flow, Hmass=fluid.Hmass)
+    if not fluid_FR.is_super_critical:
+        fluid_FR.update_kw(P=fluid_FR.P, Q=1)
+    else:
+        T_flow = theta(fluid_FR)
+        fluid_FR.update_kw(P=P_flow, T=T_flow)
+    return fluid_FR</code></pre>
 </details>
 </dd>
 <dt id="CryoToolBox.cga.primary_insulated"><code class="name flex">
@@ -288,54 +394,71 @@ refrigerated (cryogenic) fluids per 6.2.2.</p></div>
     return Q_a * ureg.ft**3 / ureg.min</code></pre>
 </details>
 </dd>
-<dt id="CryoToolBox.cga.theta"><code class="name flex">
-<span>def <span class="ident">theta</span></span>(<span>fluid, step=0.01)</span>
+<dt id="CryoToolBox.cga.relief_fire_liquefied"><code class="name flex">
+<span>def <span class="ident">relief_fire_liquefied</span></span>(<span>fluid_FR, A, F=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate latent heat/specific heat input and temperature for flow
-capacity calculation per CGA S-1.3 2008 6.1.3.</p>
-<p>fluid : ThermState object describing thermodynamic state (fluid, T, P)
-step : temperature step
-returns : tuple (specific heat, temperature)</p></div>
+<div class="desc"><p>Calculate required relief capacity for liquefied compressed gases,
+refrigerated fluids, and refrigerated (cryogenic) fluids in uninsulated and
+insulated containers.
+CGA S-1.3 2008 6.3.2.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def theta(fluid, step=0.01):
-    &#34;&#34;&#34;
-    Calculate latent heat/specific heat input and temperature for flow
-    capacity calculation per CGA S-1.3 2008 6.1.3.
+<pre><code class="python">def relief_fire_liquefied(fluid_FR, A, F=1):
+    &#34;&#34;&#34;Calculate required relief capacity for liquefied compressed gases,
+    refrigerated fluids, and refrigerated (cryogenic) fluids in uninsulated and
+    insulated containers.
+    CGA S-1.3 2008 6.3.2.&#34;&#34;&#34;
+    return F * G_u(fluid_FR) * A.m_as(ureg.ft**2)**0.82 * ureg.ft**3/ureg.min</code></pre>
+</details>
+</dd>
+<dt id="CryoToolBox.cga.theta"><code class="name flex">
+<span>def <span class="ident">theta</span></span>(<span>fluid)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>""Calculate temperature for flow capacity calculation per
+CGA S-1.3 2008 6.1.3.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>fluid</code></strong> :&ensp;<code>ThermState</code></dt>
+<dd>Object describing thermodynamic state (fluid, T, P).</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Quantity {temperature: 1}</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def theta(fluid):
+    &#34;&#34;&#34;&#34;&#34;Calculate temperature for flow capacity calculation per
+    CGA S-1.3 2008 6.1.3.
 
-    fluid : ThermState object describing thermodynamic state (fluid, T, P)
-    step : temperature step
-    returns : tuple (specific heat, temperature)
+    Parameters
+    ----------
+    fluid : ThermState
+        Object describing thermodynamic state (fluid, T, P).
+
+    Returns
+    -------
+    Quantity {temperature: 1}
     &#34;&#34;&#34;
     temp_state = fluid.copy()
-    # Only working for pure fluids and pre-defined mixtures
-    if fluid.is_super_critical:
-        logger.warning(f&#39;{fluid.name} is supercritical at {fluid.P:.3~g}&#39;
-                       f&#39; and {fluid.T:.3g~}. Specific heat input will be used.&#39;)
-        temp_state.update(&#39;P&#39;, fluid.P, &#39;T&#39;, fluid.T_min)
-        T_start = temp_state.T
-        T_end = 300*ureg.K
-        cga_criterion = ureg(&#39;0 m/J * (m*kg)**0.5&#39;)
-        # CGA criterion for calculating temperature of specific heat input
-        T = T_start
-        while T &lt;= T_end:
-            spec_vol = 1/temp_state.Dmass  # specific volume
-            cga_criterion_new = (spec_vol**0.5)/temp_state.specific_heat_input
-            if cga_criterion_new &gt; cga_criterion:
-                cga_criterion = cga_criterion_new
-            else:
-                break  # Function has only one maximum
-            T += step*ureg.K
-            temp_state.update(&#39;P&#39;, temp_state.P, &#39;T&#39;, T)
-        return (temp_state.specific_heat_input, T)
-    else:
-        logger.warning(f&#39;{fluid.name} is subcritical at {fluid.P:.3~g}. \
-        Latent heat of evaporation will be used&#39;)
-        latent_heat = fluid.latent_heat
-        return (latent_heat, temp_state.T)  # saturation temperature</code></pre>
+    if not fluid.is_super_critical:
+        temp_state.update_kw(P=temp_state.P, Q=0)
+        return temp_state.T
+    T2_ = 1000      # K
+    def func(T_):
+        temp_state.update_kw(P=temp_state.P, T=T_*ureg.K)
+        spec_vol = 1/temp_state.Dmass  # specific volume
+        y = -(spec_vol**0.5)/temp_state.specific_heat_input
+        return y.m_as(ureg(&#39;0 m/J * (m*kg)**0.5&#39;))
+    T_relief = optimize.fminbound(func, fluid.T_min.m_as(ureg.K), T2_)
+    return T_relief * ureg.K</code></pre>
 </details>
 </dd>
 </dl>
@@ -358,8 +481,11 @@ returns : tuple (specific heat, temperature)</p></div>
 <ul class="">
 <li><code><a title="CryoToolBox.cga.F" href="#CryoToolBox.cga.F">F</a></code></li>
 <li><code><a title="CryoToolBox.cga.G_i" href="#CryoToolBox.cga.G_i">G_i</a></code></li>
-<li><code><a title="CryoToolBox.cga.P_fr" href="#CryoToolBox.cga.P_fr">P_fr</a></code></li>
+<li><code><a title="CryoToolBox.cga.G_u" href="#CryoToolBox.cga.G_u">G_u</a></code></li>
+<li><code><a title="CryoToolBox.cga.P_FR" href="#CryoToolBox.cga.P_FR">P_FR</a></code></li>
+<li><code><a title="CryoToolBox.cga.calculate_fluid_FR" href="#CryoToolBox.cga.calculate_fluid_FR">calculate_fluid_FR</a></code></li>
 <li><code><a title="CryoToolBox.cga.primary_insulated" href="#CryoToolBox.cga.primary_insulated">primary_insulated</a></code></li>
+<li><code><a title="CryoToolBox.cga.relief_fire_liquefied" href="#CryoToolBox.cga.relief_fire_liquefied">relief_fire_liquefied</a></code></li>
 <li><code><a title="CryoToolBox.cga.theta" href="#CryoToolBox.cga.theta">theta</a></code></li>
 </ul>
 </li>
