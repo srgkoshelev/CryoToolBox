@@ -217,10 +217,20 @@ def pipe_Q_def(fluid, pipe, m_dot, dP, h_Q):
         dT1 = (x - Tw_i.m_as(ureg.K)) * ureg.K
         dQ = conduction_cyl(pipe.ID.to(ureg.m), pipe.OD.to(ureg.m), pipe.L.to(ureg.m), k, dT1)
         return dH*m_dot - dQ
+    
+    
     T = root_scalar(find_Tw_o, x0 = Tw_i.m_as(ureg.K)+1, x1 = Tw_i.m_as(ureg.K)+10)
     Tw_o = T.root.magnitude * ureg.K
     
     return Tw_i, Tw_o
+
+def find_Tw_i(x, T_avg, Tw_o, pipe, h_T):
+    k = k_pipe(pipe, Tw_o, x * ureg.K)
+    dT1 = x * ureg.K - Tw_o
+    dQ = (conduction_cyl(pipe.ID.to(ureg.m), pipe.OD.to(ureg.m), pipe.L.to(ureg.m), k, dT1)).m_as(ureg.watt)
+    dT2 = T_avg - x * ureg.K
+    dH = (h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14).m_as(ureg.watt)
+    return (dH ** 2 - dQ ** 2)
 
 def pipe_Tw_def(fluid, pipe, m_dot, dP, h_T):
     """Calculate the inlet and outlet average temperature of the wall of the component,
@@ -234,21 +244,13 @@ def pipe_Tw_def(fluid, pipe, m_dot, dP, h_T):
     res = 1
     j = 0
     
-    def find_Tw_i(x, T_avg):
-        k = k_pipe(pipe, Tw_o, x * ureg.K)
-        dT1 = x * ureg.K - Tw_o
-        dQ = (conduction_cyl(pipe.ID.to(ureg.m), pipe.OD.to(ureg.m), pipe.L.to(ureg.m), k, dT1)).m_as(ureg.watt)
-        dT2 = T_avg - x * ureg.K
-        dH = (h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14).m_as(ureg.watt)
-        return (dH ** 2 - dQ ** 2)
-    
     while res>0.0001:                 
 
         if fluid.T < Tw_o:
             bracket = [T_avg.m_as(ureg.K), Tw_o.m_as(ureg.K)-0.00001]  # Limits search range
         else:
             bracket = [Tw_o.m_as(ureg.K)+0.00001, T_avg.m_as(ureg.K)]
-        solution = root_scalar(find_Tw_i, x0 = T_avg.m_as(ureg.K), x1 = (Tw_o.m_as(ureg.K) + T_avg.m_as(ureg.K))/2, args=(T_avg), bracket=bracket)
+        solution = root_scalar(find_Tw_i, x0 = T_avg.m_as(ureg.K), x1 = (Tw_o.m_as(ureg.K) + T_avg.m_as(ureg.K))/2, args=(T_avg, Tw_o, pipe, h_T), bracket=bracket)
         Tw_i = solution.root * ureg.K   
         
         ####### Second part identical, function T_avg could be done
