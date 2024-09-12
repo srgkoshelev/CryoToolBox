@@ -242,6 +242,13 @@ class FunctionsTest(unittest.TestCase):
             Cp_calc = ctb.cga._average_spec_heat(fluid)
             self.assertApproxEqual(Cp, Cp_calc, 0.15)
 
+    def test_calculate_inlet_temp(self):
+        # Test of basic functionality
+        fluid = ctb.ThermState('argon', P=2*u.bar, Q=0)
+        m_dot = 100 * u.g/u.s
+        pipe = ctb.piping.Pipe(1, L=10*u.m)
+        Ti = ctb.cga.calculate_inlet_temp(fluid, m_dot, pipe, condition=None)
+
 
 
 class PipingTest(unittest.TestCase):

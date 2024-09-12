@@ -182,15 +182,25 @@ def _G_u_us(C, L, TZM):
     """
     return 633_000/ (C*L) * TZM
 
-def calculate_inlet_temp(fluid_FR, m_dot, pipe):
+def calculate_inlet_temp(fluid_FR, m_dot, pipe, condition='fire'):
     """Calculate temperature at the relief inlet per 6.1.4 b)."""
-    # Ts = fluid_FR.T.m_as(ureg.K)
-    # D = pipe.OD.m_as(u.m)
-    # L = pipe.L.m_as(u.m)
-    # W = m_dot.m_as(u.kg/u.hr)
-    print(spec_heat_ave.to(ureg.kJ/(ureg.kg*ureg.K)))
-
-    # Ti_fire = 1192-(1192-Ts)/(e*1285*D*L/(W*Cp))
+    Ts_ = fluid_FR.T.m_as(ureg.K)
+    if condition == 'fire':
+        Th_ = 1192
+        coef = 1285
+    else:
+        Th_ = 328
+        coef = 134.8
+    D = pipe.OD.m_as(ureg.m)
+    L = pipe.L.m_as(ureg.m)
+    W = m_dot.m_as(ureg.kg/ureg.hr)
+    if 0 <= fluid_FR.Q < 1:
+        fluid_FR = fluid_FR.copy()
+        fluid_FR.update_kw(P=fluid_FR.P, Q=1)
+    Cp = _average_spec_heat(fluid_FR).m_as(ureg.kJ/ureg.kg/ureg.K)
+    Ti = Th_-(Th_-Ts_)/(e*coef*D*L/(W*Cp))
+    Ti *= ureg.K
+    return Ti
 
 def _average_spec_heat(fluid, condition='fire'):
     """Calculate average specific heat for temperature range."""
