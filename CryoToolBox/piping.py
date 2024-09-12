@@ -782,6 +782,7 @@ class PackedBed(PipingElement):
     """
     def __init__(self, ID, height, D_part, eps):
         self.ID = ID
+        self.OD = self.ID
         self.L = height
         self.D_part = D_part
         self.eps = eps
@@ -1337,6 +1338,7 @@ def equivalent_orifice(m_dot, dP, fluid=AIR):
 
 def velocity(fluid, m_dot, area):
     """Calculate velocity of fluid with given local parameters."""
+
     return m_dot/(area*fluid.Dmass)
 
 
