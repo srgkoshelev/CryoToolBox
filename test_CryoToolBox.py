@@ -230,6 +230,18 @@ class FunctionsTest(unittest.TestCase):
         test_fluid = ctb.ThermState('air', P=Q_(200, u.psig), Q=1)
         self.assertApproxEqual(69, ctb.cga.G_u(test_fluid), uncertainty=0.05)
 
+    def test_average_spec_heat(self):
+        # CGA S-1.3 2008 Table 5
+        table_5 = {'nitrogen': (2170*u.kPa, 1.2167*u.kJ/u.kg/u.K),
+                   'argon': (2170*u.kPa, 0.6225*u.kJ/u.kg/u.K),
+                   'hydrogen': (1067*u.kPa, 13.3701*u.kJ/u.kg/u.K),
+                   'neon': (2170*u.kPa, 1.1245*u.kJ/u.kg/u.K),
+                   }
+        for gas, (P, Cp) in table_5.items():
+            fluid = ctb.ThermState(gas, P=P, Q=1)
+            Cp_calc = ctb.cga._average_spec_heat(fluid)
+            self.assertApproxEqual(Cp, Cp_calc, 0.15)
+
 
 
 class PipingTest(unittest.TestCase):

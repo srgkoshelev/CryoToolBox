@@ -7,6 +7,8 @@ from . import logger
 from .std_conditions import ureg, Q_
 from .cp_wrapper import CP_const_unit
 from scipy import optimize
+from scipy.integrate import quad
+from math import e
 
 
 def P_FR(P_set, factor=0.1):
@@ -179,3 +181,29 @@ def _G_u_us(C, L, TZM):
     CGA S-1.3 Notes for Table 1 and Table 2.
     """
     return 633_000/ (C*L) * TZM
+
+def calculate_inlet_temp(fluid_FR, m_dot, pipe):
+    """Calculate temperature at the relief inlet per 6.1.4 b)."""
+    # Ts = fluid_FR.T.m_as(ureg.K)
+    # D = pipe.OD.m_as(u.m)
+    # L = pipe.L.m_as(u.m)
+    # W = m_dot.m_as(u.kg/u.hr)
+    print(spec_heat_ave.to(ureg.kJ/(ureg.kg*ureg.K)))
+
+    # Ti_fire = 1192-(1192-Ts)/(e*1285*D*L/(W*Cp))
+
+def _average_spec_heat(fluid, condition='fire'):
+    """Calculate average specific heat for temperature range."""
+    if condition == 'fire':
+        Th_ = 922  # K, 6.1.4 b)
+    else:
+        Th_ = 328  # K, 6.1.4 b)
+    def specific_heat(T_):
+        """Calculate specific heat for given temperature."""
+        fluid_temp = fluid.copy()
+        T = T_ * ureg.K
+        fluid_temp.update_kw(P=fluid.P, T=T)
+        return fluid_temp.Cpmass.m_as(ureg.J/(ureg.kg*ureg.K))
+    spec_heat_ave = quad(specific_heat, fluid.T.m_as(ureg.K), Th_)[0]
+    spec_heat_ave *= ureg.J/(ureg.kg*(Th_*ureg.K-fluid.T))
+    return spec_heat_ave
