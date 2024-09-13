@@ -484,7 +484,7 @@ class Elbow(Tube):
     NPS elbow fitting.
     MRO makes method K from PipeElbow class to override method from Pipe class.
     """
-    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5, N=1,
+    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, eps=0.0018*ureg.inch,  R_D=1.5, N=1,
                  angle=90*ureg.deg):
         """Generate a tube elbow object.
 
@@ -504,7 +504,7 @@ class Elbow(Tube):
         self.R_D = R_D
         self.N = N
         self.angle = angle
-        super().__init__(OD, wall, L=0*ureg.m, c=c)
+        super().__init__(OD, wall, L=0*ureg.m, c=c, eps = eps)
         self.L = R_D*self.ID*angle
         self.type = 'Tube elbow'
 
@@ -544,7 +544,7 @@ class PipeElbow(Elbow, Pipe):
     NPS Elbow fitting.
     MRO makes method K from Elbow class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1,
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, eps=0.0018*ureg.inch, R_D=1.5, N=1,
                  angle=90*ureg.deg):
         """Generate a pipe elbow object.
 
@@ -563,7 +563,7 @@ class PipeElbow(Elbow, Pipe):
             Number of elbows in the pipeline
         """
         # D_nom and SCH go as positional arguments to Pipe __init__
-        super().__init__(D_nom, SCH, c=c, R_D=R_D, N=N, angle=angle)
+        super().__init__(D_nom, SCH, c=c, eps = eps, R_D=R_D, N=N, angle=angle)
         self.type = 'NPS elbow'
 
     def __str__(self):

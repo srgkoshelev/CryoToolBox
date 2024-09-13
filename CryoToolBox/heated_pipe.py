@@ -12,6 +12,7 @@ from .functions import heat_trans_coef, Ra, Nu_vcyl, Nu_hcyl, Pr
 from .cp_wrapper import ThermState
 from .piping import Mach, Mach_total, K_lim, ChokedFlow, HydraulicError, velocity, dP_Darcy, dP_adiab, Pipe, Tube, CopperTube
 
+
 class pipe_isolation:
     ###  class to define the necessary isolation imputs
     def __init__(self, k, OD, T_ext = 293 * ureg.K):
@@ -304,7 +305,7 @@ def pipe_h_ext(fluid, pipe, m_dot, dP, h_T):
             dH = - (h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14).m_as(ureg.watt)
             return (dH - dQ) ** 2
         
-        T_v2 = minimize(find_Tw_o, x0=(fluid2.T + T_avg) / 2, bounds=[(T_avg.m_as(ureg.K) + 0.001, pipe.T_ext.m_as(ureg.K) - 0.001)])   
+        T_v2 = minimize(find_Tw_o, x0=(fluid2.T + T_avg).m_as(ureg.K) / 2, bounds=[(T_avg.m_as(ureg.K) + 0.001, pipe.T_ext.m_as(ureg.K) - 0.001)])   
         Tw_o = T_v2.x[0] * ureg.K    
 
         h_ext = h_ext_(fluid2, pipe, Tw_o)
@@ -354,9 +355,9 @@ def pipe_insulated(fluid, pipe, m_dot, dP, h_T):
                 T1 = T_avg
             k = k_pipe(pipe, T1, x * ureg.K)
             dT1 = x * ureg.K - T1
-            dQ = conduction_cyl(pipe.ID.to(ureg.m), pipe.OD.to(ureg.m), pipe.L.to(ureg.m), k, dT1)
+            dQ = conduction_cyl(pipe.ID.to(ureg.m), pipe.OD.to(ureg.m), pipe.L.to(ureg.m), k, dT1).m_as(ureg.watt)
             dT2 = T_avg - T1
-            dH = - h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14
+            dH = - (h_T * dT2 * pipe.ID.to(ureg.m) * pipe.L.to(ureg.m) * 3.14).m_as(ureg.watt)
             return (dH - dQ)**2
         
         fact = (pipe.isolation.OD.m_as(ureg.m) - pipe.OD.m_as(ureg.m)) / pipe.isolation.k.m_as(ureg.W/ureg.m/ureg.K)
@@ -428,10 +429,13 @@ def k_pipe(pipe, T_wall, T_ext = 293 * ureg.K):    ### you should add the possib
                 mat = Material.OFHC
             else:
                 mat = Material.SS304
-        if T_wall < T_ext:
-            k = nist_property(mat, Property.TC, T1 = T_wall, T2 = T_ext)
+        if abs((T_wall - T_ext).m_as(ureg.K)) < 0.001:
+            k = nist_property(mat, Property.TC, T1 = T_wall)
         else:
-            k = nist_property(mat, Property.TC, T1 = T_ext, T2 = T_wall)
+            if T_wall < T_ext:
+                k = nist_property(mat, Property.TC, T1 = T_wall, T2 = T_ext)
+            else:
+                k = nist_property(mat, Property.TC, T1 = T_ext, T2 = T_wall)
     return k.to(ureg.W / ureg.K / ureg.m)
 
 def h_ext_(fluid, pipe, T_wall):  ### you should add the possibility to define a table of values to do that
