@@ -79,19 +79,19 @@ def calculate_fluid_FR(fluid, factor=0.1):
 
 
 
-def F(fluid_FR, fluid_PRD):
+def F(fluid_FR, fluid_i):
     """Calculate Correction factor F per 6.1.4.
 
-    fluid_FR: fluid at flow rating temperature and pressure
-    fluid_PRD: fluid at the inlet of PRD
+    fluid_FR: fluid at flow rating temperature and pressure.
+    fluid_i: fluid at the inlet of the PRD.
     """
-    if fluid_FR.name != fluid_PRD.name:
+    if fluid_FR.name != fluid_i.name:
         raise TypeError('Both states have to be of the same fluid.')
-    P_i = fluid_PRD.P
-    v_i = 1 / fluid_PRD.Dmass  # Specific volume
-    P = fluid_FR.P
-    v = 1 / fluid_FR.v
-    F_ = (P_i*v_i/(P*v))**0.5
+    Zi = fluid_i.Z
+    Ti = fluid_i.T
+    Z = fluid_FR.Z
+    T = fluid_FR.T
+    F_ = (Zi*Ti/(Z*T))**0.5
     return F_.to(ureg.dimensionless)
 
 
