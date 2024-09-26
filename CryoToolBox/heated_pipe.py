@@ -256,7 +256,14 @@ def pipe_Q_def(fluid, pipe, m_dot, dP, h_Q):
           
     #Calculate Tw_i and Tw_o: minimum of the quadratic find_Tw
     Tw_i = T_avg + pipe.Q_def/h_Q
-    Tw_o = minimize(find_Tw, x0=T_avg.m_as(ureg.K) + 1, args=(T_avg, pipe, h_Q, m_dot), bounds=[(1,3000)]).x[0] * ureg.K
+    dT = log(pipe.OD/pipe.ID) * (pipe.Q_def * pipe.OD ) / (2 * k_pipe(pipe, Tw_i))
+    # Q * pi * D_o * L = 2 * pi * L * k * dT / log(D_o/D_i)
+    
+    if pipe.Q_def > 0 * ureg.W / ureg.m ** 2 :
+        bounds = [(Tw_i, Tw_i + dT * 2)]
+    else:
+        bounds =[(Tw_i - dT * 2, Tw_i)]
+    Tw_o = minimize(find_Tw, x0=T_avg.m_as(ureg.K) + 1, args=(T_avg, pipe, h_Q, m_dot), bounds=bounds).x[0] * ureg.K
     
     return Tw_i, Tw_o  
  
