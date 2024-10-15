@@ -73,7 +73,7 @@ class Tube(PipingElement):
     Tube, requires OD and wall thickness specified
     """
     def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m,
-                 eps=0.0018*ureg.inch):
+                 eps=0.0018*ureg.inch, method='churchill' ):
         """Generate tube object.
 
         Parameters
@@ -96,6 +96,7 @@ class Tube(PipingElement):
         self.wall = wall
         self.L = L
         self.eps = eps
+        self.method = method
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
         # Wall thickness under tolerance is 12.5% as per ASTM A999
@@ -125,7 +126,7 @@ class Tube(PipingElement):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         eps_r = self.eps / self.ID
-        return f_Darcy(Re_, eps_r)*self.L/self.ID
+        return f_Darcy(Re_, eps_r, self.L/self.ID, self.method)*self.L/self.ID
 
     def f_T(self):
         """Calculate Darcy friction factor for complete turbulence for smooth
@@ -190,7 +191,7 @@ class Pipe(Tube):
     used to calculate flow coefficient K that is used for flow calculations.
     """
     def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm'),
-                 eps=0.0018*ureg.inch):
+                 eps=0.0018*ureg.inch, method='churchill'):
         """Generate `Pipe` object.
 
         Parameters
@@ -219,7 +220,7 @@ class Pipe(Tube):
         wall = NPS_table[D].get(SCH)
         if wall is None:
             raise PipingError(f'SCH {SCH} not available for pipe size {D}.')
-        super().__init__(OD, wall, L, c, eps)
+        super().__init__(OD, wall, L, c, eps, method)
         self.D = D
         self.type = 'NPS pipe'
 
@@ -243,7 +244,7 @@ class CopperTube(Tube):
         pipe.
     """
     def __init__(self, D_nom, type_='K', L=0*ureg.m,
-                 eps=0.0018*ureg.inch):
+                 eps=0.0018*ureg.inch, method='churchill'):
         if isinstance(D_nom, ureg.Quantity):
             D = D_nom.magnitude
         else:
@@ -251,7 +252,7 @@ class CopperTube(Tube):
         OD = COPPER_TABLE[D]['OD']
         wall = COPPER_TABLE[D][type_]
         c = 0 * ureg.inch  # Not affected by corrosion
-        super().__init__(OD, wall, L, c, eps)
+        super().__init__(OD, wall, L, c, eps, method)
         self.D = D
         self.type = 'Copper tube Type ' + type_
 
@@ -260,7 +261,7 @@ class VJPipe(Pipe):
     """Vacuum jacketed pipe.
     """
     def __init__(self, D_nom, *, SCH=5, L=0*ureg.m,
-                 VJ_D, VJ_SCH=5, c=0*ureg.inch):
+                 VJ_D, VJ_SCH=5, c=0*ureg.inch, method='churchill'):
         """Generate Vacuum jacketed pipe object.
 
         Parameters
@@ -279,8 +280,8 @@ class VJPipe(Pipe):
             Sum of the mechanical allowances plus corrosion and erosion
             allowances of the inner pipe.
         """
-        super().__init__(D_nom, SCH, L)
-        self.VJ = Pipe(VJ_D, VJ_SCH, L)
+        super().__init__(D_nom, SCH, L, method)
+        self.VJ = Pipe(VJ_D, VJ_SCH, L, method)
         self.type = 'VJ pipe'
 
     def info(self):
@@ -291,7 +292,7 @@ class VJPipe(Pipe):
 class CorrugatedPipe(Tube):
     """Corrugated pipe class.
     """
-    def __init__(self, D_nom, L=0*ureg.m):
+    def __init__(self, D_nom, L=0*ureg.m, method='churchill'):
         """Generate corrugated pipe object.
 
         Parameters
@@ -308,7 +309,7 @@ class CorrugatedPipe(Tube):
         c = 0 * ureg.inch
         # Friction factor multiplicator usually in 2.2..2.6 range
         self.f_mult = 2.6
-        super().__init__(OD, wall, L, c)
+        super().__init__(OD, wall, L, c, method)
         self.type = 'Corrugated pipe'
         logger.debug('For corrugated piping assumed wall = 0')
 
@@ -485,7 +486,7 @@ class Elbow(Tube):
     MRO makes method K from PipeElbow class to override method from Pipe class.
     """
     def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, eps=0.0018*ureg.inch,  R_D=1.5, N=1,
-                 angle=90*ureg.deg):
+                 angle=90*ureg.deg, method='churchill'):
         """Generate a tube elbow object.
 
         Parameters
@@ -504,7 +505,7 @@ class Elbow(Tube):
         self.R_D = R_D
         self.N = N
         self.angle = angle
-        super().__init__(OD, wall, L=0*ureg.m, c=c, eps = eps)
+        super().__init__(OD, wall, L=0*ureg.m, c=c, eps = eps, method=method)
         self.L = R_D*self.ID*angle
         self.type = 'Tube elbow'
 
@@ -545,7 +546,7 @@ class PipeElbow(Elbow, Pipe):
     MRO makes method K from Elbow class to override method from Pipe class.
     """
     def __init__(self, D_nom, SCH=40, c=0*ureg.inch, eps=0.0018*ureg.inch, R_D=1.5, N=1,
-                 angle=90*ureg.deg):
+                 angle=90*ureg.deg, method='churchill'):
         """Generate a pipe elbow object.
 
         Parameters
@@ -563,7 +564,7 @@ class PipeElbow(Elbow, Pipe):
             Number of elbows in the pipeline
         """
         # D_nom and SCH go as positional arguments to Pipe __init__
-        super().__init__(D_nom, SCH, c=c, eps = eps, R_D=R_D, N=N, angle=angle)
+        super().__init__(D_nom, SCH, c=c, eps = eps, R_D=R_D, N=N, angle=angle, method=method)
         self.type = 'NPS elbow'
 
     def __str__(self):
@@ -576,7 +577,7 @@ class Tee(Tube):
     Tee fitting.
     """
     def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru',
-                 N=1):
+                 N=1, method='churchill'):
         """Generate a tee.
 
         Parameters
@@ -599,7 +600,7 @@ class Tee(Tube):
             logger.error('''Tee direction is not recognized,
                          try "thru" or "branch": {}'''.format(direction))
         L = 0*ureg.m
-        super().__init__(OD, wall, L, c)
+        super().__init__(OD, wall, L, c, method)
         self.N = N
         self.type = 'Tube tee'
 
@@ -620,9 +621,9 @@ class PipeTee(Tee, Pipe):
     NPS Tee fitting.
     MRO makes method K from Tee class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru', N=1):
+    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru', N=1, method='churchill'):
         # D_nom and SCH go as positional arguments to Pipe __init__
-        super().__init__(D_nom, SCH, c, direction)
+        super().__init__(D_nom, SCH, c, direction, method)
         self.type = 'NPS tee'
 
     def info(self):
@@ -814,8 +815,6 @@ class PackedBed(PipingElement):
                 f'eps={self.eps:.3g}, D={self.D_part:.3g~}')
 
 
-
-
 class ParallelPlateRelief:
     def __init__(self, Springs, Plate, Supply_pipe):
         """
@@ -862,7 +861,7 @@ class ParallelPlateRelief:
 
 
 # Supporting functions used for flow rate and pressure drop calculations.
-def f_Darcy(Re_, eps_r, method='churchill'):
+def f_Darcy(Re_, eps_r, L_ID, method='churchill'):
     """Calculate Darcy friction factor using Serghide solution to
     Colebrook equation.
 
@@ -882,12 +881,15 @@ def f_Darcy(Re_, eps_r, method='churchill'):
     float
         Darcy friction coefficient
     """
+    if method == 'nellis_klein':
+        return nellis_klein(Re_, eps_r, L_ID)
     if Re_ <= 2100:
         return 64 / Re_
     if method == 'churchill':
         return churchill(Re_, eps_r)
     elif method == 'serghide':
         return serghide(Re_, eps_r)
+
 
 
 def churchill(Re_, eps_r):
@@ -941,6 +943,64 @@ def serghide(Re_, eps_r):
     return f
 
 
+def nellis_turbulent(Re_, L_ID, eps_r):
+    """
+    Non dimentional calculations of fiction factor in pipe in turbulent flow following Section 5.2.3 of Nellis and Klein (2020)
+    """
+    if L_ID <= 1:  
+        if L_ID < 0:  ###not inferior to zero - make no sense
+            raise ValueError('L/ID ratio < 0. Not possible')
+        print('L/ID ratio should be > 1. The value is {L_ID}')
+        L_ID = 1
+        
+    # Friction Factor 
+    if eps_r > 1e-5:
+        #Offor & Alabi, Advances in Chemical Engineering and Science, 2016
+        friction = (-2 * log10(eps_r / 3.71 - 1.975 / Re_ * log((eps_r / 3.93)**1.092 + 7.627 / (Re_ + 395.9))))**(-2)
+    else:
+        #Li & Seem correlation, A New Explicity Equation for Accurate Friction Factor Calculation for Smooth Tubes, 2011
+        friction = (-0.001570232 / log(Re_) + 0.394203137 / log(Re_)**2 + 2.534153311 / log(Re_)**3) * 4
+    
+    # Correct f for developing flow
+    return friction * (1 + (1 / L_ID)**0.7)    
+
+    
+def nellis_laminar(Re_, L_ID, eps_r):
+    """
+    Non dimentional calculation of the fiction factor in pipe in laminar flow  
+    Section 5.2.4 of Nellis and Klein (2020)
+    """
+    # Calculate Graetz number and Inverse Graetz number verification
+    SGZ = L_ID / Re_
+             
+    # Calculate friction factor (f)
+    return 4 * (3.44 / sqrt(SGZ) + (1.25 / (4 * SGZ) + 16 - 3.44 / sqrt(SGZ)) / (1 + 0.00021 * SGZ**(-2))) / Re_    
+
+
+def nellis_klein(Re_, eps_r, L_ID):
+    
+    # Check Flow conditions
+    if Re_ < 0.001 or Re_ > 5e7: 
+        raise ValueError(f'Reynolds number (Re) must be between 0.001 and 5E7. The value is {Re_}')
+    if eps_r < 0 or eps_r > 0.05:
+        raise ValueError(f'Relative roughness (eps) should be between 0 and 0.05. The value is {eps_r}')
+    
+    if Re_ < 2300: #laminar_flow
+        f = nellis_laminar(Re_, L_ID, eps_r)
+    
+    elif Re_ > 3000: #turbulent_flow
+        f = nellis_turbulent(Re_, L_ID, eps_r)
+        
+    else:  # Transitional flow (Re between 2300 and 3000)
+        f_turbulent = nellis_turbulent(3000, L_ID, eps_r)
+        f_lam = nellis_laminar(2300, L_ID)
+        
+        # Interpolate between laminar and turbulent values
+        alpha = (Re_ - 2300) / (3000 - 2300)
+        f = f_lam + alpha * (f_turbulent - f_lam)
+    return f
+
+
 def K_piping(m_dot, fluid, piping):
     """Calculate resistance coefficient converted to the area of the first element.
 
@@ -954,22 +1014,19 @@ def K_piping(m_dot, fluid, piping):
         A0 : area of the first element, basis for conversion
     """
     K0 = 0*ureg.dimensionless
+    if not isinstance(piping, list): #Rosalyn: fixed the error with entering a piping value as something other than a list 
+        piping = [piping]
+    
     try:
-        try:
-            A0 = piping[0].area  # using area of the first element as base
-            for element in piping:
-                Re_ = Re(fluid, m_dot, element.ID, element.area)
-                K_el = element.K(Re_) * (A0/element.area)**2
-                K0 += K_el
-        except:
-            A0 = piping.area    #if the piping component has only one element
-            Re_ = Re(fluid, m_dot, piping.ID, piping.area)
-            K_el = piping.K(Re_) * (A0/piping.area)**2
-            K0 = K_el
-    except:
+        A0 = piping[0].area  # using area of the first element as base
+    except IndexError:
         raise IndexError('Piping has no elements! '
-                            'Use Piping.add to add sections to piping.')    
-
+                            'Use Piping.add to add sections to piping.')
+    for element in piping:
+        Re_ = Re(fluid, m_dot, element.ID, element.area)
+        K_el = element.K(Re_) * (A0/element.area)**2
+        K0 += K_el
+        
     return (K0.to_base_units(), A0)
 
 
