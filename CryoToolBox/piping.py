@@ -73,7 +73,7 @@ class Tube(PipingElement):
     Tube, requires OD and wall thickness specified
     """
     def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m,
-                 eps=0.0018*ureg.inch, method='churchill' ):
+                 eps=0.0018*ureg.inch, z = 0*ureg.m, method='churchill' ):
         """Generate tube object.
 
         Parameters
@@ -90,12 +90,17 @@ class Tube(PipingElement):
         eps : ureg.Quantity {length: 1}
             Absolute roughness for the tube. Default value for smooth
             pipe.
+        z : ureg.Quantity {length: 1}
+            Elevation of the tube (the value shall be higher than the 
+            length of the tube).
+        method : "churchill", "serghide" or "nellis_klein"
         """
         self.OD = OD
         self.D = OD.to(ureg.inch).magnitude
         self.wall = wall
         self.L = L
         self.eps = eps
+        self.z = z
         self.method = method
         # c = Q_('0.5 mm') for unspecified machined surfaces
         # TODO add calculation for c based on thread depth c = h of B1.20.1
@@ -191,7 +196,7 @@ class Pipe(Tube):
     used to calculate flow coefficient K that is used for flow calculations.
     """
     def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm'),
-                 eps=0.0018*ureg.inch, method='churchill'):
+                 eps=0.0018*ureg.inch, z = 0*ureg.m, method='churchill'):
         """Generate `Pipe` object.
 
         Parameters
@@ -209,6 +214,10 @@ class Pipe(Tube):
         eps : ureg.Quantity {length: 1}
             Absolute roughness for the tube. Default value for smooth
             pipe.
+        z : ureg.Quantity {length: 1}
+            Elevation of the tube (the value shall be higher than the 
+            length of the tube).
+        method : "churchill", "serghide" or "nellis_klein"
         """
         if isinstance(D_nom, ureg.Quantity):
             D = D_nom.magnitude
@@ -220,7 +229,7 @@ class Pipe(Tube):
         wall = NPS_table[D].get(SCH)
         if wall is None:
             raise PipingError(f'SCH {SCH} not available for pipe size {D}.')
-        super().__init__(OD, wall, L, c, eps, method)
+        super().__init__(OD, wall, L, c, eps, z, method)
         self.D = D
         self.type = 'NPS pipe'
 
@@ -242,9 +251,13 @@ class CopperTube(Tube):
     eps : ureg.Quantity {length: 1}
         Absolute roughness for the tube. Default value for smooth
         pipe.
+    z : ureg.Quantity {length: 1}
+        Elevation of the tube (the value shall be higher than the 
+        length of the tube).
+    method : "churchill", "serghide" or "nellis_klein"
     """
     def __init__(self, D_nom, type_='K', L=0*ureg.m,
-                 eps=0.0018*ureg.inch, method='churchill'):
+                 eps=0.0018*ureg.inch, z = 0*ureg.m, method='churchill'):
         if isinstance(D_nom, ureg.Quantity):
             D = D_nom.magnitude
         else:
@@ -252,7 +265,7 @@ class CopperTube(Tube):
         OD = COPPER_TABLE[D]['OD']
         wall = COPPER_TABLE[D][type_]
         c = 0 * ureg.inch  # Not affected by corrosion
-        super().__init__(OD, wall, L, c, eps, method)
+        super().__init__(OD, wall, L, c, eps, z, method)
         self.D = D
         self.type = 'Copper tube Type ' + type_
 
@@ -261,7 +274,7 @@ class VJPipe(Pipe):
     """Vacuum jacketed pipe.
     """
     def __init__(self, D_nom, *, SCH=5, L=0*ureg.m,
-                 VJ_D, VJ_SCH=5, c=0*ureg.inch, method='churchill'):
+                 VJ_D, VJ_SCH=5, c=0*ureg.inch, z = 0*ureg.m, method='churchill'):
         """Generate Vacuum jacketed pipe object.
 
         Parameters
@@ -279,9 +292,13 @@ class VJPipe(Pipe):
         c : ureg.Quantity {length: 1}
             Sum of the mechanical allowances plus corrosion and erosion
             allowances of the inner pipe.
+        z : ureg.Quantity {length: 1}
+            Elevation of the tube (the value shall be higher than the 
+            length of the tube).
+        method : "churchill", "serghide" or "nellis_klein"
         """
-        super().__init__(D_nom, SCH, L, method)
-        self.VJ = Pipe(VJ_D, VJ_SCH, L, method)
+        super().__init__(D_nom, SCH, L, z, method)
+        self.VJ = Pipe(VJ_D, VJ_SCH, L, z, method)
         self.type = 'VJ pipe'
 
     def info(self):
@@ -292,7 +309,7 @@ class VJPipe(Pipe):
 class CorrugatedPipe(Tube):
     """Corrugated pipe class.
     """
-    def __init__(self, D_nom, L=0*ureg.m, method='churchill'):
+    def __init__(self, D_nom, L=0*ureg.m, z = 0*ureg.m, method='churchill'):
         """Generate corrugated pipe object.
 
         Parameters
@@ -301,6 +318,10 @@ class CorrugatedPipe(Tube):
             Nominal diameter of the inner pipe.
         L : ureg.Quantity {length: 1}
             Length of the pipe.
+        z : ureg.Quantity {length: 1}
+            Elevation of the tube (the value shall be higher than the 
+            length of the tube).
+        method : "churchill", "serghide" or "nellis_klein"
         """
         # TODO DRY
         OD = D_nom
@@ -309,7 +330,7 @@ class CorrugatedPipe(Tube):
         c = 0 * ureg.inch
         # Friction factor multiplicator usually in 2.2..2.6 range
         self.f_mult = 2.6
-        super().__init__(OD, wall, L, c, method)
+        super().__init__(OD, wall, L, c, z, method)
         self.type = 'Corrugated pipe'
         logger.debug('For corrugated piping assumed wall = 0')
 
@@ -978,7 +999,10 @@ def nellis_laminar(Re_, L_ID, eps_r):
 
 
 def nellis_klein(Re_, eps_r, L_ID):
-    
+    """
+    Non dimentional calculation of the fiction factor in pipe   
+    Section 5.2 of Nellis and Klein (2020)
+    """    
     # Check Flow conditions
     if Re_ < 0.001 or Re_ > 5e7: 
         raise ValueError(f'Reynolds number (Re) must be between 0.001 and 5E7. The value is {Re_}')
@@ -1055,9 +1079,10 @@ def dP_incomp(m_dot, fluid, piping):
     P_0 = fluid.P
     T_0 = fluid.T
     rho_0 = fluid.Dmass
+
     K, area = K_piping(m_dot, fluid, piping)
     w = m_dot / (rho_0*area)
-    return dP_Darcy(K, rho_0, w)
+    return dP_Darcy(K, rho_0, w) 
 
 
 def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
@@ -1128,7 +1153,33 @@ def m_dot_isot(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
         m_dot = m_dot_isot(fluid, pipe, P_out, m_dot, tol)
     return m_dot.to(ureg.g/ureg.s)
 
+def dP_hydro(fluid, pipe):
+    """Calculate the hydrostatic pressure.
 
+    Parameters
+    ----------
+    fluid : ThermState
+        Inlet fluid conditions
+    pipe : Pipe
+
+    Returns
+    -------
+    Quantity {length: -1, mass: 1, time: -2}
+        Pressure drop
+    """
+    
+    rho_0 = fluid.Dmass
+    g = 9.81 * ureg('meter / second**2')
+    
+    try:
+        z = pipe.z
+    except:
+        z = 0 * ureg.m
+    if pipe.z > pipe.L:
+        raise PipingError(f'The elevation of {pipe} is greater that its length')   
+        
+    return rho_0 * g * z
+    
 def dP_isot(m_dot, fluid, pipe, tol=1e-6):
     """Calculate pressure drop through piping for isothermal compressible
     flow.
@@ -1158,16 +1209,104 @@ def dP_isot(m_dot, fluid, pipe, tol=1e-6):
     K = pipe.K(Re(fluid, m_dot, pipe.ID, pipe.area))
     P2 = P1
     converged = False
-    while not converged:
-        sq_diff = m_dot**2*R*T/A**2 * (2*log(P1/P2)+K)
-        P2_new = (P1**2 - sq_diff)**0.5
-        converged = abs(P2_new-P2)/P2_new
-        P2 = P2_new
-        v = m_dot / (fluid.Dmass*A)
-        if Mach(fluid, v) > 1/(fluid.gamma):
-            raise ChokedFlow('K needs to be reduced to reach P2={P2:.3g~}')
-    return P1 - P2
+    i = 0
 
+    while not converged:
+        sq_diff = m_dot**2 * R * T / A**2 * (2 * log(P1 / P2) + K)
+        P2_new = (P1**2 - sq_diff)**0.5
+        i = i+1
+
+        # Check for convergence
+        if abs(P2_new - P2) / P2_new < tol or i == 10:
+            converged = True
+        P2 = P2_new
+        
+        # Calculate velocity
+        v = m_dot / (fluid.Dmass * A)
+        
+        # Check for choked flow
+        if Mach(fluid, v) > 1 / fluid.gamma:
+            raise ChokedFlow(f'K needs to be reduced to reach P2={P2:.3g}')
+            
+    # Return the pressure difference    
+    return P1 - P2 
+
+def dP_global(m_dot, fluid, pipe):
+    
+    #Verify two phase flow or Liquid
+    if (fluid.phase == 0 or fluid.phase == 6) and fluid.Q < 0.9: 
+        #Phase = 'liquid or two-phase'
+        dP = dP_incomp(m_dot, fluid, pipe)
+        print("incomp")
+        
+    else:
+        if Mach(fluid, m_dot / (fluid.Dmass * pipe.area)) <= (1/(fluid.gamma)) ** 0.5:
+            
+            dP = dP_isot(m_dot, fluid, pipe)
+            fluid_temp = fluid.copy()
+            fluid_temp.update_kw(P=fluid.P-dP, T=fluid.T)
+            print("isot")
+            
+            if Mach(fluid_temp, m_dot / (fluid_temp.Dmass * pipe.area)) > (1/(fluid.gamma)) ** 0.5:
+                dP = dP_adiab(m_dot, fluid, pipe)
+                print("adiab")
+                
+        else:
+            dP = dP_adiab(m_dot, fluid, pipe)
+            print("adiab")
+            
+    return dP + dP_hydro(fluid, pipe)
+
+    
+
+def dP_isot_out(m_dot, fluid_out, pipe, tol=1e-6):
+    """Calculate pressure drop through piping for isothermal compressible
+    flow.
+
+    See 4.4 of "Pipe flow, A Practical and Comprehensive Guide", Rennels,
+    Hobart, Hudson, 2012.
+
+    Parameters
+    ----------
+    m_dot : Quantity {mass: 1, time: -1}
+        mass flow rate
+    fluid : ThermState
+        Inlet fluid conditions
+    pipe : Pipe
+    tol : float
+        Accuracy of the calculation.
+
+    Returns
+    -------
+    Quantity {length: -1, mass: 1, time: -2}
+        Pressure drop
+    """
+    R = fluid_out.specific_gas_constant
+    T = fluid_out.T
+    P2 = fluid_out.P
+    A = pipe.area
+    K = pipe.K(Re(fluid_out, m_dot, pipe.ID, pipe.area))
+    P1 = P2
+    converged = False
+
+    while not converged:
+        sq_diff = m_dot**2 * R * T / A**2 * (2 * log(P1 / P2) + K)
+        P1_new = (sq_diff + P2**2)**0.5
+        
+        # Check for convergence
+        if abs(P1_new - P1) / P1_new < tol:
+            converged = True
+        P1 = P1_new
+        
+        # # Calculate velocity
+        # v = m_dot / (fluid_out.Dmass * A)
+        
+        # # Check for choked flow
+        # if Mach(fluid_out, v) > 1 / fluid_out.gamma: #to modify following the rules in Rennels
+        #     raise ChokedFlow(f'K needs to be reduced to reach P2={P2:.3g}')
+        
+    # Return the pressure difference
+    return P1 - P2 #+ rho_0 * g * z  #Add hydrotatic pressure
 
 def Mach(fluid, v):
     """Calculate Mach number for given static conditions of the fluid.

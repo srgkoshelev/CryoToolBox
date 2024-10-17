@@ -184,9 +184,9 @@ def HT_Pipe(m_dot, fluid, pipe):
     Pr_ = fluid.Prandtl
 
     # Calculate pressure drop
-    f = pipe.K(Re_)/L_ID
-    
-    Nu_T, Nu_Q = Nusselt(f, Re_, Pr_, L_ID)
+    f = (pipe.K(Re_)/L_ID)
+
+    Nu_T, Nu_Q = Nusselt(f.to_base_units().magnitude, Re_, Pr_, L_ID)
         
     # Calculate heat transfer coefficient: temperature and heat flux constant 
     h_T = heat_trans_coef(fluid, Nu_T, pipe.ID)
