@@ -1636,6 +1636,6 @@ def piping_stored_energy(fluid, piping):
     for tube in piping:
         # Smaller of 8*ID and actual length
         length = min(tube.L, 8*tube.ID)
-        area = pi * tube.ID**2 / 4
-        volume = max(volume, area*length)
+        area = circle_area(tube.ID)
+        volume = area*length
     return stored_energy(fluid, volume)

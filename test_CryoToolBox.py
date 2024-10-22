@@ -613,6 +613,16 @@ class PipingTest(unittest.TestCase):
         self.assertAlmostEqual(A3.to(u.inch**2), 0.062*u.inch**2, delta=0.001*u.inch**2)
         self.assertAlmostEqual(A4.to(u.inch**2), 2.175*u.inch**2, delta=0.001*u.inch**2)
 
+    def test_piping_stored_energy(self):
+        fluid = ctb.ThermState('nitrogen', P=100*u.psi, T=ctb.T_NTP)
+        short_pipe = ctb.piping.Pipe(1, L=2*u.inch)
+        exp_volume = pi*short_pipe.ID**2/4 * short_pipe.L
+        self.assertAlmostEqual(ctb.stored_energy(fluid, exp_volume),
+                               ctb.piping.piping_stored_energy(fluid, [short_pipe]))
+        long_pipe = ctb.piping.Pipe(1, L=100*u.ft)
+        exp_volume = pi*long_pipe.ID**2/4 * 8*long_pipe.ID
+        self.assertAlmostEqual(ctb.stored_energy(fluid, exp_volume),
+                               ctb.piping.piping_stored_energy(fluid, [long_pipe]))
 
 
 class CPWrapperTest(unittest.TestCase):
