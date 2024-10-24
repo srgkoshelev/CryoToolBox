@@ -11,7 +11,7 @@ from scipy.optimize import root_scalar, minimize
 from .functions import AIR
 from .functions import heat_trans_coef, Ra, Nu_vcyl, Nu_hcyl, Pr
 from .cp_wrapper import ThermState
-from .piping import Mach, Mach_total, K_lim, ChokedFlow, HydraulicError, velocity, dP_Darcy, dP_adiab, Pipe, Tube, CopperTube
+from .piping import Mach, Mach_total, K_lim, ChokedFlow, HydraulicError, velocity, dP_Darcy, dP_adiab, Pipe, Tube, CopperTube, dP_dyn
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -740,7 +740,9 @@ def pipe_heat(pipe, fluid, m_dot):
     """Determine the heated status of the piping component
     """
     ### Calculate pressure drop and heat transfer coefficient
-    dP, h_T, h_Q = dP_Pipe(m_dot, fluid, pipe)  
+    #dP, h_T, h_Q = dP_Pipe(m_dot, fluid, pipe)  
+    dP = dP_dyn(m_dot, fluid, pipe)
+    h_T, h_Q = HT_Pipe(m_dot, fluid, pipe)
     
     ###heat flux defined on the wall of the pipe
     if hasattr(pipe, 'Q_def') and pipe.Q_def != None :
