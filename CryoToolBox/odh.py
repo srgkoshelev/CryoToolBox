@@ -1286,7 +1286,7 @@ def hole_leak(area, fluid, P_out=P_NTP, Kd=0.62):
     return q_std
 
 
-def O2_sudden_release(release, volume, escape=True):
+def O2_sudden_release(release, volume, escape=False):
     """Calculate oxygen concentration after a sudden release.
 
     Parameters
