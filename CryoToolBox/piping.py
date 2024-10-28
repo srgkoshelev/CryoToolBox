@@ -1557,6 +1557,26 @@ def dP_adiab(m_dot, fluid, pipe):
     return fluid.P - P_total_end
 
 
+def new_dP_adiab(m_dot, fluid, pipe):
+    """Calculate pressure drop for isentropic flow given total inlet conditions.
+
+    """
+    M = Mach_total(fluid, m_dot, pipe.area)
+    K_limit = K_lim(M, fluid.gamma)
+    Re_ = Re(fluid, m_dot, pipe.ID, pipe.area)
+    K_pipe = pipe.K(Re_)
+    K_left = K_limit - K_pipe
+    if K_left < 0:
+        raise ChokedFlow(f'Flow is choked at K={float(K_limit):.3g} with given '
+                         f'K={float(K_pipe):.3g}. Reduce hydraulic resistance or'
+                         ' mass flow.')
+    M_end = M_Klim(K_left, fluid.gamma)
+    P_static_in = fluid.P / M_complex(M, fluid.gamma)
+    P_static_end = P_from_M(P_static_in, M, M_end, fluid.gamma)
+    P_total_end = P_total(P_static_end, M, fluid.gamma)
+    return fluid.P - P_total_end
+
+
 def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
     """Calculate mass flow rate through piping for adiabatic compressible
     flow.
