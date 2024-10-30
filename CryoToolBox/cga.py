@@ -99,6 +99,11 @@ def primary_insulated(fluid_FR, U, A, F=1, conservative=True):
     """Calculate minimum required flow capacity for primary PRD on insulated
     containers for liquefied compressed gases, refrigerated fluids, and
     refrigerated (cryogenic) fluids per 6.2.2.
+
+    Returns:
+    --------
+    Quantity {length:3, time:-1}
+        Required relief flow capacity for free air.
     """
     T = fluid_FR.T.to(ureg.degR).magnitude
     G_i_ = G_i(fluid_FR, conservative=conservative)
@@ -112,7 +117,13 @@ def relief_fire_liquefied(fluid_FR, A, F=1):
     """Calculate required relief capacity for liquefied compressed gases,
     refrigerated fluids, and refrigerated (cryogenic) fluids in uninsulated and
     insulated containers.
-    CGA S-1.3 2008 6.3.2."""
+    CGA S-1.3 2008 6.3.2.
+
+    Returns:
+    --------
+    Quantity {length:3, time:-1}
+        Required relief flow capacity for free air.
+    """
     return F * G_u(fluid_FR) * A.m_as(ureg.ft**2)**0.82 * ureg.ft**3/ureg.min
 
 
