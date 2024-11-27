@@ -598,7 +598,7 @@ class Tee(Tube):
     Tee fitting.
     """
     def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru',
-                 N=1, method='churchill'):
+                 N=1, eps=0.0018*ureg.inch, method='churchill'):
         """Generate a tee.
 
         Parameters
@@ -621,7 +621,7 @@ class Tee(Tube):
             logger.error('''Tee direction is not recognized,
                          try "thru" or "branch": {}'''.format(direction))
         L = 0*ureg.m
-        super().__init__(OD, wall, L, c, method)
+        super().__init__(OD, wall, L, c, eps, method)
         self.N = N
         self.type = 'Tube tee'
 

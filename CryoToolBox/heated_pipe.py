@@ -742,7 +742,7 @@ def pipe_heat(pipe, fluid, m_dot):
     ### Calculate pressure drop and heat transfer coefficient
     #dP, h_T, h_Q = dP_Pipe(m_dot, fluid, pipe)  
     dP = dP_dyn(m_dot, fluid, pipe)
-    h_T, h_Q = HT_Pipe(m_dot, fluid, pipe)
+    h_T, h_Q = HT_Pipe(m_dot, fluid, pipe) ###add conditions if length is equal to 0
     
     ###heat flux defined on the wall of the pipe
     if hasattr(pipe, 'Q_def') and pipe.Q_def != None :
