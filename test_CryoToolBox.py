@@ -624,6 +624,38 @@ class PipingTest(unittest.TestCase):
         self.assertAlmostEqual(ctb.stored_energy(fluid, exp_volume),
                                ctb.piping.piping_stored_energy(fluid, [long_pipe]))
 
+    def test_Kv_Cv(self):
+        """
+        Test the conversion functions between Cv and Kv.
+
+        This test verifies that:
+
+        1. Converting Cv (value 1) to Kv using Cv_to_Kv returns approximately 0.86,
+            within a relative error tolerance of 1e-2.
+        2. Converting Cv to Kv and then back to Cv (using Kv_to_Cv) returns the original Cv,
+            with a relative difference less than 1e-6.
+
+        Raises
+        ------
+        AssertionError
+            If either conversion does not meet the specified tolerance levels.
+
+        Notes
+        -----
+        The test relies on the correct implementation of Cv_to_Kv and Kv_to_Cv.
+        """
+        Cv = 1
+        computed_Kv = ctb.piping.Cv_to_Kv(Cv)
+        expected_Kv = 0.86
+        rel_error_Kv = abs((computed_Kv - expected_Kv) / expected_Kv)
+        self.assertLess(rel_error_Kv, 1e-2,
+                        msg=f"Expected Kv ~ {expected_Kv}, but got {computed_Kv} with relative error {rel_error_Kv}")
+
+        Cv_converted = ctb.piping.Kv_to_Cv(computed_Kv)
+        rel_error_Cv = abs((Cv_converted - Cv) / Cv)
+        self.assertLess(rel_error_Cv, 1e-6,
+                        msg=f"Round-trip conversion error is {rel_error_Cv}, which exceeds 1e-6")
+
 
 class CPWrapperTest(unittest.TestCase):
     """Test for additional methods of ThermState class"""

@@ -1639,3 +1639,39 @@ def piping_stored_energy(fluid, piping):
         area = circle_area(tube.ID)
         volume = max(volume, area*length)
     return stored_energy(fluid, volume)
+
+
+def Cv_to_Kv(Cv):
+    """
+    Convert Cv (flow coefficient in US units) to Kv (flow coefficient in metric units).
+
+    Parameters
+    ----------
+    Cv : float
+        Flow coefficient expressed in US units gal/(min*psi**0.5).
+
+    Returns
+    -------
+    float
+        Flow coefficient expressed in metric units (m³/(h*bar**0.5)).
+    """
+    Cv *= ureg.gal / (ureg.min * ureg.psi**0.5)
+    return Cv.m_as(ureg.m**3 / (ureg.h * ureg.bar**0.5))
+
+
+def Kv_to_Cv(Kv):
+    """
+    Convert Kv (flow coefficient in metric units) to Cv (flow coefficient in US units).
+
+    Parameters
+    ----------
+    Kv : float
+        Flow coefficient expressed in metric units (m³/(h*bar**0.5)).
+
+    Returns
+    -------
+    float
+        Flow coefficient expressed in US units (gal/(min*psi**0.5)).
+    """
+    Kv *= ureg.m**3 / (ureg.h * ureg.bar**0.5)
+    return Kv.m_as(ureg.gal / (ureg.min * ureg.psi**0.5))
