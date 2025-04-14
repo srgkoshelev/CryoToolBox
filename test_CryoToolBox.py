@@ -679,13 +679,13 @@ class CPWrapperTest(unittest.TestCase):
 
     def test_str(self):
         argon = ctb.ThermState('argon', P=ctb.P_NTP, T=ctb.T_NTP)
-        self.assertEqual('argon at T: 293 K and P: 1.01 bar.', argon.__str__())
+        self.assertEqual('argon at T: 293 K and P: 1.01 bar', argon.__str__())
         argon.update_kw(P=argon.P, Q=0)
-        self.assertEqual('saturated argon liquid at P: 1.01 bar.', argon.__str__())
+        self.assertEqual('saturated argon liquid at P: 1.01 bar', argon.__str__())
         argon.update_kw(P=argon.P, Q=1)
-        self.assertEqual('saturated argon vapor at P: 1.01 bar.', argon.__str__())
+        self.assertEqual('saturated argon vapor at P: 1.01 bar', argon.__str__())
         argon.update_kw(P=argon.P, Q=0.5)
-        self.assertEqual('two-phase argon at P: 1.01 bar.', argon.__str__())
+        self.assertEqual('two-phase argon at P: 1.01 bar', argon.__str__())
 
 
 class ODHTest(FunctionsTest):
