@@ -16,6 +16,21 @@ def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite(ctb.piping))
     return tests
 
+# Checking if REFPROP works to run the tests
+try:
+    ctb.ThermState('helium', P=1*u.bar, T=ctb.T_NTP, backend='REFPROP')
+    skip_RP_test = False
+except ValueError:
+    skip_RP_test = True
+
+# Checking if Heprop works to run the tests
+try:
+    ctb.ThermState('helium', T= 300*u.K, P=1*u.bar, backend='Heprop')
+    skip_HP_test = False
+except ValueError:
+    skip_HP_test = True
+
+@unittest.skipIf(skip_RP_test, 'REFPROP failed to initialize, skipping REFPROP tests.')
 class RefPropTest(unittest.TestCase):
     """Verify fluid properties are calculated accurately.
 
@@ -1045,6 +1060,7 @@ class geometry(unittest.TestCase):
         self.assertEqual(V, ctb.geometry.cylinder_volume(D, H))
 
 
+@unittest.skipIf(skip_HP_test, 'Heprop failed to initialize, skipping Heprop tests.')
 class Heprop(unittest.TestCase):
     def test_fluid_name(self):
         self.assertRaises(ValueError, ctb.ThermState, 'nitrogen', T= 300*u.K, P=1*u.bar, backend='HEPROP')
