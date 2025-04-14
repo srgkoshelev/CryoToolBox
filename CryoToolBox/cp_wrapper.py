@@ -439,7 +439,7 @@ class ThermState:
     @property
     def is_super_critical(self):
         """Return True if state is supercritical."""
-        return self.phase == 1
+        return self.phase in [1, 2, 3]
 
     @property
     def specific_heat_input(self):

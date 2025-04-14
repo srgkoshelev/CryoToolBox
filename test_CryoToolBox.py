@@ -140,6 +140,15 @@ class RefPropTest(unittest.TestCase):
     #                     fluid.mass_fractions[0])
 
 
+class CpWrapperTest(unittest.TestCase):
+    def test_super_critical(self):
+        fluid = ctb.ThermState('helium', P=1*u.bar, T=300*u.K)
+        self.assertTrue(fluid.is_super_critical)
+        fluid.update_kw(T=2.2*u.K, P=100*u.bar)
+        self.assertTrue(fluid.is_super_critical)
+        fluid.update_kw(T=300*u.K, P=100*u.bar)
+        self.assertTrue(fluid.is_super_critical)
+
 class FunctionsTest(unittest.TestCase):
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         if isinstance(data, u.Quantity):
