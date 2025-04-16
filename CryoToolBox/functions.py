@@ -822,7 +822,14 @@ _NIST_DATA = {
                                 274.0328, -112.9212, 24.7593, -2.239153, 0],
                       'range': (4, 300),
                       'fun': _nist_log_fit,
-                      'unit': ureg.J/(ureg.kg*ureg.K)}
+                      'unit': ureg.J/(ureg.kg*ureg.K)},
+        Property.LE: {'coefs': [-4.1277E2, -3.0389E-1, 8.7696E-3,
+                                -9.9821E-6, 0],
+                      'range': (4, 300),
+                      'fun': _nist_pow_fit,
+                      'Tlow': 18,
+                      'f': -415.45,
+                      'unit': 1e-5*ureg.m/ureg.m},
     },
     Material.AL6061:
     {
