@@ -747,14 +747,14 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
     -------
     specific heat capacity
     """
-    if material == Material.OFHC:
+    if material == Material.OFHC and prop == Property.TC:
         if RRR_OFHC is None:
             logger.warning('RRR for OFHC is not defined. Using RRR=100.')
             RRR_OFHC = 100
         try:
             coefs = _NIST_DATA[material][prop]['coefs'+str(RRR_OFHC)]
         except KeyError:
-            raise NISTError(f'No data for RRR {RRR_OFHC}.'
+            raise NISTError(f'No data for RRR {RRR_OFHC}. '
                             'Use RRR 50, 100, 150, 300 or 500')
     else:
         coefs = _NIST_DATA[material][prop]['coefs']

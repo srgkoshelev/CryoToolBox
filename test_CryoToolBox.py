@@ -274,7 +274,6 @@ class FunctionsTest(unittest.TestCase):
         Ti = ctb.cga.calculate_inlet_temp(fluid, m_dot, pipe, condition=None)
 
 
-
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.
     """
