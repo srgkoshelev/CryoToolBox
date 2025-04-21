@@ -274,11 +274,24 @@ class FunctionsTest(unittest.TestCase):
         pipe = ctb.piping.Pipe(1, L=10*u.m)
         Ti = ctb.cga.calculate_inlet_temp(fluid, m_dot, pipe, condition=None)
 
-        def test_mean_free_path():
-            """Barron, Example 9.1"""
-            fluid = ctb.ThermState('helium', T=290*u.K, P=5*u.mtorr)
-            mfp_exp = 28.2*u.mm
-            self.assertApproxEqual(mfp_exp, mean_free_path(fluid), 0.01)
+    def test_mean_free_path(self):
+        """Barron, Example 9.1"""
+        fluid = ctb.ThermState('helium', T=290*u.K, P=5*u.mtorr)
+        mfp_exp = 28.2*u.mm
+        self.assertApproxEqual(mfp_exp, ctb.mean_free_path(fluid), 0.01)
+
+    def test_Kv_Cv(self):
+        """
+        Test conversion between flow coefficients Kv and Cv.
+
+        Verifies that:
+        - Cv_to_Kv conversion is accurate
+        - Round-trip conversion (Cv_to_Kv and Kv_to_Cv) is accurate
+        """
+        Cv = 1
+        self.assertApproxEqual(0.86, ctb.Cv_to_Kv(Cv), 0.86)
+        self.assertApproxEqual(Cv, ctb.Kv_to_Cv(ctb.Cv_to_Kv(Cv)), Cv)
+
 
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.

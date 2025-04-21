@@ -179,6 +179,38 @@ def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
     return A * ureg.inch**2
 
 
+def Cv_to_Kv(Cv):
+    """
+    Convert flow coefficient from US units (Cv) to metric units (Kv).
+
+    Parameters
+    ----------
+    Cv : flow coefficient (dimensionless, implied units: gal/(min*psi^0.5))
+
+    Returns
+    -------
+    flow coefficient (dimensionless, implied units: m^3/(h*bar^0.5))
+    """
+    Cv *= ureg.gal/(ureg.min*ureg.psi**0.5)
+    return Cv.m_as(ureg.m**3/(ureg.h*ureg.bar**0.5))
+
+
+def Kv_to_Cv(Kv):
+    """
+    Convert flow coefficient from metric units (Kv) to US units (Cv).
+
+    Parameters
+    ----------
+    Kv : flow coefficient (dimensionless, implied units: m^3/(h*bar^0.5))
+
+    Returns
+    -------
+    flow coefficient (dimensionless, implied units: gal/(min*psi^0.5))
+    """
+    Kv *= ureg.m**3/(ureg.h*ureg.bar**0.5)
+    return Kv.m_as(ureg.gal/(ureg.min*ureg.psi**0.5))
+
+
 def theta_heat(fluid, step=0.01):
     logger.warning('Deprecated. Use ht.cga.theta() instead.')
     return cga.theta(fluid, step)
@@ -363,7 +395,7 @@ def mean_free_path(fluid):
     """
     mu = fluid.viscosity
     P = fluid.P
-    Ru = u.molar_gas_constant
+    Ru = ureg.molar_gas_constant
     T = fluid.T
     M = fluid.molar_mass
     return mu/P*(pi*Ru*T/(2*M))**0.5
