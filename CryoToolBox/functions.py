@@ -369,6 +369,32 @@ def mean_free_path(fluid):
     return mu/P*(pi*Ru*T/(2*M))**0.5
 
 
+def Kn(fluid, L):
+    """
+    Calculate Knudsen number.
+
+    Parameters
+    ----------
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
+    L : characteristic length
+
+    Returns
+    -------
+    Knudsen number, dimensionless
+
+    Notes
+    -----
+    The Knudsen number can be used to determine the flow regime:
+    $Kn < 0.01$: Continuum flow
+    $0.01 < Kn < 0.1$: Slip flow
+    $0.1 < Kn < 10$: Transitional flow
+    $Kn > 10$: Free molecular flow
+    """
+    lambda_ = mean_free_path(fluid)
+    return lambda_/L
+
+
+
 def Nu_blend(Nu_lam, Nu_turb, m):
     """Calculate Nu number using blending equation of Churchill and Usagi.
     From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.32).
