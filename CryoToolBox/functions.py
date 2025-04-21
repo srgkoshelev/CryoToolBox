@@ -349,6 +349,26 @@ def Ra(fluid, T_surf, L_surf):
     return Gr(fluid, T_surf, L_surf)*fluid.Prandtl
 
 
+def mean_free_path(fluid):
+    """
+    Calculate mean free path.
+
+    Parameters
+    ----------
+    fluid : ThermState object describing thermodynamic state (fluid, T, P)
+
+    Returns
+    -------
+    mean free path, dimensionless.
+    """
+    mu = fluid.viscosity
+    P = fluid.P
+    Ru = u.molar_gas_constant
+    T = fluid.T
+    M = fluid.molar_mass
+    return mu/P*(pi*Ru*T/(2*M))**0.5
+
+
 def Nu_blend(Nu_lam, Nu_turb, m):
     """Calculate Nu number using blending equation of Churchill and Usagi.
     From Handbook of heat transfer by Rohsenow, Hartnet, Cho (HHT) (4.32).
