@@ -194,28 +194,29 @@ class FunctionsTest(unittest.TestCase):
         self.assertAlmostEqual(141.3739475,
                                heat_flow.to(u.W/u.m**2).magnitude, 5)
 
-    # Temporarily disabled as no REFPROP available
-    # def test_API_subsonic(self):
-    #     """Example from API 5.6"""
-    #     m_dot = 53500 * u.lb/u.hr
-    #     fluid = ht.ThermState('propane&butane', backend='REFPROP')
-    #     fluid.set_mole_fractions(0.5, 0.5)
-    #     fluid.update_kw(T=627*u.degR, P=97.2*u.psi)
-    #     P_back = 77.2 * u.psi
-    #     A_expect = 6.55 * u.inch**2
-    #     A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
-    #     self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
+    @unittest.skipIf(skip_RP_test, 'REFPROP failed to initialize, skipping REFPROP tests.')
+    def test_API_subsonic(self):
+        """Example from API 5.6"""
+        m_dot = 53500 * u.lb/u.hr
+        fluid = ht.ThermState('propane&butane', backend='REFPROP')
+        fluid.set_mole_fractions(0.5, 0.5)
+        fluid.update_kw(T=627*u.degR, P=97.2*u.psi)
+        P_back = 77.2 * u.psi
+        A_expect = 6.55 * u.inch**2
+        A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
+        self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
-    # def test_API_sonic(self):
-    #     """Example from API 5.6"""
-    #     m_dot = 53500 * u.lb/u.hr
-    #     fluid = ht.ThermState('propane&butane', backend='REFPROP')
-    #     fluid.set_mole_fractions(0.5, 0.5)
-    #     fluid.update_kw(T=627*u.degR, P=97.2*u.psi)
-    #     P_back = Q_(0, u.psig)
-    #     A_expect = 5.73 * u.inch**2
-    #     A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
-    #     self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
+    @unittest.skipIf(skip_RP_test, 'REFPROP failed to initialize, skipping REFPROP tests.')
+    def test_API_sonic(self):
+        """Example from API 5.6"""
+        m_dot = 53500 * u.lb/u.hr
+        fluid = ht.ThermState('propane&butane', backend='REFPROP')
+        fluid.set_mole_fractions(0.5, 0.5)
+        fluid.update_kw(T=627*u.degR, P=97.2*u.psi)
+        P_back = Q_(0, u.psig)
+        A_expect = 5.73 * u.inch**2
+        A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
+        self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
     def test_to_standard_flow(self):
         self.assertRaises(ValueError, ctb.to_standard_flow, 1*u.inch, ctb.AIR)
