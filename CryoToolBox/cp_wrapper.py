@@ -242,7 +242,6 @@ class ThermState:
         return self._AbstractState.p()
 
     @property
-    @ureg.wraps(CP_const_unit['Q'][1], None)
     def Q(self):
         return self._AbstractState.Q()
 
@@ -399,7 +398,6 @@ class ThermState:
         return result * output_unit
 
     @property
-    @ureg.wraps(CP_const_unit['Phase'][1], None)
     def phase(self):
         """Calculate the phase of the fluid.
 
