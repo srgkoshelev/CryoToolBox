@@ -292,6 +292,19 @@ class FunctionsTest(unittest.TestCase):
         self.assertApproxEqual(0.86, ctb.Cv_to_Kv(Cv), 0.86)
         self.assertApproxEqual(Cv, ctb.Kv_to_Cv(ctb.Cv_to_Kv(Cv)), Cv)
 
+    def test_kt_Dacron(self):
+        """Test the thermal conductivity of Dacron spacer and MLI"""
+        tc = 80 * u.K
+        ks_exp = 0.1409 * u.W/u.m/u.K
+        ks = ctb.ks_Dacron(tc)
+        self.assertApproxEqual(ks_exp, ks, uncertainty=0.001)
+        ts = 0.06 * u.mm
+        hc_exp = 1.3526 * u.W/u.m**2/u.K
+        hc = ctb.hc_Dacron(tc, ts=ts)
+        self.assertApproxEqual(hc_exp, hc, uncertainty=0.001)
+        kt_exp = 0.465 * u.mW/u.m/u.K
+        kt = ctb.k_MLI(30/u.cm, hc, 80*u.K)
+        self.assertApproxEqual(kt_exp, kt, uncertainty=0.001)
 
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.

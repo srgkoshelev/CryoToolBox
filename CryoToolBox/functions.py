@@ -1002,3 +1002,71 @@ def blast_radius(E_stored):
     D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
     D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
     return (D_1, D_2, D_3)
+
+def ks_Dacron(Tc, T0=300*ureg.K):
+    """Calculate thermal conductivity of Dacron spacer, Barron 1.57
+
+    Parameters
+    ----------
+    Tc : Quantity {temperature}
+        Cold temperature.
+    T0 : Quantity {temperature}, optional
+        Hot temperature (default: 300 K).
+
+    Returns
+    -------
+    ks : Quantity {'[length]': 1, '[mass]': 1, '[temperature]': -1, '[time]': -3}
+        Thermal conductivity of Dacron spacer.
+    """
+    k0 = 0.1505*ureg.W/ureg.m/ureg.K
+    c1 = 0.01395
+    c2 = 0.15145
+    Tm = (Tc + T0) / 2
+    ks = k0 * (1+c1*(T0-Tm)/T0 + c2*log(Tm / T0))
+    return ks
+
+def hc_Dacron(Tc, T0=300*ureg.K, ts=0.06*ureg.mm):
+    """Calculate solid conductance of Dacron spacer, Barron 1.56
+
+    Parameters
+    ----------
+    Tc : Quantity {temperature}
+        Cold temperature.
+    T0 : Quantity {temperature}, optional
+        Hot temperature (default: 300 K).
+    ts : Quantity {length}, optional
+        Thickness of the spacer (default: 0.06 mm).
+
+    Returns
+    -------
+    hc : Quantity {'[mass]': 1, '[temperature]': -1, '[time]': -3}
+        Solid conductance of Dacron spacer.
+    """
+    c = 0.008
+    f = 0.072
+    hc = c * f * ks_Dacron(Tc, T0) / ts
+    return hc
+
+def k_MLI(ndx, hc, Tc, T0=300*ureg.K, e=0.04):
+    """Calculate apparent thermal conductivity of MLI, Barron 1.55
+
+    Parameters
+    ----------
+    ndx : Quantity {length:-1}
+        MLI layer density.
+    hc : Quantity {'[mass]': 1, '[temperature]': -1, '[time]': -3}
+        MLI spacer conductance.
+    Tc : Quantity {temperature}
+        Cold temperature.
+    T0 : Quantity {temperature}, optional
+        Hot temperature (default: 300 K).
+    e : float, optional
+        Emissivity (default: 0.04).
+
+    Returns
+    -------
+    kt : Quantity {'[length]': 1, '[mass]': 1, '[temperature]': -1, '[time]': -3}
+        Apparent thermal conductivity of MLI.
+    """
+    kt = 1 / ndx * (hc + e / (2 - e) * ureg.sigma * (T0**2 + Tc**2) * (T0 + Tc))
+    return kt.to(ureg.mW/ureg.m/ureg.K)
