@@ -740,7 +740,7 @@ class CPWrapperTest(unittest.TestCase):
         argon.update_kw(P=argon.P, Q=1)
         self.assertEqual('saturated argon vapor at P: 1.01 bar', argon.__str__())
         argon.update_kw(P=argon.P, Q=0.5)
-        self.assertEqual('two-phase argon at P: 1.01 bar', argon.__str__())
+        self.assertEqual('two-phase argon at P: 1.01 bar and Q: 0.50', argon.__str__())
 
 
 class ODHTest(FunctionsTest):

@@ -518,7 +518,8 @@ class ThermState:
                     f'at P: {self.P.to(ureg.bar):.3g~}')
         elif self.Q > 0 and self.Q < 1:
             return (f'two-phase {self.name.lower()} '
-                    f'at P: {self.P.to(ureg.bar):.3g~}')
+                    f'at P: {self.P.to(ureg.bar):.3g~} and '
+                    f'Q: {self.Q:.2f}')
         else:
             return (f'{self.name.lower()} at '
                     f'T: {self.T.to(ureg.K):.3g~} and '
