@@ -1022,7 +1022,7 @@ class Tubestest(unittest.TestCase):
         self.assertEqual(elbow.ID, ID)
         A = pi * ID**2 / 4
         self.assertEqual(elbow.area, A)
-        L = R_D * ID * angle
+        L = R_D * ID * angle.m_as(u.degree)/180*pi
         self.assertEqual(elbow.L, L)
         V = A * L
         self.assertEqual(elbow.volume, V)
