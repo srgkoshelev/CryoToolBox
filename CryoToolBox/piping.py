@@ -1214,11 +1214,15 @@ def P_crit(P, M, k):
     return P_c
 
 
-def dP_adiab(m_dot, fluid, pipe):
+def dP_adiab(m_dot, fluid, pipe, state='total'):
     """Calculate pressure drop for isentropic flow given total inlet conditions.
 
     """
-    M = Mach_total(fluid, m_dot, pipe.area)
+    if state == 'total':
+        M = Mach_total(fluid, m_dot, pipe.area)
+    elif state == 'static':
+        v = velocity(fluid, m_dot, pipe.area)
+        M = Mach(fluid, v)
     K_limit = K_lim(M, fluid.gamma)
     Re_ = Re(fluid, m_dot, pipe.ID, pipe.area)
     K_pipe = pipe.K(Re_)
