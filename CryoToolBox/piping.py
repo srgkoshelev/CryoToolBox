@@ -131,7 +131,8 @@ class Tube(PipingElement):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         eps_r = self.eps / self.ID
-        return f_Darcy(Re_, eps_r)*self.L/self.ID
+        K = f_Darcy(Re_, eps_r)*self.L/self.ID
+        return float(K)
 
     def f_T(self):
         """Calculate Darcy friction factor for complete turbulence for smooth
