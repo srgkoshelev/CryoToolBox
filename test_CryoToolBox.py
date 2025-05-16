@@ -521,22 +521,38 @@ class PipingTest(unittest.TestCase):
         dP_isot = ht.piping.dP_isot(m_dot_isot, fluid, pipe)
         self.assertApproxEqual(fluid.P-P_out, dP_isot)
 
-    # TODO Find out why solver stopped working
-    # def test_White_P_9_101(self):
-    #     air = ht.ThermState('air', T=Q_(20, u.degC), P=102*u.kPa)
-    #     P_out = 100*u.kPa
-    #     pipe = ht.piping.Tube(3*u.cm, wall=0*u.m, L=1*u.m)
-    #     K = 0.028 * pipe.L/pipe.ID
-    #     pipe.K = MagicMock(return_value=K)
-    #     m_dot_incomp = ht.piping.m_dot_incomp(air, [pipe], P_out=P_out)
-    #     m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out)
-    #     self.assertApproxEqual(m_dot_incomp, m_dot_isot)
-    #     m_dot_adiab = ht.piping.m_dot_adiab(air, pipe, P_out)
-    #     self.assertApproxEqual(m_dot_incomp, m_dot_adiab)
-    #     dP_incomp = ht.piping.dP_incomp(m_dot_incomp, air, [pipe])
-    #     self.assertApproxEqual(air.P-P_out, dP_incomp)
-    #     dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
-    #     self.assertApproxEqual(air.P-P_out, dP_isot)
+    def test_White_P_9_101(self):
+        air = ht.ThermState('air', T=Q_(20, u.degC), P=102*u.kPa)
+        pipe = ht.piping.Tube(1*u.cm, L=3*u.m)
+        P_out = 100*u.kPa
+        K = 0.028 * pipe.L/pipe.ID
+        pipe.K = MagicMock(return_value=K)
+        m_dot_incomp = ht.piping.m_dot_incomp(air, [pipe], P_out=P_out)
+        m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out)
+        self.assertApproxEqual(m_dot_incomp, m_dot_isot, uncertainty=0.01)
+        m_dot_adiab = ht.piping.m_dot_adiab(air, pipe, P_out, state='static')
+        self.assertApproxEqual(m_dot_incomp, m_dot_adiab, uncertainty=0.01)
+        dP_incomp = ht.piping.dP_incomp(m_dot_incomp, air, [pipe])
+        self.assertApproxEqual(air.P-P_out, dP_incomp, uncertainty=0.01)
+        dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
+        self.assertApproxEqual(air.P-P_out, dP_isot, uncertainty=0.01)
+        dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state='static')
+        # self.assertApproxEqual(air.P-P_out, dP_adiab, uncertainty=0.01)
+
+    def test_Cengel_12_15(self):
+        pipe = ctb.piping.Tube(3*u.cm)
+        fluid = ctb.ThermState('air', P=150*u.kPa, T=300*u.K)
+        Ma1 = 0.4
+        v1 = fluid.speed_sound * Ma1
+        self.assertApproxEqual(139*u.m/u.s, v1, uncertainty=0.001)
+        m_dot = fluid.Dmass*v1*pipe.area
+        Re1 = 2.637e5  # Differences in viscosity compared to the source
+        f = ctb.piping.serghide(Re1, 0)
+        self.assertApproxEqual(0.0148, f, uncertainty=0.01)
+        K_lim = ctb.piping.K_lim(Ma1, fluid.gamma)
+        L = K_lim * pipe.ID / f
+        self.assertApproxEqual(4.68*u.m, L, uncertainty=0.01)
+
 
     def test_M_from_K(self):
         air = ht.ThermState('air', P=300*u.kPa, T=500*u.K)
