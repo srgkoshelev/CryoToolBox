@@ -1141,26 +1141,20 @@ def Mach_total(fluid, m_dot, area):
     B = m_dot / area * (Z*R/k)**0.5
     M_core = float(B * T**0.5 / P)
 
-    def M_sq_total(Msq, M_core, k):
+    def to_solve(Msq):
         try:
-            res = M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1))
+            res = M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1)) - Msq
         except RuntimeWarning:
             res = float('nan')
         return res
-
-    def to_solve(Msq):
-        return Msq - M_sq_total(Msq, M_core, k)
-
-    x0 = M_core**2
-    x1 = 0.5 * x0
-    solution = root_scalar(to_solve, x0=x0, x1=x1)
+    bracket = [0, 1]
+    solution = root_scalar(to_solve, bracket=bracket)
     M_root = solution.root**0.5
+    # Not sure if this is needed anymore
     T = fluid.T - v**2 / fluid.Cpmass
     if T < 0*ureg.K:
         raise HydraulicError(f'Negative static temperature: {T:.3g~}. Required '
                              f'speed {v.to(ureg.m/ureg.s):.3g~} cannot be achieved.')
-    if isinstance(M_root, complex):
-        raise HydraulicError(f'No real solutions for Mach number found.')
     return M_root
 
 

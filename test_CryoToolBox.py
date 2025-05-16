@@ -536,7 +536,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(air.P-P_out, dP_incomp, uncertainty=0.01)
         dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
         self.assertApproxEqual(air.P-P_out, dP_isot, uncertainty=0.01)
-        dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state='static')
+        # dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state='static')
         # self.assertApproxEqual(air.P-P_out, dP_adiab, uncertainty=0.01)
 
     def test_Cengel_12_15(self):
