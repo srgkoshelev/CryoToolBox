@@ -1121,7 +1121,7 @@ def Mach(fluid, v):
     v : Quantity, {length: 1, time: -1}
     """
     M = v / fluid.speed_sound
-    return M.to_base_units()
+    return float(M)
 
 
 def Mach_total(fluid, m_dot, area):
