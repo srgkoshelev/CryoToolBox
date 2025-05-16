@@ -1142,7 +1142,11 @@ def Mach_total(fluid, m_dot, area):
     M_core = float(B * T**0.5 / P)
 
     def M_sq_total(Msq, M_core, k):
-        return M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1))
+        try:
+            res = M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1))
+        except RuntimeWarning:
+            res = float('nan')
+        return res
 
     def to_solve(Msq):
         return Msq - M_sq_total(Msq, M_core, k)
