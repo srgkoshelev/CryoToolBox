@@ -1162,6 +1162,8 @@ def Mach_total(fluid, m_dot, area):
 def K_lim(M, k):
     """Calculate max resistance coefficient of a pipe.
     """
+    if M == 0:
+        raise ValueError('K_lim is undefined for Ma=0.')
     A = (1-M**2) / (k*M**2)
     B = (k+1)/(2*k)
     C = (k+1) * M**2
@@ -1174,18 +1176,14 @@ def M_Klim(K, k):
     if K < 0:
         raise HydraulicError(f"Resistance coefficient value can't be less \
         than 0: {K}")
-    K_ = float(K)
+    K = float(K)
 
     def to_solve(M):
-        return K_ - K_lim(M, k)
-    x0 = 0.3
-    x1 = 0.1
-    bracket = [1e-15, 1]
-    try:
-        solution = root_scalar(to_solve, bracket=bracket, method='brentq')
-        logger.debug('Brentq failed for M_Klim')
-    except ValueError:
-        solution = root_scalar(to_solve, x0=x0, x1=x1)
+        if M == 0:
+            return float('-inf')
+        return K - K_lim(M, k)
+    bracket = [0, 1]
+    solution = root_scalar(to_solve, bracket=bracket)
     M = solution.root
     return M
 
