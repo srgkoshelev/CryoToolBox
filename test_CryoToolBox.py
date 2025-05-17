@@ -508,7 +508,7 @@ class PipingTest(unittest.TestCase):
         K = 0.025 * pipe.L/pipe.ID
         pipe.K = MagicMock(return_value=K)
         m_dot_adiab = ht.piping.m_dot_adiab(fluid_static, pipe, P_out, state='static')
-        self.assertApproxEqual(0.0233*u.kg/u.s, m_dot_adiab)
+        self.assertApproxEqual(0.0233*u.kg/u.s, m_dot_adiab, uncertainty=0.001)
 
     def test_White_P_9_100(self):
         fluid = ht.ThermState('methane', T=Q_(68, u.degF), P=5*u.bar+101325*u.Pa)
@@ -536,8 +536,9 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(air.P-P_out, dP_incomp, uncertainty=0.01)
         dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
         self.assertApproxEqual(air.P-P_out, dP_isot, uncertainty=0.01)
-        # dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state='static')
-        # self.assertApproxEqual(air.P-P_out, dP_adiab, uncertainty=0.01)
+        dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state='static')
+        self.assertApproxEqual(air.P-P_out, dP_adiab, uncertainty=0.01)
+
 
     def test_Cengel_12_15(self):
         pipe = ctb.piping.Tube(3*u.cm)
