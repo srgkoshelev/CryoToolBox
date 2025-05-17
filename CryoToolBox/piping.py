@@ -1230,8 +1230,7 @@ def dP_adiab(m_dot, fluid, pipe, state='total'):
                          ' mass flow.')
     M_end = M_Klim(K_left, fluid.gamma)
     P_static_end = P_from_M(fluid.P, M, M_end, fluid.gamma)
-    P_total_end = P_total(P_static_end, M, fluid.gamma)
-    return fluid.P - P_total_end
+    return fluid.P - P_static_end
 
 
 def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
