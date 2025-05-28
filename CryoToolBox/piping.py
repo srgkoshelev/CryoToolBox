@@ -694,77 +694,340 @@ class Valve(PipingElement):
 #         self._K = 1/(self.beta**2/(1-self.beta**4)**0.5*self._Cf)**2
 
 
-class Contraction(PipingElement):
+class PipingTransition(PipingElement):
     """
-    Sudden and gradual contraction based on Crane TP-410.
+    Base class for pipe diameter transitions (contractions and enlargements).
     """
-    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+
+    def _init_transition(self, ID1, ID2, theta, transition_type):
         """
-        ID1 : upstream pipe ID
-        ID2 : downstream pipe ID
-        theta : contraction angle
+        Common initialization for diameter transitions.
+
+        Parameters
+        ----------
+        ID1 : ureg.Quantity {length: 1}
+            Upstream pipe inside diameter.
+        ID2 : ureg.Quantity {length: 1}
+            Downstream pipe inside diameter.
+        theta : ureg.Quantity {dimensionless}
+            Transition angle.
+        transition_type : str
+            Type of transition ('Contraction' or 'Enlargement').
         """
-        self.beta = beta(ID1, ID2)
-        self.theta = theta
-        self.type = 'Contraction'
-        self.OD = None
+        # Validate angle (common to both)
+        if theta <= 0*ureg.deg or theta > 180*ureg.deg:
+            raise ValueError(f"Transition angle must be in range (0°, 180°], "
+                           f"got {theta}")
+
         self.ID1 = ID1
         self.ID2 = ID2
+        self.theta = theta
+        self.beta = beta(ID1, ID2)
+        self.type = transition_type
+        self.OD = None
+
+        # Use smaller diameter for area reference
         self.ID = min(ID1, ID2)
-        self._area = circle_area(self.ID)  # Probably for K_\Sigma calc
-        self.L = abs(ID1 - ID2) / tan(theta/2)
-        self.volume = pi * self.L / 3 * (ID1**2 + ID1*ID2 + ID2**2)
+        self._area = circle_area(self.ID)
+
+        # Calculate axial length
+        self.L = abs(ID1 - ID2) / (2 * tan(theta/2))
+
+        # Calculate internal volume (truncated cone)
+        r1 = ID1 / 2
+        r2 = ID2 / 2
+        self.volume = pi * self.L / 3 * (r1**2 + r1*r2 + r2**2)
+
+    def __str__(self):
+        """
+        String representation of the piping transition.
+
+        Returns
+        -------
+        str
+            Human-readable description of the contraction.
+        """
+        return (f'{self.type}, {self.theta.to(ureg.deg)} from '
+                f'{self.ID1.to(ureg.inch):.3f} to {self.ID2.to(ureg.inch):.3f}')
+
+    def __repr__(self):
+        """
+        Detailed string representation for debugging.
+
+        Returns
+        -------
+        str
+            Detailed representation showing all key parameters.
+        """
+        return (f"Contraction(ID1={self.ID1}, ID2={self.ID2}, "
+                f"theta={self.theta})")
+
+
+class Contraction(PipingTransition):
+    """
+    Sudden and gradual pipe contraction fitting based on Crane TP-410.
+
+    This class represents pipe contractions that reduce flow area from a larger
+    upstream pipe to a smaller downstream pipe. The pressure loss coefficient
+    is calculated based on the contraction angle and diameter ratio according
+    to Crane TP-410 standards.
+
+    Parameters
+    ----------
+    ID1 : ureg.Quantity {length: 1}
+        Inside diameter of upstream (larger) pipe.
+    ID2 : ureg.Quantity {length: 1}
+        Inside diameter of downstream (smaller) pipe.
+    theta : ureg.Quantity {dimensionless}, optional
+        Total contraction angle (included angle), by default 180°.
+        Valid range is 0° < theta ≤ 180°.
+
+    Attributes
+    ----------
+    beta : float
+        Diameter ratio (ID2/ID1), dimensionless.
+    theta : ureg.Quantity {dimensionless}
+        Contraction angle.
+    type : str
+        Element type identifier.
+    ID1 : ureg.Quantity {length: 1}
+        Upstream pipe inside diameter.
+    ID2 : ureg.Quantity {length: 1}
+        Downstream pipe inside diameter.
+    ID : ureg.Quantity {length: 1}
+        Minimum (downstream) inside diameter.
+    L : ureg.Quantity {length: 1}
+        Axial length of contraction.
+    volume : ureg.Quantity {length: 3}
+        Internal volume of the contraction.
+
+    Notes
+    -----
+    The pressure loss coefficient K is calculated using different formulas
+    depending on the contraction angle:
+
+    For θ ≤ 45°:
+    .. math:: K = 0.8 \\sin(\\theta/2) (1 - \\beta^2)
+
+    For 45° < θ ≤ 180°:
+    .. math:: K = 0.5 (1 - \\beta^2) \\sqrt{\\sin(\\theta/2)}
+
+    Where β = ID2/ID1 is the diameter ratio.
+
+    The axial length is calculated as:
+    .. math:: L = \\frac{|ID_1 - ID_2|}{2 \\tan(\\theta/2)}
+
+    References
+    ----------
+    Crane Technical Paper No. 410 (TP-410), Flow of Fluids Through Valves,
+    Fittings, and Pipe, Section A-26.
+
+    Examples
+    --------
+    >>> import CryoToolBox as ctb
+    >>> u = ctb.ureg
+    >>> # Sudden contraction from 4" to 2" pipe
+    >>> contraction = ctb.piping.Contraction(4*u.inch, 2*u.inch)
+    >>> contraction.beta
+    0.5
+    >>> contraction.K()
+    0.375
+
+    >>> # Gradual 30° contraction
+    >>> gradual = ctb.piping.Contraction(4*u.inch, 2*u.inch, 30*u.deg)
+    >>> gradual.K()
+    0.1552...
+    """
+
+    def __init__(self, ID1, ID2, theta=ureg('180 deg')):
+        """
+        Initialize contraction fitting.
+
+        Parameters
+        ----------
+        ID1 : ureg.Quantity {length: 1}
+            Inside diameter of upstream pipe.
+        ID2 : ureg.Quantity {length: 1}
+            Inside diameter of downstream pipe.
+        theta : ureg.Quantity {dimensionless}, optional
+            Contraction angle, by default 180°.
+
+        Raises
+        ------
+        ValueError
+            If ID1 <= ID2 (not a contraction).
+            If theta is outside valid range (0°, 180°].
+        """
+        # Input validation
+        if ID1 <= ID2:
+            raise ValueError(f"ID1 ({ID1}) must be greater than ID2 ({ID2}) "
+                           "for a contraction")
+
+        if theta <= 0*ureg.deg or theta > 180*ureg.deg:
+            raise ValueError(f"Contraction angle must be in range (0°, 180°], "
+                           f"got {theta}")
+
+        self._init_transition(ID1, ID2, theta, 'Contraction')
 
     @property
     def area(self):
+        """
+        Cross-sectional area of the downstream (smaller) pipe.
+
+        Returns
+        -------
+        ureg.Quantity {length: 2}
+            Flow area based on downstream diameter.
+        """
         return self._area
 
     def K(self, Re=None):
-        # TODO Add Re handling
+        """
+        Calculate pressure loss coefficient for the contraction.
+
+        Parameters
+        ----------
+        Re : float, optional
+            Reynolds number. Currently not implemented but reserved
+            for future Reynolds number corrections.
+
+        Returns
+        -------
+        float
+            Dimensionless pressure loss coefficient based on downstream
+            velocity head.
+
+        Notes
+        -----
+        The loss coefficient is calculated using Crane TP-410 formulas:
+
+        - For θ ≤ 45°: K = 0.8 sin(θ/2) (1 - β²)
+        - For θ > 45°: K = 0.5 (1 - β²) √sin(θ/2)
+
+        Where β = ID2/ID1 is the diameter ratio.
+
+        Raises
+        ------
+        ValueError
+            If theta > 180° (invalid contraction angle).
+
+        Examples
+        --------
+        >>> import CryoToolBox as ctb
+        >>> u = ctb.ureg
+        >>> contraction = Contraction(4*u.inch, 2*u.inch, 90*u.deg)
+        >>> contraction.K()
+        0.3153...
+        """
+        # TODO: Add Re handling for Reynolds number corrections
+        if Re is not None:
+            logger.warning("Reynolds number correction not yet implemented")
+
         if self.theta <= 45*ureg.deg:
-            K_ = 0.8 * sin(self.theta/2) * (1-self.beta**2)
-            # Crane TP-410 A-26, Formula 1 for K1 (smaller dia)
+            # Crane TP-410 A-26, Formula 1 for gradual contractions
+            K_ = 0.8 * sin(self.theta/2) * (1 - self.beta**2)
         elif self.theta <= 180*ureg.deg:
-            K_ = 0.5 * (1-self.beta**2) * sqrt(sin(self.theta/2))
-            # Crane TP-410 A-26, Formula 2 for K1 (smaller dia)
+            # Crane TP-410 A-26, Formula 2 for sudden contractions
+            K_ = 0.5 * (1 - self.beta**2) * sqrt(sin(self.theta/2))
         else:
-            logger.error(f'Theta cannot be greater than {180*ureg.deg} '
-                         f'(sudden contraction): {self.theta}')
-        return K_
+            raise ValueError(f'Contraction angle cannot exceed 180°, '
+                           f'got {self.theta.to(ureg.deg)}')
 
-    def __str__(self):
-        return f'{self.type}, {self.theta.to(ureg.deg)} from {self.ID1} ' + \
-            f'to {self.ID2}'
-
-    # def __str__(self):
-    #     return f'{self.type}'
+        return float(K_)
 
 
-class Enlargement(Contraction):
+class Enlargement(PipingTransition):
     """
-    Sudden and gradual enlargement based on Crane TP-410.
+    Sudden and gradual pipe enlargement fitting based on Crane TP-410.
+
+    This class represents pipe enlargements that increase flow area from a smaller
+    upstream pipe to a larger downstream pipe. The pressure loss coefficient
+    is calculated based on the enlargement angle and diameter ratio.
+
+    Parameters
+    ----------
+    ID1 : ureg.Quantity {length: 1}
+        Inside diameter of upstream (smaller) pipe.
+    ID2 : ureg.Quantity {length: 1}
+        Inside diameter of downstream (larger) pipe.
+    theta : ureg.Quantity {dimensionless}, optional
+        Total enlargement angle (included angle), by default 180°.
+
+    Notes
+    -----
+    For enlargements, the pressure loss coefficient is based on upstream
+    velocity head and uses different formulas than contractions.
     """
+
     def __init__(self, ID1, ID2, theta=ureg('180 deg')):
         """
-        ID1 : upstream pipe ID
-        ID2 : downstream pipe ID
-        theta : contraction angle
+        Initialize enlargement fitting.
+
+        Parameters
+        ----------
+        ID1 : ureg.Quantity {length: 1}
+            Inside diameter of upstream (smaller) pipe.
+        ID2 : ureg.Quantity {length: 1}
+            Inside diameter of downstream (larger) pipe.
+        theta : ureg.Quantity {dimensionless}, optional
+            Enlargement angle, by default 180°.
+
+        Raises
+        ------
+        ValueError
+            If ID1 >= ID2 (not an enlargement).
+            If theta is outside valid range (0°, 180°].
         """
-        super().__init__(ID1, ID2, theta)
-        self.type = 'Enlargement'
+        # Enlargement-specific validation
+        if ID1 >= ID2:
+            raise ValueError(f"ID2 ({ID2}) must be greater than ID1 ({ID1}) "
+                           "for an enlargement")
+
+        # Use shared initialization
+        self._init_transition(ID1, ID2, theta, 'Enlargement')
+
+    @property
+    def area(self):
+        """
+        Cross-sectional area of the upstream (smaller) pipe.
+
+        Returns
+        -------
+        ureg.Quantity {length: 2}
+            Flow area based on upstream diameter for enlargements.
+        """
+        return circle_area(self.ID1)  # Use upstream area for enlargements
 
     def K(self, Re=None):
-        # TODO Add Re handling
+        """
+        Calculate pressure loss coefficient for the enlargement.
+
+        Parameters
+        ----------
+        Re : float, optional
+            Reynolds number. Currently not implemented.
+
+        Returns
+        -------
+        float
+            Dimensionless pressure loss coefficient based on upstream
+            velocity head.
+
+        Notes
+        -----
+        Enlargement formulas differ from contractions and are based on
+        upstream velocity head.
+        """
+        # Enlargement-specific K calculation
+        # (Implementation depends on your specific enlargement formulas)
         if self.theta <= 45*ureg.deg:
-            K_ = 2.6 * sin(self.theta/2) * (1-self.beta**2)**2
-            # Crane TP-410 A-26, Formula 3 for K1 (smaller dia)
-        elif self.theta <= 180*ureg.deg:
-            K_ = (1-self.beta**2)**2
-            # Crane TP-410 A-26, Formula 4 for K1 (smaller dia)
+            # Gradual enlargement formula
+            K_ = 2.6 * sin(self.theta/2) * (1 - self.beta**2)**2
         else:
-            logger.error(f'Theta cannot be greater than {180*ureg.deg} \
-            (sudden enlargement): {self.theta}')
-        return K_
+            # Sudden enlargement formula: K = (1 - β²)²
+            K_ = (1 - self.beta**2)**2
+
+        return float(K_)
 
 
 class PackedBed(PipingElement):
@@ -1229,6 +1492,8 @@ def dP_adiab(m_dot, fluid, pipe, state='total'):
                          f'K={float(K_pipe):.3g}. Reduce hydraulic resistance or'
                          ' mass flow.')
     M_end = M_Klim(K_left, fluid.gamma)
+    # TODO This assumes isentropic flow, i.e., no friction. For adiabatic flow only Ttotal will be constant.
+    # See White 9.3 for details.
     P_static_end = P_from_M(fluid.P, M, M_end, fluid.gamma)
     return fluid.P - P_static_end
 
@@ -1272,6 +1537,7 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
             return -1
         M2 = M_Klim(K_lim2, k)
         P_crit2_ = P_crit(P2, M2, k).m_as(ureg.Pa)
+        # TODO Only true for isentropic flow, for adiabatic Tcrit should be used
         result = P_crit1_ - P_crit2_
         return result
     bracket = [1e-10, 1e10]  # Limits search range
@@ -1322,7 +1588,8 @@ def beta(d1, d2):
     """
     Calculate beta = d/D for contraction or enlargement.
     """
-    return min(d1, d2)/max(d1, d2)
+    beta_ = min(d1, d2)/max(d1, d2)
+    return float(beta_)
 
 
 def equivalent_orifice(m_dot, dP, fluid=AIR):

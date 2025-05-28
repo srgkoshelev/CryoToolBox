@@ -3,7 +3,7 @@ from CryoToolBox import odh
 import pprint
 import unittest
 import doctest
-from math import pi, sin
+from math import pi, sin, sqrt, tan
 from unittest.mock import MagicMock
 
 pp = pprint.PrettyPrinter()
@@ -13,8 +13,19 @@ u = ht.ureg
 Q_ = ht.Q_
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(ctb.piping))
+    """
+    Load unit tests and doctests with ellipsis support.
+
+    This function is automatically called by unittest when discovering tests.
+    It adds doctests from the ctb.piping module with ellipsis directive enabled.
+    """
+    # Add doctests with ellipsis and other useful flags
+    tests.addTests(doctest.DocTestSuite(
+        ctb.piping,
+        optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE | doctest.IGNORE_EXCEPTION_DETAIL
+    ))
     return tests
+
 
 # Checking if REFPROP works to run the tests
 try:
@@ -1143,6 +1154,198 @@ class Heprop(unittest.TestCase):
         self.assertAlmostEqual(CP_helium_state.specific_heat_input / heprop_state.specific_heat_input, 1, delta=0.001)
         self.assertAlmostEqual(CP_helium_state.compressibility_factor / heprop_state.compressibility_factor, 1, delta=0.001)
 
+
+class TestContraction(unittest.TestCase):
+    """Unit tests for the Contraction class."""
+
+    def test_contraction_basic_properties(self):
+        """Test basic contraction creation and properties."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch)
+
+        self.assertEqual(c.beta, 0.5)
+        self.assertEqual(c.theta, 180*u.deg)
+        self.assertEqual(c.ID, 2*u.inch)
+        self.assertEqual(c.ID1, 4*u.inch)
+        self.assertEqual(c.ID2, 2*u.inch)
+        self.assertEqual(c.type, 'Contraction')
+        self.assertIsNone(c.OD)
+
+    def test_contraction_gradual_30_degrees(self):
+        """Test gradual contraction with 30° angle."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 30*u.deg)
+        K = c.K()
+
+        # Expected K ≈ 0.8 * sin(15°) * (1-0.25) ≈ 0.155
+        expected_K = 0.8 * sin(15*u.deg) * (1 - 0.5**2)
+        self.assertAlmostEqual(K, expected_K, places=4)
+        self.assertTrue(0.15 < K < 0.16)
+
+    def test_contraction_gradual_45_degrees(self):
+        """Test gradual contraction at 45° boundary."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 45*u.deg)
+        K = c.K()
+
+        # Should use first formula: K = 0.8 * sin(22.5°) * (1-0.25)
+        expected_K = 0.8 * sin(22.5*u.deg) * (1 - 0.5**2)
+        self.assertAlmostEqual(K, expected_K, places=4)
+
+    def test_contraction_sudden_180_degrees(self):
+        """Test sudden contraction (180°)."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch)
+        K = c.K()
+
+        # Expected K = 0.5 * (1-0.25) * sqrt(sin(90°)) = 0.375
+        expected_K = 0.5 * (1 - 0.5**2) * sqrt(sin(90*u.deg))
+        self.assertAlmostEqual(K, expected_K, places=6)
+        self.assertAlmostEqual(K, 0.375, places=6)
+
+    def test_contraction_90_degrees(self):
+        """Test contraction with 90° angle."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 90*u.deg)
+        K = c.K()
+
+        # Should use second formula: K = 0.5 * (1-0.25) * sqrt(sin(45°))
+        expected_K = 0.5 * (1 - 0.5**2) * sqrt(sin(45*u.deg))
+        self.assertAlmostEqual(K, expected_K, places=4)
+
+    def test_contraction_different_diameter_ratio(self):
+        """Test contraction with different diameter ratio."""
+        c = ctb.piping.Contraction(6*u.inch, 3*u.inch, 60*u.deg)
+        K = c.K()
+
+        beta = 3.0/6.0  # 0.5
+        expected_K = 0.5 * (1 - beta**2) * sqrt(sin(30*u.deg))
+        self.assertAlmostEqual(K, expected_K, places=4)
+        self.assertEqual(c.beta, 0.5)
+
+    def test_contraction_small_diameter_ratio(self):
+        """Test contraction with small diameter ratio (large contraction)."""
+        c = ctb.piping.Contraction(10*u.inch, 2*u.inch, 120*u.deg)
+        K = c.K()
+
+        beta = 2.0/10.0  # 0.2
+        expected_K = 0.5 * (1 - beta**2) * sqrt(sin(60*u.deg))
+        self.assertAlmostEqual(K, expected_K, places=4)
+        self.assertEqual(c.beta, 0.2)
+
+    def test_contraction_validation_wrong_direction(self):
+        """Test input validation - ID1 must be greater than ID2."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.Contraction(2*u.inch, 4*u.inch)
+
+        self.assertIn("ID1", str(context.exception))
+        self.assertIn("greater than ID2", str(context.exception))
+
+    def test_contraction_validation_equal_diameters(self):
+        """Test input validation - equal diameters not allowed."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.Contraction(4*u.inch, 4*u.inch)
+
+        self.assertIn("greater than ID2", str(context.exception))
+
+    def test_contraction_validation_zero_angle(self):
+        """Test input validation - zero angle not allowed."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.Contraction(4*u.inch, 2*u.inch, 0*u.deg)
+
+        self.assertIn("angle must be in range", str(context.exception))
+
+    def test_contraction_validation_negative_angle(self):
+        """Test input validation - negative angle not allowed."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.Contraction(4*u.inch, 2*u.inch, -30*u.deg)
+
+        self.assertIn("angle must be in range", str(context.exception))
+
+    def test_contraction_validation_excessive_angle(self):
+        """Test input validation - angle > 180° not allowed."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.Contraction(4*u.inch, 2*u.inch, 200*u.deg)
+
+        self.assertIn("angle must be in range", str(context.exception))
+
+    def test_contraction_K_with_reynolds_warning(self):
+        """Test K calculation with Reynolds number (should warn)."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch)
+
+        # Should not raise exception but may warn
+        K = c.K(Re=10000)
+        self.assertIsInstance(K, float)
+        self.assertGreater(K, 0)
+
+    def test_contraction_length_calculation(self):
+        """Test axial length calculation."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 60*u.deg)
+
+        # L = |ID1 - ID2| / (2 * tan(theta/2))
+        expected_L = abs(4 - 2) / (2 * tan(30*u.deg))
+        expected_L_with_units = expected_L * u.inch
+
+        self.assertAlmostEqual(c.L.to(u.inch).magnitude, expected_L, places=4)
+
+    def test_contraction_volume_calculation(self):
+        """Test internal volume calculation."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 90*u.deg)
+
+        # Volume should be positive and reasonable for a truncated cone
+        self.assertGreater(c.volume.to(u.inch**3).magnitude, 0)
+
+        # Volume of truncated cone: V = π*L/3 * (r1² + r1*r2 + r2²)
+        r1 = 2.0  # radius in inches
+        r2 = 1.0  # radius in inches
+        L = c.L.to(u.inch).magnitude
+        expected_volume = pi * L / 3 * (r1**2 + r1*r2 + r2**2)
+
+        self.assertAlmostEqual(c.volume.to(u.inch**3).magnitude, expected_volume, places=4)
+
+    def test_contraction_area_property(self):
+        """Test area property returns downstream area."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch)
+
+        # Area should be based on downstream (smaller) diameter
+        expected_area = pi * (1.0)**2 * u.inch**2  # radius = 1 inch
+        self.assertAlmostEqual(c.area.to(u.inch**2).magnitude,
+                             expected_area.to(u.inch**2).magnitude, places=4)
+
+    def test_contraction_str_representation(self):
+        """Test string representation."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 60*u.deg)
+        str_repr = str(c)
+
+        self.assertIn("Contraction", str_repr)
+        self.assertIn("60", str_repr)
+        self.assertIn("4.000", str_repr)
+        self.assertIn("2.000", str_repr)
+
+    def test_contraction_repr_representation(self):
+        """Test detailed representation."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 60*u.deg)
+        repr_str = repr(c)
+
+        self.assertIn("Contraction(", repr_str)
+        self.assertIn("ID1=", repr_str)
+        self.assertIn("ID2=", repr_str)
+        self.assertIn("theta=", repr_str)
+
+    def test_contraction_edge_case_very_small_angle(self):
+        """Test contraction with very small angle."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 1*u.deg)
+        K = c.K()
+
+        # Should use first formula and give very small K value
+        self.assertGreater(K, 0)
+        self.assertLess(K, 0.01)  # Very gradual contraction
+
+    def test_contraction_edge_case_nearly_sudden(self):
+        """Test contraction with angle just under 180°."""
+        c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 179*u.deg)
+        K = c.K()
+
+        # Should be very close to sudden contraction value
+        sudden_c = ctb.piping.Contraction(4*u.inch, 2*u.inch, 180*u.deg)
+        sudden_K = sudden_c.K()
+
+        self.assertAlmostEqual(K, sudden_K, places=3)
 
 if __name__ == '__main__':
     unittest.main()
