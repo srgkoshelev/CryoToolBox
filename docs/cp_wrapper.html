@@ -2,18 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.10.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.6">
 <title>CryoToolBox.cp_wrapper API documentation</title>
-<meta name="description" content="Wrapper module for CoolProp&#39;s AbstractState …" />
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
-<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<meta name="description" content="Wrapper module for CoolProp&#39;s AbstractState …">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
-<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+/* Collapse source docstrings */
+setTimeout(() => {
+[...document.querySelectorAll('.hljs.language-python > .hljs-string')]
+.filter(el => el.innerHTML.length > 200 && ['"""', "'''"].includes(el.innerHTML.substring(0, 3)))
+.forEach(el => {
+let d = document.createElement('details');
+d.classList.add('hljs-string');
+d.innerHTML = '<summary>"""</summary>' + el.innerHTML.substring(3);
+el.replaceWith(d);
+});
+}, 100);
+})</script>
 </head>
 <body>
 <main>
@@ -27,604 +41,6 @@
 <li>Provides unit support</li>
 <li>Adds some small useful functions</li>
 </ol>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">&#34;&#34;&#34;Wrapper module for CoolProp&#39;s AbstractState.
-
-1. Provides unit support
-2. Adds some small useful functions
-
-&#34;&#34;&#34;
-import CoolProp.CoolProp as CP
-from .heprop_state import HepropState
-from math import inf
-from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
-
-CP_const_unit = {
-    &#39;gas_constant&#39;: (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
-    &#39;molar_mass&#39;: (CP.imolar_mass, ureg.kg/ureg.mol),
-    # &#39;acentric_factor&#39;: (CP.iacentric_factor, ),
-    # &#39;Dmolar_reducing&#39;: (CP.irhomolar_reducing, ),
-    &#39;Dmolar_critical&#39;: (CP.irhomolar_critical, ureg.mol/ureg.m**3),
-    &#39;T_reducing&#39;: (CP.iT_reducing, ureg.K),
-    &#39;T_critical&#39;: (CP.iT_critical, ureg.K),
-    # &#39;Dmass_reducing&#39;: (CP.irhomass_reducing, ),
-    &#39;Dmass_critical&#39;: (CP.irhomass_critical, ureg.kg/ureg.m**3),
-    &#39;P_critical&#39;: (CP.iP_critical, ureg.Pa),
-    &#39;P_reducing&#39;: (CP.iP_reducing, ureg.Pa),
-    &#39;T_triple&#39;: (CP.iT_triple, ureg.K),
-    &#39;P_triple&#39;: (CP.iP_triple, ureg.Pa),
-    &#39;T_sat&#39;: (None, ureg.K),
-    &#39;P_sat&#39;: (None, ureg.Pa),
-    &#39;T_min&#39;: (CP.iT_min, ureg.K),
-    &#39;T_max&#39;: (CP.iT_max, ureg.K),
-    &#39;P_max&#39;: (CP.iP_max, ureg.Pa),
-    &#39;P_min&#39;: (CP.iP_min, ureg.Pa),
-    # &#39;dipole_moment&#39;: (CP.idipole_moment, ),
-    &#39;T&#39;: (CP.iT, ureg.K),
-    &#39;P&#39;: (CP.iP, ureg.Pa),
-    &#39;Q&#39;: (CP.iQ, ureg.mol/ureg.mol),
-    # &#39;Tau&#39;: (CP.iTau, ),
-    # &#39;Delta&#39;: (CP.iDelta, ),
-    &#39;Dmolar&#39;: (CP.iDmolar, ureg.mol/ureg.m**3),
-    &#39;Hmolar&#39;: (CP.iHmolar, ureg.J/ureg.mol),
-    &#39;Smolar&#39;: (CP.iSmolar, ureg.J/ureg.mol/ureg.K),
-    &#39;Cpmolar&#39;: (CP.iCpmolar, ureg.J/ureg.mol/ureg.K),
-    # &#39;Cp0molar&#39;: (CP.iCp0molar, ureg.J/ureg.mol/ureg.K),
-    &#39;Cvmolar&#39;: (CP.iCvmolar, ureg.J/ureg.mol/ureg.K),
-    &#39;Umolar&#39;: (CP.iUmolar, ureg.J/ureg.mol),
-    # &#39;Gmolar&#39;: (CP.iGmolar, ),
-    # &#39;Helmholtzmolar&#39;: (CP.iHelmholtzmolar, ),
-    # &#39;Smolar_residual&#39;: (CP.iSmolar_residual, ),
-    &#39;Dmass&#39;: (CP.iDmass, ureg.kg/ureg.m**3),
-    &#39;Hmass&#39;: (CP.iHmass, ureg.J/ureg.kg),
-    &#39;Smass&#39;: (CP.iSmass, ureg.J/ureg.kg/ureg.K),
-    &#39;Cpmass&#39;: (CP.iCpmass, ureg.J/ureg.kg/ureg.K),
-    # &#39;Cp0mass&#39;: (CP.iCp0mass, ureg.J/ureg.kg/ureg.K),
-    &#39;Cvmass&#39;: (CP.iCvmass, ureg.J/ureg.kg/ureg.K),
-    &#39;Umass&#39;: (CP.iUmass, ureg.J/ureg.kg),
-    # &#39;Gmass&#39;: (CP.iGmass, ),
-    # &#39;Helmholtzmass&#39;: (CP.iHelmholtzmass, ),
-    &#39;viscosity&#39;: (CP.iviscosity, ureg.Pa*ureg.s),
-    &#39;conductivity&#39;: (CP.iconductivity, ureg.W/ureg.m/ureg.K),
-    &#39;surface_tension&#39;: (CP.isurface_tension, ureg.N/ureg.m),
-    &#39;Prandtl&#39;: (CP.iPrandtl, None),
-    &#39;speed_sound&#39;: (CP.ispeed_sound, ureg.m/ureg.s),
-    &#39;isothermal_compressibility&#39;: (CP.iisothermal_compressibility,
-                                   ureg.Pa**-1),
-    &#39;isobaric_expansion_coefficient&#39;:
-    (CP.iisobaric_expansion_coefficient, ureg.K**-1),
-    &#39;isentropic_expansion_coefficient&#39;:
-    (CP.iisentropic_expansion_coefficient, ureg.dimensionless),
-    # &#39;fundamental_derivative_of_gas_dynamics&#39;:
-    # (CP.ifundamental_derivative_of_gas_dynamics, ),
-    # &#39;alphar&#39;: (CP.ialphar, ),
-    # &#39;alpha0&#39;: (CP.ialpha0, ),
-    # &#39;Bvirial&#39;: (CP.iBvirial, ),
-    # &#39;Cvirial&#39;: (CP.iCvirial, ),
-    # &#39;dBvirial_dT&#39;: (CP.idBvirial_dT, ),
-    # &#39;dCvirial_dT&#39;: (CP.idCvirial_dT, ),
-    &#39;Z&#39;: (CP.iZ, ureg.dimensionless),
-    # &#39;PIP&#39;: (CP.iPIP, ),
-    # &#39;fraction_min&#39;: (CP.ifraction_min, ),
-    # &#39;fraction_max&#39;: (CP.ifraction_max, ),
-    # &#39;T_freeze&#39;: (CP.iT_freeze, ),
-    # &#39;GWP20&#39;: (CP.iGWP20, ),
-    # &#39;GWP100&#39;: (CP.iGWP100, ),
-    # &#39;GWP500&#39;: (CP.iGWP500, ),
-    # &#39;FH&#39;: (CP.iFH, ),
-    # &#39;HH&#39;: (CP.iHH, ),
-    # &#39;PH&#39;: (CP.iPH, ),
-    # &#39;ODP&#39;: (CP.iODP, ),
-    &#39;Phase&#39;: (CP.iPhase, ureg.dimensionless),
-    &#39;C_us&#39;: (None,  # unit defined for external use
-             ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5),
-    &#39;C_m&#39;: (None,  # unit defined for external use
-            ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5)
-}
-
-CP_inputs = {
-    &#39;QT&#39;: CP.QT_INPUTS,
-    &#39;PQ&#39;: CP.PQ_INPUTS,
-    &#39;QSmolar&#39;: CP.QSmolar_INPUTS,
-    &#39;QSmass&#39;: CP.QSmass_INPUTS,
-    &#39;HmolarQ&#39;: CP.HmolarQ_INPUTS,
-    &#39;HmassQ&#39;: CP.HmassQ_INPUTS,
-    &#39;DmolarQ&#39;: CP.DmolarQ_INPUTS,
-    &#39;DmassQ&#39;: CP.DmassQ_INPUTS,
-    &#39;PT&#39;: CP.PT_INPUTS,
-    &#39;DmassT&#39;: CP.DmassT_INPUTS,
-    &#39;DmolarT&#39;: CP.DmolarT_INPUTS,
-    &#39;HmolarT&#39;: CP.HmolarT_INPUTS,
-    &#39;HmassT&#39;: CP.HmassT_INPUTS,
-    &#39;SmolarT&#39;: CP.SmolarT_INPUTS,
-    &#39;SmassT&#39;: CP.SmassT_INPUTS,
-    &#39;TUmolar&#39;: CP.TUmolar_INPUTS,
-    &#39;TUmass&#39;: CP.TUmass_INPUTS,
-    &#39;DmassP&#39;: CP.DmassP_INPUTS,
-    &#39;DmolarP&#39;: CP.DmolarP_INPUTS,
-    &#39;HmassP&#39;: CP.HmassP_INPUTS,
-    &#39;HmolarP&#39;: CP.HmolarP_INPUTS,
-    &#39;PSmass&#39;: CP.PSmass_INPUTS,
-    &#39;PSmolar&#39;: CP.PSmolar_INPUTS,
-    &#39;PUmass&#39;: CP.PUmass_INPUTS,
-    &#39;PUmolar&#39;: CP.PUmolar_INPUTS,
-    &#39;HmassSmass&#39;: CP.HmassSmass_INPUTS,
-    &#39;HmolarSmolar&#39;: CP.HmolarSmolar_INPUTS,
-    &#39;SmassUmass&#39;: CP.SmassUmass_INPUTS,
-    &#39;SmolarUmolar&#39;: CP.SmolarUmolar_INPUTS,
-    &#39;DmassHmass&#39;: CP.DmassHmass_INPUTS,
-    &#39;DmolarHmolar&#39;: CP.DmolarHmolar_INPUTS,
-    &#39;DmassSmass&#39;: CP.DmassSmass_INPUTS,
-    &#39;DmolarSmolar&#39;: CP.DmolarSmolar_INPUTS,
-    &#39;DmassUmass&#39;: CP.DmassUmass_INPUTS,
-    &#39;DmolarUmolar&#39;: CP.DmolarUmolar_INPUTS,
-}
-
-
-class ThermState:
-    def __init__(self, fluid, backend=&#34;HEOS&#34;, **state_parameters):
-        &#34;&#34;&#34;
-        Available backends: HEOS (opensource), REFPROP.
-        See http://www.coolprop.org/coolprop/REFPROP.html for details.
-        &#34;&#34;&#34;
-        # TODO this should check for the fluid name too
-        if backend == &#34;HEPROP&#34;:
-            if fluid.lower() != &#39;helium&#39;:
-                raise ValueError(f&#39;Only helium fluid can be used with HEPROP backend: {fluid}&#39;)
-            self._AbstractState = HepropState()
-        else:
-            self._AbstractState = CP.AbstractState(backend, fluid)
-        if state_parameters:
-            self.update_kw(**state_parameters)
-
-    def update_kw(self, **state_parameters):
-        &#34;&#34;&#34;Update thermodynamic state using keyword arguments.&#34;&#34;&#34;
-        if len(state_parameters) != 2:
-            raise TypeError(f&#39;update_kw() takes 2 arguments \
-            ({len(state_parameters)} given)&#39;)
-        # TODO Code below can be simplified
-        names = []
-        values = []
-        for name, value in state_parameters.items():
-            names.append(name)
-            values.append(value)
-        self.update(names[0], values[0],
-                    names[1], values[1])
-
-    def update(self, name1, value1, name2, value2):
-        if name1 &gt; name2:  # Sorting inputs alphabetically
-            name1, name2 = name2, name1
-            value1, value2 = value2, value1
-        CP_input_str = name1 + name2
-        CP_value1 = self.prepare_input(name1, value1)
-        CP_value2 = self.prepare_input(name2, value2)
-
-        if self.backend == &#34;HEPROP&#34;:
-            self._AbstractState.update(name1, CP_value1, name2, CP_value2)
-        else:
-            self._AbstractState.update(
-                CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
-
-    @staticmethod
-    def prepare_input(name, value):
-        &#34;&#34;&#34;Prepare value to input to CoolProp.
-
-        Converts the value to units expected by CoolProp
-        (see `CP_const_unit`).
-
-        Parameters
-        ----------
-        name : str
-            Parameter name.
-        value : ureg.Quantity
-            Parameter value.
-
-        Returns
-        -------
-        float
-        &#34;&#34;&#34;
-        if isinstance(value, (int, float)):
-            return value  # Dimensionless
-        else:
-            unit = CP_const_unit[name][1]
-            return value.to(unit).magnitude
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
-    def T_critical(self):
-        return self._AbstractState.T_critical()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;P&#39;][1], None)
-    def P_critical(self):
-        return self._AbstractState.p_critical()
-
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Dmolar_critical&#39;][1], None)
-    def Dmolar_critical(self):
-        return self._AbstractState.rhomolar_critical()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Dmass_critical&#39;][1], None)
-    def Dmass_critical(self):
-        return self._AbstractState.rhomass_critical()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
-    def T(self):
-        return self._AbstractState.T()
-
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Dmolar_critical&#39;][1], None)
-    def Dmolar(self):
-        return self._AbstractState.rhomolar()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Dmass_critical&#39;][1], None)
-    def Dmass(self):
-        return self._AbstractState.rhomass()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;P&#39;][1], None)
-    def P(self):
-        return self._AbstractState.p()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Q&#39;][1], None)
-    def Q(self):
-        return self._AbstractState.Q()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;molar_mass&#39;][1], None)
-    def molar_mass(self):
-        return self._AbstractState.molar_mass()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;gas_constant&#39;][1], None)
-    def gas_constant(self):
-        return self._AbstractState.gas_constant()
-
-    @property
-    def specific_gas_constant(self):
-        R_spec = self.gas_constant / self.molar_mass
-        return R_spec
-
-    @property
-    # @ureg.wraps(CP_const_unit[&#39;Z&#39;][1], None)
-    def compressibility_factor(self):
-        if self.backend == &#34;HEPROP&#34;:
-            Z_ = self._AbstractState.compressibility_factor()
-        else:
-            Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
-        return Z_
-        # Temporarily unavailable function
-        # return self._AbstractState.compressibility_factor()
-    # Useful shorthand
-    Z = compressibility_factor
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Hmolar&#39;][1], None)
-    def Hmolar(self):
-        return self._AbstractState.hmolar()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Hmass&#39;][1], None)
-    def Hmass(self):
-        return self._AbstractState.hmass()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Smolar&#39;][1], None)
-    def Smolar(self):
-        return self._AbstractState.smolar()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Smass&#39;][1], None)
-    def Smass(self):
-        return self._AbstractState.smass()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Cpmolar&#39;][1], None)
-    def Cpmolar(self):
-        return self._AbstractState.cpmolar()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Cpmass&#39;][1], None)
-    def Cpmass(self):
-        return self._AbstractState.cpmass()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Cvmolar&#39;][1], None)
-    def Cvmolar(self):
-        return self._AbstractState.cvmolar()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Cvmass&#39;][1], None)
-    def Cvmass(self):
-        return self._AbstractState.cvmass()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;viscosity&#39;][1], None)
-    def viscosity(self):
-        return self._AbstractState.viscosity()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;conductivity&#39;][1], None)
-    def conductivity(self):
-        return self._AbstractState.conductivity()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;surface_tension&#39;][1], None)
-    def surface_tension(self):
-        return self._AbstractState.surface_tension()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;P&#39;][1], None)
-    def P_reducing(self):
-        return self._AbstractState.p_reducing()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;P&#39;][1], None)
-    def P_triple(self):
-        return self._AbstractState.ptriple()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;P&#39;][1], None)
-    def P_max(self):
-        return self._AbstractState.pmax()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
-    def T_reducing(self):
-        return self._AbstractState.T_reducing()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
-    def T_triple(self):
-        return self._AbstractState.Ttriple()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
-    def T_max(self):
-        return self._AbstractState.Tmax()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;T&#39;][1], None)
-    def T_min(self):
-        return self._AbstractState.Tmin()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;isothermal_compressibility&#39;][1], None)
-    def isothermal_compressibility(self):
-        return self._AbstractState.isothermal_compressibility()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;isobaric_expansion_coefficient&#39;][1], None)
-    def isobaric_expansion_coefficient(self):
-        return self._AbstractState.isobaric_expansion_coefficient()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;isentropic_expansion_coefficient&#39;][1], None) ### not existing with coolprop issues
-    def isentropic_expansion_coefficient(self):
-        return self._AbstractState.isentropic_expansion_coefficient()
-
-    @property
-    def Prandtl(self):
-        return self._AbstractState.Prandtl()
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;speed_sound&#39;][1], None)
-    def speed_sound(self):
-        &#34;&#34;&#34;Mass fractions of a mixture.&#34;&#34;&#34;
-        return self._AbstractState.speed_sound()
-
-    def first_partial_deriv(self, Of, Wrt, Constant):
-        output_unit = CP_const_unit[Of][1] / CP_const_unit[Wrt][1]
-        Of_CP_const = CP_const_unit[Of][0]
-        Wrt_CP_const = CP_const_unit[Wrt][0]
-        Constant_CP_const = CP_const_unit[Constant][0]
-        result = self._AbstractState.first_partial_deriv(
-            Of_CP_const, Wrt_CP_const, Constant_CP_const)
-        return result * output_unit
-
-    @property
-    @ureg.wraps(CP_const_unit[&#39;Phase&#39;][1], None)
-    def phase(self):
-        &#34;&#34;&#34;Calculate the phase of the fluid.
-
-        * 0: Subcritical liquid
-        * 1: Supercritical (p &gt; pc, T &gt; Tc)
-        * 2: Supercritical gas (p &lt; pc, T &gt; Tc)
-        * 3: Supercritical liquid (p &gt; pc, T &lt; Tc)
-        * 4: At the critical point.
-        * 5: Subcritical gas.
-        * 6: Twophase.
-        * 7: Unknown phase
-        &#34;&#34;&#34;
-        return self._AbstractState.phase()
-
-    def set_mole_fractions(self, *fractions):
-        &#34;&#34;&#34;Set mole fractions for a mixture.&#34;&#34;&#34;
-        self._AbstractState.set_mole_fractions(fractions)
-
-    def set_mass_fractions(self, *fractions):
-        &#34;&#34;&#34;Set mass fractions for a mixture.&#34;&#34;&#34;
-        self._AbstractState.set_mass_fractions(fractions)
-
-    def set_volu_fractions(self, *fractions):
-        &#34;&#34;&#34;Set volume fractions for a mixture.&#34;&#34;&#34;
-        self._AbstractState.set_volu_fractions(fractions)
-
-    @property
-    def mole_fractions(self):
-        &#34;&#34;&#34;Mole fractions of a mixture.&#34;&#34;&#34;
-        return self._AbstractState.get_mole_fractions()
-
-    @property
-    def mass_fractions(self):
-        &#34;&#34;&#34;Mass fractions of a mixture.&#34;&#34;&#34;
-        return self._AbstractState.get_mass_fractions()
-
-    @property
-    def is_super_critical(self):
-        &#34;&#34;&#34;Return True if state is supercritical.&#34;&#34;&#34;
-        return self.phase == 1
-
-    @property
-    def specific_heat_input(self):
-        &#34;&#34;&#34;
-        Calculate Specific heat input, v * (dh/dv)|p.
-        This function is not described in AbstractState class.
-        &#34;&#34;&#34;
-        # Because specific volume is not available as function of
-        # the AbstractState, density is used instead
-        # The resulting function is: -Dmass*(dHmass/dDmass)|p
-        if self.backend == &#34;HEPROP&#34;:
-            return self._AbstractState.specific_heat_input() * ureg.joule/ureg.kg
-        else:
-            return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)
-
-    @property
-    def gamma(self):
-        &#34;&#34;&#34;Calculate gamma = k = Cp/Cv coefficient.
-        &#34;&#34;&#34;
-        # To avoid real gas effects influencing Cp and Cv,
-        # calculating at gamma at NTP
-        T_current = self.T
-        S_current = self.Smass
-        self.update(&#39;P&#39;, P_NTP, &#39;T&#39;, T_NTP)
-        _gamma = self.Cpmass / self.Cvmass
-        self.update(&#39;T&#39;, T_current, &#39;Smass&#39;, S_current)
-        return _gamma
-
-    @property
-    def C_gas_const(self):
-        &#34;&#34;&#34;
-        Constant for gas or vapor which is the function of the ratio of
-        specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
-        &#34;&#34;&#34;
-        k_ = self.gamma.magnitude
-        root = (k_ * (2/(k_+1))**((k_+1)/(k_-1)))**0.5
-        R = ureg.R  # Universal gas constant
-        C_ = root / R**0.5 * (ureg.g/ureg.mol)**0.5
-        return C_
-
-    @property
-    def C(self):
-        &#34;&#34;&#34;A shortcut to C_gas_const&#34;&#34;&#34;
-        return self.C_gas_const
-
-    @property
-    def C_us(self):
-        &#34;&#34;&#34;A shortcut to C_gas_const for US customary units&#34;&#34;&#34;
-        us_unit = ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5
-        return self.C_gas_const.to(us_unit)
-
-    @property
-    def C_si(self):
-        &#34;&#34;&#34;A shortcut to C_gas_const for SI units&#34;&#34;&#34;
-        si_unit = ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5
-        return self.C_gas_const.to(si_unit)
-
-    @property
-    def name(self):
-        &#34;&#34;&#34;
-        Return fluid name (backend dependent)
-        &#34;&#34;&#34;
-        return self._AbstractState.name()
-
-    @property
-    def backend(self):
-        &#34;&#34;&#34;
-        Return backend name
-        &#34;&#34;&#34;
-        return self._AbstractState.backend_name()
-
-    def __str__(self):
-        if self.Q == 0:
-            return (f&#39;saturated {self.name.lower()} liquid &#39;
-                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
-        elif self.Q == 1:
-            return (f&#39;saturated {self.name.lower()} vapor &#39;
-                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
-        elif self.Q &gt; 0 and self.Q &lt; 1:
-            return (f&#39;two-phase {self.name.lower()} &#39;
-                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
-        else:
-            return (f&#39;{self.name.lower()} at &#39;
-                    f&#39;T: {self.T.to(ureg.K):.3g~} and &#39;
-                    f&#39;P: {self.P.to(ureg.bar):.3g~}.&#39;)
-
-    @property
-    def M(self):
-        &#34;&#34;&#34;Calculate relative molecular mass.&#34;&#34;&#34;
-        return self.molar_mass.m_as(ureg.g/ureg.mole)
-
-    @property
-    def MZT(self):
-        &#34;&#34;&#34;
-        Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
-        flow calculation.
-        &#34;&#34;&#34;
-        MZT_ = (self.M / (self.compressibility_factor*self.T))**0.5
-        return MZT_
-
-    @property
-    def latent_heat(self):
-        &#34;&#34;&#34;Calculate latent heat of evaporation for current quality.&#34;&#34;&#34;
-        assert self.is_super_critical is False, (
-            &#39;Latent heat is only defined &#39;
-            &#39;for subcritical phase&#39;)
-        TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=0)
-        h_liq = TempState.Hmass
-        TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=1)
-        h_gas = TempState.Hmass
-        return h_gas - h_liq
-
-    def copy(self):
-        &#34;&#34;&#34;Create a copy of current ThermState object.&#34;&#34;&#34;
-        TempState = ThermState(self.name, backend=self.backend)
-        # If conditions are defined
-        if self.Dmass != -inf*ureg.kg/ureg.m**3:
-            TempState.update_kw(T=self.T, Smass=self.Smass)
-        return TempState
-
-    def to_standard(self, conditions=&#39;NTP&#39;):
-        &#34;&#34;&#34;Create a copy of current ThermState object at standard conditions.
-        &#34;&#34;&#34;
-        if conditions == &#39;NTP&#39;:
-            P = P_NTP
-            T = T_NTP
-        elif conditions == &#39;MSC&#39;:
-            P = P_MSC
-            T = T_MSC
-        elif conditions == &#39;STD&#39;:
-            P = P_STD
-            T = T_STD
-        else:
-            raise ValueError(f&#39;Conditions {conditions!r} are not defined.&#39;)
-        TempState = self.copy()
-        TempState.update_kw(P=P, T=T)
-        return TempState
-
-    @property
-    def P_sat(self):
-        TempState = self.copy()
-        TempState.update_kw(T=self.T, Q=0)
-        return TempState.P
-
-    @property
-    def T_sat(self):
-        TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=0)
-        return TempState.T</code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -640,8 +56,6 @@ class ThermState:
 <span>(</span><span>fluid, backend='HEOS', **state_parameters)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Available backends: HEOS (opensource), REFPROP.
-See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.org/coolprop/REFPROP.html</a> for details.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -757,7 +171,6 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         return self._AbstractState.p()
 
     @property
-    @ureg.wraps(CP_const_unit[&#39;Q&#39;][1], None)
     def Q(self):
         return self._AbstractState.Q()
 
@@ -914,7 +327,6 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         return result * output_unit
 
     @property
-    @ureg.wraps(CP_const_unit[&#39;Phase&#39;][1], None)
     def phase(self):
         &#34;&#34;&#34;Calculate the phase of the fluid.
 
@@ -954,7 +366,7 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
     @property
     def is_super_critical(self):
         &#34;&#34;&#34;Return True if state is supercritical.&#34;&#34;&#34;
-        return self.phase == 1
+        return self.phase in [1, 2, 3]
 
     @property
     def specific_heat_input(self):
@@ -1029,17 +441,18 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
     def __str__(self):
         if self.Q == 0:
             return (f&#39;saturated {self.name.lower()} liquid &#39;
-                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}&#39;)
         elif self.Q == 1:
             return (f&#39;saturated {self.name.lower()} vapor &#39;
-                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~}&#39;)
         elif self.Q &gt; 0 and self.Q &lt; 1:
             return (f&#39;two-phase {self.name.lower()} &#39;
-                    f&#39;at P: {self.P.to(ureg.bar):.3g~}.&#39;)
+                    f&#39;at P: {self.P.to(ureg.bar):.3g~} and &#39;
+                    f&#39;Q: {self.Q:.2f}&#39;)
         else:
             return (f&#39;{self.name.lower()} at &#39;
                     f&#39;T: {self.T.to(ureg.K):.3g~} and &#39;
-                    f&#39;P: {self.P.to(ureg.bar):.3g~}.&#39;)
+                    f&#39;P: {self.P.to(ureg.bar):.3g~}&#39;)
 
     @property
     def M(self):
@@ -1107,27 +520,14 @@ See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.
         TempState.update_kw(P=self.P, Q=0)
         return TempState.T</code></pre>
 </details>
+<div class="desc"><p>Available backends: HEOS (opensource), REFPROP.
+See <a href="http://www.coolprop.org/coolprop/REFPROP.html">http://www.coolprop.org/coolprop/REFPROP.html</a> for details.</p></div>
 <h3>Static methods</h3>
 <dl>
 <dt id="CryoToolBox.cp_wrapper.ThermState.prepare_input"><code class="name flex">
 <span>def <span class="ident">prepare_input</span></span>(<span>name, value)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Prepare value to input to CoolProp.</p>
-<p>Converts the value to units expected by CoolProp
-(see <code>CP_const_unit</code>).</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
-<dd>Parameter name.</dd>
-<dt><strong><code>value</code></strong> :&ensp;<code>ureg.Quantity</code></dt>
-<dd>Parameter value.</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>float</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1156,13 +556,27 @@ def prepare_input(name, value):
         unit = CP_const_unit[name][1]
         return value.to(unit).magnitude</code></pre>
 </details>
+<div class="desc"><p>Prepare value to input to CoolProp.</p>
+<p>Converts the value to units expected by CoolProp
+(see <code>CP_const_unit</code>).</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>Parameter name.</dd>
+<dt><strong><code>value</code></strong> :&ensp;<code>ureg.Quantity</code></dt>
+<dd>Parameter value.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>
 <dl>
-<dt id="CryoToolBox.cp_wrapper.ThermState.C"><code class="name">var <span class="ident">C</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.C"><code class="name">prop <span class="ident">C</span></code></dt>
 <dd>
-<div class="desc"><p>A shortcut to C_gas_const</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1172,11 +586,10 @@ def C(self):
     &#34;&#34;&#34;A shortcut to C_gas_const&#34;&#34;&#34;
     return self.C_gas_const</code></pre>
 </details>
+<div class="desc"><p>A shortcut to C_gas_const</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.C_gas_const"><code class="name">var <span class="ident">C_gas_const</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.C_gas_const"><code class="name">prop <span class="ident">C_gas_const</span></code></dt>
 <dd>
-<div class="desc"><p>Constant for gas or vapor which is the function of the ratio of
-specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1193,10 +606,11 @@ def C_gas_const(self):
     C_ = root / R**0.5 * (ureg.g/ureg.mol)**0.5
     return C_</code></pre>
 </details>
+<div class="desc"><p>Constant for gas or vapor which is the function of the ratio of
+specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.C_si"><code class="name">var <span class="ident">C_si</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.C_si"><code class="name">prop <span class="ident">C_si</span></code></dt>
 <dd>
-<div class="desc"><p>A shortcut to C_gas_const for SI units</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1207,10 +621,10 @@ def C_si(self):
     si_unit = ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5
     return self.C_gas_const.to(si_unit)</code></pre>
 </details>
+<div class="desc"><p>A shortcut to C_gas_const for SI units</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.C_us"><code class="name">var <span class="ident">C_us</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.C_us"><code class="name">prop <span class="ident">C_us</span></code></dt>
 <dd>
-<div class="desc"><p>A shortcut to C_gas_const for US customary units</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1221,10 +635,10 @@ def C_us(self):
     us_unit = ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5
     return self.C_gas_const.to(us_unit)</code></pre>
 </details>
+<div class="desc"><p>A shortcut to C_gas_const for US customary units</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Cpmass"><code class="name">var <span class="ident">Cpmass</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Cpmass"><code class="name">prop <span class="ident">Cpmass</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1234,10 +648,10 @@ def C_us(self):
 def Cpmass(self):
     return self._AbstractState.cpmass()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Cpmolar"><code class="name">var <span class="ident">Cpmolar</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Cpmolar"><code class="name">prop <span class="ident">Cpmolar</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1247,10 +661,10 @@ def Cpmass(self):
 def Cpmolar(self):
     return self._AbstractState.cpmolar()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Cvmass"><code class="name">var <span class="ident">Cvmass</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Cvmass"><code class="name">prop <span class="ident">Cvmass</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1260,10 +674,10 @@ def Cpmolar(self):
 def Cvmass(self):
     return self._AbstractState.cvmass()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Cvmolar"><code class="name">var <span class="ident">Cvmolar</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Cvmolar"><code class="name">prop <span class="ident">Cvmolar</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1273,10 +687,10 @@ def Cvmass(self):
 def Cvmolar(self):
     return self._AbstractState.cvmolar()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Dmass"><code class="name">var <span class="ident">Dmass</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Dmass"><code class="name">prop <span class="ident">Dmass</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1286,10 +700,10 @@ def Cvmolar(self):
 def Dmass(self):
     return self._AbstractState.rhomass()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Dmass_critical"><code class="name">var <span class="ident">Dmass_critical</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Dmass_critical"><code class="name">prop <span class="ident">Dmass_critical</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1299,10 +713,10 @@ def Dmass(self):
 def Dmass_critical(self):
     return self._AbstractState.rhomass_critical()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Dmolar"><code class="name">var <span class="ident">Dmolar</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Dmolar"><code class="name">prop <span class="ident">Dmolar</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1312,10 +726,10 @@ def Dmass_critical(self):
 def Dmolar(self):
     return self._AbstractState.rhomolar()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Dmolar_critical"><code class="name">var <span class="ident">Dmolar_critical</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Dmolar_critical"><code class="name">prop <span class="ident">Dmolar_critical</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1325,10 +739,10 @@ def Dmolar(self):
 def Dmolar_critical(self):
     return self._AbstractState.rhomolar_critical()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Hmass"><code class="name">var <span class="ident">Hmass</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Hmass"><code class="name">prop <span class="ident">Hmass</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1338,10 +752,10 @@ def Dmolar_critical(self):
 def Hmass(self):
     return self._AbstractState.hmass()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Hmolar"><code class="name">var <span class="ident">Hmolar</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Hmolar"><code class="name">prop <span class="ident">Hmolar</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1351,10 +765,10 @@ def Hmass(self):
 def Hmolar(self):
     return self._AbstractState.hmolar()</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.M"><code class="name">var <span class="ident">M</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.M"><code class="name">prop <span class="ident">M</span></code></dt>
 <dd>
-<div class="desc"><p>Calculate relative molecular mass.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1364,11 +778,10 @@ def M(self):
     &#34;&#34;&#34;Calculate relative molecular mass.&#34;&#34;&#34;
     return self.molar_mass.m_as(ureg.g/ureg.mole)</code></pre>
 </details>
+<div class="desc"><p>Calculate relative molecular mass.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.MZT"><code class="name">var <span class="ident">MZT</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.MZT"><code class="name">prop <span class="ident">MZT</span></code></dt>
 <dd>
-<div class="desc"><p>Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
-flow calculation.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1382,10 +795,11 @@ def MZT(self):
     MZT_ = (self.M / (self.compressibility_factor*self.T))**0.5
     return MZT_</code></pre>
 </details>
+<div class="desc"><p>Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
+flow calculation.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.P"><code class="name">var <span class="ident">P</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.P"><code class="name">prop <span class="ident">P</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1395,10 +809,10 @@ def MZT(self):
 def P(self):
     return self._AbstractState.p()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.P_critical"><code class="name">var <span class="ident">P_critical</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.P_critical"><code class="name">prop <span class="ident">P_critical</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1408,10 +822,10 @@ def P(self):
 def P_critical(self):
     return self._AbstractState.p_critical()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.P_max"><code class="name">var <span class="ident">P_max</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.P_max"><code class="name">prop <span class="ident">P_max</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1421,10 +835,10 @@ def P_critical(self):
 def P_max(self):
     return self._AbstractState.pmax()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.P_reducing"><code class="name">var <span class="ident">P_reducing</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.P_reducing"><code class="name">prop <span class="ident">P_reducing</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1434,10 +848,10 @@ def P_max(self):
 def P_reducing(self):
     return self._AbstractState.p_reducing()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.P_sat"><code class="name">var <span class="ident">P_sat</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.P_sat"><code class="name">prop <span class="ident">P_sat</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1448,10 +862,10 @@ def P_sat(self):
     TempState.update_kw(T=self.T, Q=0)
     return TempState.P</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.P_triple"><code class="name">var <span class="ident">P_triple</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.P_triple"><code class="name">prop <span class="ident">P_triple</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1461,10 +875,10 @@ def P_sat(self):
 def P_triple(self):
     return self._AbstractState.ptriple()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Prandtl"><code class="name">var <span class="ident">Prandtl</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Prandtl"><code class="name">prop <span class="ident">Prandtl</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1473,23 +887,22 @@ def P_triple(self):
 def Prandtl(self):
     return self._AbstractState.Prandtl()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Q"><code class="name">var <span class="ident">Q</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Q"><code class="name">prop <span class="ident">Q</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-@ureg.wraps(CP_const_unit[&#39;Q&#39;][1], None)
 def Q(self):
     return self._AbstractState.Q()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Smass"><code class="name">var <span class="ident">Smass</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Smass"><code class="name">prop <span class="ident">Smass</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1499,10 +912,10 @@ def Q(self):
 def Smass(self):
     return self._AbstractState.smass()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Smolar"><code class="name">var <span class="ident">Smolar</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Smolar"><code class="name">prop <span class="ident">Smolar</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1512,10 +925,10 @@ def Smass(self):
 def Smolar(self):
     return self._AbstractState.smolar()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.T"><code class="name">var <span class="ident">T</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T"><code class="name">prop <span class="ident">T</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1525,10 +938,10 @@ def Smolar(self):
 def T(self):
     return self._AbstractState.T()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.T_critical"><code class="name">var <span class="ident">T_critical</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T_critical"><code class="name">prop <span class="ident">T_critical</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1538,10 +951,10 @@ def T(self):
 def T_critical(self):
     return self._AbstractState.T_critical()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.T_max"><code class="name">var <span class="ident">T_max</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T_max"><code class="name">prop <span class="ident">T_max</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1551,10 +964,10 @@ def T_critical(self):
 def T_max(self):
     return self._AbstractState.Tmax()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.T_min"><code class="name">var <span class="ident">T_min</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T_min"><code class="name">prop <span class="ident">T_min</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1564,10 +977,10 @@ def T_max(self):
 def T_min(self):
     return self._AbstractState.Tmin()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.T_reducing"><code class="name">var <span class="ident">T_reducing</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T_reducing"><code class="name">prop <span class="ident">T_reducing</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1577,10 +990,10 @@ def T_min(self):
 def T_reducing(self):
     return self._AbstractState.T_reducing()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.T_sat"><code class="name">var <span class="ident">T_sat</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T_sat"><code class="name">prop <span class="ident">T_sat</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1591,10 +1004,10 @@ def T_sat(self):
     TempState.update_kw(P=self.P, Q=0)
     return TempState.T</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.T_triple"><code class="name">var <span class="ident">T_triple</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.T_triple"><code class="name">prop <span class="ident">T_triple</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1604,10 +1017,10 @@ def T_sat(self):
 def T_triple(self):
     return self._AbstractState.Ttriple()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.Z"><code class="name">var <span class="ident">Z</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.Z"><code class="name">prop <span class="ident">Z</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1623,10 +1036,10 @@ def compressibility_factor(self):
     # Temporarily unavailable function
     # return self._AbstractState.compressibility_factor()</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.backend"><code class="name">var <span class="ident">backend</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.backend"><code class="name">prop <span class="ident">backend</span></code></dt>
 <dd>
-<div class="desc"><p>Return backend name</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1638,10 +1051,10 @@ def backend(self):
     &#34;&#34;&#34;
     return self._AbstractState.backend_name()</code></pre>
 </details>
+<div class="desc"><p>Return backend name</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.compressibility_factor"><code class="name">var <span class="ident">compressibility_factor</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.compressibility_factor"><code class="name">prop <span class="ident">compressibility_factor</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1657,10 +1070,10 @@ def compressibility_factor(self):
     # Temporarily unavailable function
     # return self._AbstractState.compressibility_factor()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.conductivity"><code class="name">var <span class="ident">conductivity</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.conductivity"><code class="name">prop <span class="ident">conductivity</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1670,10 +1083,10 @@ def compressibility_factor(self):
 def conductivity(self):
     return self._AbstractState.conductivity()</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.gamma"><code class="name">var <span class="ident">gamma</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.gamma"><code class="name">prop <span class="ident">gamma</span></code></dt>
 <dd>
-<div class="desc"><p>Calculate gamma = k = Cp/Cv coefficient.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1691,10 +1104,10 @@ def gamma(self):
     self.update(&#39;T&#39;, T_current, &#39;Smass&#39;, S_current)
     return _gamma</code></pre>
 </details>
+<div class="desc"><p>Calculate gamma = k = Cp/Cv coefficient.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.gas_constant"><code class="name">var <span class="ident">gas_constant</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.gas_constant"><code class="name">prop <span class="ident">gas_constant</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1704,10 +1117,10 @@ def gamma(self):
 def gas_constant(self):
     return self._AbstractState.gas_constant()</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.is_super_critical"><code class="name">var <span class="ident">is_super_critical</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.is_super_critical"><code class="name">prop <span class="ident">is_super_critical</span></code></dt>
 <dd>
-<div class="desc"><p>Return True if state is supercritical.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1715,12 +1128,12 @@ def gas_constant(self):
 <pre><code class="python">@property
 def is_super_critical(self):
     &#34;&#34;&#34;Return True if state is supercritical.&#34;&#34;&#34;
-    return self.phase == 1</code></pre>
+    return self.phase in [1, 2, 3]</code></pre>
 </details>
+<div class="desc"><p>Return True if state is supercritical.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.isentropic_expansion_coefficient"><code class="name">var <span class="ident">isentropic_expansion_coefficient</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.isentropic_expansion_coefficient"><code class="name">prop <span class="ident">isentropic_expansion_coefficient</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1730,10 +1143,10 @@ def is_super_critical(self):
 def isentropic_expansion_coefficient(self):
     return self._AbstractState.isentropic_expansion_coefficient()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.isobaric_expansion_coefficient"><code class="name">var <span class="ident">isobaric_expansion_coefficient</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.isobaric_expansion_coefficient"><code class="name">prop <span class="ident">isobaric_expansion_coefficient</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1743,10 +1156,10 @@ def isentropic_expansion_coefficient(self):
 def isobaric_expansion_coefficient(self):
     return self._AbstractState.isobaric_expansion_coefficient()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.isothermal_compressibility"><code class="name">var <span class="ident">isothermal_compressibility</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.isothermal_compressibility"><code class="name">prop <span class="ident">isothermal_compressibility</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1756,10 +1169,10 @@ def isobaric_expansion_coefficient(self):
 def isothermal_compressibility(self):
     return self._AbstractState.isothermal_compressibility()</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.latent_heat"><code class="name">var <span class="ident">latent_heat</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.latent_heat"><code class="name">prop <span class="ident">latent_heat</span></code></dt>
 <dd>
-<div class="desc"><p>Calculate latent heat of evaporation for current quality.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1778,10 +1191,10 @@ def latent_heat(self):
     h_gas = TempState.Hmass
     return h_gas - h_liq</code></pre>
 </details>
+<div class="desc"><p>Calculate latent heat of evaporation for current quality.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.mass_fractions"><code class="name">var <span class="ident">mass_fractions</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.mass_fractions"><code class="name">prop <span class="ident">mass_fractions</span></code></dt>
 <dd>
-<div class="desc"><p>Mass fractions of a mixture.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1791,10 +1204,10 @@ def mass_fractions(self):
     &#34;&#34;&#34;Mass fractions of a mixture.&#34;&#34;&#34;
     return self._AbstractState.get_mass_fractions()</code></pre>
 </details>
+<div class="desc"><p>Mass fractions of a mixture.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.molar_mass"><code class="name">var <span class="ident">molar_mass</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.molar_mass"><code class="name">prop <span class="ident">molar_mass</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1804,10 +1217,10 @@ def mass_fractions(self):
 def molar_mass(self):
     return self._AbstractState.molar_mass()</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.mole_fractions"><code class="name">var <span class="ident">mole_fractions</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.mole_fractions"><code class="name">prop <span class="ident">mole_fractions</span></code></dt>
 <dd>
-<div class="desc"><p>Mole fractions of a mixture.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1817,10 +1230,10 @@ def mole_fractions(self):
     &#34;&#34;&#34;Mole fractions of a mixture.&#34;&#34;&#34;
     return self._AbstractState.get_mole_fractions()</code></pre>
 </details>
+<div class="desc"><p>Mole fractions of a mixture.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.name"><code class="name">prop <span class="ident">name</span></code></dt>
 <dd>
-<div class="desc"><p>Return fluid name (backend dependent)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1832,26 +1245,15 @@ def name(self):
     &#34;&#34;&#34;
     return self._AbstractState.name()</code></pre>
 </details>
+<div class="desc"><p>Return fluid name (backend dependent)</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.phase"><code class="name">var <span class="ident">phase</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.phase"><code class="name">prop <span class="ident">phase</span></code></dt>
 <dd>
-<div class="desc"><p>Calculate the phase of the fluid.</p>
-<ul>
-<li>0: Subcritical liquid</li>
-<li>1: Supercritical (p &gt; pc, T &gt; Tc)</li>
-<li>2: Supercritical gas (p &lt; pc, T &gt; Tc)</li>
-<li>3: Supercritical liquid (p &gt; pc, T &lt; Tc)</li>
-<li>4: At the critical point.</li>
-<li>5: Subcritical gas.</li>
-<li>6: Twophase.</li>
-<li>7: Unknown phase</li>
-</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-@ureg.wraps(CP_const_unit[&#39;Phase&#39;][1], None)
 def phase(self):
     &#34;&#34;&#34;Calculate the phase of the fluid.
 
@@ -1866,10 +1268,20 @@ def phase(self):
     &#34;&#34;&#34;
     return self._AbstractState.phase()</code></pre>
 </details>
+<div class="desc"><p>Calculate the phase of the fluid.</p>
+<ul>
+<li>0: Subcritical liquid</li>
+<li>1: Supercritical (p &gt; pc, T &gt; Tc)</li>
+<li>2: Supercritical gas (p &lt; pc, T &gt; Tc)</li>
+<li>3: Supercritical liquid (p &gt; pc, T &lt; Tc)</li>
+<li>4: At the critical point.</li>
+<li>5: Subcritical gas.</li>
+<li>6: Twophase.</li>
+<li>7: Unknown phase</li>
+</ul></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.specific_gas_constant"><code class="name">var <span class="ident">specific_gas_constant</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.specific_gas_constant"><code class="name">prop <span class="ident">specific_gas_constant</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1879,11 +1291,10 @@ def specific_gas_constant(self):
     R_spec = self.gas_constant / self.molar_mass
     return R_spec</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.specific_heat_input"><code class="name">var <span class="ident">specific_heat_input</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.specific_heat_input"><code class="name">prop <span class="ident">specific_heat_input</span></code></dt>
 <dd>
-<div class="desc"><p>Calculate Specific heat input, v * (dh/dv)|p.
-This function is not described in AbstractState class.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1902,10 +1313,11 @@ def specific_heat_input(self):
     else:
         return (-self.Dmass) * self.first_partial_deriv(&#39;Hmass&#39;, &#39;Dmass&#39;, &#39;P&#39;)</code></pre>
 </details>
+<div class="desc"><p>Calculate Specific heat input, v * (dh/dv)|p.
+This function is not described in AbstractState class.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.speed_sound"><code class="name">var <span class="ident">speed_sound</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.speed_sound"><code class="name">prop <span class="ident">speed_sound</span></code></dt>
 <dd>
-<div class="desc"><p>Mass fractions of a mixture.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1916,10 +1328,10 @@ def speed_sound(self):
     &#34;&#34;&#34;Mass fractions of a mixture.&#34;&#34;&#34;
     return self._AbstractState.speed_sound()</code></pre>
 </details>
+<div class="desc"><p>Mass fractions of a mixture.</p></div>
 </dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.surface_tension"><code class="name">var <span class="ident">surface_tension</span></code></dt>
+<dt id="CryoToolBox.cp_wrapper.ThermState.surface_tension"><code class="name">prop <span class="ident">surface_tension</span></code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1929,10 +1341,10 @@ def speed_sound(self):
 def surface_tension(self):
     return self._AbstractState.surface_tension()</code></pre>
 </details>
-</dd>
-<dt id="CryoToolBox.cp_wrapper.ThermState.viscosity"><code class="name">var <span class="ident">viscosity</span></code></dt>
-<dd>
 <div class="desc"></div>
+</dd>
+<dt id="CryoToolBox.cp_wrapper.ThermState.viscosity"><code class="name">prop <span class="ident">viscosity</span></code></dt>
+<dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1942,6 +1354,7 @@ def surface_tension(self):
 def viscosity(self):
     return self._AbstractState.viscosity()</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
 </dl>
 <h3>Methods</h3>
@@ -1950,7 +1363,6 @@ def viscosity(self):
 <span>def <span class="ident">copy</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create a copy of current ThermState object.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1963,12 +1375,12 @@ def viscosity(self):
         TempState.update_kw(T=self.T, Smass=self.Smass)
     return TempState</code></pre>
 </details>
+<div class="desc"><p>Create a copy of current ThermState object.</p></div>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.first_partial_deriv"><code class="name flex">
 <span>def <span class="ident">first_partial_deriv</span></span>(<span>self, Of, Wrt, Constant)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1982,12 +1394,12 @@ def viscosity(self):
         Of_CP_const, Wrt_CP_const, Constant_CP_const)
     return result * output_unit</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.set_mass_fractions"><code class="name flex">
 <span>def <span class="ident">set_mass_fractions</span></span>(<span>self, *fractions)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Set mass fractions for a mixture.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1996,12 +1408,12 @@ def viscosity(self):
     &#34;&#34;&#34;Set mass fractions for a mixture.&#34;&#34;&#34;
     self._AbstractState.set_mass_fractions(fractions)</code></pre>
 </details>
+<div class="desc"><p>Set mass fractions for a mixture.</p></div>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.set_mole_fractions"><code class="name flex">
 <span>def <span class="ident">set_mole_fractions</span></span>(<span>self, *fractions)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Set mole fractions for a mixture.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2010,12 +1422,12 @@ def viscosity(self):
     &#34;&#34;&#34;Set mole fractions for a mixture.&#34;&#34;&#34;
     self._AbstractState.set_mole_fractions(fractions)</code></pre>
 </details>
+<div class="desc"><p>Set mole fractions for a mixture.</p></div>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.set_volu_fractions"><code class="name flex">
 <span>def <span class="ident">set_volu_fractions</span></span>(<span>self, *fractions)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Set volume fractions for a mixture.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2024,12 +1436,12 @@ def viscosity(self):
     &#34;&#34;&#34;Set volume fractions for a mixture.&#34;&#34;&#34;
     self._AbstractState.set_volu_fractions(fractions)</code></pre>
 </details>
+<div class="desc"><p>Set volume fractions for a mixture.</p></div>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.to_standard"><code class="name flex">
 <span>def <span class="ident">to_standard</span></span>(<span>self, conditions='NTP')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create a copy of current ThermState object at standard conditions.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2052,12 +1464,12 @@ def viscosity(self):
     TempState.update_kw(P=P, T=T)
     return TempState</code></pre>
 </details>
+<div class="desc"><p>Create a copy of current ThermState object at standard conditions.</p></div>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.update"><code class="name flex">
 <span>def <span class="ident">update</span></span>(<span>self, name1, value1, name2, value2)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2076,12 +1488,12 @@ def viscosity(self):
         self._AbstractState.update(
             CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop</code></pre>
 </details>
+<div class="desc"></div>
 </dd>
 <dt id="CryoToolBox.cp_wrapper.ThermState.update_kw"><code class="name flex">
 <span>def <span class="ident">update_kw</span></span>(<span>self, **state_parameters)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Update thermodynamic state using keyword arguments.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2100,6 +1512,7 @@ def viscosity(self):
     self.update(names[0], values[0],
                 names[1], values[1])</code></pre>
 </details>
+<div class="desc"><p>Update thermodynamic state using keyword arguments.</p></div>
 </dd>
 </dl>
 </dd>
@@ -2107,7 +1520,6 @@ def viscosity(self):
 </section>
 </article>
 <nav id="sidebar">
-<h1>Index</h1>
 <div class="toc">
 <ul></ul>
 </div>
@@ -2193,7 +1605,7 @@ def viscosity(self):
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.6</a>.</p>
 </footer>
 </body>
 </html>
