@@ -1,5 +1,5 @@
 echo 'Generating docs'
-python3.10 -m pdoc --html CryoToolBox -o docs 
+python3 -m pdoc --html CryoToolBox -o docs 
 mv docs/CryoToolBox/*.html docs
 rm -rv docs/CryoToolBox
 echo 'Docs generated'
