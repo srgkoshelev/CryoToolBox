@@ -1,5 +1,5 @@
 echo 'Generating docs'
-python3 -m pdoc --html CryoToolBox -o docs -c latex_math=True
+python3 -m pdoc CryoToolBox -o docs --math -d numpy
 mv docs/CryoToolBox/*.html docs
 rm -rv docs/CryoToolBox
 echo 'Docs generated'

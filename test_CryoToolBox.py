@@ -1347,5 +1347,102 @@ class TestContraction(unittest.TestCase):
 
         self.assertAlmostEqual(K, sudden_K, places=3)
 
+class TestDPDarcy(unittest.TestCase):
+    """Unit tests for dP_Darcy function."""
+
+    def test_basic_calculation(self):
+        """Test basic pressure drop calculation."""
+        K = 0.9  # 90° elbow
+        rho = 1000 * u.kg / u.m**3  # Water density
+        w = 2.0 * u.m / u.s  # Flow velocity
+
+        dp = ctb.piping.dP_Darcy(K, rho, w)
+
+        # Expected: K * rho * w^2 / 2 = 0.9 * 1000 * 4 / 2 = 1800 Pa
+        expected_pa = 1800 * u.Pa
+
+        self.assertAlmostEqual(dp.m_as(u.Pa), expected_pa.m_as(u.Pa), places=5)
+
+    def test_zero_velocity(self):
+        """Test with zero velocity should give zero pressure drop."""
+        dp = ctb.piping.dP_Darcy(0.9, 1000*u.kg/u.m**3, 0*u.m/u.s)
+        self.assertEqual(dp.magnitude, 0.0)
+
+    def test_zero_K_coefficient(self):
+        """Test with zero K coefficient should give zero pressure drop."""
+        dp = ctb.piping.dP_Darcy(0.0, 1000*u.kg/u.m**3, 2*u.m/u.s)
+        self.assertEqual(dp.magnitude, 0.0)
+
+    def test_liquid_nitrogen_example(self):
+        """Test with liquid nitrogen properties."""
+        K = 0.375  # Sudden contraction 4" to 2"
+        rho = 808 * u.kg / u.m**3  # Liquid nitrogen
+        w = 1.5 * u.m / u.s
+
+        dp = ctb.piping.dP_Darcy(K, rho, w)
+
+        self.assertAlmostEqual(dp.m_as(u.psi), 0.0494397, places=5)
+
+    def test_high_velocity_flow(self):
+        """Test with high velocity flow (quadratic relationship)."""
+        K = 1.0
+        rho = 1000 * u.kg / u.m**3
+        w1 = 1 * u.m / u.s
+        w2 = 2 * u.m / u.s  # Double velocity
+
+        dp1 = ctb.piping.dP_Darcy(K, rho, w1)
+        dp2 = ctb.piping.dP_Darcy(K, rho, w2)
+
+        # Pressure drop should be 4x for 2x velocity (quadratic)
+        ratio = float(dp2 / dp1)
+        self.assertAlmostEqual(ratio, 4.0, places=2)
+
+    def test_validation_negative_K(self):
+        """Test validation of negative K coefficient."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.dP_Darcy(-0.5, 1000*u.kg/u.m**3, 2*u.m/u.s)
+
+        self.assertIn("non-negative", str(context.exception))
+
+    def test_validation_negative_density(self):
+        """Test validation of negative density."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.dP_Darcy(0.9, -1000*u.kg/u.m**3, 2*u.m/u.s)
+
+        self.assertIn("positive", str(context.exception))
+
+    def test_validation_zero_density(self):
+        """Test validation of zero density."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.dP_Darcy(0.9, 0*u.kg/u.m**3, 2*u.m/u.s)
+
+        self.assertIn("positive", str(context.exception))
+
+    def test_validation_negative_velocity(self):
+        """Test validation of negative velocity."""
+        with self.assertRaises(ValueError) as context:
+            ctb.piping.dP_Darcy(0.9, 1000*u.kg/u.m**3, -2*u.m/u.s)
+
+        self.assertIn("non-negative", str(context.exception))
+
+    def test_multiple_fittings_additive(self):
+        """Test that K values are additive for multiple fittings."""
+        # Individual fittings
+        K1, K2, K3 = 0.5, 0.9, 0.15  # entrance, elbow, valve
+        rho = 1000 * u.kg / u.m**3
+        w = 2 * u.m / u.s
+
+        dp1 = ctb.piping.dP_Darcy(K1, rho, w)
+        dp2 = ctb.piping.dP_Darcy(K2, rho, w)
+        dp3 = ctb.piping.dP_Darcy(K3, rho, w)
+
+        # Combined fitting
+        K_total = K1 + K2 + K3
+        dp_total = ctb.piping.dP_Darcy(K_total, rho, w)
+
+        # Total should equal sum of individuals
+        dp_sum = dp1 + dp2 + dp3
+        self.assertAlmostEqual(dp_total.magnitude, dp_sum.magnitude, places=6)
+
 if __name__ == '__main__':
     unittest.main()

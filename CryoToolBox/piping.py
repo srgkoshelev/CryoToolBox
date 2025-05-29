@@ -1263,7 +1263,78 @@ def dP_incomp(m_dot, fluid, piping):
     K, area = K_piping(m_dot, fluid, piping)
     w = m_dot / (rho_0*area)
     return dP_Darcy(K, rho_0, w)
+def dP_Darcy(K, rho, w):
+    """
+    Calculate pressure drop using the Darcy-Weisbach equation.
 
+    This function calculates the pressure drop across a pipe fitting or
+    section using the standard form of the Darcy-Weisbach equation with
+    a resistance coefficient K.
+
+    Parameters
+    ----------
+    K : float
+        Dimensionless resistance coefficient (loss coefficient).
+        Typical values:
+        - Sharp-edged entrance: K ≈ 0.5
+        - Well-rounded entrance: K ≈ 0.04
+        - 90° elbow: K ≈ 0.9
+        - Gate valve (fully open): K ≈ 0.15
+    rho : ureg.Quantity {length: -3, mass: 1}
+        Fluid density at flow conditions.
+    w : ureg.Quantity {length: 1, time: -1}
+        Flow velocity (speed) at the reference location.
+
+    Returns
+    -------
+    ureg.Quantity {length: -1, mass: 1, time: -2}
+        Pressure drop in psi. Positive value indicates pressure loss
+        in the direction of flow.
+
+    Notes
+    -----
+    The Darcy-Weisbach equation for pressure drop is:
+
+    .. math:: \\Delta P = K \\frac{\\rho w^2}{2}
+
+    where:
+    - K is the dimensionless loss coefficient
+    - ρ is the fluid density
+    - w is the flow velocity
+
+    This equation assumes:
+    - Incompressible flow
+    - Steady-state conditions
+    - K value appropriate for the flow conditions (Reynolds number)
+
+    The pressure drop represents the mechanical energy loss due to
+    friction, turbulence, and flow separation.
+
+    References
+    ----------
+    - Crane Technical Paper No. 410 (TP-410)
+
+    Examples
+    --------
+    >>> import CryoToolBox as ctb
+    >>> u = ctb.ureg
+    >>> # Pressure drop across a 90° elbow
+    >>> K_elbow = 0.2
+    >>> rho_water = 1000 * u.kg / u.m**3
+    >>> velocity = 2.5 * u.m / u.s
+    >>> dP_Darcy(K_elbow, rho_water, velocity)
+    <Quantity(6.25, 'millibar')>
+    """
+    # Input validation
+    if K < 0:
+        raise ValueError(f"Resistance coefficient K must be non-negative, got {K}")
+    if rho.magnitude <= 0:
+        raise ValueError(f"Density must be positive, got {rho}")
+    if w.magnitude < 0:
+        raise ValueError(f"Velocity magnitude must be non-negative, got {w}")
+
+    dP = K * rho * w**2 / 2
+    return dP.to(ureg.mbar)
 
 def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
     '''Calculate mass flow through the piping using initial conditions
