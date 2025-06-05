@@ -31,5 +31,5 @@ Homepage = "https://srgkoshelev.github.io/CryoToolBox/"
 Documentation = "https://srgkoshelev.github.io/CryoToolBox/"
 Source = "https://github.com/srgkoshelev/CryoToolBox"
 
-[tool.setuptools]
-package_data = { "CryoToolBox" = ["*.ini", "*.txt", "*.yaml"] }
+[project.package-data]
+ "CryoToolBox" = ["*.ini", "*.txt", "*.yaml"]
