@@ -18,11 +18,6 @@ dependencies = [
     "xlsxwriter ~= 3.0"
 ]
 
-[project.urls]
-Homepage = "https://srgkoshelev.github.io/CryoToolBox/"
-Documentation = "https://srgkoshelev.github.io/CryoToolBox/"
-Source = "https://github.com/srgkoshelev/CryoToolBox"
-
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -30,6 +25,11 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering",
 ]
+
+[project.urls]
+Homepage = "https://srgkoshelev.github.io/CryoToolBox/"
+Documentation = "https://srgkoshelev.github.io/CryoToolBox/"
+Source = "https://github.com/srgkoshelev/CryoToolBox"
 
 [tool.setuptools]
 package_data = { "CryoToolBox" = ["*.ini", "*.txt", "*.yaml"] }
