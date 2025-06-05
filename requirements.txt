@@ -1,6 +1,0 @@
-CoolProp~=6.4
-Pint~=0.9
-Serialize~=0.1
-scipy~=1.2
-pyyaml~=5.0
-xlsxwriter~=3.0
