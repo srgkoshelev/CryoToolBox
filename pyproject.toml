@@ -16,7 +16,8 @@ dependencies = [
     "Serialize ~= 0.1",
     "scipy ~= 1.2",
     "pyyaml ~= 6.0",
-    "xlsxwriter ~= 3.0"
+    "xlsxwriter ~= 3.0",
+    "pdoc >= 15"
 ]
 requires-python = ">=3.8"
 classifiers = [
