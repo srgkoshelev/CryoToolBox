@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CryoToolBox"
+version = "0.1.0"
+description = "The python toolkit for cryogenic fluid and heat transfer analysis"
+authors = [
+    { name = "Sergey Koshelev", email = "srg.koshelev@proton.me" }
+]
+dependencies = [
+    "CoolProp ~= 6.4",
+    "Pint ~= 0.9",
+    "Serialize ~= 0.1",
+    "scipy ~= 1.2",
+    "pyyaml ~= 5.0",
+    "xlsxwriter ~= 3.0"
+]
