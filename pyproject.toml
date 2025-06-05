@@ -21,7 +21,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://srgkoshelev.github.io/CryoToolBox/"
 Documentation = "https://srgkoshelev.github.io/CryoToolBox/"
-Source Code = "https://github.com/srgkoshelev/CryoToolBox"
+Source = "https://github.com/srgkoshelev/CryoToolBox"
 
 [project.classifiers]
 "Development Status :: 3 - Alpha"
