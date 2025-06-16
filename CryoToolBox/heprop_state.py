@@ -1,5 +1,9 @@
 import numpy as np
 import ctypes
+import os
+
+# Getting path for HEPROP dll
+DLL_PATH = os.getenv('HEPROPPATH')
 
 
 HEPAK_inputs = {
@@ -26,8 +30,8 @@ HEPAK_inputs = {
 # Load the HEPAK DLL
 def init_he():
     try:
-        #dll = ctypes.WinDLL('./hepak.dll')
-        dll = ctypes.CDLL('./hepak.dll')
+        #dll = ctypes.WinDLL(DLL_PATH)
+        dll = ctypes.CDLL(DLL_PATH)
         err='OK'
     except OSError as el:
         print("Helium dll not present in the folder") ###should raise an error
