@@ -6,7 +6,7 @@ import os
 DLL_PATH = os.getenv('HEPROPPATH')
 
 
-HEPAK_inputs = {
+HEPROP_inputs = {
     'P': 1,
     'T': 2,
     'D': 3,
@@ -27,7 +27,7 @@ HEPAK_inputs = {
     'L': 15
 }
 
-# Load the HEPAK DLL
+# Load the HEPROP DLL
 def init_he():
     try:
         #dll = ctypes.WinDLL(DLL_PATH)
@@ -41,12 +41,12 @@ def init_he():
 
 def hecalc(j1, value1, j2, value2, unit, dll, err):
     if isinstance(j1, str):
-            j1_ptr = ctypes.c_int(HEPAK_inputs[j1])
+            j1_ptr = ctypes.c_int(HEPROP_inputs[j1])
     else:
         j1_ptr = ctypes.c_int(j1)
     value1_ptr = ctypes.c_double(value1)
     if isinstance(j2, str):
-        j2_ptr = ctypes.c_int(HEPAK_inputs[j2])
+        j2_ptr = ctypes.c_int(HEPROP_inputs[j2])
     else:
         j2_ptr = ctypes.c_int(j2)
     value2_ptr = ctypes.c_double(value2)
@@ -68,8 +68,8 @@ class HepropState:
         self._heprop = None
 
     def update(self, name1, value1, name2, value2):
-        hepak = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
-        self._heprop = hepak
+        heprop = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
+        self._heprop = heprop
 
     def T_critical(self):
         return 5.1953
