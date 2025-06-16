@@ -32,14 +32,11 @@ def init_he():
     try:
         #dll = ctypes.WinDLL(DLL_PATH)
         dll = ctypes.CDLL(DLL_PATH)
-        err='OK'
-    except OSError as el:
-        print("Helium dll not present in the folder") ###should raise an error
-        dll = None
-        err='No'
-    return dll, err
+    except OSError:
+        raise OSError(f"Helium dll not present in the folder {DLL_PATH}")
+    return dll
 
-def hecalc(j1, value1, j2, value2, unit, dll, err):
+def hecalc(j1, value1, j2, value2, unit, dll):
     if isinstance(j1, str):
             j1_ptr = ctypes.c_int(HEPROP_inputs[j1])
     else:
@@ -53,22 +50,21 @@ def hecalc(j1, value1, j2, value2, unit, dll, err):
     unit_ptr = ctypes.c_int(unit)
     PROP2 = np.zeros((3,42), dtype=np.float64)
     ID = ctypes.c_int()
-    if err == 'OK':
-        try:
-            dll.HEPROP(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
-        except:
-            dll.heprop_(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
-        idi = ID.value
-    return PROP2 if err == 'OK' else None
+    try:
+        dll.HEPROP(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+    except:
+        dll.heprop_(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+    idi = ID.value
+    return PROP2
 
 
 class HepropState:
     def __init__(self, **state_parameters):
-        self.dll, self.err = init_he()
+        self.dll = init_he()
         self._heprop = None
 
     def update(self, name1, value1, name2, value2):
-        heprop = hecalc(name1, value1, name2, value2, 1, self.dll, self.err)
+        heprop = hecalc(name1, value1, name2, value2, 1, self.dll)
         self._heprop = heprop
 
     def T_critical(self):
