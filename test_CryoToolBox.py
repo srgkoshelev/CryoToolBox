@@ -36,7 +36,7 @@ except ValueError:
 
 # Checking if Heprop works to run the tests
 try:
-    ctb.ThermState('helium', T= 300*u.K, P=1*u.bar, backend='Heprop')
+    ctb.ThermState('helium', T= 300*u.K, P=1*u.bar, backend='HEPROP')
     skip_HP_test = False
 except ValueError:
     skip_HP_test = True
