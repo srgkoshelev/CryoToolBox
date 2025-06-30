@@ -714,8 +714,14 @@ class Volume:
         -------
         None
         """
+        print(f'Analyzing ODH for {self.name}.')
         self.fail_modes = []
         for source in sources:
+            print(f'Analyzing inert gas source {source}.')
+            if self._is_safe(source):
+                print(f"{source} doesn't contain enough {source.fluid.name} to cause an ODH condition.")
+                print(f'Final concentration on sudden release is {O2_sudden_release(source.volume, self.volume):.1%}.')
+                continue
             for leak in source.leaks:
                 if not leak._is_const:
                     self._fatality_no_power(source, leak, power_outage)
@@ -964,6 +970,10 @@ class Volume:
     @property
     def phi(self):
         return sum((fm.phi for fm in self.fail_modes)).to(1/ureg.hr)
+
+    def _is_safe(self, source):
+        O2_conc = O2_sudden_release(source.volume, self.volume)
+        return fatality_prob(O2_conc)
 
     # def report(self, brief=True, sens=None):
     #     """Print a report for failure modes and effects.
