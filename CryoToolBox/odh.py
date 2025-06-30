@@ -942,30 +942,6 @@ class Volume:
                                   f'{O2_conc_1fan:.1%} with {Q_1fan:.3g~} '
                                   f'vent rate: {leak.name}')
 
-    def _fatality_prob(self, O2_conc):
-        """Calculate fatality probability for given oxygen concentration.
-
-        The equation is fitted from the FESHM 4240 plot.
-
-        Parameters
-        ----------
-        O2_conc : float
-            Oxygen concentration.
-
-        Returns
-        -------
-        float
-            Fatality rate.
-        """
-        if O2_conc >= 0.18:  # Lowest oxygen concentration above 18%
-            Fi = 0
-        elif O2_conc <= 0.088:  # 8.8% of oxygen is assumed to be 100% fatal
-            Fi = 1
-        else:
-            # Fi formula, reverse engineered using 8.8% and 18% thresholds
-            Fi = 10**(6.5-76*O2_conc)
-        return Fi
-
     @property
     def odh_class(self):
         """Calculate ODH class as defined in FESHM 4240.
@@ -1236,6 +1212,31 @@ def conc_after(V, C_e, Q, t, t_e):
     """
     C = 0.21-(0.21-C_e)*math.e**-(abs(Q)/V*(t-t_e))
     return C
+
+
+def fatality_prob(self, O2_conc):
+    """Calculate fatality probability for given oxygen concentration.
+
+    The equation is fitted from the FESHM 4240 plot.
+
+    Parameters
+    ----------
+    O2_conc : float
+        Oxygen concentration.
+
+    Returns
+    -------
+    float
+        Fatality rate.
+    """
+    if O2_conc >= 0.18:  # Lowest oxygen concentration above 18%
+        Fi = 0
+    elif O2_conc <= 0.088:  # 8.8% of oxygen is assumed to be 100% fatal
+        Fi = 1
+    else:
+        # Fi formula, reverse engineered using 8.8% and 18% thresholds
+        Fi = 10**(6.5-76*O2_conc)
+    return Fi
 
 
 # def print_result(*Volumes):
