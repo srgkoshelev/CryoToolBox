@@ -717,7 +717,7 @@ class Volume:
         print(f'Analyzing ODH for {self.name}.')
         self.fail_modes = []
         for source in sources:
-            print(f'Analyzing inert gas source {source}.')
+            print(f'Analyzing inert gas source {source} with {len(source.leaks)} leaks.')
             if self._is_safe(source):
                 print(f"{source} doesn't contain enough {source.fluid.name} to cause an ODH condition.")
                 print(f'Final concentration on sudden release is {O2_sudden_release(source.volume, self.volume):.1%}.')
@@ -1224,7 +1224,7 @@ def conc_after(V, C_e, Q, t, t_e):
     return C
 
 
-def fatality_prob(self, O2_conc):
+def fatality_prob(O2_conc):
     """Calculate fatality probability for given oxygen concentration.
 
     The equation is fitted from the FESHM 4240 plot.
