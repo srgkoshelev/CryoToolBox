@@ -973,7 +973,7 @@ class Volume:
 
     def _is_safe(self, source):
         O2_conc = O2_sudden_release(source.volume, self.volume)
-        return fatality_prob(O2_conc)
+        return not fatality_prob(O2_conc)  # No fatality
 
     # def report(self, brief=True, sens=None):
     #     """Print a report for failure modes and effects.
