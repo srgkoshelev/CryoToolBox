@@ -139,7 +139,7 @@ class ThermState:
         """
         # TODO this should check for the fluid name too
         if backend == "HEPROP":
-            if fluid.lower() != 'helium':
+            if fluid != 'helium':
                 raise ValueError(f'Only helium fluid can be used with HEPROP backend: {fluid}')
             self._AbstractState = HepropState()
         else:
@@ -500,7 +500,7 @@ class ThermState:
         """
         Return fluid name (backend dependent)
         """
-        return self._AbstractState.name()
+        return self._AbstractState.name().lower()
 
     @property
     def backend(self):
