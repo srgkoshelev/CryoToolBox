@@ -854,7 +854,7 @@ class Volume:
         """
         P_i = failure_rate * P_event
         O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, tau_event)
-        F_i = self._fatality_prob(O2_conc)
+        F_i = fatality_prob(O2_conc)
         phi_i = P_i*F_i
         if leak._is_const == True:
             N_events = 1
