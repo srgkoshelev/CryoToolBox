@@ -717,9 +717,9 @@ class Volume:
         print(f'Analyzing ODH for {self.name}.')
         self.fail_modes = []
         for source in sources:
-            print(f'Analyzing inert gas source {source} with {len(source.leaks)} leaks.')
+            print(f'Analyzing inert gas source {source.name} with {len(source.leaks)} leaks.')
             if self._is_safe(source):
-                print(f"{source} doesn't contain enough {source.fluid.name} to cause an ODH condition.")
+                print(f"{source.name} doesn't contain enough {source.fluid.name} to cause an ODH condition.")
                 print(f'Final concentration on sudden release is {O2_sudden_release(source.volume, self.volume):.1%}.')
                 continue
             for leak in source.leaks:
