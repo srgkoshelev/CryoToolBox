@@ -472,7 +472,7 @@ class Source:
 
     def __str__(self):
         return (f'{self.name}, '
-            f'{self.volume:,.0f~} '
+            f'{self.volume:,.0f~P} '
             f'of {self.fluid.name}')
 
     def print_leaks(self):
@@ -719,7 +719,7 @@ class Volume:
         for source in sources:
             print(f'Inert gas source {source} with {len(source.leaks)} leaks.')
             if self._is_safe(source):
-                print(f"{source.name} doesn't contain enough {source.fluid.name} to cause an ODH condition.")
+                print(f"  {source.name} doesn't contain enough {source.fluid.name} to cause an ODH condition.")
                 print(f'  Final concentration on sudden release is {O2_sudden_release(source.volume, self.volume):.1%}.')
                 continue
             for leak in source.leaks:
