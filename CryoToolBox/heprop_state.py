@@ -189,15 +189,15 @@ class HepropState:
         * 6: Two phase.
         * 7: Unknown phase
         """
-        if self._heprop[0][0] <= 0 and self._heprop[0][1] < self.p_critical:
+        if self._heprop[0][0] <= 0 and self._heprop[0][1] < self.p_critical():
             return 0
-        elif self._heprop[0][2] > self.T_critical and self._heprop[0][1] > self.p_critical:
+        elif self._heprop[0][2] > self.T_critical() and self._heprop[0][1] > self.p_critical():
             return 1
-        elif self._heprop[0][2] > self.T_critical and self._heprop[0][1] < self.p_critical:
+        elif self._heprop[0][2] > self.T_critical() and self._heprop[0][1] < self.p_critical():
             return 2
-        elif self._heprop[0][2] < self.T_critical and self._heprop[0][1] > self.p_critical:
+        elif self._heprop[0][2] < self.T_critical() and self._heprop[0][1] > self.p_critical():
             return 3
-        elif self._heprop[0][2] == self.T_critical and self._heprop[0][1] == self.p_critical:
+        elif self._heprop[0][2] == self.T_critical() and self._heprop[0][1] == self.p_critical():
             return 4
         elif self._heprop[0][0] >= 1:
             return 5
