@@ -867,6 +867,7 @@ def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):
 class Material(Enum):
     """Available materials with low temperature with fits NIST."""
     SS304 = auto()  # AISI 304 Stainless Steel
+    SS316 = auto()  # AISI 316 Stainless Steel
     AL6061 = auto()  # 6061-T6 Aluminum (UNS A96061)
     G10 = auto()  # G10
     PTFE = auto()  # PTFE/Teflon
@@ -901,6 +902,14 @@ _NIST_DATA = {
                       'range': (4, 300),
                       'fun': _nist_log_fit,
                       'unit': ureg.J/(ureg.kg*ureg.K)},
+    },
+    Material.SS316:
+    {
+        Property.TC: {'coefs': [-1.4087, 1.3982, 0.2543, -0.6260, 0.2334,
+                                0.4256, -0.4658, 0.1650, -0.0199],
+                      'range': (1, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.W/(ureg.m*ureg.K)},
     },
     Material.AL6061:
     {
