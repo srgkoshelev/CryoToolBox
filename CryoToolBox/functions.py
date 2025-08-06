@@ -807,7 +807,10 @@ def _nist_quad(T1, T2, fun, coefs):
     -------
     thermal property (e.g. thermal conductivity)
     """
-    return quad(fun, T1, T2, args=coefs)[0] / (T2-T1)
+    if T1 == T2:
+        return(fun(T1, coefs))
+    else:
+        return quad(fun, T1, T2, args=coefs)[0] / (T2-T1)
 
 
 def nist_property(material, prop, T1, T2=None, RRR_OFHC=None):

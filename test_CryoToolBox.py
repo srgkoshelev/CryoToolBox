@@ -317,6 +317,20 @@ class FunctionsTest(unittest.TestCase):
         kt = ctb.k_MLI(30/u.cm, hc, 80*u.K)
         self.assertApproxEqual(kt_exp, kt, uncertainty=0.001)
 
+
+    def test_nist_property(self):
+        T1 = 10 * u.K
+        k = ctb.nist_property(ctb.Material.SS304, ctb.Property.TC, T1)
+        self.assertAlmostEqual(k, 0.90385757*u.W/u.m/u.K)
+        # If two temperatures are the same, should give value for the temperature
+        k = ctb.nist_property(ctb.Material.SS304, ctb.Property.TC, T1, T1)
+        self.assertAlmostEqual(k, 0.90385757*u.W/u.m/u.K)
+        # Integral value from Barron, Cryogenic Heat Transfer Table 2.2
+        k = ctb.nist_property(ctb.Material.SS304, ctb.Property.TC, 4*u.K, T1)
+        self.assertAlmostEqual(k, 3.5/(T1-4*u.K)*u.W/u.m, places=1)
+
+
+
 class PipingTest(unittest.TestCase):
     """Piping checks, mostly taken from textbooks.
     """
