@@ -1763,7 +1763,7 @@ def pressure_req_thick(tube, P_diff, I=1, *, S, E, W, Y):
     >>> W = 1.0
     >>> Y = 0.4
     >>> pressure_req_thick(tube, P_diff, 1, S=S, E=E, W=W, Y=Y)
-    <Quantity(0.148419204, 'inch')>
+    <Quantity(0.14841920374707265, 'inch')>
     """
     D = tube.OD
     P = P_diff.to_base_units()
