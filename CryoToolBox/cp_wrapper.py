@@ -412,6 +412,21 @@ class ThermState:
         """
         return self._AbstractState.phase()
 
+    @property
+    def phase_str(self):
+        """Return string representation of the fluid phase."""
+        phases = {
+        0: 'Subcritical liquid',
+        1: 'Supercritical (p > pc, T > Tc)',
+        2: 'Supercritical gas (p < pc, T > Tc)',
+        3: 'Supercritical liquid (p > pc, T < Tc)',
+        4: 'At the critical point',
+        5: 'Subcritical gas',
+        6: 'Twophase',
+        7: 'Unknown phase',
+        }
+        return phases[self.phase]
+
     def set_mole_fractions(self, *fractions):
         """Set mole fractions for a mixture."""
         self._AbstractState.set_mole_fractions(fractions)
