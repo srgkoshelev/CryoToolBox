@@ -160,6 +160,17 @@ class CpWrapperTest(unittest.TestCase):
         fluid.update_kw(T=300*u.K, P=100*u.bar)
         self.assertTrue(fluid.is_super_critical)
 
+    def test_phases(self):
+        fluid = ctb.ThermState('helium', P=1*u.bar, T=300*u.K)
+        self.assertEqual(fluid.phase, 2)
+        self.assertEqual(fluid.phase_str, 'Supercritical gas (p < pc, T > Tc)',)
+        fluid.update_kw(P=fluid.P, Q=0.5)
+        self.assertEqual(fluid.phase, 6)
+        self.assertEqual(fluid.phase_str, 'Twophase',)
+        fluid.update_kw(P=fluid.P, T=2.5*u.K)
+        self.assertEqual(fluid.phase, 0)
+        self.assertEqual(fluid.phase_str, 'Subcritical liquid',)
+
 class FunctionsTest(unittest.TestCase):
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         if isinstance(data, u.Quantity):
