@@ -171,6 +171,18 @@ class CpWrapperTest(unittest.TestCase):
         self.assertEqual(fluid.phase, 0)
         self.assertEqual(fluid.phase_str, 'Subcritical liquid',)
 
+    def test_latent_heat(self):
+        liquid = ctb.ThermState('helium', P=1*u.bar, Q=0)
+        vapor = ctb.ThermState('helium', P=1*u.bar, Q=1)
+        two_phase = ctb.ThermState('helium', P=1*u.bar, Q=0.5)
+        L = vapor.Hmass - liquid.Hmass
+        self.assertAlmostEqual(L, liquid.latent_heat, places=7)
+        self.assertAlmostEqual(0*u.J/u.g, vapor.latent_heat, places=7)
+        self.assertAlmostEqual(0.5*L, two_phase.latent_heat, places=7)
+        super_critical = ctb.ThermState('helium', P=1*u.bar, T=300*u.K)
+        with self.assertRaises(ValueError):
+            _ = super_critical.latent_heat
+
 class FunctionsTest(unittest.TestCase):
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         if isinstance(data, u.Quantity):

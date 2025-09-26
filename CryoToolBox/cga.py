@@ -162,13 +162,16 @@ def _calculate_Gi_Gu_heat(fluid_FR):
         L = fluid_FR.specific_heat_input  # L is replaced by theta
     elif fluid_FR.P >= 0.4*fluid_FR.P_critical:
         temp_state = fluid_FR.copy()
-        temp_state.update_kw(P=temp_state.P, Q=0*ureg.dimensionless)
+        temp_state.update_kw(P=temp_state.P, Q=0)
         v_l = 1/temp_state.Dmass
-        temp_state.update_kw(P=temp_state.P, Q=1*ureg.dimensionless)
+        h_liq = temp_state.latent_heat
+        temp_state.update_kw(P=temp_state.P, Q=1)
         v_g = 1/temp_state.Dmass
-        L = fluid_FR.latent_heat * v_g/(v_g-v_l)
+        L = h_liq * v_g/(v_g-v_l)
     else:
-        L = fluid_FR.latent_heat
+        temp_state = fluid_FR.copy()
+        temp_state.update_kw(P=temp_state.P, Q=0)
+        L = temp_state.latent_heat
     return L
 
 @ureg.wraps(None, (ureg.degR,

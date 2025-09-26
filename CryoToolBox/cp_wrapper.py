@@ -8,6 +8,7 @@ import CoolProp.CoolProp as CP
 from .heprop_state import HepropState
 from math import inf
 from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
+import warnings
 
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
@@ -557,16 +558,14 @@ class ThermState:
     @property
     def latent_heat(self):
         """Calculate latent heat of evaporation for current quality."""
-        assert self.is_super_critical is False, (
-            'Latent heat is only defined '
-            'for subcritical phase')
-        TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=0)
-        h_liq = TempState.Hmass
+        warnings.warn('latent_heat function behavior has been changed. It now accounts for fluid quality.',
+                      DeprecationWarning)
+        if not (0<= self.Q <= 1):
+            raise ValueError(f'Latent heat is undefined for Q={self.Q}, {self}.')
         TempState = self.copy()
         TempState.update_kw(P=self.P, Q=1)
         h_gas = TempState.Hmass
-        return h_gas - h_liq
+        return h_gas - self.Hmass
 
     def copy(self):
         """Create a copy of current ThermState object."""
