@@ -11,15 +11,15 @@ from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 import warnings
 
 CP_const_unit = {
-    'gas_constant': (CP.igas_constant, ureg.J/ureg.mol/ureg.K),
-    'molar_mass': (CP.imolar_mass, ureg.kg/ureg.mol),
+    'gas_constant': (CP.igas_constant, ureg.J / ureg.mol / ureg.K),
+    'molar_mass': (CP.imolar_mass, ureg.kg / ureg.mol),
     # 'acentric_factor': (CP.iacentric_factor, ),
     # 'Dmolar_reducing': (CP.irhomolar_reducing, ),
-    'Dmolar_critical': (CP.irhomolar_critical, ureg.mol/ureg.m**3),
+    'Dmolar_critical': (CP.irhomolar_critical, ureg.mol / ureg.m**3),
     'T_reducing': (CP.iT_reducing, ureg.K),
     'T_critical': (CP.iT_critical, ureg.K),
     # 'Dmass_reducing': (CP.irhomass_reducing, ),
-    'Dmass_critical': (CP.irhomass_critical, ureg.kg/ureg.m**3),
+    'Dmass_critical': (CP.irhomass_critical, ureg.kg / ureg.m**3),
     'P_critical': (CP.iP_critical, ureg.Pa),
     'P_reducing': (CP.iP_reducing, ureg.Pa),
     'T_triple': (CP.iT_triple, ureg.K),
@@ -33,35 +33,35 @@ CP_const_unit = {
     # 'dipole_moment': (CP.idipole_moment, ),
     'T': (CP.iT, ureg.K),
     'P': (CP.iP, ureg.Pa),
-    'Q': (CP.iQ, ureg.mol/ureg.mol),
+    'Q': (CP.iQ, ureg.mol / ureg.mol),
     # 'Tau': (CP.iTau, ),
     # 'Delta': (CP.iDelta, ),
-    'Dmolar': (CP.iDmolar, ureg.mol/ureg.m**3),
-    'Hmolar': (CP.iHmolar, ureg.J/ureg.mol),
-    'Smolar': (CP.iSmolar, ureg.J/ureg.mol/ureg.K),
-    'Cpmolar': (CP.iCpmolar, ureg.J/ureg.mol/ureg.K),
+    'Dmolar': (CP.iDmolar, ureg.mol / ureg.m**3),
+    'Hmolar': (CP.iHmolar, ureg.J / ureg.mol),
+    'Smolar': (CP.iSmolar, ureg.J / ureg.mol / ureg.K),
+    'Cpmolar': (CP.iCpmolar, ureg.J / ureg.mol / ureg.K),
     # 'Cp0molar': (CP.iCp0molar, ureg.J/ureg.mol/ureg.K),
-    'Cvmolar': (CP.iCvmolar, ureg.J/ureg.mol/ureg.K),
-    'Umolar': (CP.iUmolar, ureg.J/ureg.mol),
+    'Cvmolar': (CP.iCvmolar, ureg.J / ureg.mol / ureg.K),
+    'Umolar': (CP.iUmolar, ureg.J / ureg.mol),
     # 'Gmolar': (CP.iGmolar, ),
     # 'Helmholtzmolar': (CP.iHelmholtzmolar, ),
     # 'Smolar_residual': (CP.iSmolar_residual, ),
-    'Dmass': (CP.iDmass, ureg.kg/ureg.m**3),
-    'Hmass': (CP.iHmass, ureg.J/ureg.kg),
-    'Smass': (CP.iSmass, ureg.J/ureg.kg/ureg.K),
-    'Cpmass': (CP.iCpmass, ureg.J/ureg.kg/ureg.K),
+    'Dmass': (CP.iDmass, ureg.kg / ureg.m**3),
+    'Hmass': (CP.iHmass, ureg.J / ureg.kg),
+    'Smass': (CP.iSmass, ureg.J / ureg.kg / ureg.K),
+    'Cpmass': (CP.iCpmass, ureg.J / ureg.kg / ureg.K),
     # 'Cp0mass': (CP.iCp0mass, ureg.J/ureg.kg/ureg.K),
-    'Cvmass': (CP.iCvmass, ureg.J/ureg.kg/ureg.K),
-    'Umass': (CP.iUmass, ureg.J/ureg.kg),
+    'Cvmass': (CP.iCvmass, ureg.J / ureg.kg / ureg.K),
+    'Umass': (CP.iUmass, ureg.J / ureg.kg),
     # 'Gmass': (CP.iGmass, ),
     # 'Helmholtzmass': (CP.iHelmholtzmass, ),
-    'viscosity': (CP.iviscosity, ureg.Pa*ureg.s),
-    'conductivity': (CP.iconductivity, ureg.W/ureg.m/ureg.K),
-    'surface_tension': (CP.isurface_tension, ureg.N/ureg.m),
+    'viscosity': (CP.iviscosity, ureg.Pa * ureg.s),
+    'conductivity': (CP.iconductivity, ureg.W / ureg.m / ureg.K),
+    'surface_tension': (CP.isurface_tension, ureg.N / ureg.m),
     'Prandtl': (CP.iPrandtl, None),
-    'speed_sound': (CP.ispeed_sound, ureg.m/ureg.s),
-    'isothermal_compressibility': (CP.iisothermal_compressibility,
-                                   ureg.Pa**-1),
+    'speed_sound': (CP.ispeed_sound, ureg.m / ureg.s),
+    'isothermal_compressibility':
+    (CP.iisothermal_compressibility, ureg.Pa**-1),
     'isobaric_expansion_coefficient':
     (CP.iisobaric_expansion_coefficient, ureg.K**-1),
     'isentropic_expansion_coefficient':
@@ -87,10 +87,12 @@ CP_const_unit = {
     # 'PH': (CP.iPH, ),
     # 'ODP': (CP.iODP, ),
     'Phase': (CP.iPhase, ureg.dimensionless),
-    'C_us': (None,  # unit defined for external use
-             ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5),
-    'C_m': (None,  # unit defined for external use
-            ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5)
+    'C_us': (
+        None,  # unit defined for external use
+        ureg.lb / (ureg.hr * ureg.lbf) * (ureg.degR)**0.5),
+    'C_m': (
+        None,  # unit defined for external use
+        ureg.s**2 / (ureg.hr * ureg.m) * (ureg.K)**0.5)
 }
 
 CP_inputs = {
@@ -133,6 +135,7 @@ CP_inputs = {
 
 
 class ThermState:
+
     def __init__(self, fluid, backend="HEOS", **state_parameters):
         """
         Available backends: HEOS (opensource), REFPROP.
@@ -141,7 +144,9 @@ class ThermState:
         # TODO this should check for the fluid name too
         if backend == "HEPROP":
             if fluid != 'helium':
-                raise ValueError(f'Only helium fluid can be used with HEPROP backend: {fluid}')
+                raise ValueError(
+                    f'Only helium fluid can be used with HEPROP backend: {fluid}'
+                )
             self._AbstractState = HepropState()
         else:
             self._AbstractState = CP.AbstractState(backend, fluid)
@@ -159,8 +164,7 @@ class ThermState:
         for name, value in state_parameters.items():
             names.append(name)
             values.append(value)
-        self.update(names[0], values[0],
-                    names[1], values[1])
+        self.update(names[0], values[0], names[1], values[1])
 
     def update(self, name1, value1, name2, value2):
         if name1 > name2:  # Sorting inputs alphabetically
@@ -174,7 +178,8 @@ class ThermState:
             self._AbstractState.update(name1, CP_value1, name2, CP_value2)
         else:
             self._AbstractState.update(
-                CP_inputs[CP_input_str], CP_value1, CP_value2) ###update all properties in coolprop
+                CP_inputs[CP_input_str], CP_value1,
+                CP_value2)  ###update all properties in coolprop
 
     @staticmethod
     def prepare_input(name, value):
@@ -210,7 +215,6 @@ class ThermState:
     def P_critical(self):
         return self._AbstractState.p_critical()
 
-
     @property
     @ureg.wraps(CP_const_unit['Dmolar_critical'][1], None)
     def Dmolar_critical(self):
@@ -225,7 +229,6 @@ class ThermState:
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T(self):
         return self._AbstractState.T()
-
 
     @property
     @ureg.wraps(CP_const_unit['Dmolar_critical'][1], None)
@@ -267,10 +270,13 @@ class ThermState:
         if self.backend == "HEPROP":
             Z_ = self._AbstractState.compressibility_factor()
         else:
-            Z_ = (self.P * self.molar_mass / (self.Dmass*self.gas_constant*self.T)).m_as(ureg.dimensionless)
+            Z_ = (self.P * self.molar_mass /
+                  (self.Dmass * self.gas_constant * self.T)).m_as(
+                      ureg.dimensionless)
         return Z_
         # Temporarily unavailable function
         # return self._AbstractState.compressibility_factor()
+
     # Useful shorthand
     Z = compressibility_factor
 
@@ -375,7 +381,8 @@ class ThermState:
         return self._AbstractState.isobaric_expansion_coefficient()
 
     @property
-    @ureg.wraps(CP_const_unit['isentropic_expansion_coefficient'][1], None) ### not existing with coolprop issues
+    @ureg.wraps(CP_const_unit['isentropic_expansion_coefficient'][1],
+                None)  ### not existing with coolprop issues
     def isentropic_expansion_coefficient(self):
         return self._AbstractState.isentropic_expansion_coefficient()
 
@@ -417,14 +424,14 @@ class ThermState:
     def phase_str(self):
         """Return string representation of the fluid phase."""
         phases = {
-        0: 'Subcritical liquid',
-        1: 'Supercritical (p > pc, T > Tc)',
-        2: 'Supercritical gas (p < pc, T > Tc)',
-        3: 'Supercritical liquid (p > pc, T < Tc)',
-        4: 'At the critical point',
-        5: 'Subcritical gas',
-        6: 'Twophase',
-        7: 'Unknown phase',
+            0: 'Subcritical liquid',
+            1: 'Supercritical (p > pc, T > Tc)',
+            2: 'Supercritical gas (p < pc, T > Tc)',
+            3: 'Supercritical liquid (p > pc, T < Tc)',
+            4: 'At the critical point',
+            5: 'Subcritical gas',
+            6: 'Twophase',
+            7: 'Unknown phase',
         }
         return phases[self.phase]
 
@@ -465,9 +472,11 @@ class ThermState:
         # the AbstractState, density is used instead
         # The resulting function is: -Dmass*(dHmass/dDmass)|p
         if self.backend == "HEPROP":
-            return self._AbstractState.specific_heat_input() * ureg.joule/ureg.kg
+            return self._AbstractState.specific_heat_input(
+            ) * ureg.joule / ureg.kg
         else:
-            return (-self.Dmass) * self.first_partial_deriv('Hmass', 'Dmass', 'P')
+            return (-self.Dmass) * self.first_partial_deriv(
+                'Hmass', 'Dmass', 'P')
 
     @property
     def gamma(self):
@@ -489,9 +498,9 @@ class ThermState:
         specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
         """
         k_ = self.gamma.magnitude
-        root = (k_ * (2/(k_+1))**((k_+1)/(k_-1)))**0.5
+        root = (k_ * (2 / (k_ + 1))**((k_ + 1) / (k_ - 1)))**0.5
         R = ureg.R  # Universal gas constant
-        C_ = root / R**0.5 * (ureg.g/ureg.mol)**0.5
+        C_ = root / R**0.5 * (ureg.g / ureg.mol)**0.5
         return C_
 
     @property
@@ -502,13 +511,13 @@ class ThermState:
     @property
     def C_us(self):
         """A shortcut to C_gas_const for US customary units"""
-        us_unit = ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5
+        us_unit = ureg.lb / (ureg.hr * ureg.lbf) * (ureg.degR)**0.5
         return self.C_gas_const.to(us_unit)
 
     @property
     def C_si(self):
         """A shortcut to C_gas_const for SI units"""
-        si_unit = ureg.s**2/(ureg.hr*ureg.m)*(ureg.K)**0.5
+        si_unit = ureg.s**2 / (ureg.hr * ureg.m) * (ureg.K)**0.5
         return self.C_gas_const.to(si_unit)
 
     @property
@@ -544,7 +553,7 @@ class ThermState:
     @property
     def M(self):
         """Calculate relative molecular mass."""
-        return self.molar_mass.m_as(ureg.g/ureg.mole)
+        return self.molar_mass.m_as(ureg.g / ureg.mole)
 
     @property
     def MZT(self):
@@ -552,16 +561,18 @@ class ThermState:
         Calculate sqrt(M/(ZT)) a commonly used square root group for discharge
         flow calculation.
         """
-        MZT_ = (self.M / (self.compressibility_factor*self.T))**0.5
+        MZT_ = (self.M / (self.compressibility_factor * self.T))**0.5
         return MZT_
 
     @property
     def latent_heat(self):
         """Calculate latent heat of evaporation for current quality."""
-        warnings.warn('latent_heat function behavior has been changed. It now accounts for fluid quality.',
-                      DeprecationWarning)
-        if not (0<= self.Q <= 1):
-            raise ValueError(f'Latent heat is undefined for Q={self.Q}, {self}.')
+        warnings.warn(
+            'latent_heat function behavior has been changed. It now accounts for fluid quality.',
+            DeprecationWarning)
+        if not (0 <= self.Q <= 1):
+            raise ValueError(
+                f'Latent heat is undefined for Q={self.Q}, {self}.')
         TempState = self.copy()
         TempState.update_kw(P=self.P, Q=1)
         h_gas = TempState.Hmass
@@ -571,7 +582,7 @@ class ThermState:
         """Create a copy of current ThermState object."""
         TempState = ThermState(self.name, backend=self.backend)
         # If conditions are defined
-        if self.Dmass != -inf*ureg.kg/ureg.m**3:
+        if self.Dmass != -inf * ureg.kg / ureg.m**3:
             TempState.update_kw(T=self.T, Smass=self.Smass)
         return TempState
 
