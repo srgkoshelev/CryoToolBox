@@ -5,7 +5,6 @@ import os
 # Getting path for HEPROP dll
 DLL_PATH = os.getenv('HEPROPPATH')
 
-
 HEPROP_inputs = {
     'P': 1,
     'T': 2,
@@ -27,6 +26,7 @@ HEPROP_inputs = {
     'L': 15
 }
 
+
 # Load the HEPROP DLL
 def init_he():
     try:
@@ -36,9 +36,10 @@ def init_he():
         raise OSError(f"Helium dll not present in the folder {DLL_PATH}")
     return dll
 
+
 def hecalc(j1, value1, j2, value2, unit, dll):
     if isinstance(j1, str):
-            j1_ptr = ctypes.c_int(HEPROP_inputs[j1])
+        j1_ptr = ctypes.c_int(HEPROP_inputs[j1])
     else:
         j1_ptr = ctypes.c_int(j1)
     value1_ptr = ctypes.c_double(value1)
@@ -48,17 +49,26 @@ def hecalc(j1, value1, j2, value2, unit, dll):
         j2_ptr = ctypes.c_int(j2)
     value2_ptr = ctypes.c_double(value2)
     unit_ptr = ctypes.c_int(unit)
-    PROP2 = np.zeros((3,42), dtype=np.float64)
+    PROP2 = np.zeros((3, 42), dtype=np.float64)
     ID = ctypes.c_int()
     try:
-        dll.HEPROP(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+        dll.HEPROP(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr),
+                   ctypes.byref(j2_ptr), ctypes.byref(value2_ptr),
+                   ctypes.byref(unit_ptr),
+                   PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                   ctypes.byref(ID))
     except:
-        dll.heprop_(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr), ctypes.byref(j2_ptr), ctypes.byref(value2_ptr), ctypes.byref(unit_ptr), PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.byref(ID))
+        dll.heprop_(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr),
+                    ctypes.byref(j2_ptr), ctypes.byref(value2_ptr),
+                    ctypes.byref(unit_ptr),
+                    PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+                    ctypes.byref(ID))
     idi = ID.value
     return PROP2
 
 
 class HepropState:
+
     def __init__(self, **state_parameters):
         self.dll = init_he()
         self._heprop = None
@@ -83,7 +93,7 @@ class HepropState:
         return self._heprop[0][2]
 
     def rhomolar(self):
-        return self._heprop[0][3]/0.004002602
+        return self._heprop[0][3] / 0.004002602
 
     def rhomass(self):
         return self._heprop[0][3]
@@ -104,25 +114,25 @@ class HepropState:
         return self._heprop[0][5]
 
     def hmolar(self):
-        return self._heprop[0][9]*self.molar_mass()
+        return self._heprop[0][9] * self.molar_mass()
 
     def hmass(self):
         return self._heprop[0][9]
 
     def smolar(self):
-        return self._heprop[0][8]*self.molar_mass()
+        return self._heprop[0][8] * self.molar_mass()
 
     def smass(self):
         return self._heprop[0][8]
 
     def cpmolar(self):
-        return self._heprop[0][14]*self.molar_mass()
+        return self._heprop[0][14] * self.molar_mass()
 
     def cpmass(self):
         return self._heprop[0][14]
 
     def cvmolar(self):
-        return self._heprop[0][15]*self.molar_mass()
+        return self._heprop[0][15] * self.molar_mass()
 
     def cvmass(self):
         return self._heprop[0][15]
@@ -137,10 +147,10 @@ class HepropState:
         return self._heprop[0][29]
 
     def p_reducing(self):
-        return 0 #value to add, not existing in Coolprop
+        return 0  #value to add, not existing in Coolprop
 
     def ptriple(self):
-        return 0 #value to add, not existing in Coolprop
+        return 0  #value to add, not existing in Coolprop
 
     def pmax(self):
         return 2028000000
@@ -161,10 +171,10 @@ class HepropState:
         return self._heprop[0][19]
 
     def isobaric_expansion_coefficient(self):
-        return self._heprop[0][17]/self._heprop[0][2]
+        return self._heprop[0][17] / self._heprop[0][2]
 
     def isentropic_expansion_coefficient(self):
-        return 0 #value to add, I need to verify this part with Heprop
+        return 0  #value to add, I need to verify this part with Heprop
 
     def Prandtl(self):
         return self._heprop[0][27]
@@ -191,13 +201,17 @@ class HepropState:
         """
         if self._heprop[0][0] <= 0 and self._heprop[0][1] < self.p_critical():
             return 0
-        elif self._heprop[0][2] > self.T_critical() and self._heprop[0][1] > self.p_critical():
+        elif self._heprop[0][2] > self.T_critical(
+        ) and self._heprop[0][1] > self.p_critical():
             return 1
-        elif self._heprop[0][2] > self.T_critical() and self._heprop[0][1] < self.p_critical():
+        elif self._heprop[0][2] > self.T_critical(
+        ) and self._heprop[0][1] < self.p_critical():
             return 2
-        elif self._heprop[0][2] < self.T_critical() and self._heprop[0][1] > self.p_critical():
+        elif self._heprop[0][2] < self.T_critical(
+        ) and self._heprop[0][1] > self.p_critical():
             return 3
-        elif self._heprop[0][2] == self.T_critical() and self._heprop[0][1] == self.p_critical():
+        elif self._heprop[0][2] == self.T_critical(
+        ) and self._heprop[0][1] == self.p_critical():
             return 4
         elif self._heprop[0][0] >= 1:
             return 5
