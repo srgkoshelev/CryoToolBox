@@ -54,14 +54,15 @@ NPS_table = _load_table('NPS_table.yaml')
 COPPER_TABLE = _load_table('copper_table.yaml')
 
 NPS_PATTERN = re.compile(
+    r'^(?=.*\bnps)'  # nps should be present
     r'(?:nps)?\s*'
-    r'(?!0*\.?0+(?:\D|$))(\d+\.?\d*)'
+    r'(?!0+\.?0+\D)(\d\.?\d*)'
     r'\s*(?:in)?\s*(?:nps)?\s*'
     r'sch\s*(\d+)(?:nps)?$'
 )
 TUBE_PATTERN = re.compile(
-    r'^(\d*\.?\d*\s*(?:"|in(?:ch)?|[cmu]m))\s*x\s*'
-    r'(\d*\.?\d*\s*(?:"|in(?:ch)?|[cmu]m))$',
+    r'^(\d\.?\d*\s*(?:"|in(?:ch)?|[cmu]m))\s*x\s*'
+    r'(\d\.?\d*\s*(?:"|in(?:ch)?|[cmu]m))$',
     re.IGNORECASE,
 )
 

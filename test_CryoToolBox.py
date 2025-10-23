@@ -1617,5 +1617,143 @@ class TestDPDarcy(unittest.TestCase):
         self.assertAlmostEqual(dp_total.magnitude, dp_sum.magnitude, places=6)
 
 
+class TestTubePattern(unittest.TestCase):
+    @staticmethod
+    def _matches(text: str) -> bool:
+        """
+        Return ``True`` if *text* matches ``TUBE_PATTERN`` exactly.
+        Stripping whitespace makes the tests a little more forgiving.
+        """
+        return bool(ctb.piping.TUBE_PATTERN.fullmatch(text.strip()))
+    # ---- Positive cases -------------------------------------------------
+    def test_inches_with_quotes(self):
+        self.assertTrue(self._matches('0.5"x0.25"'))
+        self.assertTrue(self._matches('0.5" x 0.25"'))   # spaces around x
+
+    def test_inches_spelled_out(self):
+        self.assertTrue(self._matches('0.5 in x 0.35 in'))
+        self.assertTrue(self._matches('0.5 inch x 0.35 inch'))
+
+    def test_millimeters(self):
+        self.assertTrue(self._matches('10mmx20mm'))
+        self.assertTrue(self._matches('10 mm x 20 mm'))
+
+    def test_centimeters(self):
+        self.assertTrue(self._matches('5cm x 7cm'))
+        self.assertTrue(self._matches('5 cm x 7 cm'))
+
+    def test_micrometers(self):
+        # both µm (Unicode mu) and plain "um"
+        self.assertTrue(self._matches('100 um x 200 um'))
+
+    def test_mixed_units(self):
+        self.assertTrue(self._matches('0.5in x 12mm'))
+        self.assertTrue(self._matches('2 cm x 0.75"'))
+
+    # ---- Negative cases ------------------------------------------------
+    def test_missing_second_dimension(self):
+        self.assertFalse(self._matches('0.5"x'))          # incomplete second part
+        self.assertFalse(self._matches('0.5in x'))        # incomplete second part
+
+    def test_wrong_separator(self):
+        self.assertFalse(self._matches('0.5"x0.25'))      # missing quote on second side
+        self.assertFalse(self._matches('0.5in * 0.35in')) # asterisk instead of x
+
+    def test_extra_characters(self):
+        self.assertFalse(self._matches('size: 0.5"x0.25"'))   # leading text
+        self.assertFalse(self._matches('0.5"x0.25" end'))    # trailing text
+
+    def test_invalid_units(self):
+        self.assertFalse(self._matches('5ft x 7ft'))         # unsupported unit
+        self.assertFalse(self._matches('10px x 20px'))       # unsupported unit
+
+
+class TestNpsPattern(unittest.TestCase):
+    """Unit tests for the NPS_PATTERN regular expression."""
+
+    @staticmethod
+    def _matches(text: str) -> bool:
+        """Return True if text fully matches NPS_PATTERN."""
+        return bool(ctb.piping.NPS_PATTERN.fullmatch(text.strip()))
+
+    def test_basic_integer_forms(self):
+        """Test basic integer NPS values with various spacing."""
+        cases = [
+            'nps 1 in sch10',
+            'nps 1 in sch 10',
+            'nps 1in sch10',
+            'nps 1in sch 10',
+            'nps 1 sch10',
+            'nps 1 sch 10',
+            '1 in nps sch10',
+            '1 in nps sch 10',
+            '1in nps sch10',
+            '1in nps sch 10',
+            '1 nps sch10',
+            '1 nps sch 10',
+            '1 in sch 10',
+        ]
+        for s in cases:
+            with self.subTest(string=s):
+                self.assertTrue(self._matches(s))
+
+    def test_decimal_forms(self):
+        """Test decimal NPS values with various spacing."""
+        cases = [
+            'nps 1.5 in sch10',
+            'nps 1.5 in sch 10',
+            'nps 1.5in sch10',
+            'nps 1.5in sch 10',
+            'nps 1.5 sch10',
+            'nps 1.5 sch 10',
+            '1.5 in nps sch10',
+            '1.5 in nps sch 10',
+            '1.5in nps sch10',
+            '1.5in nps sch 10',
+            '1.5 nps sch10',
+            '1.5 nps sch 10',
+        ]
+        for s in cases:
+            with self.subTest(string=s):
+                self.assertTrue(self._matches(s))
+
+    def test_rejects_zero_values(self):
+        """Test that zero values are properly rejected."""
+        cases = [
+            'nps 0 in sch10',
+            'nps 0 in sch 10',
+            'nps 0in sch10',
+            'nps 0in sch 10',
+            'nps 0 sch10',
+            'nps 0 sch 10',
+            '0 in nps sch10',
+            '0 in nps sch 10',
+            '0in nps sch10',
+            '0in nps sch 10',
+            '0 nps sch10',
+            '0 nps sch 10',
+            'nps 0.0 sch 10',
+            'nps 00.00 sch 10',
+        ]
+        for s in cases:
+            with self.subTest(string=s):
+                self.assertFalse(self._matches(s))
+
+    def test_rejects_malformed_input(self):
+        """Test that malformed or incomplete input is rejected."""
+        cases = [
+            '1 nps',              # Missing 'sch'
+            'nps sch10',          # Missing size number
+            'nps only',           # No valid numbers
+            'random text',        # No match
+            'sch NPS 1',          # Wrong order
+            '1 in only',          # Missing 'nps' and 'sch'
+            '',                   # Empty string
+            'sch 10',             # Missing NPS size
+        ]
+        for s in cases:
+            with self.subTest(string=s):
+                self.assertFalse(self._matches(s))
+
 if __name__ == '__main__':
     unittest.main()
