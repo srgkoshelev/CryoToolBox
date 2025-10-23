@@ -198,9 +198,6 @@ class Tube(PipingElement):
         return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
             f'L={self.L:.3g~}'
 
-    # def __str__(self):
-    #     return f'{self.D:.3g}" {self.type}'
-
 
 class Pipe(Tube):
     """NPS pipe class.
@@ -276,36 +273,36 @@ class CopperTube(Tube):
         self.type = 'Copper tube Type ' + type_
 
 
-class VJPipe(Pipe):
-    """Vacuum jacketed pipe.
-    """
-    def __init__(self, D_nom, *, SCH=5, L=0*ureg.m,
-                 VJ_D, VJ_SCH=5, c=0*ureg.inch):
-        """Generate Vacuum jacketed pipe object.
+# class VJPipe(Pipe):
+#     """Vacuum jacketed pipe.
+#     """
+#     def __init__(self, D_nom, *, SCH=5, L=0*ureg.m,
+#                  VJ_D, VJ_SCH=5, c=0*ureg.inch):
+#         """Generate Vacuum jacketed pipe object.
 
-        Parameters
-        ----------
-        D_nom : float or ureg.Quantity {length: 1}
-            Nominal diameter of the inner pipe.
-        SCH : int
-            Inner pipe schedule. Default value is SCH 40 (STD).
-        L : ureg.Quantity {length: 1}
-            Length of the inner pipe.
-        VJ_D : float or ureg.Quantity {length: 1}
-            Nominal diameter of the vacuum jacket.
-        VJ_SCH : int
-            Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
-        c : ureg.Quantity {length: 1}
-            Sum of the mechanical allowances plus corrosion and erosion
-            allowances of the inner pipe.
-        """
-        super().__init__(D_nom, SCH, L)
-        self.VJ = Pipe(VJ_D, VJ_SCH, L)
-        self.type = 'VJ pipe'
+#         Parameters
+#         ----------
+#         D_nom : float or ureg.Quantity {length: 1}
+#             Nominal diameter of the inner pipe.
+#         SCH : int
+#             Inner pipe schedule. Default value is SCH 40 (STD).
+#         L : ureg.Quantity {length: 1}
+#             Length of the inner pipe.
+#         VJ_D : float or ureg.Quantity {length: 1}
+#             Nominal diameter of the vacuum jacket.
+#         VJ_SCH : int
+#             Vacuum jacket pipe schedule. Default value is SCH 40 (STD).
+#         c : ureg.Quantity {length: 1}
+#             Sum of the mechanical allowances plus corrosion and erosion
+#             allowances of the inner pipe.
+#         """
+#         super().__init__(D_nom, SCH, L)
+#         self.VJ = Pipe(VJ_D, VJ_SCH, L)
+#         self.type = 'VJ pipe'
 
-    def info(self):
-        return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}", ' + \
-            f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
+#     def info(self):
+#         return f'NPS {self.D}" SCH {self.SCH} with VJ {self.VJ.D}", ' + \
+#             f'SCH {self.VJ.SCH}, L={self.L:.3~g}'
 
 
 class CorrugatedPipe(Tube):
@@ -657,7 +654,7 @@ class Valve(PipingElement):
     def __init__(self, D, Cv):
         # TODO DRY
         self.D = D
-        self._Cv = Cv
+        self.Cv = Cv
         self.OD = None
         self.ID = self.D
         self._area = circle_area(D)
@@ -671,10 +668,10 @@ class Valve(PipingElement):
 
     def K(self, Re=None):
         # TODO Add Re handling
-        return Cv_to_K(self._Cv, self.D)
+        return Cv_to_K(self.Cv, self.D)
 
     def __str__(self):
-        return f'{self.type}, {self.D}", Cv = {self._Cv:.3g}'
+        return f'{self.type}, {self.D}", Cv={self.Cv:.3g}'
 
 
 # class GlobeValve(Pipe):
@@ -1131,6 +1128,41 @@ class LineContext:
         if name in self.dimensions:
             return self.dimensions[name]
         raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
+
+
+def create_element(description, ctx: LineContext):
+    if isinstance(description, str):
+        description = description.lower().strip()
+    if isinstance(description, (int, float)):
+        if ctx.system == 'tube':
+            return Tube(ctx.OD, wall=ctx.wall, L=description*ctx.length_unit)
+        else:
+            return Pipe(ctx.D_nom, SCH=ctx.SCH, L=description*ctx.length_unit)
+    elif description.startswith('elbow'):
+        if ctx.system == 'tube':
+            return Elbow(ctx.OD, wall=ctx.wall)
+        else:
+            return PipeElbow(ctx.D_nom, SCH=ctx.SCH)
+    elif description.startswith('tee'):
+        if description[-1] == 'r':
+            direction = 'run'
+        elif description[-1] == 'b':
+            direction = 'branch'
+        else:
+            raise ValueError(f'Expected r for run or b for branch: {description[-1]}')
+        if ctx.system == 'tube':
+            return Tee(ctx.OD, wall=ctx.wall, direction=direction)
+        else:
+            return PipeTee(ctx.D_nom, SCH=ctx.SCH, direction=direction)
+    elif description.startswith('cv'):
+        Cv = float(description.split('=')[1])
+        if ctx.system == 'tube':
+            return Valve(ctx.OD, Cv=Cv)
+        else:
+            return Valve(ctx.D_nom*ureg.inch, Cv=Cv)
+    else:
+        raise ValueError(f'Element description not recognized: {description}')
+
 
 ################################################################################
 
@@ -2005,7 +2037,7 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
 def volume(piping):
     """Calculate volume inside piping."""
     result = []
-    pipe_type = (Pipe, VJPipe, CorrugatedPipe, Tube, Annulus, Elbow)
+    pipe_type = (Pipe, CorrugatedPipe, Tube, Annulus, Elbow)
     # TODO remove elbows and tees after merge
     for pipe in piping:
         if isinstance(pipe, pipe_type):

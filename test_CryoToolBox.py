@@ -397,7 +397,7 @@ class PipingTest(unittest.TestCase):
             f'expected value {expected:g}'
 
     def test_create_pipes(self):
-        vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
+        # vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
         entrance = ht.piping.Entrance(Q_('1 inch'))
         pipe_exit = ht.piping.Exit(Q_('1 inch'))
         orifice = ht.piping.Orifice(Q_('1 inch'))
@@ -414,7 +414,6 @@ class PipingTest(unittest.TestCase):
         enl = ht.piping.Enlargement(0.5 * u.inch, 1 * u.inch)
         test_state = ht.AIR
         piping = [
-            vj_pipe,
             entrance,
             pipe_exit,
             orifice,
@@ -1800,9 +1799,66 @@ class TestLineContext(unittest.TestCase):
         with self.assertRaises(ValueError):
             ctb.piping.LineContext.from_string('NPS1SCH')  # malformed pattern
 
+
+class TestCreateElement(unittest.TestCase):
+    def setUp(self):
+        self.ctx_tube = ctb.piping.LineContext.from_string('0.5"x0.035"')
+        self.ctx_tube.length_unit = u.m
+        self.ctx_pipe = ctb.piping.LineContext.from_string('NPS 1 SCH10')
+        self.ctx_pipe.length_unit = u.m
+
+    def test_numeric_description_creates_tube_or_pipe(self):
+        el1 = ctb.piping.create_element(2.0, self.ctx_tube)
+        self.assertIsInstance(el1, ctb.piping.Tube)
+        self.assertEqual(el1.OD, 0.5*u.inch)
+        self.assertEqual(el1.wall, 0.035*u.inch)
+        self.assertEqual(el1.L, 2.0 * u.m)
+
+        el2 = ctb.piping.create_element(3.0, self.ctx_pipe)
+        self.assertIsInstance(el2, ctb.piping.Pipe)
+        self.assertEqual(el2.D, 1.0)
+        self.assertEqual(el2.SCH, 10)
+        self.assertEqual(el2.L, 3.0 * u.m)
+
+    def test_elbow_creation(self):
+        el1 = ctb.piping.create_element('elbow', self.ctx_tube)
+        self.assertIsInstance(el1, ctb.piping.Elbow)
+        self.assertEqual(el1.OD, 0.5*u.inch)
+        self.assertEqual(el1.wall, 0.035*u.inch)
+
+        el2 = ctb.piping.create_element('elbow', self.ctx_pipe)
+        self.assertIsInstance(el2, ctb.piping.PipeElbow)
+        self.assertEqual(el2.D, 1.0)
+        self.assertEqual(el2.SCH, 10)
+
+    def test_tee_creation_run_and_branch(self):
+        el_run = ctb.piping.create_element('teer', self.ctx_tube)
+        self.assertIsInstance(el_run, ctb.piping.Tee)
+        self.assertEqual(el_run.direction, 'run')
+
+        el_branch = ctb.piping.create_element('teeb', self.ctx_tube)
+        self.assertEqual(el_branch.direction, 'branch')
+
+        el_run = ctb.piping.create_element('teer', self.ctx_pipe)
+        self.assertIsInstance(el_run, ctb.piping.PipeTee)
+        self.assertEqual(el_run.direction, 'run')
+
+        el_branch = ctb.piping.create_element('teeb', self.ctx_pipe)
+        self.assertEqual(el_branch.direction, 'branch')
+
+    def test_valve_creation(self):
+        el = ctb.piping.create_element('cv=2.5', self.ctx_tube)
+        self.assertIsInstance(el, ctb.piping.Valve)
+        self.assertEqual(el.Cv, 2.5)
+        self.assertEqual(el.D, 0.5*u.inch)
+
+    def test_invalid_tee_suffix_raises(self):
+        with self.assertRaises(ValueError):
+            ctb.piping.create_element('teex', self.ctx_tube)
+
+    def test_unrecognized_description_raises(self):
+        with self.assertRaises(ValueError):
+            ctb.piping.create_element('foobar', self.ctx_tube)
+
 if __name__ == "__main__":
-    unittest.main()
-
-
-if __name__ == '__main__':
     unittest.main()
