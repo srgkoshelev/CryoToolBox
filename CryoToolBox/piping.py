@@ -57,7 +57,8 @@ NPS_PATTERN = re.compile(
     r'(?:nps)?\s*'
     r'(?!0*\.?0+(?:\D|$))(\d+\.?\d*)'
     r'\s*(?:in)?\s*(?:nps)?\s*'
-    r'sch\s*(\d+)(?:nps)?$'
+    r'sch\s*(\d+)(?:nps)?$',
+    re.IGNORECASE,
 )
 TUBE_PATTERN = re.compile(
     r'^(\d*\.?\d*\s*(?:"|in(?:ch)?|[cmu]m))\s*x\s*'
@@ -1099,13 +1100,37 @@ class PackedBed(PipingElement):
 
 @dataclass
 class LineContext:
-    ...
+    """Pipeline context: system type, dimensions, and units."""
+    system: str
+    dimensions: dict[str, float]
+    length_unit: ureg.Quantity = Q_('m')
+
     @classmethod
     def from_string(cls, description: str, length_unit: str = 'm'):
-        desc = description.strip().lower
-        if 'nps' in desc:
-            ...
+        """Parse a pipeline description string into a LineContext."""
+        desc = description.strip().replace('"', ' inch')
+        if m := NPS_PATTERN.fullmatch(desc):
+            return cls(
+                system='NPS',
+                dimensions={'D_nom': float(m.group(1)), 'SCH': int(m.group(2))},
+                length_unit=Q_(length_unit).u
+            )
 
+        if m := TUBE_PATTERN.fullmatch(desc):
+            OD, wall = map(Q_, m.groups())
+            return cls(
+                system='tube',
+                dimensions={'OD': OD, 'wall': wall},
+                length_unit=Q_(length_unit).u
+            )
+
+        raise ValueError(f'Unrecognized context string: {description}')
+
+    def __getattr__(self, name: str):
+        """Allow attribute-style access to dimensions."""
+        if name in self.dimensions:
+            return self.dimensions[name]
+        raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
 
 ################################################################################
 
