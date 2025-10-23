@@ -56,7 +56,7 @@ COPPER_TABLE = _load_table('copper_table.yaml')
 NPS_PATTERN = re.compile(
     r'(?:nps)?\s*'
     r'(?!0*\.?0+(?:\D|$))(\d+\.?\d*)'
-    r'\s*(?:in)?\s*(?:nps)?\s*'
+    r'\s*(?:in(?:ch)?)?\s*(?:nps)?\s*'
     r'sch\s*(\d+)(?:nps)?$',
     re.IGNORECASE,
 )

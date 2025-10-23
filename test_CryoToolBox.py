@@ -1680,6 +1680,7 @@ class TestNpsPattern(unittest.TestCase):
         cases = [
             'nps 1 in sch10',
             'nps 1 in sch 10',
+            'nps 1 inch sch 10',
             'nps 1in sch10',
             'nps 1in sch 10',
             'nps 1 sch10',
