@@ -1103,7 +1103,7 @@ class LineContext:
     length_unit: ureg.Quantity = Q_('m')
 
     @classmethod
-    def from_string(cls, description: str, length_unit: str = 'm'):
+    def from_string(cls, description: str, length_unit: str):
         """Parse a pipeline description string into a LineContext."""
         desc = description.strip().replace('"', ' inch')
         if m := NPS_PATTERN.fullmatch(desc):

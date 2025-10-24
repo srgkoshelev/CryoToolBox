@@ -1759,27 +1759,31 @@ class TestNpsPattern(unittest.TestCase):
 class TestLineContext(unittest.TestCase):
 
     def test_nps_parsing_basic(self):
-        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH10")
+        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH10",
+                                                 length_unit='m')
         self.assertEqual(ctx.system, "NPS")
         self.assertAlmostEqual(ctx.D_nom, 1.0)
         self.assertEqual(ctx.SCH, 10)
         self.assertEqual(ctx.length_unit, u.m)
 
     def test_nps_parsing_with_spaces_and_case(self):
-        ctx = ctb.piping.LineContext.from_string("  nps 2.5 sch 40  ")
+        ctx = ctb.piping.LineContext.from_string("  nps 2.5 sch 40  ",
+                                                 length_unit='m')
         self.assertEqual(ctx.system, "NPS")
         self.assertAlmostEqual(ctx.D_nom, 2.5)
         self.assertEqual(ctx.SCH, 40)
 
     def test_tube_parsing_basic(self):
-        ctx = ctb.piping.LineContext.from_string('0.5"x0.035"')
+        ctx = ctb.piping.LineContext.from_string('0.5"x0.035"',
+                                                 length_unit='m')
         self.assertEqual(ctx.system, "tube")
         self.assertAlmostEqual(ctx.OD, 0.5*u.inch)
         self.assertAlmostEqual(ctx.wall, 0.035*u.inch)
         self.assertEqual(ctx.length_unit, u.m)
 
     def test_tube_parsing_with_spaces(self):
-        ctx = ctb.piping.LineContext.from_string('  1.25" x 0.065"  ')
+        ctx = ctb.piping.LineContext.from_string('  1.25" x 0.065"  ',
+                                                 length_unit='m')
         self.assertEqual(ctx.system, "tube")
         self.assertAlmostEqual(ctx.OD, 1.25*u.inch)
         self.assertAlmostEqual(ctx.wall, 0.065*u.inch)
@@ -1790,23 +1794,26 @@ class TestLineContext(unittest.TestCase):
 
     def test_invalid_context_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.LineContext.from_string("DN25")  # not matching either pattern
+            ctb.piping.LineContext.from_string("DN25",
+                                               length_unit='m')  # not matching either pattern
 
     def test_invalid_tube_format_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.LineContext.from_string('0.5x0.035')  # missing quote or x format
+            ctb.piping.LineContext.from_string('0.5x0.035',
+                                               length_unit='m')  # missing quote or x format
 
     def test_invalid_nps_format_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.LineContext.from_string('NPS1SCH')  # malformed pattern
+            ctb.piping.LineContext.from_string('NPS1SCH',
+                                               length_unit='m')  # malformed pattern
 
 
 class TestCreateElement(unittest.TestCase):
     def setUp(self):
-        self.ctx_tube = ctb.piping.LineContext.from_string('0.5"x0.035"')
-        self.ctx_tube.length_unit = u.m
-        self.ctx_pipe = ctb.piping.LineContext.from_string('NPS 1 SCH10')
-        self.ctx_pipe.length_unit = u.m
+        self.ctx_tube = ctb.piping.LineContext.from_string('0.5"x0.035"',
+                                                           length_unit='m')
+        self.ctx_pipe = ctb.piping.LineContext.from_string('NPS 1 SCH10',
+                                                           length_unit='m')
 
     def test_numeric_description_creates_tube_or_pipe(self):
         el1 = ctb.piping.create_element(2.0, self.ctx_tube)
