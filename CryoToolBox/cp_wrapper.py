@@ -430,7 +430,7 @@ class ThermState:
             3: 'Supercritical liquid (p > pc, T < Tc)',
             4: 'At the critical point',
             5: 'Subcritical gas',
-            6: 'Twophase',
+            6: 'Two-phase',
             7: 'Unknown phase',
         }
         return phases[self.phase]
@@ -542,7 +542,7 @@ class ThermState:
             return (f'saturated {self.name.lower()} vapor '
                     f'at P: {self.P.to(ureg.bar):.3g~}')
         elif self.Q > 0 and self.Q < 1:
-            return (f'two-phase {self.name.lower()} '
+            return (f'{self.phase_str.lower()} {self.name.lower()} '
                     f'at P: {self.P.to(ureg.bar):.3g~} and '
                     f'Q: {self.Q:.2f}')
         else:
