@@ -1807,6 +1807,69 @@ class TestLineContext(unittest.TestCase):
             ctb.piping.LineContext.from_string('NPS1SCH',
                                                length_unit='m')  # malformed pattern
 
+    def test_str_nps_complete(self):
+            ctx = ctb.piping.LineContext(
+                system='NPS',
+                dimensions={'D_nom': 1.0, 'SCH': 40},
+                length_unit=u.m
+            )
+            s = str(ctx)
+            self.assertIn('NPS 1 SCH 40', s)
+            self.assertIn('[m]', s)
+
+    def test_str_nps_incomplete(self):
+        ctx = ctb.piping.LineContext(
+            system='NPS',
+            dimensions={'D_nom': 2.0},  # missing SCH
+            length_unit=u.ft
+        )
+        s = str(ctx)
+        self.assertIn('incomplete', s)
+        self.assertIn('[ft]', s)
+
+    def test_str_tube_complete(self):
+        ctx = ctb.piping.LineContext(
+            system='tube',
+            dimensions={'OD': Q_('0.5 inch'), 'wall': Q_('0.035 inch')},
+            length_unit=u.m
+        )
+        s = str(ctx)
+        self.assertIn('0.5 in', s)
+        self.assertIn('0.035 in', s)
+        self.assertIn('tube', s)
+        self.assertIn('[m]', s)
+
+    def test_str_tube_incomplete(self):
+        ctx = ctb.piping.LineContext(
+            system='tube',
+            dimensions={'OD': Q_('0.5 in')},  # missing wall
+            length_unit=u.m
+        )
+        s = str(ctx)
+        self.assertIn('incomplete', s)
+        self.assertIn('[m]', s)
+
+    def test_str_custom_system(self):
+        ctx = ctb.piping.LineContext(
+            system='custom',
+            dimensions={'D': 0.01},
+            length_unit=u.cm
+        )
+        s = str(ctx)
+        self.assertIn('custom line', s)
+        self.assertIn('D=0.01', s)
+        self.assertIn('[cm]', s)
+
+    def test_str_handles_non_pint_length_unit(self):
+        ctx = ctb.piping.LineContext(
+            system='NPS',
+            dimensions={'D_nom': 1.0, 'SCH': 10},
+            length_unit='m'  # string instead of Pint unit
+        )
+        s = str(ctx)
+        self.assertIn('[m]', s)
+        self.assertIn('NPS 1 SCH 10', s)
+
 
 class TestCreateElement(unittest.TestCase):
     def setUp(self):

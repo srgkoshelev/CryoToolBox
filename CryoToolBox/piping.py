@@ -11,7 +11,7 @@ from .functions import stored_energy
 from .functions import Re
 from .geometry import circle_area
 from . import os, __location__
-from pint import set_application_registry
+import pint
 from serialize import load
 from scipy.optimize import root_scalar
 from collections.abc import MutableSequence
@@ -21,7 +21,7 @@ from scipy.integrate import quad
 from dataclasses import dataclass
 import re
 
-set_application_registry(ureg)
+pint.set_application_registry(ureg)
 
 
 class PipingError(Exception):
@@ -1100,7 +1100,7 @@ class LineContext:
     """Pipeline context: system type, dimensions, and units."""
     system: str
     dimensions: dict[str, float]
-    length_unit: ureg.Quantity = Q_('m')
+    length_unit: pint.Unit = ureg.m
 
     @classmethod
     def from_string(cls, description: str, length_unit: str):
@@ -1128,6 +1128,27 @@ class LineContext:
         if name in self.dimensions:
             return self.dimensions[name]
         raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
+
+    def __str__(self):
+        """Return a concise, human-readable summary of the line context."""
+        unit_str = f"[{self.length_unit:~P}]" if isinstance(self.length_unit, pint.Unit) else f"[{self.length_unit}]"
+        if self.system == "NPS":
+            d_nom = self.dimensions.get("D_nom")
+            sch = self.dimensions.get("SCH")
+            if d_nom is not None and sch is not None:
+                return f"NPS {d_nom:g} SCH {sch} {unit_str}"
+            return f"NPS line (incomplete: {self.dimensions}) {unit_str}"
+
+        elif self.system.lower() == "tube":
+            od = self.dimensions.get("OD")
+            wall = self.dimensions.get("wall")
+            if od is not None and wall is not None:
+                return f"{od:~P} x {wall:~P} tube {unit_str}"
+            return f"Tube line (incomplete: {self.dimensions}) {unit_str}"
+
+        # Fallback for unrecognized system types
+        dims = ", ".join(f"{k}={v}" for k, v in self.dimensions.items())
+        return f"{self.system} line ({dims}) {unit_str}"
 
 
 def create_element(description, ctx: LineContext):
