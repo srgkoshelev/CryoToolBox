@@ -542,7 +542,7 @@ class ThermState:
             return (f'saturated {self.name.lower()} vapor '
                     f'at P: {self.P.to(ureg.bar):.3g~}')
         elif self.Q > 0 and self.Q < 1:
-            return (f'{self.phase_str.lower()} {self.name.lower()} '
+            return (f'{self.name.lower()} '
                     f'at P: {self.P.to(ureg.bar):.3g~} and '
                     f'Q: {self.Q:.2f}')
         else:
