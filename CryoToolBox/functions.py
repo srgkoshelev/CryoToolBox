@@ -11,10 +11,9 @@ from scipy.interpolate import interp1d
 from scipy.integrate import quad
 from enum import Enum, auto
 
-E_TNT = Q_('4850 J/g')  # TNT equivalent Energy of Explosion (PNNL)
-z_1 = Q_('200 ft')  # Scaled distance for debris and missile damage (PNNL)
-z_2 = Q_('15 ft')  # Scaled distance for eardrum rupture (PNNL)
-z_3 = Q_('6.7 ft')  # Scaled distance for lung damage (PNNL)
+# TNT equivalent Energy of Explosion (ASME PCC-2)
+E_TNT = 4266920 * ureg.J / ureg.kg
+R_scaled = [20, 12, 6, 2] * ureg.m/ureg.kg**(1/3)
 
 sigma = ureg.stefan_boltzmann_constant
 # Basic thermodynamic functions
@@ -158,6 +157,7 @@ def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
         1 - for no rupture disc installed in combination
         0.9 - for rupture disc installed in combination
     """
+    logger.warning('Deprecated. Use ht.piping.G_nozzle() instead.')
     W = m_dot.m_as(ureg.lb/ureg.hr)
     P_1 = fluid.P.m_as(ureg.psi)
     P_2 = P_back.m_as(ureg.psi)
@@ -1007,78 +1007,10 @@ def stored_energy(fluid, volume):
 
 
 def blast_radius(E_stored):
-    """Calculate maximum distance for debris, eardrum rupture and
-    lung damage based on PNNL paper."""
+    """Calculate maximum distance for debris, eardrum rupture,
+    lung damage, and fatality based on ASME PCC-2."""
     W_TNT = E_stored / E_TNT  # Energy equivalent in TNT
-    D_1 = z_1 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
-    D_2 = z_2 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
-    D_3 = z_3 * (W_TNT.to(ureg.kg).magnitude)**(1/3)
+    D_1 = z_1 * W_TNT.m_as(ureg.kg)**(1/3)
+    D_2 = z_2 * W_TNT.m_as(ureg.kg)**(1/3)
+    D_3 = z_3 * W_TNT.m_as(ureg.kg)**(1/3)
     return (D_1, D_2, D_3)
-
-def ks_Dacron(Tc, T0=300*ureg.K):
-    """Calculate thermal conductivity of Dacron spacer, Barron 1.57
-
-    Parameters
-    ----------
-    Tc : Quantity {temperature}
-        Cold temperature.
-    T0 : Quantity {temperature}, optional
-        Hot temperature (default: 300 K).
-
-    Returns
-    -------
-    ks : Quantity {'[length]': 1, '[mass]': 1, '[temperature]': -1, '[time]': -3}
-        Thermal conductivity of Dacron spacer.
-    """
-    k0 = 0.1505*ureg.W/ureg.m/ureg.K
-    c1 = 0.01395
-    c2 = 0.15145
-    Tm = (Tc + T0) / 2
-    ks = k0 * (1+c1*(T0-Tm)/T0 + c2*log(Tm / T0))
-    return ks
-
-def hc_Dacron(Tc, T0=300*ureg.K, ts=0.06*ureg.mm):
-    """Calculate solid conductance of Dacron spacer, Barron 1.56
-
-    Parameters
-    ----------
-    Tc : Quantity {temperature}
-        Cold temperature.
-    T0 : Quantity {temperature}, optional
-        Hot temperature (default: 300 K).
-    ts : Quantity {length}, optional
-        Thickness of the spacer (default: 0.06 mm).
-
-    Returns
-    -------
-    hc : Quantity {'[mass]': 1, '[temperature]': -1, '[time]': -3}
-        Solid conductance of Dacron spacer.
-    """
-    c = 0.008
-    f = 0.072
-    hc = c * f * ks_Dacron(Tc, T0) / ts
-    return hc
-
-def k_MLI(ndx, hc, Tc, T0=300*ureg.K, e=0.04):
-    """Calculate apparent thermal conductivity of MLI, Barron 1.55
-
-    Parameters
-    ----------
-    ndx : Quantity {length:-1}
-        MLI layer density.
-    hc : Quantity {'[mass]': 1, '[temperature]': -1, '[time]': -3}
-        MLI spacer conductance.
-    Tc : Quantity {temperature}
-        Cold temperature.
-    T0 : Quantity {temperature}, optional
-        Hot temperature (default: 300 K).
-    e : float, optional
-        Emissivity (default: 0.04).
-
-    Returns
-    -------
-    kt : Quantity {'[length]': 1, '[mass]': 1, '[temperature]': -1, '[time]': -3}
-        Apparent thermal conductivity of MLI.
-    """
-    kt = 1 / ndx * (hc + e / (2 - e) * ureg.sigma * (T0**2 + Tc**2) * (T0 + Tc))
-    return kt.to(ureg.mW/ureg.m/ureg.K)

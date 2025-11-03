@@ -13,9 +13,9 @@ from .functions import to_standard_flow
 from .piping import G_nozzle
 from dataclasses import dataclass
 import xlsxwriter
+from enum import Enum, auto
 # Loading FESHM 4240 Failure rates
 from .FESHM4240_TABLES import TABLE_1, TABLE_2
-
 
 # Probability of failure on demand and failure rate for ODH head+chassis
 # Data from J. Anderson's analysis
@@ -23,7 +23,7 @@ PFD_ODH = Q_('2 * 10^-3')
 lambda_ODH = 2.3e-6 / ureg.hr
 TRANSFER_LINE_LEAK_AREA = Q_(10, ureg.mm**2)  # Taken for consistency
 # Min required air intake from Table 6.1, ASHRAE 62-2001
-ASHRAE_MIN_FLOW = 0.06 * ureg.ft**3/(ureg.min*ureg.ft**2)
+ASHRAE_MIN_FLOW = 0.06 * ureg.ft**3 / (ureg.min * ureg.ft**2)
 
 
 class ODHError(Exception):
@@ -34,16 +34,17 @@ class ConstLeakTooBig(Exception):
     pass
 
 
-class ConstLeakNoVent(Exception):
+class ConstLeakTooLong(Exception):
     pass
 
-@ureg.check(None, '1/[time]', None, '[length]^3/[time]', '[time]', None)
+
+@ureg.check(None, None, '1/[time]', '[length]^3/[time]', '[time]', None)
 @dataclass
 class Leak:
     """Describe inert gas leak from a Source"""
     name: str
-    failure_rate: ureg.Quantity
     fluid: ThermState
+    failure_rate: ureg.Quantity
     q_std: ureg.Quantity
     tau: ureg.Quantity
     N_events: int
@@ -64,6 +65,7 @@ class ConstLeak:
 class Source:
     """Source of inert gas
     """
+
     def __init__(self, name, fluid, volume, N=1, PFD_isol_valve=1):
         """Define the possible source of inert gas.
 
@@ -95,7 +97,7 @@ class Source:
         temp_state = fluid.copy()
         temp_state.update('T', T_NTP, 'P', P_NTP)
         self.liquid_volume = volume
-        self.volume = volume*fluid.Dmass/temp_state.Dmass
+        self.volume = volume * fluid.Dmass / temp_state.Dmass
         self.volume.ito_base_units()
         # By default assume there is no isolation valve
         # that is used by ODH system
@@ -117,6 +119,8 @@ class Source:
         Parameters
         ----------
         tube : heat_transfer.piping.Tube
+        N_welds : int
+            Number of welds on the tube.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid for the release.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
@@ -126,9 +130,10 @@ class Source:
         """
         # Failure rate coefficients; Piping failure rate is per unit of length,
         # weld is dependent on number of welds, pipe OD and wall thickness
-        failure_rate_coeff = {'Piping': (tube.L, 1),
-                              'Pipe weld': (tube.OD / tube.wall,
-                                            N_welds)}
+        failure_rate_coeff = {
+            'Piping': (tube.L, 1),
+            'Pipe weld': (tube.OD / tube.wall, N_welds)
+        }
         # Piping and weld leaks as per Table 2
         for cause, fr_coefs in failure_rate_coeff.items():
             for mode in TABLE_2[cause].keys():
@@ -155,8 +160,7 @@ class Source:
                             ODHError('Leak area cannot be larger'
                                      ' than pipe area.')
                         q_std = hole_leak(area, fluid)
-                    self.add_failure_mode(name, failure_rate, fluid, q_std,
-                                          N_events)
+                    self.add_leak(name, fluid, failure_rate, q_std, N_events)
 
     def add_dewar_insulation_failure(self, q_std):
         """Add dewar insulation failure to leaks dict.
@@ -172,11 +176,16 @@ class Source:
             dewar insulation failure.
         """
         failure_rate = TABLE_1['Dewar']['Loss of vacuum']
-        self.add_failure_mode('Dewar insulation failure', failure_rate,
-                              self.fluid, q_std, 1)
+        self.add_leak('Dewar insulation failure', self.fluid, failure_rate, q_std,
+                      1)
 
-    def add_flange_failure(self, pipe, fluid, q_std_rupture=None, N=1,
-                           gasket_type='reinforced', blowout_area=None):
+    def add_flange_failure(self,
+                           pipe,
+                           fluid,
+                           q_std_rupture=None,
+                           N=1,
+                           gasket_type='reinforced',
+                           blowout_area=None):
         """Add reinforced or preformed gasket flange failure
         to leaks dict.
 
@@ -187,6 +196,8 @@ class Source:
         Parameters
         ----------
         pipe : heat_transfer.Pipe
+        N : int
+            Number of reinforced seal connections on the pipe.
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
@@ -208,7 +219,7 @@ class Source:
         failure_rate = table['Leak']['Failure rate']
         area = table['Leak']['Area']
         q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+        self.add_leak(name, fluid, failure_rate, q_std, N)
         # Blowout for soft gasket
         if gasket_type == 'soft':
             name = f'Flange soft gasket blowout: {pipe}'
@@ -218,7 +229,7 @@ class Source:
             if q_std_rupture is not None:
                 # Blowout flow cannot be greater than rupture flow
                 q_std = min(q_std, q_std_rupture)
-            self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+            self.add_leak(name, fluid, failure_rate, q_std, N)
         # Rupture
         name = f'Flange {gasket_type} gasket rupture: {pipe}'
         failure_rate = table['Rupture']
@@ -227,7 +238,7 @@ class Source:
         else:
             area = pipe.area
             q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+        self.add_leak(name, fluid, failure_rate, q_std, N)
 
     def add_valve_failure(self, pipe, fluid, q_std_rupture=None, N=1):
         """Add valve leak and rupture failure modes to leaks dict.
@@ -240,12 +251,12 @@ class Source:
         ----------
         pipe : heat_transfer.Pipe
             Pipe/tube upstream the valve.
+        N : int
+            Number of valves
         fluid : heat_transfer.ThermState
             Thermodynamic state of the fluid stored in the source.
         q_std_rupture : ureg.Quantity, [length]^3/[time]
             Standard volumetric flow rate for flange rupture.
-        N : int
-            Number of valves
         """
         table = TABLE_2['Valve, pneumatic']
         # Leak case
@@ -254,7 +265,7 @@ class Source:
         # Using area from flange leak for consistency
         area = TABLE_2['Flange, soft gasket']['Leak']['Area']
         q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+        self.add_leak(name, fluid, failure_rate, q_std, N)
         # Rupture
         name = f'Valve rupture: {pipe}'
         failure_rate = table['Rupture']
@@ -263,22 +274,27 @@ class Source:
         else:
             area = pipe.area
             q_std = hole_leak(area, fluid)
-        self.add_failure_mode(name, failure_rate, fluid, q_std, N)
+        self.add_leak(name, fluid, failure_rate, q_std, N)
 
-    def add_line_failure(self, pipe, fluid, *, N_welds, N_reinforced, N_soft, N_valves,
-                         q_std_rupture=None, blowout_area=None):
+    def add_line_failure(self,
+                         pipe,
+                         fluid,
+                         *,
+                         N_welds,
+                         N_reinforced,
+                         N_soft,
+                         N_valves,
+                         q_std_rupture=None,
+                         blowout_area=None):
         """Add leaks for pipe, weld, flange, and valve failures.
 
-        Store failure rate, flow rate and expected time duration of
-        the event for pipe, weld, flange, and valve failures. Based on
-        FESHM 4240. Failure modes are analyzed by `Volume.odh` method.
+         Store failure rate, flow rate and expected time duration of
+         the event for pipe, weld, flange, and valve failures. Based on
+         FESHM 4240. Failure modes are analyzed by `Volume.odh` method.
 
         Parameters
         ----------
-        pipe : heat_transfer.Pipe
-            Pipe/tube upstream the valve.
-        fluid : heat_transfer.ThermState
-            Thermodynamic state of the fluid stored in the source.
+        tube : heat_transfer.piping.Tube
         N_welds : int
             Number of welds on the line.
         N_reinforced : int
@@ -286,8 +302,10 @@ class Source:
         N_soft : int
             Number of flanges with soft gaskets on the line.
         N_valves : int
-            Number of valves on the line.
-        q_std_rupture : ureg.Quantity, [length]^3/[time]
+            Number of valves
+        fluid : heat_transfer.ThermState
+            Thermodynamic state of the fluid for the release.
+        q_std_rupture : ureg.Quantity {length: 3, time: -1}
             Standard volumetric flow rate for flange rupture.
         blowout_area : Quantity [length^2]
             Leak area in case of the soft gasket blowout. Not applicable for reinforced gaskets.
@@ -295,55 +313,20 @@ class Source:
         if N_welds > 0:
             self.add_pipe_failure(pipe, fluid, q_std_rupture, N_welds)
         if N_reinforced > 0:
-            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_reinforced, gasket_type='reinforced')
+            self.add_flange_failure(pipe,
+                                    fluid,
+                                    q_std_rupture,
+                                    N=N_reinforced,
+                                    gasket_type='reinforced')
         if N_soft > 0:
-            self.add_flange_failure(pipe, fluid, q_std_rupture, N=N_soft, gasket_type='soft', blowout_area=blowout_area)
+            self.add_flange_failure(pipe,
+                                    fluid,
+                                    q_std_rupture,
+                                    N=N_soft,
+                                    gasket_type='soft',
+                                    blowout_area=blowout_area)
         if N_valves > 0:
             self.add_valve_failure(pipe, fluid, q_std_rupture, N=N_valves)
-
-    # def transfer_line_failure(self, pipe, fluid, q_std_rupture=None, N=1):
-    #     """Add transfer line failure to leaks dict.
-
-    #     For a given tube calculate leak parameters as following:
-    #     - failure rate
-    #     - standard volumetric flow
-    #     - duration of the release
-    #     - number of possible similar events
-    #     for all failure modes for transfer line listed in Table 1 of
-    #     FESHM 4240. Note that Rationale for Table 1: “Fermilab Equipment
-    #     Failure Rate Estimates” clearly states that only bayonet failures
-    #     are considered for these failure modes. Therefore only bayonet leak and
-    #     blowout (rupture) are considered. Leak area is not defined in
-    #     FESHM 4240 and is defined globally as `TRANSFER_LINE_LEAK_AREA`.
-
-    #     Failure modes are analyzed by `Volume.odh` method.
-
-    #     Parameters
-    #     ----------
-    #     pipe : piping.PipingElement
-    #     fluid : cp_wrapper.ThermState
-    #         Thermodynamic state of the fluid stored in the source.
-    #     q_std_rupture : ureg.Quantity {length: 3, time: -1}
-    #         Standard volumetric flow rate for fluid line rupture.
-    #     N : int
-    #         Number of bayonets/soft seals on the transfer line.
-    #     """
-    #     # TODO This should be replaced by flange failure at some point
-    #     # Leak case
-    #     name = f'Fluid line gasket leak: {pipe}'
-    #     failure_rate = TABLE_1['Fluid line']['Leak']
-    #     area = TRANSFER_LINE_LEAK_AREA
-    #     q_std = hole_leak(area, fluid)
-    #     self.add_failure_mode(name, failure_rate, q_std, N)
-    #     # Rupture case
-    #     name = f'Fluid line gasket rupture: {pipe}'
-    #     failure_rate = TABLE_1['Fluid line']['Rupture']
-    #     if q_std_rupture is not None:
-    #         q_std = q_std_rupture
-    #     else:
-    #         area = pipe.area
-    #         q_std = hole_leak(area, fluid)
-    #     self.add_failure_mode(name, failure_rate, q_std, N)
 
     def add_pressure_vessel_failure(self, relief_area=None):
         """Add pressure vessel failure to leaks dict.
@@ -360,9 +343,10 @@ class Source:
         # Leak case
         name = 'Pressure vessel leak'
         area = TABLE_2['Vessel, pressure']['Small leak']['Area']
-        failure_rate = TABLE_2['Vessel, pressure']['Small leak']['Failure rate']
+        failure_rate = TABLE_2['Vessel, pressure']['Small leak'][
+            'Failure rate']
         q_std = hole_leak(area, self.fluid)
-        self.add_failure_mode(name, failure_rate, self.fluid, q_std, 1)
+        self.add_leak(name, self.fluid, failure_rate, q_std, 1)
 
         # Rupture case
         name = 'Pressure vessel rupture'
@@ -373,7 +357,7 @@ class Source:
             area = relief_area
         failure_rate = TABLE_2['Vessel, pressure']['Failure']
         q_std = hole_leak(area, self.fluid)
-        self.add_failure_mode(name, failure_rate, self.fluid, q_std, 1)
+        self.add_leak(name, self.fluid, failure_rate, q_std, 1)
 
     def add_const_leak(self, name, fluid, q_std, N=1):
         """Add constant leak to leaks dict.
@@ -397,10 +381,10 @@ class Source:
             fluid = self.fluid
         N_events = N * self.N
         tau_event = self.volume / q_std
-        self.leaks.append(ConstLeak(name, fluid, q_std*N_events, tau_event))
+        self.leaks.append(ConstLeak(name, fluid, q_std * N_events, tau_event))
 
-    def add_failure_mode(self, name, failure_rate, fluid, q_std, N=1):
-        """Add general failure mode to leaks dict.
+    def add_leak(self, name, fluid, failure_rate, q_std, N=1):
+        """Add general leak to leaks dict.
 
         Store failure rate, flow rate and expected time duration of the
         failure event for general failure mode.
@@ -410,24 +394,25 @@ class Source:
         ----------
         name : str
             Name of the failure mode
+        fluid : ThermState
+            Fluid state at the release location.
         failure rate : ureg.Quantity, 1/[time]
             Failure rate of the failure mode,
             i.e. how often the failure occurs
-        fluid : ThermState
-            Fluid state at the release location.
         q_std : ureg.Quantity, [length]^3/[time]
             Standard volumetric flow rate.
         N : int
             Number of similar failure modes.
         """
         N_events = N * self.N
-        tau = self.volume/q_std
-        total_failure_rate = N_events*failure_rate
-        total_failure_rate.ito(1/ureg.hr)
+        tau = self.volume / q_std
+        total_failure_rate = N_events * failure_rate
+        total_failure_rate.ito(1 / ureg.hr)
         # self.leaks.append((name, total_failure_rate, q_std, tau.to(ureg.min),
         #                    N_events))
-        self.leaks.append(Leak(name, total_failure_rate, fluid, q_std,
-                               tau.to(ureg.min), N_events))
+        self.leaks.append(
+            Leak(name, fluid, total_failure_rate, q_std, tau.to(ureg.min),
+                 N_events))
 
     @staticmethod
     def combine(name, fluid, sources, N=1, PFD_isol_valve=1):
@@ -462,18 +447,26 @@ class Source:
         if sources[0].fluid.name != fluid.name:
             ODHError('New source should have the same fluid as combined.')
             return None
-        volume_NTP = sum([source.N*source.volume for source in sources])
+        volume_NTP = sum([source.N * source.volume for source in sources])
         fluid_NTP = ThermState(fluid.name, P=P_NTP, T=T_NTP)
-        phys_volume = volume_NTP*fluid_NTP.Dmass / fluid.Dmass
-        return Source(name, fluid, phys_volume, N=N, PFD_isol_valve=PFD_isol_valve)
+        phys_volume = volume_NTP * fluid_NTP.Dmass / fluid.Dmass
+        return Source(name,
+                      fluid,
+                      phys_volume,
+                      N=N,
+                      PFD_isol_valve=PFD_isol_valve)
 
     def __repr__(self):
         return f'Source({self.name!r}, {self.fluid!r}, {self.volume!r}, N={int(self.N)}, PFD_isol_valve={float(self.PFD_isol_valve)})'
 
     def __str__(self):
-        return (f'{self.name}, '
-            f'{self.volume:,.0f~P} '
-            f'of {self.fluid.name}')
+        if self.N == 1:
+            quant_str = ''
+        else:
+            quant_str = f'{self.N}x '
+        return quant_str + f'{self.name}, ' + \
+            f'{self.volume.to(ureg.ft**3):.3g~} ' + \
+            f'of {self.fluid.name}'
 
     def print_leaks(self):
         """Print information on the leaks defined for the source."""
@@ -489,15 +482,16 @@ class Source:
             print()
 
 
-@ureg.check(None, None, None, '1/[time]', None, '1/[time]', '1/[time]',
-            None, None, '[length]^3/[time]', '[time]',
-            '[length]^3/[time]', None, None, None, None)
+@ureg.check(None, None, None, None, '1/[time]', None, '1/[time]', '1/[time]',
+            None, None, '[length]^3/[time]', '[time]', '[length]^3/[time]',
+            None, None, None, None)
 @dataclass
 class FailureMode:
     """Describes ODH failure modes, a combination of a leak and response to it."""
     name: str
     source: Source
     fluid: ThermState
+    case: str
     phi: ureg.Quantity
     O2_conc: float
     leak_fr: ureg.Quantity
@@ -543,7 +537,8 @@ class BuildPower:
     """
     power_pfd: float = TABLE_1['Electrical Power Failure']['Demand rate']
     backup_pfd: float = 1
-    lambda_power: ureg.Quantity = TABLE_1['Electrical Power Failure']['Time rate']
+    lambda_power: ureg.Quantity = TABLE_1['Electrical Power Failure'][
+        'Time rate']
     max_outage: ureg.Quantity = float('inf') * ureg.hr
 
     @property
@@ -554,6 +549,7 @@ class BuildPower:
         return (f'Power provided with {self.pfd:.3g~} unavailability and '
                 f'{self.max_outage:.3g~} max outage period.'
                 f'\nPower failure rate is {self.lambda_power:.3e~}.')
+
 
 @ureg.check('[length]^3/[time]', None, '[time]', '1/[time]',
             '[length]^3/[time]', None)
@@ -572,10 +568,15 @@ class BuildVent:
         Test period of the fans and dampers.
     lambda_fan : ureg.Quantity, 1/[time]
         Failure rate of the fans in the building.
-    const_vent : ureg.Quantity, [length]^3/[time]
+    min_vent : ureg.Quantity, [length]^3/[time]
         Min volumetric flow required or present in the building.
-    PFD_ODH : float
-        The default value for the oxygen deficiency hazard (ODH) system failure.
+        Default value is 0 CFM.
+    indep_vent : bool
+        `True` means min fresh air intake is independent from the fans,
+        e.g., provided by HVAC system. `False` means min ventilation
+        is achieved using the dedicated ODH fan, generally run at a lower
+        capacity. For this case fan failure means no ventilation will be
+        present in the building. Default value: `False`.
 
     Properties
     ----------
@@ -593,40 +594,64 @@ class BuildVent:
     N_fans: int
     Test_period: ureg.Quantity
     lambda_fan: ureg.Quantity = TABLE_2['Fan']['Failure to run']
-    const_vent: ureg.Quantity = 0*ureg.ft**3/ureg.min
-    PFD_ODH: float = PFD_ODH  # Default value for ODH system failure
+    min_vent: ureg.Quantity = 0 * ureg.ft**3 / ureg.min
+    indep_vent: bool = False
+
+    def const_vent(self, fail_case):
+        if fail_case == FailCase.POWER:
+            return 0 * ureg.ft**3 / ureg.min
+        elif fail_case == FailCase.ODH:
+            return self.min_vent
+        elif fail_case == FailCase.FAN:
+            return float(self.indep_vent) * self.min_vent
 
     def fan_flowrates(self):
         # TODO add fans with different volumetric rates (see report as well)
         fail_rate = self.lambda_fan
         fan_flowrates = []
-        for m in range(self.N_fans+1):
+        for m in range(self.N_fans + 1):
             # Probability of exactly m units starting
             P_m_fan_work = prob_m_of_n(m, self.N_fans, self.Test_period,
                                        fail_rate)
-            flowrate = self.Q_fan*m
-            if flowrate == Q_('0 m**3/min'):
-                flowrate = self.const_vent
+            if m == 0:
+                flowrate = self.const_vent(FailCase.FAN)
+            else:
+                flowrate = m * self.Q_fan
             fan_flowrates.append((P_m_fan_work, flowrate, m))
         return fan_flowrates
 
     def info(self):
-        if self.Q_fan > 0*ureg.L/ureg.s:
+        if self.Q_fan > 0 * ureg.L / ureg.s:
             vent_action = 'supplying clean air to'
         else:
             vent_action = 'drawing contaminated air from'
-        result = [f'Ventilation consists of {self.N_fans} fans {abs(self.Q_fan):,.0f~} each\n  {vent_action} the volume.']
-        if self.const_vent > 0*ureg.L/ureg.s:
+        result = [
+            f'Ventilation consists of {self.N_fans} fans {abs(self.Q_fan):,.0f~} each\n  {vent_action} the volume.'
+        ]
+        if self.const_vent > 0 * ureg.L / ureg.s:
             vent_action = 'supplying clean air to'
         else:
             vent_action = 'drawing contaminated air from'
-        result.append(f'Constant ventilation in the building is {abs(self.const_vent):,.1f~}\n  {vent_action} the volume.')
+        result.append(
+            f'Constant ventilation in the building is {abs(self.const_vent):,.1f~}\n  {vent_action} the volume.'
+        )
         if self.N_fans == 1:
-            result.append(f'ODH fan is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.')
+            result.append(
+                f'ODH fan is tested every {self.Test_period:.1f~} and fan failure rate is {self.lambda_fan:.3e~}.'
+            )
         elif self.N_fans > 1:
-            result.append(f'ODH fans are tested every {self.Test_period:.1f~} and failure rate of each fan is {self.lambda_fan:.3e~}.')
+            result.append(
+                f'ODH fans are tested every {self.Test_period:.1f~} and failure rate of each fan is {self.lambda_fan:.3e~}.'
+            )
         result.append(f'ODH system unavailability is {self.PFD_ODH:.3e}.')
         return '\n'.join(result)
+
+
+class FailCase(Enum):
+    """Failure cases possible during a release event, i.e., power failure, ODH system failure, or fan failure."""
+    POWER = auto()
+    ODH = auto()
+    FAN = auto()
 
 
 class Volume:
@@ -672,6 +697,7 @@ class Volume:
     _fatality_prob(O2_conc)
         Calculate fatality probability for given oxygen concentration.
     """
+
     def __init__(self, name, volume, *, build_vent, build_power):
         """Define a volume affected by inert gas release from  a `Source`.
 
@@ -719,8 +745,12 @@ class Volume:
         for source in sources:
             print(f'Inert gas source {source} with {len(source.leaks)} leaks.')
             if self._is_safe(source):
-                print(f"  {source.name} doesn't contain enough {source.fluid.name} to cause an ODH condition.")
-                print(f'  Final concentration on sudden release is {O2_sudden_release(source.volume, self.volume):.1%}.')
+                print(
+                    f"  {source.name} doesn't contain enough {source.fluid.name} to cause an ODH condition."
+                )
+                print(
+                    f'  Final concentration on sudden release is {O2_sudden_release(source.volume, self.volume):.1%}.'
+                )
                 continue
             for leak in source.leaks:
                 if not leak._is_const:
@@ -730,9 +760,12 @@ class Volume:
                         self._fatality_with_fans(source, leak)
                 else:
                     self._fatality_const_leak(source, leak, power_outage)
+        print(f'{self.name} failure modes analyzed: {len(self.fail_modes)}')
+        print(f'{self.name} ODH class: {self.odh_class()}')
+        print(f'{self.name} fatality rate: {self.phi:.2g}')
 
     def _fatality_no_power(self, source, leak, power_outage):
-        """Calculate fatality rate in the event of power failure.
+        """Calculate fatality rate in the case of power failure.
 
         Source isolation is the only protection for this case. No ventilation
         is available without electric power.
@@ -757,15 +790,16 @@ class Volume:
         else:
             PFD_power = self.power.pfd
             tau_event = min(leak.tau, self.power.max_outage)
-            scenario = 'Power failure'
-        PFD_isol_valve = source.PFD_isol_valve
-        P_event = PFD_power * PFD_isol_valve
-        Q_fan = 0 * ureg.ft**3/ureg.min
-        self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
-                               leak, Q_fan, 0, power_outage, scenario)
+        PFD_isol_valve = source.sol_PFD
+        P_case = PFD_power * PFD_isol_valve
+        Q_fan = 0 * ureg.ft**3 / ureg.min
+        case = 'No power and isolation'
+        self._add_failure_mode(case, P_case, tau_event, leak.fluid,
+                               leak.failure_rate, source, leak, Q_fan, 0,
+                               power_outage)
 
     def _fatality_no_odh(self, source, leak):
-        """Calculate fatality rate in the event of ODH system failure.
+        """Calculate fatality rate in the case of ODH system failure.
 
         Power has to be  on for ODH system to fail. Source isolation is
         possible for this event. Only ventilation independent from ODH system
@@ -782,21 +816,23 @@ class Volume:
         -------
         None
         """
-        PFD_isol_valve = source.PFD_isol_valve
-        P_event = (1-self.power.pfd) * self.vent.PFD_ODH * PFD_isol_valve
+        PFD_isol_valve = source.sol_PFD
         Q_fan = self.vent.const_vent
+        P_case = (1 - self.power.pfd) * self.PFD_ODH * PFD_isol_valve
+        Q_fan = self.vent.const_vent(FailCase.ODH)
         tau_event = min(leak.tau, self.vent.Test_period)
-        scenario = 'ODH system failure'
-        self._add_failure_mode(P_event, tau_event, leak.failure_rate, source,
-                               leak, Q_fan, 0, False, scenario)
+        case = 'ODH fail'
+        self._add_failure_mode(case, P_case, tau_event, leak.fluid,
+                               leak.failure_rate, source, leak, Q_fan, 0,
+                               False)
 
     def _fatality_with_fans(self, source, leak):
         """Calculate fatality rate for any number of fans operational.
 
         Power has to be  on, and ODH system operational. Source isolation is
-        possible for this event. Ventilation independent from ODH system,
-        e.g., HVAC, is considered for all fans unavailable at the time of
-        the event.
+        possible for this event. If ventilation is independent from the ODH
+        system, e.g., HVAC, it is used for the case of all fans failure at
+        the time of the event.
 
         Parameters
         ----------
@@ -809,30 +845,33 @@ class Volume:
         -------
         None
         """
-        PFD_isol_valve = source.PFD_isol_valve
-        # Probability for this group of the events
-        P_group = (1-self.power.pfd) * (1-self.vent.PFD_ODH) * PFD_isol_valve
+        PFD_isol_valve = source.sol_PFD
+        # Probability for this group of the cases
+        P_group = (1 - self.power.pfd) * (1 - self.PFD_ODH) * PFD_isol_valve
         tau_event = min(leak.tau, self.vent.Test_period)
+        case = 'Fan failure'
         for (P_fan, Q_fan, N_fans) in self.vent.fan_flowrates():
-            P_event = P_group * P_fan  # Probability of the particular event
-            if N_fans == self.vent.N_fans:
-                scenario = 'Normal operation'
-            else:
-                scenario = 'Fan failure'
-            self._add_failure_mode(P_event, tau_event,
+            P_case = P_group * P_fan  # Probability of the particular case
+            if Q_fan == 0 * ureg.ft**3 / ureg.min:
+                Q_fan = self.vent.const_vent
+            self._add_failure_mode(case, P_case, tau_event, leak.fluid,
                                    leak.failure_rate, source, leak, Q_fan,
                                    N_fans, False, scenario)
 
-    def _add_failure_mode(self, P_event, tau_event, failure_rate, source, leak,
-                          Q_fan, N_fans, power_outage, scenario):
+    def _add_failure_mode(self, case, P_case, tau_event, fluid, failure_rate,
+                          source, leak, Q_fan, N_fans, power_outage):
         """Add a failure mode.
 
         Parameters
         ----------
-        P_event : float
+        case : str
+            Description of the particular response case, e.g., no power.
+        P_case : float
             Probability of a particular state of the system, assuming the leak
             has happened. Alternatively, probability of a constant leak or 1.
-        failure_rate : ureg.Quantity, 1/[time]
+        fluid : heat_transfer.ThermState
+            Thermodynamic state of the fluid stored in the source.
+        failure_rate : ureg.Quantity {time: -1}
             Failure rate of the leak. Alternatively, system failure rate for
             a constant leak.
         tau_event : ureg.Quantity, [time]
@@ -858,20 +897,19 @@ class Volume:
         -------
         None
         """
-        P_i = failure_rate * P_event
+        P_i = failure_rate * P_case
         O2_conc = conc_vent(self.volume, leak.q_std, Q_fan, tau_event)
         F_i = fatality_prob(O2_conc)
-        phi_i = P_i*F_i
+        phi_i = P_i * F_i
         if leak._is_const == True:
             N_events = 1
         else:
             N_events = leak.N_events
         self.fail_modes.append(
-            FailureMode(leak.name, source, leak.fluid, phi_i, O2_conc,
+            FailureMode(leak.name, source, fluid, case, phi_i, O2_conc,
                         failure_rate, P_i, F_i, power_outage, leak.q_std,
                         tau_event, Q_fan, N_fans, N_events, leak._is_const,
-                        scenario)
-        )
+                        scenario))
 
     def _fatality_const_leak(self, source, leak, power_outage):
         """Calculate fatality rates for constant leak case.
@@ -898,47 +936,48 @@ class Volume:
         PFD_isol_valve = source.PFD_isol_valve
         if power_outage:
             tau_outage = leak.tau
-            Q_fan_outage = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-            O2_conc_outage = conc_vent(self.volume, leak.q_std, Q_fan_outage, tau_outage)
+            Q_fan_outage = 0 * ureg.ft**3 / ureg.min  # No ventilation without power
+            O2_conc_outage = conc_vent(self.volume, leak.q_std, Q_fan_outage,
+                                       tau_outage)
             if O2_conc_outage < 0.195:
-                raise ConstLeakNoVent(f'Constant leak {leak.name} from '
-                                    f'{source.name} is not mitigated during '
-                                    f'power outage in {self.name}.')
+                raise ConstLeakTooLong(
+                    f'Constant leak {leak.name} from {source.name} is not '
+                    f'mitigated during power outage in {self.name}.'
+                    ' Time to reach 19.5% oxygen concentration: '
+                    f'{tau_outage:.3g~}. Power outage time: '
+                    f'{self.power.max_outage:.3g~}.')
 
         # Constant leak and power failure
         failure_rate = self.power.lambda_power
         # Constant leak is assumed to be hazardous only when
         # the isolation valve fails
-        P_event = PFD_isol_valve * self.power.backup_pfd
-        Q_fan = 0 * ureg.ft**3/ureg.min  # No ventilation without power
-        tau_event = min([self.vent.Test_period, self.power.max_outage, leak.tau])
-        scenario = 'Const leak and power failure'
-        self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, Q_fan, 0, False,
-                               scenario)
+        P_case = PFD_isol_valve
+        Q_fan = 0 * ureg.ft**3 / ureg.min  # No ventilation without power
+        tau_event = min(self.vent.Test_period, self.power.max_outage)
+        case = 'No power and isolation'
+        self._add_failure_mode(case, P_case, tau_event, leak.fluid,
+                               failure_rate, source, leak, Q_fan, 0, False)
 
         # Constant leak and ODH system failure
         failure_rate = lambda_ODH
-        P_event = 1  # ODH system failure will not trigger isolation valve
+        P_case = PFD_isol_valve
         # Event can't go undetected for longer than the test period
         tau_event = self.vent.Test_period
         scenario = 'Const leak and ODH system failure'
         # Ventilation is available on ODH system failure
-        self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, self.vent.const_vent, 0, False,
-                               scenario)
-
+        case = 'No ODH'
+        self._add_failure_mode(case, P_case, tau_event, leak.fluid,
+                               failure_rate, source, leak,
+                               self.vent.const_vent(FailCase.ODH), 0, False)
         # Fan failure
         # If at least 1 fan is down, all fans are considered non-operational
         failure_rate = TABLE_2['Fan']['Failure to run']
-        P_event = PFD_isol_valve
-        # Event can't go undetected for longer than the test period
+        P_case = PFD_isol_valve
         tau_event = self.vent.Test_period
-        scenario = 'Const leak and 1 fan failure'
-        self._add_failure_mode(P_event, tau_event, failure_rate,
-                               source, leak, self.vent.const_vent, 0, False,
-                               scenario)
-
+        case = 'No fan'
+        self._add_failure_mode(case, P_case, tau_event, leak.fluid,
+                               failure_rate, source, leak,
+                               self.vent.const_vent(FailCase.FAN), 0, False)
         # Fans operational
         # If fatality is possible with just one fan, raise error
         Q_1fan = max(self.vent.Q_fan, self.vent.const_vent)
@@ -957,89 +996,63 @@ class Volume:
         int
             ODH class.
         """
-        if self.phi < 1e-7/ureg.hr:
+        if self.phi < 1e-7 / ureg.hr:
             return 0
-        elif self.phi < 1e-5/ureg.hr:
+        elif self.phi < 1e-5 / ureg.hr:
             return 1
-        elif self.phi < 1e-3/ureg.hr:
+        elif self.phi < 1e-3 / ureg.hr:
             return 2
         else:
             # TODO add a custom exception for ODH > 2
-            raise ODHError('ODH fatality rate is too high. Please, check calculations.')
+            raise ODHError(
+                'ODH fatality rate is too high. Please, check calculations.')
 
     @property
     def phi(self):
-        return sum((fm.phi for fm in self.fail_modes)).to(1/ureg.hr)
+        return sum((fm.phi for fm in self.fail_modes)).to(1 / ureg.hr)
 
     def _is_safe(self, source):
         O2_conc = O2_sudden_release(source.volume, self.volume)
         return not fatality_prob(O2_conc)  # No fatality
-
-    # def report(self, brief=True, sens=None):
-    #     """Print a report for failure modes and effects.
-
-    #     The report is sorted by fatality rate descending."""
-    #     self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
-    #     sens = sens or 0/ureg.hr
-    #     title = f'ODH report for {self}'
-    #     padding = len(title) + 10
-    #     print('#'*padding)
-    #     print(title)
-    #     print('-'*padding)
-    #     if brief:
-    #         print('Printing brief ODH report')
-    #         print(f'Only leaks with Fatality rate > {sens} are shown')
-    #     for f_mode in self.fail_modes:
-    #         if f_mode.phi >= sens or not brief:
-    #             print()
-    #             print(f' Source:               {f_mode.source.name}')
-    #             print(f' Failure:              {f_mode.name}')
-    #             print(f' Fatality rate:        {f_mode.phi.to(1/ureg.hr):.2~}')
-    #             print(f' Building is powered:  {not f_mode.outage}')
-    #             print(f' Oxygen concentration: {f_mode.O2_conc:.0%}, '
-    #                   f'{f_mode.O2_conc/0.21:.0%} percent of norm')
-    #             print(f' Leak failure rate:    {f_mode.leak_fr:.3g~}')
-    #             print(' ODH protection PFD:    '
-    #                   f'{(f_mode.P_i/f_mode.leak_fr).to(ureg.dimensionless):.2~}')
-    #             print(f' Total failure rate:   {f_mode.P_i.to(1/ureg.hr):.2~}')
-    #             print(f' Leak rate:            {f_mode.q_leak:.2~}')
-    #             print(f' Event duration:       {f_mode.tau:.2~}')
-    #             print(f' Fans working:         {f_mode.N_fan}')
-    #             print(f' Fan rate:             {f_mode.Q_fan:.2~}')
-    #             print(f' Fatality prob:        {f_mode.F_i:.0%}')
 
     def make_doc_table(self, sens=None):
         """Make a short table for failure modes and effects to be included to a document.
 
         The report is sorted by fatality rate descending."""
         self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
-        sens = sens or 0/ureg.hr
-        table = [
-            ["Failure mode", "Fans on", "O_2", "Duration, min", "\\phi_i"],
-            None]
+        sens = sens or 0 / ureg.hr
+        table = [[
+            "Failure mode", "Fans on", "O_2", "Duration, min", "\\phi_i"
+        ], None]
         for f_mode in self.fail_modes:
             if f_mode.phi <= sens:
                 break
             row = []
             row.append(f'{f_mode.source.name} {f_mode.name}')
             row.append(f'{f_mode.N_fan}')
-            row.append(f'{f_mode.O2_conc:.0%}')
+            row.append(f'{float(f_mode.O2_conc):.0%}')
             row.append(f'{f_mode.tau.m_as(ureg.min):,.1f}')
             row.append(f'{f_mode.phi.m_as(1/ureg.hr):.2e}')
             table.append(row)
         return table
 
-    def make_excel_table(self, filename='ODH_report'):
+    def make_excel_table(self, filename='ODH_report', sort=phi):
         """Make a table with the calculation results."""
         table = []
-        header = ['Source', 'Failure', 'Fluid', 'Event failure rate, 1/hr',
-                  '# of', 'Total failure rate, 1/hr', 'Leak rate, SCFM',
-                  '# fans working', 'Fan rate, SCFM', 'Event duration, min',
-                  'Oxygen concentration', 'Fatality prob', 'Scenario', 'Scenario prob',
-                  'Fatality rate, 1/hr']
+        header = [
+            'Source', 'Failure', 'Fluid', 'Event failure rate, 1/hr', '# of',
+            'Total failure rate, 1/hr', 'Leak rate, SCFM', '# fans working',
+            'Fan rate, SCFM', 'Event duration, min', 'Oxygen concentration',
+            'Fatality prob', 'Case', 'Case prob ', 'Fatality rate, 1/hr'
+        ]
         # 'Total failure rate', 'ODH protection PFD', 'Building is powered'
         table.append(header)
-        self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
+        if sort == 'name':
+            self.fail_modes.sort(key=lambda x: x.source.name)
+        elif sort == 'phi':
+            self.fail_modes.sort(key=lambda x: x.phi, reverse=True)
+        else:
+            ODHError(f'Sort option {sort} not supported.')
         for f_mode in self.fail_modes:
             tau = f_mode.tau.m_as(ureg.min)
             if tau == float('inf'):
@@ -1048,23 +1061,18 @@ class Volume:
             if f_mode.is_const:
                 event_fr = f_mode.leak_fr
             else:
-                event_fr = f_mode.leak_fr/f_mode.N
+                event_fr = f_mode.leak_fr / f_mode.N
             table.append([
-                f_mode.source.name,
-                f_mode.name,
+                f_mode.source.name, f_mode.name,
                 str(f_mode.fluid),
-                event_fr.m_as(1/ureg.hr),
-                f_mode.N,
-                f_mode.leak_fr.m_as(1/ureg.hr),
-                f_mode.q_leak.m_as(ureg.ft**3/ureg.min),
-                f_mode.N_fan,
-                f_mode.Q_fan.m_as(ureg.ft**3/ureg.min),
-                tau,
-                f_mode.O2_conc,
-                f_mode.F_i,
-                f_mode.scenario,
-                f_mode.P_i/f_mode.leak_fr,
-                f_mode.phi.m_as(1/ureg.hr)])
+                event_fr.m_as(1 / ureg.hr), f_mode.N,
+                f_mode.leak_fr.m_as(1 / ureg.hr),
+                f_mode.q_leak.m_as(ureg.ft**3 / ureg.min), f_mode.N_fan,
+                f_mode.Q_fan.m_as(ureg.ft**3 / ureg.min), tau, f_mode.O2_conc,
+                f_mode.case, f_mode.F_i, f_mode.scenario,
+                f_mode.P_i / f_mode.leak_fr,
+                f_mode.phi.m_as(1 / ureg.hr)
+            ])
         wb_options = {}
         filename += '.xlsx'
         with xlsxwriter.Workbook(filename, wb_options) as workbook:
@@ -1072,40 +1080,50 @@ class Volume:
             for row_n, row in enumerate(table):
                 for col_n, data in enumerate(row):
                     worksheet.write(row_n, col_n, data)
-            header_format = workbook.add_format({'bold': True,
-                                                 'font_size': 12,
-                                                 'bottom': 3})
-            sci_format = workbook.add_format({'num_format': '0.00E+00'},)
-            # flow_format = workbook.add_format({'num_format': '#'},)
-            percent_format = workbook.add_format({'num_format': '0%'},)
-            number_format = workbook.add_format({'num_format': '0'},)
+            header_format = workbook.add_format({
+                'bold': True,
+                'font_size': 12,
+                'bottom': 3
+            })
+            sci_format = workbook.add_format({'num_format': '0.00E+00'}, )
+            percent_format = workbook.add_format({'num_format': '0.0%'}, )
+            number_format = workbook.add_format({'num_format': '0'}, )
             worksheet.set_row(0, None, header_format)
-            worksheet.set_column(3, 3, None, sci_format)
-            worksheet.set_column(5, 5, None, sci_format)
-            # worksheet.set_column(5, 5, None, flow_format)
-            worksheet.set_column(6, 6, None, sci_format)
-            worksheet.set_column(9, 9, None, sci_format)
-            worksheet.set_column(10, 10, None, percent_format)
-            worksheet.set_column(11, 11, None, sci_format)
-            worksheet.set_column(13, 14, None, sci_format)
+            worksheet.set_column(3, 3, None, sci_format)  # Event fr
+            worksheet.set_column(5, 5, None, sci_format)  # Total event fr
+            worksheet.set_column(6, 6, None, sci_format)  # Leak rate
+            worksheet.set_column(9, 9, None, sci_format)  # Duration (tau)
+            worksheet.set_column(10, 10, None, percent_format)  # O2_conc
+            worksheet.set_column(
+                12, 14, None, sci_format)  # Fatality rates and probabilities
             # Writing total/summary
             N_rows = len(table)
             N_cols = len(table[0])
-            worksheet.write(N_rows+1, N_cols-2, 'Total fatality rate, 1/hr')
-            worksheet.write(N_rows+1, N_cols-1,
-                            self.phi.m_as(1/ureg.hr))
-            worksheet.write(N_rows+2, N_cols-2, 'ODH class')
-            worksheet.write(N_rows+2, N_cols-1, self.odh_class,
+            worksheet.write(N_rows + 1, N_cols - 2,
+                            'Total fatality rate, 1/hr')
+            worksheet.write(N_rows + 1, N_cols - 1, self.phi.m_as(1 / ureg.hr))
+            worksheet.write(N_rows + 2, N_cols - 2, 'ODH class')
+            worksheet.write(N_rows + 2, N_cols - 1, self.odh_class,
                             number_format)
             worksheet.autofit()
             worksheet.conditional_format(
-                1, N_cols-1, N_rows-1, N_cols-1,
-                {'type': '3_color_scale', 'min_color': '#008000',
-                 'max_color': '#FF0000'})
+                1, N_cols - 1, N_rows - 1, N_cols - 1, {
+                    'type': '3_color_scale',
+                    'min_color': '#008000',
+                    'max_color': '#FF0000'
+                })
             worksheet.freeze_panes(1, 0)
 
-    def __str__(self):
-        return (f'Volume: {self.name}, {self.volume.to(ureg.ft**3):~}')
+    def info(self):
+        print(f'ODH volume: {self.name}, {self.volume.to(ureg.ft**3):~}')
+        print(f'Building power probability of failure: {self.power.pfd:.1e~}')
+        print(
+            f'Building power max outage period: {self.power.max_outage:.3g~}')
+        print(f'Fan flow rate: {self.vent.Q_fan:.0f~}')
+        print(f'Number of fans: {self.vent.N_fans:.0f}')
+        print(f'ODH system test period: {self.vent.Test_period:.0f~}')
+        print(f'Fan failure rate: {self.vent.lambda_fan:.1e~}')
+        print(f'Building fresh air supply rate: {self.vent.min_vent:.3g~}')
 
 
 def prob_m_of_n(m, n, T, l):
@@ -1129,9 +1147,9 @@ def prob_m_of_n(m, n, T, l):
     float
         Probability of m out of n units working.
     """
-    PFD_one_unit = l*T/2
-    m_of_n = binom(n, m) * (PFD_one_unit)**(n-m) * (1-PFD_one_unit)**m
-    return m_of_n
+    PFD_one_unit = l * T / 2
+    m_of_n = binom(n, m) * (PFD_one_unit)**(n - m) * (1 - PFD_one_unit)**m
+    return m_of_n.to_base_units()
 
 
 def conc_vent(V, R, Q, t):
@@ -1158,15 +1176,15 @@ def conc_vent(V, R, Q, t):
         Oxygen concentration.
     """
     if Q > 0:
-        C = 0.21/(Q+R) * (Q+R*math.e**-((Q+R)/V*t))
+        C = 0.21 / (Q + R) * (Q + R * math.e**-((Q + R) / V * t))
     elif abs(Q) <= R:
-        C = 0.21*math.e**-(R/V*t)
+        C = 0.21 * math.e**-(R / V * t)
     elif abs(Q) > R:
-        C = 0.21*(1-R/abs(Q)*(1-math.e**-(abs(Q)*t/V)))
+        C = 0.21 * (1 - R / abs(Q) * (1 - math.e**-(abs(Q) * t / V)))
     return float(C)
 
 
-def conc_final(R, Q):
+def conc_inf(V, R, Q):
     """Calculate the final oxygen concentration for continuous flow.
 
     Equivalent to conc_vent(V, R, Q, float('inf')).
@@ -1186,11 +1204,11 @@ def conc_final(R, Q):
         Oxygen concentration.
     """
     if Q > 0:
-        C = 0.21/(Q+R)*Q
+        C = 0.21 / (Q + R) * Q
     elif abs(Q) <= abs(R):
         C = 0
     elif abs(Q) > abs(R):
-        C = 0.21*(1-R/abs(Q))
+        C = 0.21 * (1 - R / abs(Q))
     return C
 
 
@@ -1220,7 +1238,7 @@ def conc_after(V, C_e, Q, t, t_e):
     float
         Oxygen concentration.
     """
-    C = 0.21-(0.21-C_e)*math.e**-(abs(Q)/V*(t-t_e))
+    C = 0.21 - (0.21 - C_e) * math.e**-(abs(Q) / V * (t - t_e))
     return C
 
 
@@ -1245,7 +1263,7 @@ def fatality_prob(O2_conc):
         Fi = 1
     else:
         # Fi formula, reverse engineered using 8.8% and 18% thresholds
-        Fi = 10**(6.5-76*O2_conc)
+        Fi = 10**(6.5 - 76 * O2_conc)
     return Fi
 
 
@@ -1317,9 +1335,9 @@ def O2_sudden_release(release, volume, escape=False):
         Resulting oxygen concentration.
     """
     if escape:
-        O2_conc = 0.21*volume/(volume+release)
+        O2_conc = 0.21 * volume / (volume + release)
     else:
-        O2_conc = 0.21*(1-release/volume)
+        O2_conc = 0.21 * (1 - release / volume)
     return O2_conc
 
 
@@ -1345,7 +1363,7 @@ def PFD_avg(l_du, l_dd, T_p, MTTR):
     float
         Probability of failure on demand.
     """
-    PFD_du = l_du * (T_p/2 + MTTR)
+    PFD_du = l_du * (T_p / 2 + MTTR)
     PFD_dd = l_dd * MTTR
     PFD = PFD_du + PFD_dd
     return float(PFD)

@@ -190,7 +190,6 @@ class Tube(PipingElement):
         ureg.Quantity {length: 1}
             Minimum required wall thickness.
         """
-        logger.warning('Deprecated, use standalone function instead.')
         return pressure_rating(self, S, E, W, Y)
 
 
@@ -1458,9 +1457,13 @@ def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
     ureg.Quantity : {mass: 1, time: -1}
     '''
     P_0 = fluid.P
+    dP = P_0 - P_out
     if P_0 <= P_out:
         raise HydraulicError(f'Input pressure less or equal to output: \
         {P_0.to(ureg.Pa):.3g}, {P_out.to(ureg.Pa):.3g}')
+    elif dP/P_0 > 0.4:
+        raise HydraulicError(f'Estimated pressure drop {dP/P_0:.3g~} exceeds '
+                             '40% limit for incompressible flow.')
     def to_solve(m_dot_gs, P_in_Pa, P_out_Pa):
         dP_calc = dP_incomp(m_dot_gs*ureg.g/ureg.s, fluid, piping)
         dP_given = P_in_Pa - P_out_Pa
@@ -2015,7 +2018,7 @@ def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg')
     return result
 
 
-def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
+def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
     """Calculate mass flux through a converging nozzle using direct integration
     method.
 
@@ -2037,20 +2040,23 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=20):
         P = P_ * ureg.Pa
         fluid_temp.update_kw(P=P, Smass=S)
         rho = fluid_temp.Dmass.m_as(ureg.kg/ureg.m**3)
-        return 1/rho
-
+        return 1 / rho
     dP = (P1_-P2_) / n_steps
     P_ = P1_
-    # temp = []
+    Pc_ = P2_
     G_max = 0
     while P_ > P2_:
-        G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
-        # temp.append((G, (P_*ureg.Pa).m_as(ureg.psi)))
-        if G >= G_max:
-            G_max = G
-        else:
+        try:
+            G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
+        except ValueError:  # CoolProp has issues around critical point
+            P_ -= dP
+            continue
+        if G < G_max:
+            Pc_ = P_
             break
-        P_ -= dP
+        else:
+            G_max = G
+            P_ -= dP
     G_max *= ureg.kg/(ureg.s*ureg.m**2)
     return G_max
 

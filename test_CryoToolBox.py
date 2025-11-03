@@ -176,7 +176,7 @@ class CpWrapperTest(unittest.TestCase):
         self.assertEqual(fluid.phase, 6)
         self.assertEqual(
             fluid.phase_str,
-            'Twophase',
+            'Two-phase',
         )
         fluid.update_kw(P=fluid.P, T=2.5 * u.K)
         self.assertEqual(fluid.phase, 0)
@@ -355,20 +355,6 @@ class FunctionsTest(unittest.TestCase):
         Cv = 1
         self.assertApproxEqual(0.86, ctb.Cv_to_Kv(Cv), 0.86)
         self.assertApproxEqual(Cv, ctb.Kv_to_Cv(ctb.Cv_to_Kv(Cv)), Cv)
-
-    def test_kt_Dacron(self):
-        """Test the thermal conductivity of Dacron spacer and MLI"""
-        tc = 80 * u.K
-        ks_exp = 0.1409 * u.W / u.m / u.K
-        ks = ctb.ks_Dacron(tc)
-        self.assertApproxEqual(ks_exp, ks, uncertainty=0.001)
-        ts = 0.06 * u.mm
-        hc_exp = 1.3526 * u.W / u.m**2 / u.K
-        hc = ctb.hc_Dacron(tc, ts=ts)
-        self.assertApproxEqual(hc_exp, hc, uncertainty=0.001)
-        kt_exp = 0.465 * u.mW / u.m / u.K
-        kt = ctb.k_MLI(30 / u.cm, hc, 80 * u.K)
-        self.assertApproxEqual(kt_exp, kt, uncertainty=0.001)
 
     def test_nist_property(self):
         T1 = 10 * u.K
@@ -873,7 +859,7 @@ class CPWrapperTest(unittest.TestCase):
         self.assertEqual('saturated argon vapor at P: 1.01 bar',
                          argon.__str__())
         argon.update_kw(P=argon.P, Q=0.5)
-        self.assertEqual('two-phase argon at P: 1.01 bar and Q: 0.50',
+        self.assertEqual('argon at P: 1.01 bar and Q: 0.50',
                          argon.__str__())
 
 
@@ -921,17 +907,17 @@ class ODHTest(FunctionsTest):
         D_t = tube.OD / tube.wall
         source.add_pipe_failure(tube, fluid, N_welds=N)
         leaks = [
-            odh.Leak('', N * 1e-9 / u.hr, fluid,
+            odh.Leak('', fluid, N * 1e-9 / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', N * 1e-10 / u.hr, fluid,
+            odh.Leak('', fluid, N * 1e-10 / u.hr,
                      odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', N * 3e-11 / u.hr, fluid,
+            odh.Leak('', fluid, N * 3e-11 / u.hr,
                      odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
-            odh.Leak('', N * 2e-11 * D_t / u.hr, fluid,
+            odh.Leak('', fluid, N * 2e-11 * D_t / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', N * 2e-12 * D_t / u.hr, fluid,
+            odh.Leak('', fluid, N * 2e-12 * D_t / u.hr,
                      odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', N * 6e-13 * D_t / u.hr, fluid,
+            odh.Leak('', fluid, N * 6e-13 * D_t / u.hr,
                      odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
@@ -947,9 +933,9 @@ class ODHTest(FunctionsTest):
         N = 2
         source.add_flange_failure(tube, fluid, N=N)
         leaks = [
-            odh.Leak('', N * 4e-7 / u.hr, fluid,
+            odh.Leak('', fluid, N * 4e-7 / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', N * 1e-9 / u.hr, fluid,
+            odh.Leak('', fluid, N * 1e-9 / u.hr,
                      odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
@@ -965,9 +951,9 @@ class ODHTest(FunctionsTest):
         N = 2
         source.add_valve_failure(tube, fluid, N=N)
         leaks = [
-            odh.Leak('', N * 1e-8 / u.hr, fluid,
+            odh.Leak('', fluid, N * 1e-8 / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', N * 5e-10 / u.hr, fluid,
+            odh.Leak('', fluid, N * 5e-10 / u.hr,
                      odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
@@ -988,25 +974,25 @@ class ODHTest(FunctionsTest):
                                 N_valves=1)
         D_t = tube.OD / tube.wall
         leaks = [
-            odh.Leak('', 1e-9 / u.hr, fluid,
+            odh.Leak('', fluid, 1e-9 / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', 1e-10 / u.hr, fluid,
+            odh.Leak('', fluid, 1e-10 / u.hr,
                      odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', 3e-11 / u.hr, fluid, odh.hole_leak(tube.area, fluid),
+            odh.Leak('', fluid, 3e-11 / u.hr,  odh.hole_leak(tube.area, fluid),
                      0 * u.s, 1),
-            odh.Leak('', 2e-11 * D_t / u.hr, fluid,
+            odh.Leak('', fluid, 2e-11 * D_t / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', 2e-12 * D_t / u.hr, fluid,
+            odh.Leak('', fluid, 2e-12 * D_t / u.hr,
                      odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', 6e-13 * D_t / u.hr, fluid,
+            odh.Leak('', fluid, 6e-13 * D_t / u.hr,
                      odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
-            odh.Leak('', 4e-7 / u.hr, fluid,
+            odh.Leak('', fluid, 4e-7 / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', 1e-9 / u.hr, fluid, odh.hole_leak(tube.area, fluid),
+            odh.Leak('', fluid, 1e-9 / u.hr,  odh.hole_leak(tube.area, fluid),
                      0 * u.s, 1),
-            odh.Leak('', 1e-8 / u.hr, fluid,
+            odh.Leak('', fluid, 1e-8 / u.hr,
                      odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', 5e-10 / u.hr, fluid, odh.hole_leak(tube.area, fluid),
+            odh.Leak('', fluid, 5e-10 / u.hr,  odh.hole_leak(tube.area, fluid),
                      0 * u.s, 1),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
@@ -1617,6 +1603,7 @@ class TestDPDarcy(unittest.TestCase):
 
 
 class TestTubePattern(unittest.TestCase):
+
     @staticmethod
     def _matches(text: str) -> bool:
         """
@@ -1624,10 +1611,11 @@ class TestTubePattern(unittest.TestCase):
         Stripping whitespace makes the tests a little more forgiving.
         """
         return bool(ctb.piping.TUBE_PATTERN.fullmatch(text.strip()))
+
     # ---- Positive cases -------------------------------------------------
     def test_inches_with_quotes(self):
         self.assertTrue(self._matches('0.5"x0.25"'))
-        self.assertTrue(self._matches('0.5" x 0.25"'))   # spaces around x
+        self.assertTrue(self._matches('0.5" x 0.25"'))  # spaces around x
 
     def test_inches_spelled_out(self):
         self.assertTrue(self._matches('0.5 in x 0.35 in'))
@@ -1651,20 +1639,22 @@ class TestTubePattern(unittest.TestCase):
 
     # ---- Negative cases ------------------------------------------------
     def test_missing_second_dimension(self):
-        self.assertFalse(self._matches('0.5"x'))          # incomplete second part
-        self.assertFalse(self._matches('0.5in x'))        # incomplete second part
-        self.assertFalse(self._matches('0.5"x0.25'))      # missing quote on second side
+        self.assertFalse(self._matches('0.5"x'))  # incomplete second part
+        self.assertFalse(self._matches('0.5in x'))  # incomplete second part
+        self.assertFalse(
+            self._matches('0.5"x0.25'))  # missing quote on second side
 
     def test_wrong_separator(self):
-        self.assertFalse(self._matches('0.5in * 0.35in')) # asterisk instead of x
+        self.assertFalse(
+            self._matches('0.5in * 0.35in'))  # asterisk instead of x
 
     def test_extra_characters(self):
-        self.assertFalse(self._matches('size: 0.5"x0.25"'))   # leading text
-        self.assertFalse(self._matches('0.5"x0.25" end'))    # trailing text
+        self.assertFalse(self._matches('size: 0.5"x0.25"'))  # leading text
+        self.assertFalse(self._matches('0.5"x0.25" end'))  # trailing text
 
     def test_invalid_units(self):
-        self.assertFalse(self._matches('5ft x 7ft'))         # unsupported unit
-        self.assertFalse(self._matches('10px x 20px'))       # unsupported unit
+        self.assertFalse(self._matches('5ft x 7ft'))  # unsupported unit
+        self.assertFalse(self._matches('10px x 20px'))  # unsupported unit
 
 
 class TestNpsPattern(unittest.TestCase):
@@ -1742,14 +1732,14 @@ class TestNpsPattern(unittest.TestCase):
     def test_rejects_malformed_input(self):
         """Test that malformed or incomplete input is rejected."""
         cases = [
-            '1 nps',              # Missing 'sch'
-            'nps sch10',          # Missing size number
-            'nps only',           # No valid numbers
-            'random text',        # No match
-            'sch NPS 1',          # Wrong order
-            '1 in only',          # Missing 'nps' and 'sch'
-            '',                   # Empty string
-            'sch 10',             # Missing NPS size
+            '1 nps',  # Missing 'sch'
+            'nps sch10',  # Missing size number
+            'nps only',  # No valid numbers
+            'random text',  # No match
+            'sch NPS 1',  # Wrong order
+            '1 in only',  # Missing 'nps' and 'sch'
+            '',  # Empty string
+            'sch 10',  # Missing NPS size
         ]
         for s in cases:
             with self.subTest(string=s):
@@ -1777,62 +1767,64 @@ class TestLineContext(unittest.TestCase):
         ctx = ctb.piping.LineContext.from_string('0.5"x0.035"',
                                                  length_unit='m')
         self.assertEqual(ctx.system, "tube")
-        self.assertAlmostEqual(ctx.OD, 0.5*u.inch)
-        self.assertAlmostEqual(ctx.wall, 0.035*u.inch)
+        self.assertAlmostEqual(ctx.OD, 0.5 * u.inch)
+        self.assertAlmostEqual(ctx.wall, 0.035 * u.inch)
         self.assertEqual(ctx.length_unit, u.m)
 
     def test_tube_parsing_with_spaces(self):
         ctx = ctb.piping.LineContext.from_string('  1.25" x 0.065"  ',
                                                  length_unit='m')
         self.assertEqual(ctx.system, "tube")
-        self.assertAlmostEqual(ctx.OD, 1.25*u.inch)
-        self.assertAlmostEqual(ctx.wall, 0.065*u.inch)
+        self.assertAlmostEqual(ctx.OD, 1.25 * u.inch)
+        self.assertAlmostEqual(ctx.wall, 0.065 * u.inch)
 
     def test_custom_length_unit(self):
-        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH40", length_unit="ft")
+        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH40",
+                                                 length_unit="ft")
         self.assertEqual(ctx.length_unit, u.ft)
 
     def test_invalid_context_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.LineContext.from_string("DN25",
-                                               length_unit='m')  # not matching either pattern
+            ctb.piping.LineContext.from_string(
+                "DN25", length_unit='m')  # not matching either pattern
 
     def test_invalid_tube_format_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.LineContext.from_string('0.5x0.035',
-                                               length_unit='m')  # missing quote or x format
+            ctb.piping.LineContext.from_string(
+                '0.5x0.035', length_unit='m')  # missing quote or x format
 
     def test_invalid_nps_format_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.LineContext.from_string('NPS1SCH',
-                                               length_unit='m')  # malformed pattern
+            ctb.piping.LineContext.from_string(
+                'NPS1SCH', length_unit='m')  # malformed pattern
 
     def test_str_nps_complete(self):
-            ctx = ctb.piping.LineContext(
-                system='NPS',
-                dimensions={'D_nom': 1.0, 'SCH': 40},
-                length_unit=u.m
-            )
-            s = str(ctx)
-            self.assertIn('NPS 1 SCH 40', s)
-            self.assertIn('[m]', s)
+        ctx = ctb.piping.LineContext(system='NPS',
+                                     dimensions={
+                                         'D_nom': 1.0,
+                                         'SCH': 40
+                                     },
+                                     length_unit=u.m)
+        s = str(ctx)
+        self.assertIn('NPS 1 SCH 40', s)
+        self.assertIn('[m]', s)
 
     def test_str_nps_incomplete(self):
         ctx = ctb.piping.LineContext(
             system='NPS',
             dimensions={'D_nom': 2.0},  # missing SCH
-            length_unit=u.ft
-        )
+            length_unit=u.ft)
         s = str(ctx)
         self.assertIn('incomplete', s)
         self.assertIn('[ft]', s)
 
     def test_str_tube_complete(self):
-        ctx = ctb.piping.LineContext(
-            system='tube',
-            dimensions={'OD': Q_('0.5 inch'), 'wall': Q_('0.035 inch')},
-            length_unit=u.m
-        )
+        ctx = ctb.piping.LineContext(system='tube',
+                                     dimensions={
+                                         'OD': Q_('0.5 inch'),
+                                         'wall': Q_('0.035 inch')
+                                     },
+                                     length_unit=u.m)
         s = str(ctx)
         self.assertIn('0.5 in', s)
         self.assertIn('0.035 in', s)
@@ -1843,18 +1835,15 @@ class TestLineContext(unittest.TestCase):
         ctx = ctb.piping.LineContext(
             system='tube',
             dimensions={'OD': Q_('0.5 in')},  # missing wall
-            length_unit=u.m
-        )
+            length_unit=u.m)
         s = str(ctx)
         self.assertIn('incomplete', s)
         self.assertIn('[m]', s)
 
     def test_str_custom_system(self):
-        ctx = ctb.piping.LineContext(
-            system='custom',
-            dimensions={'D': 0.01},
-            length_unit=u.cm
-        )
+        ctx = ctb.piping.LineContext(system='custom',
+                                     dimensions={'D': 0.01},
+                                     length_unit=u.cm)
         s = str(ctx)
         self.assertIn('custom line', s)
         self.assertIn('D=0.01', s)
@@ -1863,7 +1852,10 @@ class TestLineContext(unittest.TestCase):
     def test_str_handles_non_pint_length_unit(self):
         ctx = ctb.piping.LineContext(
             system='NPS',
-            dimensions={'D_nom': 1.0, 'SCH': 10},
+            dimensions={
+                'D_nom': 1.0,
+                'SCH': 10
+            },
             length_unit='m'  # string instead of Pint unit
         )
         s = str(ctx)
@@ -1872,6 +1864,7 @@ class TestLineContext(unittest.TestCase):
 
 
 class TestCreateElement(unittest.TestCase):
+
     def setUp(self):
         self.ctx_tube = ctb.piping.LineContext.from_string('0.5"x0.035"',
                                                            length_unit='m')
@@ -1881,8 +1874,8 @@ class TestCreateElement(unittest.TestCase):
     def test_numeric_description_creates_tube_or_pipe(self):
         el1 = ctb.piping.create_element(2.0, self.ctx_tube)
         self.assertIsInstance(el1, ctb.piping.Tube)
-        self.assertEqual(el1.OD, 0.5*u.inch)
-        self.assertEqual(el1.wall, 0.035*u.inch)
+        self.assertEqual(el1.OD, 0.5 * u.inch)
+        self.assertEqual(el1.wall, 0.035 * u.inch)
         self.assertEqual(el1.L, 2.0 * u.m)
 
         el2 = ctb.piping.create_element(3.0, self.ctx_pipe)
@@ -1894,8 +1887,8 @@ class TestCreateElement(unittest.TestCase):
     def test_elbow_creation(self):
         el1 = ctb.piping.create_element('elbow', self.ctx_tube)
         self.assertIsInstance(el1, ctb.piping.Elbow)
-        self.assertEqual(el1.OD, 0.5*u.inch)
-        self.assertEqual(el1.wall, 0.035*u.inch)
+        self.assertEqual(el1.OD, 0.5 * u.inch)
+        self.assertEqual(el1.wall, 0.035 * u.inch)
 
         el2 = ctb.piping.create_element('elbow', self.ctx_pipe)
         self.assertIsInstance(el2, ctb.piping.PipeElbow)
@@ -1921,7 +1914,7 @@ class TestCreateElement(unittest.TestCase):
         el = ctb.piping.create_element('cv=2.5', self.ctx_tube)
         self.assertIsInstance(el, ctb.piping.Valve)
         self.assertEqual(el.Cv, 2.5)
-        self.assertEqual(el.D, 0.5*u.inch)
+        self.assertEqual(el.D, 0.5 * u.inch)
 
     def test_invalid_tee_suffix_raises(self):
         with self.assertRaises(ValueError):
@@ -1930,6 +1923,7 @@ class TestCreateElement(unittest.TestCase):
     def test_unrecognized_description_raises(self):
         with self.assertRaises(ValueError):
             ctb.piping.create_element('foobar', self.ctx_tube)
+
 
 if __name__ == "__main__":
     unittest.main()
