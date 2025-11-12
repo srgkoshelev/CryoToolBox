@@ -25,18 +25,21 @@ pint.set_application_registry(ureg)
 
 
 class PipingError(Exception):
+
     def __init__(self, message):
         self.message = message
         super().__init__(message)
 
 
 class HydraulicError(Exception):
+
     def __init__(self, message):
         self.message = message
         super().__init__(message)
 
 
 class ChokedFlow(HydraulicError):
+
     def __init__(self, message):
         self.message = message
         super().__init__(message)
@@ -46,7 +49,7 @@ def _load_table(table_name):
     yaml_table = load((os.path.join(__location__, table_name)))
     result = {}
     for D, sub_table in yaml_table.items():
-        result.update({D: {k: v*ureg.inch for k, v in sub_table.items()}})
+        result.update({D: {k: v * ureg.inch for k, v in sub_table.items()}})
     return result
 
 
@@ -66,7 +69,8 @@ TUBE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-ReinforcementAreaResult = namedtuple('ReinforcementAreaResult', ['A1', 'A2', 'A3', 'A4', 'd2', 'safe'])
+ReinforcementAreaResult = namedtuple('ReinforcementAreaResult',
+                                     ['A1', 'A2', 'A3', 'A4', 'd2', 'safe'])
 
 
 class PipingElement(ABC):
@@ -90,8 +94,14 @@ class Tube(PipingElement):
     """
     Tube, requires OD and wall thickness specified
     """
-    def __init__(self, OD, wall=0*ureg.m, L=0*ureg.m, c=0*ureg.m, wall_tol=None,
-                 eps=0.0018*ureg.inch):
+
+    def __init__(self,
+                 OD,
+                 wall=0 * ureg.m,
+                 L=0 * ureg.m,
+                 c=0 * ureg.m,
+                 wall_tol=None,
+                 eps=0.0018 * ureg.inch):
         """Generate tube object.
 
         Parameters
@@ -117,7 +127,7 @@ class Tube(PipingElement):
         self.L = L
         self.eps = eps
         # Wall thickness under tolerance is 12.5% as per ASTM A999
-        self.wall_tol = wall_tol or (0.125*self.wall)
+        self.wall_tol = wall_tol or (0.125 * self.wall)
         self.T = wall - self.wall_tol
         self.c = c
         # c = Q_('0.5 mm') for unspecified machined surfaces
@@ -128,7 +138,7 @@ class Tube(PipingElement):
     def ID(self):
         """ureg.Quantity {length: 1} : Wall thickness of Pipe based on NPS table.
         """
-        return self.OD - 2*self.wall
+        return self.OD - 2 * self.wall
 
     @property
     def area(self):
@@ -146,7 +156,7 @@ class Tube(PipingElement):
         """ureg.Quantity {length: 1}: Resistance coefficient.
         """
         eps_r = self.eps / self.ID
-        K = f_Darcy(Re_, eps_r)*self.L/self.ID
+        K = f_Darcy(Re_, eps_r) * self.L / self.ID
         return float(K)
 
     def f_T(self):
@@ -158,7 +168,7 @@ class Tube(PipingElement):
         ureg.Quantity {dimensionless}
             Fully turbulent Darcy friction factor.
         """
-        return 1 / (4*log10(self.eps/(3.7*self.ID))**2)
+        return 1 / (4 * log10(self.eps / (3.7 * self.ID))**2)
 
     def pressure_design_thick(self, P_int, P_ext=P_NTP, *, S, E, W, Y):
         """Calculate pressure design thickness for given pressure and pipe
@@ -192,7 +202,6 @@ class Tube(PipingElement):
         """
         return pressure_rating(self, S, E, W, Y)
 
-
     def __str__(self):
         return f'{self.type}, {self.OD:.3g~}x{self.wall:.3g~}, ' + \
             f'L={self.L:.3g~}'
@@ -205,8 +214,13 @@ class Pipe(Tube):
     will contain information such as OD, ID, wall thickness, and can be
     used to calculate flow coefficient K that is used for flow calculations.
     """
-    def __init__(self, D_nom, SCH=40, L=0*ureg.m, c=Q_('0 mm'),
-                 eps=0.0018*ureg.inch):
+
+    def __init__(self,
+                 D_nom,
+                 SCH=40,
+                 L=0 * ureg.m,
+                 c=Q_('0 mm'),
+                 eps=0.0018 * ureg.inch):
         """Generate `Pipe` object.
 
         Parameters
@@ -258,8 +272,8 @@ class CopperTube(Tube):
         Absolute roughness for the tube. Default value for smooth
         pipe.
     """
-    def __init__(self, D_nom, type_='K', L=0*ureg.m,
-                 eps=0.0018*ureg.inch):
+
+    def __init__(self, D_nom, type_='K', L=0 * ureg.m, eps=0.0018 * ureg.inch):
         if isinstance(D_nom, ureg.Quantity):
             D = D_nom.magnitude
         else:
@@ -307,7 +321,8 @@ class CopperTube(Tube):
 class CorrugatedPipe(Tube):
     """Corrugated pipe class.
     """
-    def __init__(self, D_nom, L=0*ureg.m):
+
+    def __init__(self, D_nom, L=0 * ureg.m):
         """Generate corrugated pipe object.
 
         Parameters
@@ -329,7 +344,8 @@ class CorrugatedPipe(Tube):
         logger.debug('For corrugated piping assumed wall = 0')
 
     def K(self, Re_):
-        return self.f_mult * super().K(Re_)  # Multiplier 4 is used for corrugated pipe
+        return self.f_mult * super().K(
+            Re_)  # Multiplier 4 is used for corrugated pipe
 
     def branch_reinforcement(self):
         raise NotImplementedError('Branch reinforcement not implemented for'
@@ -346,6 +362,7 @@ class CorrugatedPipe(Tube):
 class Entrance(PipingElement):
     """Pipe entrance, flush, sharp edged.
     """
+
     def __init__(self, ID, K=0.5):
         """Generate an pipe entrance.
 
@@ -357,7 +374,7 @@ class Entrance(PipingElement):
             Resistance coefficient. 0.5 for sharp entrance.
         """
         self.ID = ID
-        self.L = 0*ureg.m
+        self.L = 0 * ureg.m
         self._K = K
         self.type = 'Entrance'
         self.volume = 0 * ureg.ft**3
@@ -377,9 +394,10 @@ class Entrance(PipingElement):
     #     return self.type
 
 
-class Exit (Entrance):
+class Exit(Entrance):
     """Pipe exit, projecting or sharp-edged, or rounded.
     """
+
     def __init__(self, ID):
         """Generate pipe exit.
 
@@ -389,7 +407,7 @@ class Exit (Entrance):
             Inside diameter of the exit.
         """
         self.ID = ID
-        self.L = 0*ureg.m
+        self.L = 0 * ureg.m
         self.type = 'Exit'
         self.volume = 0 * ureg.ft**3
         self._K = 1  # Crane TP-410, A-30
@@ -401,6 +419,7 @@ class Exit (Entrance):
 class Orifice(PipingElement):
     """Square-edged orifice plate
     """
+
     def __init__(self, ID):
         """Generate orifice.
 
@@ -411,7 +430,7 @@ class Orifice(PipingElement):
         """
         self.Cd = 0.61  # Thin sharp edged orifice plate
         self.ID = ID
-        self.L = 0*ureg.m
+        self.L = 0 * ureg.m
         self._area = circle_area(ID)
         self.type = 'Orifice'
         self.volume = 0 * ureg.ft**3
@@ -422,7 +441,7 @@ class Orifice(PipingElement):
 
     def K(self, Re=None):
         # TODO add Re handling
-        return 1/self.Cd**2
+        return 1 / self.Cd**2
 
     def __str__(self):
         return f'Orifice, {self.ID:.3g~}'
@@ -434,6 +453,7 @@ class Orifice(PipingElement):
 class ConicOrifice(Orifice):
     """Conic orifice
     """
+
     def __init__(self, D, ID):
         """Generate conic orifice.
 
@@ -444,7 +464,7 @@ class ConicOrifice(Orifice):
             Inside diameter of the orifice.
         """
         super().__init__(ID)
-        if NPS_table[D]['OD'] >= 1*ureg.inch:
+        if NPS_table[D]['OD'] >= 1 * ureg.inch:
             # For a smaller diameter using value for
             # square-edged plate (unfounded assumption)
             self.Cd = 0.73
@@ -470,7 +490,8 @@ class Annulus(PipingElement):
     L : ureg.Quantity {length: 1}
         Length of the annulus tube.
     """
-    def __init__(self, D1, D2, L=Q_('0m'), eps=0.0018*ureg.inch):
+
+    def __init__(self, D1, D2, L=Q_('0m'), eps=0.0018 * ureg.inch):
         self.D1 = D1
         self.D2 = D2
         assert D1 > D2, 'D1 should be larger than D2'
@@ -500,8 +521,14 @@ class Elbow(Tube):
     NPS elbow fitting.
     MRO makes method K from PipeElbow class to override method from Pipe class.
     """
-    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, R_D=1.5, N=1,
-                 angle=90*ureg.deg):
+
+    def __init__(self,
+                 OD,
+                 wall=0 * ureg.inch,
+                 c=0 * ureg.inch,
+                 R_D=1.5,
+                 N=1,
+                 angle=90 * ureg.deg):
         """Generate a tube elbow object.
 
         Parameters
@@ -520,8 +547,8 @@ class Elbow(Tube):
         self.R_D = R_D
         self.N = N
         self.angle = angle
-        super().__init__(OD, wall, L=0*ureg.m, c=c)
-        self.L = R_D*self.ID*angle
+        super().__init__(OD, wall, L=0 * ureg.m, c=c)
+        self.L = R_D * self.ID * angle
         self.type = 'Tube elbow'
 
     def K(self, Re_):
@@ -529,26 +556,26 @@ class Elbow(Tube):
         Pressure drop in an elbow fitting.
         Based on Handbook of Hydraulic Resistance by I.E. Idelchik.
         """
-        if self.angle <= 70*ureg.deg:
-            A1 = 0.9*sin(self.angle)
-        elif self.angle == 90*ureg.deg:
+        if self.angle <= 70 * ureg.deg:
+            A1 = 0.9 * sin(self.angle)
+        elif self.angle == 90 * ureg.deg:
             A1 = 1
-        elif self.angle >= 100*ureg.deg:
-            A1 = 0.7+0.35*self.angle/(90*ureg.deg)
+        elif self.angle >= 100 * ureg.deg:
+            A1 = 0.7 + 0.35 * self.angle / (90 * ureg.deg)
         else:
             logger.error('''Improper bend angle for elbow.
             90 degrees used instead: {}'''.format(self.angle))
             A1 = 1
 
         if self.R_D < 1:
-            B1 = 0.21*(self.R_D)**(-0.25)
+            B1 = 0.21 * (self.R_D)**(-0.25)
         else:
-            B1 = 0.21*(self.R_D)**(-0.5)
+            B1 = 0.21 * (self.R_D)**(-0.5)
 
         C1 = 1  # use different value for non-axis symmetric
         # Friction losses in the elbow
         K_frict = super().K(Re_)
-        return (A1*B1*C1+K_frict)*self.N
+        return (A1 * B1 * C1 + K_frict) * self.N
 
     def __str__(self):
         return f'{self.N}x {self.type}, {self.OD}"x{self.wall}", ' + \
@@ -560,8 +587,14 @@ class PipeElbow(Elbow, Pipe):
     NPS Elbow fitting.
     MRO makes method K from Elbow class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, R_D=1.5, N=1,
-                 angle=90*ureg.deg):
+
+    def __init__(self,
+                 D_nom,
+                 SCH=40,
+                 c=0 * ureg.inch,
+                 R_D=1.5,
+                 N=1,
+                 angle=90 * ureg.deg):
         """Generate a pipe elbow object.
 
         Parameters
@@ -591,7 +624,12 @@ class Tee(Tube):
     """
     Tee fitting.
     """
-    def __init__(self, OD, wall=0*ureg.inch, c=0*ureg.inch, direction='thru',
+
+    def __init__(self,
+                 OD,
+                 wall=0 * ureg.inch,
+                 c=0 * ureg.inch,
+                 direction='thru',
                  N=1):
         """Generate a tee.
 
@@ -614,7 +652,7 @@ class Tee(Tube):
         else:
             logger.error('''Tee direction is not recognized,
                          try "thru" or "branch": {}'''.format(direction))
-        L = 0*ureg.m
+        L = 0 * ureg.m
         super().__init__(OD, wall, L, c)
         self.N = N
         self.type = 'Tube tee'
@@ -622,9 +660,9 @@ class Tee(Tube):
     def K(self, Re=None):
         # TODO Add Re handling
         if self.direction == 'run':
-            K_ = 20*self.f_T()  # Crane TP-410 p. A-29
+            K_ = 20 * self.f_T()  # Crane TP-410 p. A-29
         elif self.direction == 'branch':
-            K_ = 60*self.f_T()  # Crane TP-410 p. A-29
+            K_ = 60 * self.f_T()  # Crane TP-410 p. A-29
         return self.N * K_
 
     def __str__(self):
@@ -636,7 +674,8 @@ class PipeTee(Tee, Pipe):
     NPS Tee fitting.
     MRO makes method K from Tee class to override method from Pipe class.
     """
-    def __init__(self, D_nom, SCH=40, c=0*ureg.inch, direction='thru', N=1):
+
+    def __init__(self, D_nom, SCH=40, c=0 * ureg.inch, direction='thru', N=1):
         # D_nom and SCH go as positional arguments to Pipe __init__
         super().__init__(D_nom, SCH, c, direction)
         self.type = 'NPS tee'
@@ -650,6 +689,7 @@ class Valve(PipingElement):
     """
     Generic valve with known Cv.
     """
+
     def __init__(self, D, Cv):
         # TODO DRY
         self.D = D
@@ -691,7 +731,6 @@ class Valve(PipingElement):
 #     def __str__(self):
 #         return f'{self.type}, {self.D}"'
 
-
 # class VCone(Pipe):
 #     """
 #     McCrometer V-Cone flowmeter.
@@ -726,9 +765,9 @@ class PipingTransition(PipingElement):
             Type of transition ('Contraction' or 'Enlargement').
         """
         # Validate angle (common to both)
-        if theta <= 0*ureg.deg or theta > 180*ureg.deg:
+        if theta <= 0 * ureg.deg or theta > 180 * ureg.deg:
             raise ValueError(f"Transition angle must be in range (0°, 180°], "
-                           f"got {theta}")
+                             f"got {theta}")
 
         self.ID1 = ID1
         self.ID2 = ID2
@@ -742,12 +781,12 @@ class PipingTransition(PipingElement):
         self._area = circle_area(self.ID)
 
         # Calculate axial length
-        self.L = abs(ID1 - ID2) / (2 * tan(theta/2))
+        self.L = abs(ID1 - ID2) / (2 * tan(theta / 2))
 
         # Calculate internal volume (truncated cone)
         r1 = ID1 / 2
         r2 = ID2 / 2
-        self.volume = pi * self.L / 3 * (r1**2 + r1*r2 + r2**2)
+        self.volume = pi * self.L / 3 * (r1**2 + r1 * r2 + r2**2)
 
     def __str__(self):
         """
@@ -758,8 +797,9 @@ class PipingTransition(PipingElement):
         str
             Human-readable description of the contraction.
         """
-        return (f'{self.type}, {self.theta.to(ureg.deg)} from '
-                f'{self.ID1.to(ureg.inch):.3f} to {self.ID2.to(ureg.inch):.3f}')
+        return (
+            f'{self.type}, {self.theta.to(ureg.deg)} from '
+            f'{self.ID1.to(ureg.inch):.3f} to {self.ID2.to(ureg.inch):.3f}')
 
     def __repr__(self):
         """
@@ -872,11 +912,11 @@ class Contraction(PipingTransition):
         # Input validation
         if ID1 <= ID2:
             raise ValueError(f"ID1 ({ID1}) must be greater than ID2 ({ID2}) "
-                           "for a contraction")
+                             "for a contraction")
 
-        if theta <= 0*ureg.deg or theta > 180*ureg.deg:
+        if theta <= 0 * ureg.deg or theta > 180 * ureg.deg:
             raise ValueError(f"Contraction angle must be in range (0°, 180°], "
-                           f"got {theta}")
+                             f"got {theta}")
 
         self._init_transition(ID1, ID2, theta, 'Contraction')
 
@@ -934,15 +974,15 @@ class Contraction(PipingTransition):
         if Re is not None:
             logger.warning("Reynolds number correction not yet implemented")
 
-        if self.theta <= 45*ureg.deg:
+        if self.theta <= 45 * ureg.deg:
             # Crane TP-410 A-26, Formula 1 for gradual contractions
-            K_ = 0.8 * sin(self.theta/2) * (1 - self.beta**2)
-        elif self.theta <= 180*ureg.deg:
+            K_ = 0.8 * sin(self.theta / 2) * (1 - self.beta**2)
+        elif self.theta <= 180 * ureg.deg:
             # Crane TP-410 A-26, Formula 2 for sudden contractions
-            K_ = 0.5 * (1 - self.beta**2) * sqrt(sin(self.theta/2))
+            K_ = 0.5 * (1 - self.beta**2) * sqrt(sin(self.theta / 2))
         else:
             raise ValueError(f'Contraction angle cannot exceed 180°, '
-                           f'got {self.theta.to(ureg.deg)}')
+                             f'got {self.theta.to(ureg.deg)}')
 
         return float(K_)
 
@@ -992,7 +1032,7 @@ class Enlargement(PipingTransition):
         # Enlargement-specific validation
         if ID1 >= ID2:
             raise ValueError(f"ID2 ({ID2}) must be greater than ID1 ({ID1}) "
-                           "for an enlargement")
+                             "for an enlargement")
 
         # Use shared initialization
         self._init_transition(ID1, ID2, theta, 'Enlargement')
@@ -1031,9 +1071,9 @@ class Enlargement(PipingTransition):
         """
         # Enlargement-specific K calculation
         # (Implementation depends on your specific enlargement formulas)
-        if self.theta <= 45*ureg.deg:
+        if self.theta <= 45 * ureg.deg:
             # Gradual enlargement formula
-            K_ = 2.6 * sin(self.theta/2) * (1 - self.beta**2)**2
+            K_ = 2.6 * sin(self.theta / 2) * (1 - self.beta**2)**2
         else:
             # Sudden enlargement formula: K = (1 - β²)²
             K_ = (1 - self.beta**2)**2
@@ -1055,6 +1095,7 @@ class PackedBed(PipingElement):
     eps : float
         Void fraction (porosity) of the bed.
     """
+
     def __init__(self, ID, height, D_part, eps):
         self.ID = ID
         self.OD = self.ID
@@ -1069,7 +1110,7 @@ class PackedBed(PipingElement):
 
     def f(self, Re_s):
         """Calculate packed bed friction factor."""
-        return 150/self.Re_mod(Re_s) + 1.75
+        return 150 / self.Re_mod(Re_s) + 1.75
 
     def Re_mod(self, Re_s):
         """Calculate modified Reynolds number for the packed bed.
@@ -1080,7 +1121,7 @@ class PackedBed(PipingElement):
             Superficial Re number; Re_s = U_s*ID*rho/mu,
             where U_s - superficial velocity and ID - shell ID.
         """
-        Re_ = Re_s * self.D_part/(self.ID*(1-self.eps))
+        Re_ = Re_s * self.D_part / (self.ID * (1 - self.eps))
         return Re_.to_base_units()
 
     def K(self, Re_s):
@@ -1106,19 +1147,21 @@ class LineContext:
         """Parse a pipeline description string into a LineContext."""
         desc = description.strip().replace('"', ' inch')
         if m := NPS_PATTERN.fullmatch(desc):
-            return cls(
-                system='NPS',
-                dimensions={'D_nom': float(m.group(1)), 'SCH': int(m.group(2))},
-                length_unit=Q_(length_unit).u
-            )
+            return cls(system='NPS',
+                       dimensions={
+                           'D_nom': float(m.group(1)),
+                           'SCH': int(m.group(2))
+                       },
+                       length_unit=Q_(length_unit).u)
 
         if m := TUBE_PATTERN.fullmatch(desc):
             OD, wall = map(Q_, m.groups())
-            return cls(
-                system='tube',
-                dimensions={'OD': OD, 'wall': wall},
-                length_unit=Q_(length_unit).u
-            )
+            return cls(system='tube',
+                       dimensions={
+                           'OD': OD,
+                           'wall': wall
+                       },
+                       length_unit=Q_(length_unit).u)
 
         raise ValueError(f'Unrecognized context string: {description}')
 
@@ -1126,11 +1169,13 @@ class LineContext:
         """Allow attribute-style access to dimensions."""
         if name in self.dimensions:
             return self.dimensions[name]
-        raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
+        raise AttributeError(
+            f"'{type(self).__name__}' has no attribute '{name}'")
 
     def __str__(self):
         """Return a concise, human-readable summary of the line context."""
-        unit_str = f"[{self.length_unit:~P}]" if isinstance(self.length_unit, pint.Unit) else f"[{self.length_unit}]"
+        unit_str = f"[{self.length_unit:~P}]" if isinstance(
+            self.length_unit, pint.Unit) else f"[{self.length_unit}]"
         if self.system == "NPS":
             d_nom = self.dimensions.get("D_nom")
             sch = self.dimensions.get("SCH")
@@ -1155,9 +1200,11 @@ def create_element(description, ctx: LineContext):
         description = description.lower().strip()
     if isinstance(description, (int, float)):
         if ctx.system == 'tube':
-            return Tube(ctx.OD, wall=ctx.wall, L=description*ctx.length_unit)
+            return Tube(ctx.OD, wall=ctx.wall, L=description * ctx.length_unit)
         else:
-            return Pipe(ctx.D_nom, SCH=ctx.SCH, L=description*ctx.length_unit)
+            return Pipe(ctx.D_nom,
+                        SCH=ctx.SCH,
+                        L=description * ctx.length_unit)
     elif description.startswith('elbow'):
         if ctx.system == 'tube':
             return Elbow(ctx.OD, wall=ctx.wall)
@@ -1169,7 +1216,8 @@ def create_element(description, ctx: LineContext):
         elif description[-1] == 'b':
             direction = 'branch'
         else:
-            raise ValueError(f'Expected r for run or b for branch: {description[-1]}')
+            raise ValueError(
+                f'Expected r for run or b for branch: {description[-1]}')
         if ctx.system == 'tube':
             return Tee(ctx.OD, wall=ctx.wall, direction=direction)
         else:
@@ -1179,14 +1227,13 @@ def create_element(description, ctx: LineContext):
         if ctx.system == 'tube':
             return Valve(ctx.OD, Cv=Cv)
         else:
-            return Valve(ctx.D_nom*ureg.inch, Cv=Cv)
+            return Valve(ctx.D_nom * ureg.inch, Cv=Cv)
     else:
         raise ValueError(f'Element description not recognized: {description}')
 
 
-################################################################################
-
 class ParallelPlateRelief:
+
     def __init__(self, Springs, Plate, Supply_pipe):
         """
         Initiate Parallel Plate instance.
@@ -1219,14 +1266,14 @@ class ParallelPlateRelief:
         Calculate pressure required to fully open Parallel Plate relief
         """
         # compression required to provide vent area equal to supply pipe area
-        dx_open = self.Supply_pipe.area / (pi*self.Plate['OD_plate'])
+        dx_open = self.Supply_pipe.area / (pi * self.Plate['OD_plate'])
         # Force at fully open
         F_open = self.F_lift = self.Springs['N'] * self.Springs['k'] * dx_open
         # At fully open pressure is distributed as:
         # Full pressure for up to supply pipe diameter
         # Linear fall off up to plate OD
-        A_open = self.Supply_pipe.area + pi/8*(self.Plate['OD_plate']**2 -
-                                               self.Supply_pipe.ID**2)
+        A_open = self.Supply_pipe.area + pi / 8 * (self.Plate['OD_plate']**2 -
+                                                   self.Supply_pipe.ID**2)
         P_open = F_open / A_open
         return P_open.to(ureg.psi)
 
@@ -1279,10 +1326,10 @@ def churchill(Re_, eps_r):
     """
     A1 = 0.883 * log(Re_)**1.282 / Re_**1.007
     A2 = 0.27 * eps_r
-    A3 = - 110 * eps_r / Re_
-    A = (0.8687 * log(A1+A2+A3))**16
+    A3 = -110 * eps_r / Re_
+    A = (0.8687 * log(A1 + A2 + A3))**16
     B = (13269 / Re_)**16
-    f = ((64/Re_)**12 + 1/(A+B)**(3/2))**(1/12)
+    f = ((64 / Re_)**12 + 1 / (A + B)**(3 / 2))**(1 / 12)
     return f
 
 
@@ -1304,10 +1351,10 @@ def serghide(Re_, eps_r):
     float
         Darcy friction coefficient
     """
-    A = -2 * log10(eps_r/3.7+12/Re_)
-    B = -2 * log10(eps_r/3.7+2.51*A/Re_)
-    C = -2 * log10(eps_r/3.7+2.51*B/Re_)
-    f = (A - (B-A)**2/(C-2*B+A))**(-2)
+    A = -2 * log10(eps_r / 3.7 + 12 / Re_)
+    B = -2 * log10(eps_r / 3.7 + 2.51 * A / Re_)
+    C = -2 * log10(eps_r / 3.7 + 2.51 * B / Re_)
+    f = (A - (B - A)**2 / (C - 2 * B + A))**(-2)
     return f
 
 
@@ -1323,15 +1370,15 @@ def K_piping(m_dot, fluid, piping):
         K0 : converted resistance coefficient of the piping
         A0 : area of the first element, basis for conversion
     """
-    K0 = 0*ureg.dimensionless
+    K0 = 0 * ureg.dimensionless
     try:
         A0 = piping[0].area  # using area of the first element as base
     except IndexError:
         raise IndexError('Piping has no elements! '
-                            'Use Piping.add to add sections to piping.')
+                         'Use Piping.add to add sections to piping.')
     for element in piping:
         Re_ = Re(fluid, m_dot, element.ID, element.area)
-        K_el = element.K(Re_) * (A0/element.area)**2
+        K_el = element.K(Re_) * (A0 / element.area)**2
         K0 += K_el
     return (K0.to_base_units(), A0)
 
@@ -1339,7 +1386,7 @@ def K_piping(m_dot, fluid, piping):
 def rc(fluid):
     """Calculate critical pressure drop for the given fluid."""
     k = fluid.gamma
-    rc = (2/(k+1))**(k/(k-1))
+    rc = (2 / (k + 1))**(k / (k - 1))
     return rc
 
 
@@ -1350,7 +1397,7 @@ def dP_Darcy(K, rho, w):
     rho - density of flow at entrance
     w - flow speed
     '''
-    d_P = K*rho*w**2/2
+    d_P = K * rho * w**2 / 2
     return d_P.to(ureg.psi)
 
 
@@ -1362,8 +1409,10 @@ def dP_incomp(m_dot, fluid, piping):
     T_0 = fluid.T
     rho_0 = fluid.Dmass
     K, area = K_piping(m_dot, fluid, piping)
-    w = m_dot / (rho_0*area)
+    w = m_dot / (rho_0 * area)
     return dP_Darcy(K, rho_0, w)
+
+
 def dP_Darcy(K, rho, w):
     """
     Calculate pressure drop using the Darcy-Weisbach equation.
@@ -1428,7 +1477,8 @@ def dP_Darcy(K, rho, w):
     """
     # Input validation
     if K < 0:
-        raise ValueError(f"Resistance coefficient K must be non-negative, got {K}")
+        raise ValueError(
+            f"Resistance coefficient K must be non-negative, got {K}")
     if rho.magnitude <= 0:
         raise ValueError(f"Density must be positive, got {rho}")
     if w.magnitude < 0:
@@ -1437,7 +1487,8 @@ def dP_Darcy(K, rho, w):
     dP = K * rho * w**2 / 2
     return dP.to(ureg.mbar)
 
-def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
+
+def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1 * ureg.g / ureg.s):
     '''Calculate mass flow through the piping using initial conditions
     at the beginning of piping.
 
@@ -1461,24 +1512,30 @@ def m_dot_incomp(fluid, piping, P_out=P_NTP, guess=1*ureg.g/ureg.s):
     if P_0 <= P_out:
         raise HydraulicError(f'Input pressure less or equal to output: \
         {P_0.to(ureg.Pa):.3g}, {P_out.to(ureg.Pa):.3g}')
-    elif dP/P_0 > 0.4:
+    elif dP / P_0 > 0.4:
         raise HydraulicError(f'Estimated pressure drop {dP/P_0:.3g~} exceeds '
                              '40% limit for incompressible flow.')
+
     def to_solve(m_dot_gs, P_in_Pa, P_out_Pa):
-        dP_calc = dP_incomp(m_dot_gs*ureg.g/ureg.s, fluid, piping)
+        dP_calc = dP_incomp(m_dot_gs * ureg.g / ureg.s, fluid, piping)
         dP_given = P_in_Pa - P_out_Pa
         return dP_given - dP_calc.m_as(ureg.Pa)
+
     P_in_Pa = P_0.m_as(ureg.Pa)
     P_out_Pa = P_out.m_as(ureg.Pa)
     args = (P_in_Pa, P_out_Pa)  # arguments passed to to_solve
-    x0 = guess.m_as(ureg.g/ureg.s)
+    x0 = guess.m_as(ureg.g / ureg.s)
     x1 = x0 * 2  # Usually doubling the flow is OK estimate
     solution = root_scalar(to_solve, args, x0=x0, x1=x1)
-    m_dot_ = solution.root * ureg.g/ureg.s
+    m_dot_ = solution.root * ureg.g / ureg.s
     return m_dot_
 
 
-def m_dot_isot(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
+def m_dot_isot(fluid,
+               pipe,
+               P_out=P_NTP,
+               m_dot_g=1 * ureg.g / ureg.s,
+               tol=1e-6):
     """Calculate mass flow rate through piping for isothermal compressible
     flow.
 
@@ -1504,10 +1561,10 @@ def m_dot_isot(fluid, pipe, P_out=P_NTP, m_dot_g=1*ureg.g/ureg.s, tol=1e-6):
     R = fluid.specific_gas_constant
     K = pipe.K(Re(fluid, m_dot_g, pipe.ID, pipe.area))
     A = pipe.area
-    m_dot = A * ((P1**2-P2**2)/(R*T*(2*log(P1/P2)+K)))**0.5
-    if abs(m_dot-m_dot_g)/m_dot > tol:
+    m_dot = A * ((P1**2 - P2**2) / (R * T * (2 * log(P1 / P2) + K)))**0.5
+    if abs(m_dot - m_dot_g) / m_dot > tol:
         m_dot = m_dot_isot(fluid, pipe, P_out, m_dot, tol)
-    return m_dot.to(ureg.g/ureg.s)
+    return m_dot.to(ureg.g / ureg.s)
 
 
 def dP_isot(m_dot, fluid, pipe, tol=1e-6):
@@ -1540,12 +1597,12 @@ def dP_isot(m_dot, fluid, pipe, tol=1e-6):
     P2 = P1
     converged = False
     while not converged:
-        sq_diff = m_dot**2*R*T/A**2 * (2*log(P1/P2)+K)
+        sq_diff = m_dot**2 * R * T / A**2 * (2 * log(P1 / P2) + K)
         P2_new = (P1**2 - sq_diff)**0.5
-        converged = abs(P2_new-P2)/P2_new
+        converged = abs(P2_new - P2) / P2_new
         P2 = P2_new
-        v = m_dot / (fluid.Dmass*A)
-        if Mach(fluid, v) > 1/(fluid.gamma):
+        v = m_dot / (fluid.Dmass * A)
+        if Mach(fluid, v) > 1 / (fluid.gamma):
             raise ChokedFlow('K needs to be reduced to reach P2={P2:.3g~}')
     return P1 - P2
 
@@ -1578,23 +1635,26 @@ def Mach_total(fluid, m_dot, area):
     P = fluid.P
     Z = fluid.Z
     R = ureg.molar_gas_constant / fluid.molar_mass
-    B = m_dot / area * (Z*R/k)**0.5
+    B = m_dot / area * (Z * R / k)**0.5
     M_core = float(B * T**0.5 / P)
 
     def to_solve(Msq):
         try:
-            res = M_core**2 * (1+Msq*(k-1)/2)**((k+1)/(k-1)) - Msq
+            res = M_core**2 * (1 + Msq * (k - 1) / 2)**((k + 1) /
+                                                        (k - 1)) - Msq
         except RuntimeWarning:
             res = float('nan')
         return res
+
     bracket = [0, 1]
     solution = root_scalar(to_solve, bracket=bracket)
     M_root = solution.root**0.5
     # Not sure if this is needed anymore
     T = fluid.T - v**2 / fluid.Cpmass
-    if T < 0*ureg.K:
-        raise HydraulicError(f'Negative static temperature: {T:.3g~}. Required '
-                             f'speed {v.to(ureg.m/ureg.s):.3g~} cannot be achieved.')
+    if T < 0 * ureg.K:
+        raise HydraulicError(
+            f'Negative static temperature: {T:.3g~}. Required '
+            f'speed {v.to(ureg.m/ureg.s):.3g~} cannot be achieved.')
     return M_root
 
 
@@ -1603,11 +1663,11 @@ def K_lim(M, k):
     """
     if M == 0:
         raise ValueError('K_lim is undefined for Ma=0.')
-    A = (1-M**2) / (k*M**2)
-    B = (k+1)/(2*k)
-    C = (k+1) * M**2
-    D = 2 + (k-1) * M**2
-    K = A + B * log(C/D)
+    A = (1 - M**2) / (k * M**2)
+    B = (k + 1) / (2 * k)
+    C = (k + 1) * M**2
+    D = 2 + (k - 1) * M**2
+    K = A + B * log(C / D)
     return K
 
 
@@ -1621,6 +1681,7 @@ def M_Klim(K, k):
         if M == 0:
             return float('-inf')
         return K - K_lim(M, k)
+
     bracket = [0, 1]
     solution = root_scalar(to_solve, bracket=bracket)
     M = solution.root
@@ -1628,24 +1689,24 @@ def M_Klim(K, k):
 
 
 def M_complex(M, k):
-    return 1 + M**2 * (k-1) / 2
+    return 1 + M**2 * (k - 1) / 2
 
 
 def P_from_M(P1, M1, M2, k):
     """Calculate static pressure from inlet static pressure and Mach numbers."""
     PM1 = P1 * M1 * M_complex(M1, k)**0.5
-    P2 = PM1 / (M2*M_complex(M2, k)**0.5)
+    P2 = PM1 / (M2 * M_complex(M2, k)**0.5)
     return P2
 
 
 def P_total(P, M, k):
     """Calculate total pressure from static pressure."""
-    return P * M_complex(M, k)**(k/(k-1))
+    return P * M_complex(M, k)**(k / (k - 1))
 
 
 def P_crit(P, M, k):
     """Calculate critical(sonic) pressure for the given static pressure and Ma."""
-    M_crit_comp = (k+1) / (2+(k-1)*M**2)
+    M_crit_comp = (k + 1) / (2 + (k - 1) * M**2)
     P_c = P * M / M_crit_comp**0.5
     return P_c
 
@@ -1664,9 +1725,10 @@ def dP_adiab(m_dot, fluid, pipe, state='total'):
     K_pipe = pipe.K(Re_)
     K_left = K_limit - K_pipe
     if K_left < 0:
-        raise ChokedFlow(f'Flow is choked at K={float(K_limit):.3g} with given '
-                         f'K={float(K_pipe):.3g}. Reduce hydraulic resistance or'
-                         ' mass flow.')
+        raise ChokedFlow(
+            f'Flow is choked at K={float(K_limit):.3g} with given '
+            f'K={float(K_pipe):.3g}. Reduce hydraulic resistance or'
+            ' mass flow.')
     M_end = M_Klim(K_left, fluid.gamma)
     # TODO This assumes isentropic flow, i.e., no friction. For adiabatic flow only Ttotal will be constant.
     # See White 9.3 for details.
@@ -1696,7 +1758,7 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
     P2 = P_out
 
     def to_solve(m_dot_):
-        m_dot = m_dot_ * ureg.kg/ureg.s
+        m_dot = m_dot_ * ureg.kg / ureg.s
         if state == 'total':
             try:
                 M1 = Mach_total(fluid, m_dot, pipe.area)
@@ -1716,9 +1778,10 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
         # TODO Only true for isentropic flow, for adiabatic Tcrit should be used
         result = P_crit1_ - P_crit2_
         return result
+
     bracket = [1e-10, 1e10]  # Limits search range
     solution = root_scalar(to_solve, bracket=bracket)
-    m_dot = solution.root * ureg.kg/ureg.s
+    m_dot = solution.root * ureg.kg / ureg.s
     return m_dot
 
 
@@ -1732,11 +1795,11 @@ def K_to_Cv(K, ID):
     d_P - pressure drop through the valve.
     [Cv] = gal/(min*(psi)**0.5)
     """
-    A = pi*ID**2/4
-    rho_w = 999*ureg('kg/m**3')  # Water density at 60 F
+    A = pi * ID**2 / 4
+    rho_w = 999 * ureg('kg/m**3')  # Water density at 60 F
     # TODO move density to global const (or use ThermState)
     # Based on Crane TP-410 p. 2-10 and Darcy equation:
-    Cv = A*(2/(K*rho_w))**0.5
+    Cv = A * (2 / (K * rho_w))**0.5
     Cv.ito(ureg('gal/(min*(psi)**0.5)'))  # Convention accepted in the US
     return Cv
 
@@ -1752,11 +1815,11 @@ def Cv_to_K(Cv, ID):
     [Cv] = gal/(min*(psi)**0.5)
     """
     if isinstance(Cv, (int, float)):  # Check if dimensionless input
-        Cv = Cv*ureg('gal/(min*(psi)**0.5)')  # Convention accepted in the US
-    A = pi*ID**2/4
-    rho_w = 999*ureg('kg/m**3')  # Water density at 60 F
+        Cv = Cv * ureg('gal/(min*(psi)**0.5)')  # Convention accepted in the US
+    A = pi * ID**2 / 4
+    rho_w = 999 * ureg('kg/m**3')  # Water density at 60 F
     # Based on Crane TP-410 p. 2-10 and Darcy equation:
-    K = 2*A**2/(Cv**2*rho_w)
+    K = 2 * A**2 / (Cv**2 * rho_w)
     return K.to(ureg.dimensionless)
 
 
@@ -1764,7 +1827,7 @@ def beta(d1, d2):
     """
     Calculate beta = d/D for contraction or enlargement.
     """
-    beta_ = min(d1, d2)/max(d1, d2)
+    beta_ = min(d1, d2) / max(d1, d2)
     return float(beta_)
 
 
@@ -1775,14 +1838,14 @@ def equivalent_orifice(m_dot, dP, fluid=AIR):
     """
     Cd = 0.61
     rho = fluid.Dmass
-    ID = 2 * (m_dot/(pi*Cd*(2*dP*rho)**0.5))**0.5
+    ID = 2 * (m_dot / (pi * Cd * (2 * dP * rho)**0.5))**0.5
     return ID.to(ureg.inch)
 
 
 def velocity(fluid, m_dot, area):
     """Calculate velocity of fluid with given local parameters."""
 
-    return m_dot/(area*fluid.Dmass)
+    return m_dot / (area * fluid.Dmass)
 
 
 def piping_stress(tube, P_diff, *, E, W, Y):
@@ -1804,7 +1867,7 @@ def piping_stress(tube, P_diff, *, E, W, Y):
     P = P_diff
     D = tube.OD
     t = tube.wall - tube.c
-    S = P / (E*W) * (D/(2*t) - Y)
+    S = P / (E * W) * (D / (2 * t) - Y)
     return S.to(ureg.psi)
 
 
@@ -1872,8 +1935,8 @@ def pressure_req_thick(tube, P_diff, I=1, *, S, E, W, Y):
     """
     D = tube.OD
     P = P_diff.to_base_units()
-    t = P * D / (2*(S*E*W/I + P*Y))
-    if (t >= D/6) or (P/(S*E)) > 0.385:
+    t = P * D / (2 * (S * E * W / I + P * Y))
+    if (t >= D / 6) or (P / (S * E)) > 0.385:
         logger.error('Calculate design thickness in accordance \
         with B31.3 304.1.2 (b)')
         return None
@@ -1896,7 +1959,7 @@ def I_intrados(R1, D):
     float
     """
 
-    I = (4*(R1/D)-1) / (4*(R1/D)-2)
+    I = (4 * (R1 / D) - 1) / (4 * (R1 / D) - 2)
     return I
 
 
@@ -1915,7 +1978,7 @@ def I_extrados(R1, D):
     float
     """
 
-    I = (4*(R1/D)+1) / (4*(R1/D)+2)
+    I = (4 * (R1 / D) + 1) / (4 * (R1 / D) + 2)
     return I
 
 
@@ -1931,13 +1994,22 @@ def pressure_rating(tube, *, S, E, W, Y):
     """
     D = tube.OD
     t = tube.T - tube.c
-    P = 2 * t * S * E * W / (D-2*Y*t)
+    P = 2 * t * S * E * W / (D - 2 * Y * t)
     return P.to(ureg.psi)
 
 
-def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'),
-                                   Tr=Q_('0 in'), Lr=Q_('0 in'), d1=None,
-                                   *, S, E, W, Y):
+def calculate_branch_reinforcement(header,
+                                   branch,
+                                   P_diff,
+                                   beta=Q_('90 deg'),
+                                   Tr=Q_('0 in'),
+                                   Lr=Q_('0 in'),
+                                   d1=None,
+                                   *,
+                                   S,
+                                   E,
+                                   W,
+                                   Y):
     """Calculate reinforcement and available area for given branch pipe and
     reinforcing ring thickness, Tr.
 
@@ -1971,9 +2043,10 @@ def calculate_branch_reinforcement(header, branch, P_diff, beta=Q_('90 deg'),
     tmh = pressure_req_thick(header, P_diff, S=S, E=E, W=W, Y=Y)
     c = header.c
     th = tmh - c
-    result = _reinforcement_area(P_diff, Dh, Th, th, c, branch, beta, Tr, Lr, d1,
-                                 S, E, W, Y)
+    result = _reinforcement_area(P_diff, Dh, Th, th, c, branch, beta, Tr, Lr,
+                                 d1, S, E, W, Y)
     return result
+
 
 def _reinforcement_area(P_diff, Dh, Th, th, c, branch, beta, Tr, Lr, d1, S, E,
                         W, Y):
@@ -1983,29 +2056,41 @@ def _reinforcement_area(P_diff, Dh, Th, th, c, branch, beta, Tr, Lr, d1, S, E,
     C = branch.c
     tb = tmb - C
     if d1 is None:
-        d1 = (Db - 2*(Tb-C)) / sin(beta)
+        d1 = (Db - 2 * (Tb - C)) / sin(beta)
     d2 = _half_width(d1, Th, c, Tb, C, Dh)
-    A1 = th * d1 * (2-sin(beta))
-    A2 = (2*d2-d1) * (Th - th - c)
-    L4 = min(2.5*(Th-c), 2.5*(Tb-C)+Tr)
-    A3 = 2 * L4 * (Tb-tb-C)/sin(beta)
+    A1 = th * d1 * (2 - sin(beta))
+    A2 = (2 * d2 - d1) * (Th - th - c)
+    L4 = min(2.5 * (Th - c), 2.5 * (Tb - C) + Tr)
+    A3 = 2 * L4 * (Tb - tb - C) / sin(beta)
     # TODO Add handling of different allowable stresses for header and branch
     # A_3 = 2 * L_4 * (T_b-t_b-c)/sin(beta) * branch.S / header.S
     # TODO Add reinforcement area due to welds
-    A4 = Tr * (Lr-Db/sin(beta))
-    return ReinforcementAreaResult(A1, A2, A3, A4, d2, A2+A3+A4>A1)
+    A4 = Tr * (Lr - Db / sin(beta))
+    return ReinforcementAreaResult(A1, A2, A3, A4, d2, A2 + A3 + A4 > A1)
+
 
 def _half_width(d1, Th, c, Tb, C, Dh):
     """
     Calculate 'half width' of reinforcement zone per B31.3 304.3.3.
     """
-    d2_a = (Tb-C) + (Th-c) + d1/2
+    d2_a = (Tb - C) + (Th - c) + d1 / 2
     return min(max(d1, d2_a), Dh)
 
 
-def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg'),
-                                 Tr=Q_('0 in'), Lr=Q_('0 in'), d1=None,
-                                    *, S, E, W, Y):
+def calculate_closure_reinforcement(Tp,
+                                    tp,
+                                    c,
+                                    branch,
+                                    P_diff,
+                                    beta=Q_('90 deg'),
+                                    Tr=Q_('0 in'),
+                                    Lr=Q_('0 in'),
+                                    d1=None,
+                                    *,
+                                    S,
+                                    E,
+                                    W,
+                                    Y):
     """
 
     Tp : ureg.Quantity {length: 1}
@@ -2013,7 +2098,8 @@ def calculate_closure_reinforcement(Tp, tp, c, branch, P_diff, beta=Q_('90 deg')
     tp : ureg.Quantity {length: 1}
         Pressure design thickness of the plate.
     """
-    result = _reinforcement_area(P_diff, float('inf')*ureg.m, Tp, tp, c, branch,
+    result = _reinforcement_area(P_diff,
+                                 float('inf') * ureg.m, Tp, tp, c, branch,
                                  beta, Tr, Lr, d1, S, E, W, Y)
     return result
 
@@ -2039,15 +2125,16 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
     def v(P_):
         P = P_ * ureg.Pa
         fluid_temp.update_kw(P=P, Smass=S)
-        rho = fluid_temp.Dmass.m_as(ureg.kg/ureg.m**3)
+        rho = fluid_temp.Dmass.m_as(ureg.kg / ureg.m**3)
         return 1 / rho
-    dP = (P1_-P2_) / n_steps
+
+    dP = (P1_ - P2_) / n_steps
     P_ = P1_
     Pc_ = P2_
     G_max = 0
     while P_ > P2_:
         try:
-            G = 1/v(P_) * (-2*quad(v, P1_, P_)[0])**0.5
+            G = 1 / v(P_) * (-2 * quad(v, P1_, P_)[0])**0.5
         except ValueError:  # CoolProp has issues around critical point
             P_ -= dP
             continue
@@ -2057,7 +2144,7 @@ def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
         else:
             G_max = G
             P_ -= dP
-    G_max *= ureg.kg/(ureg.s*ureg.m**2)
+    G_max *= ureg.kg / (ureg.s * ureg.m**2)
     return G_max
 
 
@@ -2068,9 +2155,8 @@ def volume(piping):
     # TODO remove elbows and tees after merge
     for pipe in piping:
         if isinstance(pipe, pipe_type):
-            result.append((str(pipe),
-                            f'{pipe.L.to(ureg.ft).magnitude:.3g}',
-                            f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
+            result.append((str(pipe), f'{pipe.L.to(ureg.ft).magnitude:.3g}',
+                           f'{pipe.volume.to(ureg.ft**3).magnitude:.3g}'))
     return result
 
 
@@ -2081,9 +2167,9 @@ def piping_stored_energy(fluid, piping):
     volume = 0 * ureg.m**3
     for tube in piping:
         # Smaller of 8*ID and actual length
-        length = min(tube.L, 8*tube.ID)
+        length = min(tube.L, 8 * tube.ID)
         area = circle_area(tube.ID)
-        volume = max(volume, area*length)
+        volume = max(volume, area * length)
     return stored_energy(fluid, volume)
 
 
