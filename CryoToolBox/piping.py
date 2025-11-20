@@ -1180,19 +1180,19 @@ class LineContext:
             d_nom = self.dimensions.get("D_nom")
             sch = self.dimensions.get("SCH")
             if d_nom is not None and sch is not None:
-                return f"NPS {d_nom:g} SCH {sch} {unit_str}"
+                return f"NPS {d_nom:g} SCH {sch}, L {unit_str}"
             return f"NPS line (incomplete: {self.dimensions}) {unit_str}"
 
         elif self.system.lower() == "tube":
             od = self.dimensions.get("OD")
             wall = self.dimensions.get("wall")
             if od is not None and wall is not None:
-                return f"{od:~P} x {wall:~P} tube {unit_str}"
+                return f"{od:~P} x {wall:~P} tube, L {unit_str}"
             return f"Tube line (incomplete: {self.dimensions}) {unit_str}"
 
         # Fallback for unrecognized system types
         dims = ", ".join(f"{k}={v}" for k, v in self.dimensions.items())
-        return f"{self.system} line ({dims}) {unit_str}"
+        return f"{self.system} line ({dims}), L {unit_str}"
 
 
 def create_element(description, ctx: LineContext):
