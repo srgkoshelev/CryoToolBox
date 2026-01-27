@@ -1690,6 +1690,7 @@ class TestNpsPattern(unittest.TestCase):
     def test_decimal_forms(self):
         """Test decimal NPS values with various spacing."""
         cases = [
+            'nps 0.5 in sch10',
             'nps 1.5 in sch10',
             'nps 1.5 in sch 10',
             'nps 1.5in sch10',
@@ -1753,6 +1754,14 @@ class TestLineContext(unittest.TestCase):
                                                  length_unit='m')
         self.assertEqual(ctx.system, "NPS")
         self.assertAlmostEqual(ctx.D_nom, 1.0)
+        self.assertEqual(ctx.SCH, 10)
+        self.assertEqual(ctx.length_unit, u.m)
+
+    def test_nps_parsing_fractional(self):
+        ctx = ctb.piping.LineContext.from_string('NPS 1/2" SCH10',
+                                                 length_unit='m')
+        self.assertEqual(ctx.system, "NPS")
+        self.assertAlmostEqual(ctx.D_nom, 0.5)
         self.assertEqual(ctx.SCH, 10)
         self.assertEqual(ctx.length_unit, u.m)
 

@@ -58,7 +58,7 @@ COPPER_TABLE = _load_table('copper_table.yaml')
 
 NPS_PATTERN = re.compile(
     r'(?:nps)?\s*'
-    r'(?!0*\.?0+(?:\D|$))(\d+\.?\d*)'
+    r'(?!0+\.?0*(?:[^\d.]|$))(\d+\.?\d*)'
     r'\s*(?:in(?:ch)?)?\s*(?:nps)?\s*'
     r'sch\s*(\d+)(?:nps)?$',
     re.IGNORECASE,
@@ -1146,6 +1146,7 @@ class LineContext:
     def from_string(cls, description: str, length_unit: str):
         """Parse a pipeline description string into a LineContext."""
         desc = description.strip().replace('"', ' inch')
+        desc = cls._fraction_to_decimal(desc)
         if m := NPS_PATTERN.fullmatch(desc):
             return cls(system='NPS',
                        dimensions={
@@ -1164,6 +1165,17 @@ class LineContext:
                        length_unit=Q_(length_unit).u)
 
         raise ValueError(f'Unrecognized context string: {description}')
+
+    @staticmethod
+    def _fraction_to_decimal(s: str) -> str:
+        """Convert common fractions like '1/2' to decimal notation."""
+        import re
+        fraction_pattern = re.compile(r'\b(\d+)/(\d+)\b')
+        def replace_fraction(match):
+            numerator = int(match.group(1))
+            denominator = int(match.group(2))
+            return str(numerator / denominator)
+        return fraction_pattern.sub(replace_fraction, s)
 
     def __getattr__(self, name: str):
         """Allow attribute-style access to dimensions."""
