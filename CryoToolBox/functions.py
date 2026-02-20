@@ -994,6 +994,12 @@ _NIST_DATA = {
                       'range': (4, 300),
                       'fun': _nist_Cu_log_fit,
                       'unit': ureg.W/(ureg.m*ureg.K)},
+        Property.SH: {'coefs': [-1.91844, -0.15973, 8.61013, -18.996,
+                                21.9661, -12.7328, 3.54322, -0.3797, 0,
+                                ],
+                      'range': (4, 300),
+                      'fun': _nist_log_fit,
+                      'unit': ureg.J/(ureg.kg*ureg.K)},
     },
 }
 
