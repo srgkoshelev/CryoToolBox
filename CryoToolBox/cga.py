@@ -92,7 +92,7 @@ def F(fluid_FR, fluid_i):
     Z = fluid_FR.Z
     T = fluid_FR.T
     F_ = (Zi*Ti/(Z*T))**0.5
-    return F_.to(ureg.dimensionless)
+    return float(F_)
 
 
 def primary_insulated(fluid_FR, U, A, F=1, conservative=True):
@@ -183,7 +183,7 @@ def _G_i_us(T, C, L, TZM):
     While the actual value has units, the quantity returned as dimensionless.
     CGA S-1.3 Notes for Table 1 and Table 2.
     """
-    return 73.4 * (1660-T) / (C*L) * TZM
+    return float(73.4 * (1660-T) / (C*L) * TZM)
 
 
 @ureg.wraps(None, (CP_const_unit['C_us'][1],
@@ -194,7 +194,7 @@ def _G_u_us(C, L, TZM):
     While the actual value has units, the quantity returned as dimensionless.
     CGA S-1.3 Notes for Table 1 and Table 2.
     """
-    return 633_000/ (C*L) * TZM
+    return float(633_000/ (C*L) * TZM)
 
 def calculate_inlet_temp(fluid_FR, m_dot, pipe, condition='fire'):
     """Calculate temperature at the relief inlet per 6.1.4 b)."""
