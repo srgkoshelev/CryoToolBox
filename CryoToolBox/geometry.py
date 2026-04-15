@@ -25,9 +25,9 @@ def circle_area(D):
     .. math:: A = \\frac{\\pi D^2}{4}
 
     where:
-      - \( A \) is the area of the circle,
-      - \( D \) is the diameter of the circle,
-      - \( \\pi \) is a mathematical constant, approximately 3.14159.
+      - `A` is the area of the circle,
+      - `D` is the diameter of the circle,
+      - `pi` is a mathematical constant, approximately 3.14159.
 
     Examples
     --------
@@ -63,10 +63,10 @@ def cylinder_volume(D, H):
     .. math:: V = \\frac{\\pi D^2 H}{4}
 
     where:
-      - \( V \) is the volume of the cylinder,
-      - \( D \) is the diameter of the cylinder,
-      - \( H \) is the height of the cylinder,
-      - \( \\pi \) is a mathematical constant, approximately 3.14159.
+      - `V` is the volume of the cylinder,
+      - `D` is the diameter of the cylinder,
+      - `H` is the height of the cylinder,
+      - `pi` is a mathematical constant, approximately 3.14159.
 
     Examples
     --------

@@ -12,7 +12,6 @@ from .functions import ThermState
 from .functions import to_standard_flow
 from .piping import G_nozzle
 from dataclasses import dataclass
-import xlsxwriter
 from enum import Enum, auto
 # Loading FESHM 4240 Failure rates
 from .FESHM4240_TABLES import TABLE_1, TABLE_2
@@ -1075,6 +1074,13 @@ class Volume:
             ])
         wb_options = {}
         filename += '.xlsx'
+        try:
+            import xlsxwriter
+        except ImportError as exc:
+            raise ImportError(
+                'Excel export requires the optional dependency group '
+                '`CryoToolBox[odh]`.'
+            ) from exc
         with xlsxwriter.Workbook(filename, wb_options) as workbook:
             worksheet = workbook.add_worksheet()
             for row_n, row in enumerate(table):

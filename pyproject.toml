@@ -6,18 +6,16 @@ build-backend = "setuptools.build_meta"
 name = "CryoToolBox"
 version = "0.1.0"
 description = "The python toolkit for cryogenic fluid and heat transfer analysis"
+readme = "README.md"
 authors = [
     { name = "Sergey Koshelev", email = "srg.koshelev@proton.me" }
 ]
-license = {text = "MIT"}
+license = "MIT"
 dependencies = [
     "CoolProp >= 6.4",
     "Pint >= 0.9",
-    "Serialize >= 0.1",
     "scipy >= 1.2",
-    "pyyaml >= 6.0",
-    "xlsxwriter >= 3.0",
-    "pdoc >= 15"
+    "pyyaml >= 6.0"
 ]
 requires-python = ">=3.8"
 classifiers = [
@@ -37,6 +35,14 @@ classifiers = [
 Homepage = "https://srgkoshelev.github.io/CryoToolBox/"
 Documentation = "https://srgkoshelev.github.io/CryoToolBox/"
 Source = "https://github.com/srgkoshelev/CryoToolBox"
+
+[project.optional-dependencies]
+docs = [
+    "pdoc >= 15",
+]
+odh = [
+    "xlsxwriter >= 3.0",
+]
 
 [tool.setuptools.package-data]
 CryoToolBox = ["*.ini", "*.txt", "*.yaml"]

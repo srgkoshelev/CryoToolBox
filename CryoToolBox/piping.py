@@ -12,7 +12,7 @@ from .functions import Re
 from .geometry import circle_area
 from . import os, __location__
 import pint
-from serialize import load
+import yaml
 from scipy.optimize import root_scalar
 from collections.abc import MutableSequence
 from collections import namedtuple
@@ -46,7 +46,8 @@ class ChokedFlow(HydraulicError):
 
 
 def _load_table(table_name):
-    yaml_table = load((os.path.join(__location__, table_name)))
+    with open(os.path.join(__location__, table_name), encoding='utf-8') as fh:
+        yaml_table = yaml.safe_load(fh)
     result = {}
     for D, sub_table in yaml_table.items():
         result.update({D: {k: v * ureg.inch for k, v in sub_table.items()}})
@@ -1921,16 +1922,18 @@ def pressure_req_thick(tube, P_diff, I=1, *, S, E, W, Y):
     .. math:: t_m = \\frac{P D}{2 (S E W/I + P Y)} + c
 
     where:
-      - \( t \) is the minimum required wall thickness,
-      - \( P \) is the differential internal pressure,
-      - \( D \) is the outside diameter of the tube,
-      - \( S \) is the allowable stress of the material,
-      - \( E \) is the quality factor,
-      - \( W \) is the weld joint strength reduction factor,
-      - \( I \) is the pipe bend coefficient.
-      - \( Y \) is the coefficient from Table 304.1.1.
+      - `t` is the minimum required wall thickness,
+      - `P` is the differential internal pressure,
+      - `D` is the outside diameter of the tube,
+      - `S` is the allowable stress of the material,
+      - `E` is the quality factor,
+      - `W` is the weld joint strength reduction factor,
+      - `I` is the pipe bend coefficient.
+      - `Y` is the coefficient from Table 304.1.1.
 
-    If the calculated thickness \( t \) is greater than or equal to \( D/6 \) or if \( P/(S E) \) is greater than 0.385, the design thickness must be calculated in accordance with B31.3 304.1.2 (b).
+    If the calculated thickness `t` is greater than or equal to `D/6` or if
+    `P/(S E)` is greater than 0.385, the design thickness must be calculated
+    in accordance with B31.3 304.1.2 (b).
 
     Examples
     --------

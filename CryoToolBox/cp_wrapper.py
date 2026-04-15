@@ -138,8 +138,11 @@ class ThermState:
 
     def __init__(self, fluid, backend="HEOS", **state_parameters):
         """
-        Available backends: HEOS (opensource), REFPROP.
-        See http://www.coolprop.org/coolprop/REFPROP.html for details.
+        Available backends: HEOS, REFPROP, and HEPROP.
+
+        HEOS is the default and supported alpha path.
+        REFPROP and HEPROP are optional backends that require local
+        third-party installations.
         """
         # TODO this should check for the fluid name too
         if backend == "HEPROP":
@@ -147,7 +150,14 @@ class ThermState:
                 raise ValueError(
                     f'Only helium fluid can be used with HEPROP backend: {fluid}'
                 )
-            self._AbstractState = HepropState()
+            try:
+                self._AbstractState = HepropState()
+            except OSError as exc:
+                raise OSError(
+                    'HEPROP backend is optional and requires a working '
+                    '`HEPROPPATH` installation. Use the default HEOS backend '
+                    'for the supported alpha path.'
+                ) from exc
         else:
             self._AbstractState = CP.AbstractState(backend, fluid)
         if state_parameters:
