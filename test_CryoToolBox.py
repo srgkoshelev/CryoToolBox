@@ -40,7 +40,7 @@ except ValueError:
 try:
     ctb.ThermState('helium', T=300 * u.K, P=1 * u.bar, backend='HEPROP')
     skip_HP_test = False
-except ValueError:
+except (ValueError, OSError):
     skip_HP_test = True
 
 
