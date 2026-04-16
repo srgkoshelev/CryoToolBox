@@ -1,6 +1,9 @@
-"""
-Pressure relief calculations for CGA S-1.3.
-2008 ed.
+"""Pressure-relief calculations based on CGA S-1.3.
+
+This module contains the CGA-specific capacity and flow-rating helpers used by
+the relief-sizing features in CryoToolBox. These functions are a better home
+for standard-specific relief logic than the legacy mixed-purpose helpers in
+``functions.py``.
 """
 
 from . import logger
@@ -28,8 +31,7 @@ def P_FR(P_set, factor=0.1):
 
 
 def theta(fluid):
-    """""Calculate temperature for flow capacity calculation per
-    CGA S-1.3 2008 6.1.3.
+    """Calculate the flow-rating temperature per CGA S-1.3 section 6.1.3.
 
     Parameters
     ----------
@@ -39,6 +41,7 @@ def theta(fluid):
     Returns
     -------
     Quantity {temperature: 1}
+        Flow-rating temperature used for capacity calculations.
     """
     temp_state = fluid.copy()
     if not fluid.is_super_critical:

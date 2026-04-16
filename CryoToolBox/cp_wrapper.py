@@ -1,8 +1,8 @@
-"""Wrapper module for CoolProp's AbstractState.
+"""Unit-aware wrapper layer around CoolProp and the optional HEPROP backend.
 
-1. Provides unit support
-2. Adds some small useful functions
-
+This module translates between Pint quantities and the lower-level property
+backends so the rest of CryoToolBox can work with dimensional values while
+keeping the backend-specific details in one place.
 """
 import CoolProp.CoolProp as CP
 from .heprop_state import HepropState
@@ -140,6 +140,25 @@ CP_inputs = {
 
 
 class ThermState:
+    """Unit-aware wrapper around CoolProp's ``AbstractState``.
+
+    Parameters
+    ----------
+    fluid : str
+        CoolProp fluid string such as ``"nitrogen"`` or ``"helium"``.
+    backend : str, default ``"HEOS"``
+        Property backend. ``HEOS`` is the supported default. ``REFPROP`` and
+        ``HEPROP`` require local third-party installations.
+    **state_parameters
+        Optional pair of state variables used to initialize the state, for
+        example ``P=...`` and ``T=...``.
+
+    Notes
+    -----
+    Public inputs and outputs are unit-aware quantities. Values are converted
+    internally to the units expected by CoolProp or the optional HEPROP
+    adapter.
+    """
 
     def __init__(self, fluid, backend="HEOS", **state_parameters):
         """
@@ -182,6 +201,7 @@ class ThermState:
         self.update(names[0], values[0], names[1], values[1])
 
     def update(self, name1, value1, name2, value2):
+        """Update the state from two named thermodynamic inputs."""
         if name1 > name2:  # Sorting inputs alphabetically
             name1, name2 = name2, name1
             value1, value2 = value2, value1
@@ -223,65 +243,78 @@ class ThermState:
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T_critical(self):
+        """Critical temperature."""
         return self._AbstractState.T_critical()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P_critical(self):
+        """Critical pressure."""
         return self._AbstractState.p_critical()
 
     @property
     @ureg.wraps(CP_const_unit['Dmolar_critical'][1], None)
     def Dmolar_critical(self):
+        """Critical molar density."""
         return self._AbstractState.rhomolar_critical()
 
     @property
     @ureg.wraps(CP_const_unit['Dmass_critical'][1], None)
     def Dmass_critical(self):
+        """Critical mass density."""
         return self._AbstractState.rhomass_critical()
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T(self):
+        """Temperature of the current state."""
         return self._AbstractState.T()
 
     @property
     @ureg.wraps(CP_const_unit['Dmolar_critical'][1], None)
     def Dmolar(self):
+        """Molar density of the current state."""
         return self._AbstractState.rhomolar()
 
     @property
     @ureg.wraps(CP_const_unit['Dmass_critical'][1], None)
     def Dmass(self):
+        """Mass density of the current state."""
         return self._AbstractState.rhomass()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P(self):
+        """Pressure of the current state."""
         return self._AbstractState.p()
 
     @property
     def Q(self):
+        """Vapor quality for two-phase states."""
         return self._AbstractState.Q()
 
     @property
     @ureg.wraps(CP_const_unit['molar_mass'][1], None)
     def molar_mass(self):
+        """Fluid molar mass."""
         return self._AbstractState.molar_mass()
 
     @property
     @ureg.wraps(CP_const_unit['gas_constant'][1], None)
     def gas_constant(self):
+        """Universal gas constant returned by the backend."""
         return self._AbstractState.gas_constant()
 
     @property
     def specific_gas_constant(self):
+        """Specific gas constant derived from ``R/M``."""
         R_spec = self.gas_constant / self.molar_mass
         return R_spec
 
     @property
     # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
+        """Compressibility factor ``Z``."""
         if self.backend == "HEPROP":
             Z_ = self._AbstractState.compressibility_factor()
         else:
@@ -298,120 +331,143 @@ class ThermState:
     @property
     @ureg.wraps(CP_const_unit['Hmolar'][1], None)
     def Hmolar(self):
+        """Molar enthalpy."""
         return self._AbstractState.hmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Hmass'][1], None)
     def Hmass(self):
+        """Specific enthalpy on a mass basis."""
         return self._AbstractState.hmass()
 
     @property
     @ureg.wraps(CP_const_unit['Smolar'][1], None)
     def Smolar(self):
+        """Molar entropy."""
         return self._AbstractState.smolar()
 
     @property
     @ureg.wraps(CP_const_unit['Smass'][1], None)
     def Smass(self):
+        """Specific entropy on a mass basis."""
         return self._AbstractState.smass()
 
     @property
     @ureg.wraps(CP_const_unit['Cpmolar'][1], None)
     def Cpmolar(self):
+        """Constant-pressure heat capacity on a molar basis."""
         return self._AbstractState.cpmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Cpmass'][1], None)
     def Cpmass(self):
+        """Constant-pressure heat capacity on a mass basis."""
         return self._AbstractState.cpmass()
 
     @property
     @ureg.wraps(CP_const_unit['Cvmolar'][1], None)
     def Cvmolar(self):
+        """Constant-volume heat capacity on a molar basis."""
         return self._AbstractState.cvmolar()
 
     @property
     @ureg.wraps(CP_const_unit['Cvmass'][1], None)
     def Cvmass(self):
+        """Constant-volume heat capacity on a mass basis."""
         return self._AbstractState.cvmass()
 
     @property
     @ureg.wraps(CP_const_unit['viscosity'][1], None)
     def viscosity(self):
+        """Dynamic viscosity."""
         return self._AbstractState.viscosity()
 
     @property
     @ureg.wraps(CP_const_unit['conductivity'][1], None)
     def conductivity(self):
+        """Thermal conductivity."""
         return self._AbstractState.conductivity()
 
     @property
     @ureg.wraps(CP_const_unit['surface_tension'][1], None)
     def surface_tension(self):
+        """Surface tension."""
         return self._AbstractState.surface_tension()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P_reducing(self):
+        """Reducing pressure."""
         return self._AbstractState.p_reducing()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P_triple(self):
+        """Triple-point pressure."""
         return self._AbstractState.ptriple()
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P_max(self):
+        """Maximum pressure supported by the backend."""
         return self._AbstractState.pmax()
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T_reducing(self):
+        """Reducing temperature."""
         return self._AbstractState.T_reducing()
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T_triple(self):
+        """Triple-point temperature."""
         return self._AbstractState.Ttriple()
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T_max(self):
+        """Maximum temperature supported by the backend."""
         return self._AbstractState.Tmax()
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
     def T_min(self):
+        """Minimum temperature supported by the backend."""
         return self._AbstractState.Tmin()
 
     @property
     @ureg.wraps(CP_const_unit['isothermal_compressibility'][1], None)
     def isothermal_compressibility(self):
+        """Isothermal compressibility."""
         return self._AbstractState.isothermal_compressibility()
 
     @property
     @ureg.wraps(CP_const_unit['isobaric_expansion_coefficient'][1], None)
     def isobaric_expansion_coefficient(self):
+        """Isobaric thermal expansion coefficient."""
         return self._AbstractState.isobaric_expansion_coefficient()
 
     @property
     @ureg.wraps(CP_const_unit['isentropic_expansion_coefficient'][1],
                 None)  ### not existing with coolprop issues
     def isentropic_expansion_coefficient(self):
+        """Isentropic expansion coefficient."""
         return self._AbstractState.isentropic_expansion_coefficient()
 
     @property
     def Prandtl(self):
+        """Prandtl number."""
         return self._AbstractState.Prandtl()
 
     @property
     @ureg.wraps(CP_const_unit['speed_sound'][1], None)
     def speed_sound(self):
-        """Mass fractions of a mixture."""
+        """Speed of sound at the current thermodynamic state."""
         return self._AbstractState.speed_sound()
 
     def first_partial_deriv(self, Of, Wrt, Constant):
+        """Evaluate a first partial derivative exposed by CoolProp."""
         output_unit = CP_const_unit[Of][1] / CP_const_unit[Wrt][1]
         Of_CP_const = CP_const_unit[Of][0]
         Wrt_CP_const = CP_const_unit[Wrt][0]
@@ -624,12 +680,14 @@ class ThermState:
 
     @property
     def P_sat(self):
+        """Saturation pressure at the current temperature."""
         TempState = self.copy()
         TempState.update_kw(T=self.T, Q=0)
         return TempState.P
 
     @property
     def T_sat(self):
+        """Saturation temperature at the current pressure."""
         TempState = self.copy()
         TempState.update_kw(P=self.P, Q=0)
         return TempState.T

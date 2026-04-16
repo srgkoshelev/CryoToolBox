@@ -1,4 +1,9 @@
-# Defining failure rates as per FESHM 4240 chapter
+"""Failure-rate tables used by the ODH calculations.
+
+The data is encoded as Pint quantities at import time so downstream ODH logic
+can work directly with dimensional values.
+"""
+
 from .std_conditions import Q_
 
 TABLE_1 = {'Compressor':

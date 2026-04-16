@@ -1,11 +1,13 @@
+"""Shared Pint registry and standard reference conditions used by the package."""
+
+from importlib.resources import files
 from pint import UnitRegistry
-import os
 
 # Configuring units package:
 ureg = UnitRegistry()
 Q_ = ureg.Quantity
-__location__ = os.path.dirname(os.path.abspath(__file__))
-ureg.load_definitions(os.path.join(__location__, 'pint definitions.txt'))
+__location__ = str(files(__package__))
+ureg.load_definitions(str(files(__package__).joinpath('pint definitions.txt')))
 
 
 # Setting units for "standard" flow

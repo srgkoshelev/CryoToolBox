@@ -1,4 +1,15 @@
-"""Helpful thermodynamic functions.
+"""General engineering helpers spanning thermodynamics and heat transfer.
+
+Historically this module accumulated a broad set of utility functions. It now
+contains several distinct domains:
+
+1. flow and relief helper conversions,
+2. radiative and conductive heat-transfer utilities,
+3. nondimensional transport numbers and natural-convection correlations,
+4. material-property fits and stored-energy helpers.
+
+The implementation remains stable for compatibility, but future refactoring
+should split these groups into more focused modules.
 """
 
 from math import log, log10, pi
@@ -20,6 +31,8 @@ sigma = ureg.stefan_boltzmann_constant
 
 
 class NISTError(Exception):
+    """Raised when a calculated property falls outside a NIST comparison."""
+
     def __init__(self, message):
         self.message = message
         super().__init__(message)
@@ -211,6 +224,15 @@ def Kv_to_Cv(Kv):
 
 
 def theta_heat(fluid, step=0.01):
+    """Deprecated compatibility wrapper for :func:`CryoToolBox.cga.theta`.
+
+    Parameters
+    ----------
+    fluid : ThermState
+        Fluid state used for the CGA temperature calculation.
+    step : float, optional
+        Deprecated legacy argument retained for compatibility.
+    """
     logger.warning('Deprecated. Use ht.cga.theta() instead.')
     return cga.theta(fluid, step)
 
