@@ -29,19 +29,28 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-# Checking if REFPROP works to run the tests
-try:
-    ctb.ThermState('helium', P=1 * u.bar, T=ctb.T_NTP, backend='REFPROP')
-    skip_RP_test = False
-except ValueError:
-    skip_RP_test = True
+def _backend_available(fluid, backend, **state_parameters):
+    """Return True when an optional backend can be initialized for tests."""
+    try:
+        ctb.ThermState(fluid, backend=backend, **state_parameters)
+        return True
+    except Exception:
+        return False
 
-# Checking if Heprop works to run the tests
-try:
-    ctb.ThermState('helium', T=300 * u.K, P=1 * u.bar, backend='HEPROP')
-    skip_HP_test = False
-except (ValueError, OSError):
-    skip_HP_test = True
+
+# Checking if optional backends work to run the tests
+skip_RP_test = not _backend_available(
+    'helium',
+    'REFPROP',
+    P=1 * u.bar,
+    T=ctb.T_NTP,
+)
+skip_HP_test = not _backend_available(
+    'helium',
+    'HEPROP',
+    T=300 * u.K,
+    P=1 * u.bar,
+)
 
 
 @unittest.skipIf(skip_RP_test,
