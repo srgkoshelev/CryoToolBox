@@ -973,7 +973,7 @@ class Contraction(PipingTransition):
         """
         # TODO: Add Re handling for Reynolds number corrections
         if Re is not None:
-            logger.warning("Reynolds number correction not yet implemented")
+            logger.debug("Reynolds number correction not yet implemented")
 
         if self.theta <= 45 * ureg.deg:
             # Crane TP-410 A-26, Formula 1 for gradual contractions

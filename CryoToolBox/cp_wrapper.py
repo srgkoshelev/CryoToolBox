@@ -10,6 +10,11 @@ from math import inf
 from .std_conditions import ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 import warnings
 
+
+class CryoToolBoxFutureWarning(FutureWarning):
+    """FutureWarning subclass for user-facing API behavior changes."""
+
+
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J / ureg.mol / ureg.K),
     'molar_mass': (CP.imolar_mass, ureg.kg / ureg.mol),
@@ -578,8 +583,11 @@ class ThermState:
     def latent_heat(self):
         """Calculate latent heat of evaporation for current quality."""
         warnings.warn(
-            'latent_heat function behavior has been changed. It now accounts for fluid quality.',
-            DeprecationWarning)
+            'latent_heat behavior changed: it now returns the remaining latent '
+            'heat at the current quality (Q=0 -> full latent heat, Q=1 -> 0).',
+            CryoToolBoxFutureWarning,
+            stacklevel=2,
+        )
         if not (0 <= self.Q <= 1):
             raise ValueError(
                 f'Latent heat is undefined for Q={self.Q}, {self}.')

@@ -1,12 +1,23 @@
 import CryoToolBox as ctb
+from CryoToolBox.cp_wrapper import CryoToolBoxFutureWarning
 from CryoToolBox import odh
 import pprint
 import unittest
 import doctest
+import warnings
 from math import pi, sin, sqrt, tan
 from unittest.mock import MagicMock
 
 pp = pprint.PrettyPrinter()
+
+warnings.filterwarnings(
+    'ignore',
+    category=CryoToolBoxFutureWarning,
+)
+
+
+def setUpModule():
+    warnings.simplefilter('ignore', CryoToolBoxFutureWarning)
 
 ht = ctb
 u = ht.ureg
