@@ -1,3 +1,8 @@
+# Copper tube dimensions in inches.
+# Source basis: nominal copper tube sizes used by CryoToolBox.
+# Each row must define:
+# - `OD`: outside diameter
+# - one or more type keys such as `K`, `L`, or `M` with wall thicknesses
     0.25:
         OD: .375
         K: .035

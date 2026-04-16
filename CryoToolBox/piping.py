@@ -51,12 +51,61 @@ class ChokedFlow(HydraulicError):
 
 
 def _load_table(table_name):
+    """Load a dimensional lookup table from package data.
+
+    The YAML files store nominal dimensions in inches without units. This
+    loader attaches units and validates a few schema expectations so table
+    regressions are caught close to import time.
+    """
     with files(__package__).joinpath(table_name).open(encoding='utf-8') as fh:
         yaml_table = yaml.safe_load(fh)
     result = {}
     for D, sub_table in yaml_table.items():
         result.update({D: {k: v * ureg.inch for k, v in sub_table.items()}})
+    _validate_table(table_name, result)
     return result
+
+
+def _validate_table(table_name, table):
+    """Validate the basic structure and values of a dimensional lookup table."""
+    if not table:
+        raise PipingError(f'{table_name} is empty.')
+
+    metadata_keys = {'OD'}
+    if table_name == 'NPS_table.yaml':
+        metadata_keys.add('DN')
+
+    for nominal_size, row in table.items():
+        if 'OD' not in row:
+            raise PipingError(
+                f'{table_name} entry {nominal_size!r} is missing required key '
+                "'OD'."
+            )
+
+        od = row['OD']
+        if od <= 0 * ureg.inch:
+            raise PipingError(
+                f'{table_name} entry {nominal_size!r} has non-positive OD {od}.'
+            )
+
+        thickness_keys = [key for key in row if key not in metadata_keys]
+        if not thickness_keys:
+            raise PipingError(
+                f'{table_name} entry {nominal_size!r} has no wall-thickness '
+                'data.'
+            )
+
+        for key, value in row.items():
+            if value <= 0 * ureg.inch:
+                raise PipingError(
+                    f'{table_name} entry {nominal_size!r} field {key!r} has '
+                    f'non-positive value {value}.'
+                )
+            if key in thickness_keys and 2 * value >= od:
+                raise PipingError(
+                    f'{table_name} entry {nominal_size!r} field {key!r} has '
+                    f'wall {value} inconsistent with OD {od}.'
+                )
 
 
 NPS_table = _load_table('NPS_table.yaml')
