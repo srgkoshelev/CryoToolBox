@@ -1242,6 +1242,51 @@ class geometry(unittest.TestCase):
         self.assertEqual(V, ctb.geometry.cylinder_volume(D, H))
 
 
+class ReliefFacadeTest(unittest.TestCase):
+
+    def test_relief_exports_legacy_helpers(self):
+        self.assertIs(ctb.relief.A_relief_API, ctb.A_relief_API)
+        self.assertIs(ctb.relief.P_FR, ctb.cga.P_FR)
+        self.assertIs(ctb.relief.G_nozzle, ctb.piping.G_nozzle)
+
+
+class FlowFacadeTest(unittest.TestCase):
+
+    def test_flow_exports_legacy_helpers(self):
+        self.assertIs(ctb.flow.to_scfma, ctb.to_scfma)
+        self.assertIs(ctb.flow.from_scfma, ctb.from_scfma)
+        self.assertIs(ctb.flow.to_standard_flow, ctb.to_standard_flow)
+        self.assertIs(ctb.flow.to_mass_flow, ctb.to_mass_flow)
+
+    def test_flow_exports_preferred_aliases(self):
+        self.assertIs(ctb.flow.to_equiv_air, ctb.flow.to_scfma)
+        self.assertIs(ctb.flow.from_equiv_air, ctb.flow.from_scfma)
+        self.assertIs(ctb.flow.to_std_flow, ctb.flow.to_standard_flow)
+        self.assertIs(ctb.flow.from_std_flow, ctb.flow.to_mass_flow)
+
+    def test_air_equivalent_flow_round_trip(self):
+        fluid = ctb.ThermState('nitrogen', P=3 * u.bar, T=290 * u.K)
+        m_dot = 12.5 * u.g / u.s
+        q_air = ctb.flow.to_equiv_air(m_dot, fluid)
+        m_dot_roundtrip = ctb.flow.from_equiv_air(q_air, fluid)
+        self.assertAlmostEqual(
+            m_dot_roundtrip.to(u.g / u.s).magnitude,
+            m_dot.to(u.g / u.s).magnitude,
+            places=9,
+        )
+
+    def test_standard_flow_mass_round_trip(self):
+        fluid = ctb.ThermState('nitrogen', P=3 * u.bar, T=290 * u.K)
+        m_dot = 5.5 * u.g / u.s
+        q_std = ctb.flow.to_std_flow(m_dot, fluid)
+        m_dot_roundtrip = ctb.flow.from_std_flow(q_std, fluid)
+        self.assertAlmostEqual(
+            m_dot_roundtrip.to(u.g / u.s).magnitude,
+            m_dot.to(u.g / u.s).magnitude,
+            places=9,
+        )
+
+
 class TableIntegrityTest(unittest.TestCase):
 
     def test_nps_table_has_required_fields(self):

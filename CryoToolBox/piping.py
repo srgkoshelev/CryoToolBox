@@ -12,6 +12,7 @@ from .std_conditions import ureg, Q_, P_NTP
 from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
+from .relief import G_nozzle, equivalent_orifice
 from .geometry import circle_area
 import pint
 import yaml
@@ -1521,17 +1522,6 @@ def rc(fluid):
     return rc
 
 
-def dP_Darcy(K, rho, w):
-    '''
-    Darcy equation for pressure drop.
-    K - resistance coefficient
-    rho - density of flow at entrance
-    w - flow speed
-    '''
-    d_P = K * rho * w**2 / 2
-    return d_P.to(ureg.psi)
-
-
 def dP_incomp(m_dot, fluid, piping):
     """Calculate pressure drop of incompressible flow through piping.
     Lumped method using Darcy equation is used.
@@ -1966,17 +1956,6 @@ def beta(d1, d2):
     return float(beta_)
 
 
-def equivalent_orifice(m_dot, dP, fluid=AIR):
-    """
-    Calculate ID for the equivalent square edge orifice (Cd = 0.61) for given
-    flow and pressure drop.
-    """
-    Cd = 0.61
-    rho = fluid.Dmass
-    ID = 2 * (m_dot / (pi * Cd * (2 * dP * rho)**0.5))**0.5
-    return ID.to(ureg.inch)
-
-
 def velocity(fluid, m_dot, area):
     """Calculate velocity of fluid with given local parameters."""
 
@@ -2243,48 +2222,6 @@ def calculate_closure_reinforcement(Tp,
     return result
 
 
-def G_nozzle(fluid, P_out=P_NTP, n_steps=100):
-    """Calculate mass flux through a converging nozzle using direct integration
-    method.
-
-    This method is recommended for relief valve sizing.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-    fluid_temp = fluid.copy()
-    P1_ = fluid.P.m_as(ureg.Pa)
-    P2_ = P_out.m_as(ureg.Pa)
-    S = fluid.Smass
-
-    def v(P_):
-        P = P_ * ureg.Pa
-        fluid_temp.update_kw(P=P, Smass=S)
-        rho = fluid_temp.Dmass.m_as(ureg.kg / ureg.m**3)
-        return 1 / rho
-
-    dP = (P1_ - P2_) / n_steps
-    P_ = P1_
-    Pc_ = P2_
-    G_max = 0
-    while P_ > P2_:
-        try:
-            G = 1 / v(P_) * (-2 * quad(v, P1_, P_)[0])**0.5
-        except ValueError:  # CoolProp has issues around critical point
-            P_ -= dP
-            continue
-        if G < G_max:
-            Pc_ = P_
-            break
-        else:
-            G_max = G
-            P_ -= dP
-    G_max *= ureg.kg / (ureg.s * ureg.m**2)
-    return G_max
 
 
 def volume(piping):

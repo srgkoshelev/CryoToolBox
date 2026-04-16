@@ -36,6 +36,7 @@ and costly to document because unrelated concerns sit in one namespace.
 
 `CryoToolBox/functions.py` currently mixes:
 
+- flow-conversion helpers,
 - relief-flow conversions,
 - radiation and conduction helpers,
 - transport-property dimensionless groups,
@@ -64,14 +65,39 @@ The relief-related functionality is spread across at least three modules:
 This split is understandable historically, but it is no longer obvious to a
 user where relief functionality should live.
 
-### 5. `geometry.py` is small but still useful
+A minimal backward-compatible improvement is to expose a dedicated
+`CryoToolBox.relief` facade now, while leaving implementations in place until a
+larger reorganization is ready.
+
+### 5. Flow-conversion helpers should live together
+
+The following helpers are conceptually one group and should ultimately share a
+module:
+
+- `to_scfma` and `from_scfma`,
+- `to_standard_flow` and `to_mass_flow`.
+
+They are all unit-aware flow-conversion utilities rather than general
+thermodynamic helpers. A dedicated `CryoToolBox.flow` facade is the least
+disruptive near-term step.
+
+Recommended future names:
+
+- `to_scfma` -> `to_equiv_air`
+- `from_scfma` -> `from_equiv_air`
+- `to_standard_flow` -> `to_std_flow`
+- `to_mass_flow` -> `from_std_flow`
+
+The short legacy names should remain available through compatibility aliases.
+
+### 6. `geometry.py` is small but still useful
 
 The geometry module is not redundant by itself. It becomes valuable when it
 remains narrowly scoped to shared, unit-aware primitives that are reused across
 modules. The current issue is not that `geometry.py` exists; it is that its
 role is not yet clearly bounded.
 
-### 6. Table/data handling works, but can be made more robust
+### 7. Table/data handling works, but can be made more robust
 
 The current packaged YAML and Python-table approach is serviceable and tested,
 but there are some long-term maintenance risks:
@@ -108,6 +134,9 @@ CryoToolBox/
     cga.py
     nozzle.py
     equivalents.py
+  flow/
+    __init__.py
+    conversions.py
   piping/
     __init__.py
     tables.py
@@ -138,6 +167,7 @@ Recommended responsibilities:
 - `relief/cga.py`: CGA S-1.3 calculations now in `cga.py`.
 - `relief/nozzle.py`: `G_nozzle`, choked-flow helpers, and discharge utilities.
 - `relief/equivalents.py`: air-equivalent and standard-flow conversions.
+- `flow/conversions.py`: standard-flow and air-equivalent flow conversions.
 - `piping/tables.py`: YAML loading, schema validation, and dimensional lookup tables.
 - `piping/parsing.py`: `LineContext`, regex patterns, `create_element`.
 - `piping/elements.py`: `Tube`, `Pipe`, `CopperTube`, fittings, valves, beds.
@@ -201,23 +231,29 @@ to merge an older documentation-heavy branch wholesale.
 2. Split `functions.py` into domain modules behind compatibility re-exports.
    This is the single biggest discoverability improvement after the docs pass.
 
-3. Split `piping.py` behind a compatibility layer.
+3. Keep steering flow-conversion users toward `CryoToolBox.flow`.
+   This creates a stable namespace before the deeper `functions.py` split.
+
+4. Keep steering relief users toward `CryoToolBox.relief`.
+   This creates a stable namespace before the deeper module split.
+
+5. Split `piping.py` behind a compatibility layer.
    This offers the biggest maintainability improvement without forcing user
    code to change immediately.
 
-4. Add focused examples for the three main workflows.
+6. Add focused examples for the three main workflows.
    These should cover thermodynamic state setup, piping pressure-drop analysis,
    and ODH/source modeling.
 
-5. Expand tests around parsing and branch conditions.
+7. Expand tests around parsing and branch conditions.
    The line-description parsing and compressible-flow edge cases are the parts
    most likely to surprise users.
 
-6. Document backend expectations clearly.
+8. Document backend expectations clearly.
    `HEOS` should be the default documented path, while `REFPROP` and `HEPROP`
    should be marked as optional integrations with setup caveats.
 
-7. Introduce lightweight validation around packaged tables.
+9. Introduce lightweight validation around packaged tables.
    Required keys, units, and monotonic expectations should be tested so table
    updates cannot silently break calculations.
 
@@ -249,7 +285,33 @@ Longer-term options:
 For the next development cycle, the safest order is:
 
 1. Freeze and document the current public API.
-2. Extract `functions.py` into domain modules behind compatibility re-exports.
-3. Extract `piping` internals into submodules with no user-facing breakage.
-4. Add examples and tests around the extracted boundaries.
-5. Revisit deeper API cleanup only after the modular split is stable.
+2. Add stable facades such as `flow` and `relief` before moving implementations.
+3. Extract `functions.py` into domain modules behind compatibility re-exports.
+4. Extract `piping` internals into submodules with no user-facing breakage.
+5. Split the test suite by domain once the facades settle.
+6. Add examples and tests around the extracted boundaries.
+7. Revisit deeper API cleanup only after the modular split is stable.
+
+## Test-plan notes
+
+Current touched areas and coverage:
+
+- `relief` facade: lightly covered by alias/export tests.
+- flow conversions: only partially covered today.
+- table loading: covered by import-time validation and integrity tests.
+
+Easy tests that do not require new domain-specific reference data:
+
+1. facade alias tests for `flow` and `relief`,
+2. round-trip tests for inverse conversion helpers,
+3. dimensionality/error-path tests for public conversion helpers,
+4. packaging/import tests for data-backed modules.
+
+Reasonable future split of the test suite:
+
+- `tests/test_cp_wrapper.py`
+- `tests/test_flow.py`
+- `tests/test_relief.py`
+- `tests/test_piping.py`
+- `tests/test_odh.py`
+- `tests/test_geometry.py`

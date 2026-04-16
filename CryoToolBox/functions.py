@@ -13,11 +13,22 @@ should split these groups into more focused modules.
 """
 
 from math import log, log10, pi
-from .std_conditions import ureg, Q_, T_NTP, P_NTP
+from .std_conditions import ureg, Q_, P_NTP
 from .constants import AIR
 from .cp_wrapper import ThermState
 from . import cga
 from . import logger
+from .flow import (
+    from_equiv_air,
+    from_scfma,
+    from_std_flow,
+    to_equiv_air,
+    to_mass_flow,
+    to_scfma,
+    to_standard_flow,
+    to_std_flow,
+)
+from .relief import A_relief_API, PRV_flow, m_max
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
 from enum import Enum, auto
@@ -36,159 +47,6 @@ class NISTError(Exception):
     def __init__(self, message):
         self.message = message
         super().__init__(message)
-
-
-def to_scfma(M_dot_fluid, fluid):
-    """
-    Convert mass flow rate into equivalent flow of air.
-    Flow through a relief device with invariant Area/discharge coefficient
-    (KA).
-
-    Parameters
-    ----------
-    M_dot_fluid : Quantity {mass: 1, time: -1}
-        mass flow rate
-    fluid : ThermState
-
-    Returns
-    -------
-    ThermState
-        volumetric air flow rate
-    """
-    C_fluid = fluid.C_gas_const
-    C_air = AIR.C_gas_const
-
-    # Calculation
-    M_dot_air = M_dot_fluid * C_air / C_fluid * AIR.MZT / fluid.MZT
-    Q_air = M_dot_air / AIR.Dmass
-    Q_air.ito(ureg.ft**3/ureg.min)
-    return Q_air
-
-
-def from_scfma(Q_air, fluid):
-    """
-    Convert volumetric air flow rate into equivalent mass flow of specified
-    fluid. Flow through a relief device with invariant Area/discharge
-    coefficient (KA).
-    Invert function to to_scfma().
-
-    Parameters
-    ----------
-    Q_air : Quantity {length: 3, time: -1}
-        volumetric air flow rate
-    fluid : ThermState
-
-    Returns
-    -------
-    Quantity {mass: 1, time: -1}
-        mass flow rate
-    """
-    C_fluid = fluid.C_gas_const
-    C_air = AIR.C_gas_const
-
-    # Calculation
-    M_dot_air = Q_air * AIR.Dmass
-    M_dot_fluid = M_dot_air * C_fluid / C_air * fluid.MZT / AIR.MZT
-    M_dot_fluid.ito(ureg.g/ureg.s)
-    return M_dot_fluid
-
-
-def to_standard_flow(flow_rate, fluid):
-    '''
-    Converting volumetric flow at certain conditions or mass flow to
-    flow at NTP.
-    '''
-    fluid_NTP = ThermState(fluid.name)
-    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
-    if flow_rate.dimensionality == ureg('kg/s').dimensionality:
-        # mass flow, flow conditions are unnecessary
-        q_std = flow_rate / fluid_NTP.Dmass
-    elif flow_rate.dimensionality == ureg('m^3/s').dimensionality:
-        # volumetric flow given, converting to standard pressure and
-        # temperature
-        if fluid.Dmass != -float('Inf')*ureg.kg/ureg.m**3:
-            # By default ThermState is initialized with all fields == -inf
-            q_std = flow_rate * fluid.Dmass / fluid_NTP.Dmass
-        else:
-            logger.warning('''Flow conditions for volumetric flow {:.3~}
-                           are not set. Assuming standard flow at NTP.
-                           '''.format(flow_rate))
-            q_std = flow_rate
-    else:
-        raise ValueError ('Flow dimensionality is not supported: '
-                     f'{flow_rate.dimensionality}.')
-    q_std.ito(ureg.ft**3/ureg.min)
-    return q_std
-
-
-def to_mass_flow(Q_std, fluid):
-    """
-    Calculate mass flow for given volumetric flow at standard conditions.
-    """
-    fluid_NTP = ThermState(fluid.name)
-    fluid_NTP.update('T', T_NTP, 'P', P_NTP)
-    m_dot = Q_std * fluid_NTP.Dmass
-    return m_dot.to(ureg.g/ureg.s)
-
-
-def m_max(fluid, A):
-    """Calculate max isentropic flow at sonic condition
-    (9.46a, Fluid Mechanics, F. White, 2015)
-    """
-    C = fluid.C_gas_const
-    P = fluid.P
-    m_max_ = C * A * P * fluid.MZT
-    return m_max_.to_base_units()
-
-
-def PRV_flow(A, Kd, fluid):
-    """Calculate mass flow through the relief valve based on
-    BPVC VIII div. 1 UG-131 (e) (2).
-    """
-    W_T = m_max(fluid, A)  # Theoretical flow
-    W_a = W_T * Kd  # Actual flow
-    return W_a.to(ureg.g/ureg.s)
-
-
-def A_relief_API(m_dot, fluid, *, P_back=P_NTP, K_d=0.975, K_b=1, K_c=1):
-    """Calculate required relief area for given flow as per
-    API 520 5.6.3/4
-
-    Parameters
-    ----------
-    m_dot : Quantity {mass:1, time:-1}
-        mass flow rate
-    fluid : ThermState at relief conditions
-    P_back : ureg.Quantity {length: -1, mass: 1, time: -2}
-        backpressure
-    K_d : discharge coefficient
-        0.975 - when PRV installed with/without a rupture disk
-        0.62 - for rupture disc only (see 5.11.1.1.2)
-    K_c : capacity correction factor due to backpressure
-        applies to balanced bellows valves only
-    K_c : combination correction factor
-        1 - for no rupture disc installed in combination
-        0.9 - for rupture disc installed in combination
-    """
-    W = m_dot.m_as(ureg.lb/ureg.hr)
-    P_1 = fluid.P.m_as(ureg.psi)
-    P_2 = P_back.m_as(ureg.psi)
-    k = fluid.gamma
-    T = fluid.T.m_as(ureg.degR)
-    Z = fluid.compressibility_factor
-    M = fluid.M
-    P_cf = P_1 * (2/(k+1))**(k/(k-1))
-    if P_2 <= P_cf:
-        critical = True  # For future verbose use
-        C = fluid.C.m_as(ureg.lb/(ureg.hr*ureg.lbf)*(ureg.degR)**0.5)
-        A = W / (C*K_d*P_1*K_b*K_c) * (T*Z/M)**0.5
-    else:
-        critical = False
-        r = P_2 / P_1
-        F_2_brack = (1-r**((k-1)/k)) / (1-r)
-        F_2 = (k/(k-1) * r**(2/k) * F_2_brack)**0.5
-        A = W / (735*F_2*K_d*K_c) * (T*Z/(M*P_1*(P_1-P_2)))**0.5
-    return A * ureg.inch**2
 
 
 def Cv_to_Kv(Cv):
