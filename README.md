@@ -4,7 +4,7 @@
 
 ## Status
 
-Version `0.1.0` is an early alpha. The API is still evolving and optional backends such as `REFPROP` and `HEPROP` may not be available in every environment.
+Version `0.2.0` is an early alpha. The API is still evolving and optional backends such as `REFPROP` and `HEPROP` may not be available in every environment.
 
 ## Installation
 
