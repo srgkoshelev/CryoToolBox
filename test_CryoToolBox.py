@@ -1242,6 +1242,37 @@ class geometry(unittest.TestCase):
         self.assertEqual(V, ctb.geometry.cylinder_volume(D, H))
 
 
+class TableIntegrityTest(unittest.TestCase):
+
+    def test_nps_table_has_required_fields(self):
+        for nominal_size, row in ctb.piping.NPS_table.items():
+            self.assertIn('OD', row, nominal_size)
+            self.assertGreater(row['OD'], 0 * u.inch)
+            self.assertGreater(len(row), 1, nominal_size)
+            for schedule, wall in row.items():
+                self.assertGreater(wall, 0 * u.inch, (nominal_size, schedule))
+                if schedule not in {'OD', 'DN'}:
+                    self.assertGreater(
+                        row['OD'],
+                        2 * wall,
+                        (nominal_size, schedule, row['OD'], wall),
+                    )
+
+    def test_copper_table_has_required_fields(self):
+        for nominal_size, row in ctb.piping.COPPER_TABLE.items():
+            self.assertIn('OD', row, nominal_size)
+            self.assertGreater(row['OD'], 0 * u.inch)
+            self.assertGreater(len(row), 1, nominal_size)
+            for type_name, wall in row.items():
+                self.assertGreater(wall, 0 * u.inch, (nominal_size, type_name))
+                if type_name != 'OD':
+                    self.assertGreater(
+                        row['OD'],
+                        2 * wall,
+                        (nominal_size, type_name, row['OD'], wall),
+                    )
+
+
 @unittest.skipIf(skip_HP_test,
                  'Heprop failed to initialize, skipping Heprop tests.')
 class Heprop(unittest.TestCase):

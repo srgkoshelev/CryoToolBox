@@ -1,3 +1,8 @@
+# NPS dimensions in inches.
+# Source basis: ASME B36.10/B36.19 style pipe dimensions used by CryoToolBox.
+# Each row must define:
+# - `OD`: outside diameter
+# - one or more schedule keys with wall thicknesses
 0.125:
   OD: 0.405
   5: 0.035

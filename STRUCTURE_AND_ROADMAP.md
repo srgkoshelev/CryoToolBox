@@ -232,6 +232,9 @@ Near-term best practices:
    standard edition, source table, and any intentional omissions.
 4. Prefer package-resource loading over direct filesystem assumptions.
    This review already updated the package-data access in code.
+5. Keep all lookup-table loading and validation in one place.
+   A future `piping.tables` module would simplify imports, testing, and schema
+   evolution without changing the user-facing API.
 
 Longer-term options:
 
