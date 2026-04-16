@@ -1,3 +1,5 @@
+"""Thin adapter around the optional external HEPROP helium property library."""
+
 import numpy as np
 import ctypes
 import os
@@ -94,124 +96,167 @@ def _hecalc(j1, value1, j2, value2, unit, dll):
 
 
 class HepropState:
+    """Expose the subset of the CoolProp ``AbstractState`` API used here.
+
+    This adapter is only intended for the optional ``HEPROP`` backend in
+    :class:`CryoToolBox.cp_wrapper.ThermState`.
+    """
 
     def __init__(self, **state_parameters):
         self.dll = _init_he()
         self._heprop = None
 
     def update(self, name1, value1, name2, value2):
+        """Update the cached HEPROP state from two named inputs."""
         heprop = _hecalc(name1, value1, name2, value2, 1, self.dll)
         self._heprop = heprop
 
     def T_critical(self):
+        """Critical temperature for helium."""
         return 5.1953
 
     def p_critical(self):
+        """Critical pressure for helium."""
         return 227462.3
 
     def rhomolar_critical(self):
+        """Critical molar density for helium."""
         return 18130.0
 
     def rhomass_critical(self):
+        """Critical mass density for helium."""
         return 72.56717426
 
     def T(self):
+        """Temperature of the current state."""
         return self._heprop[0][2]
 
     def rhomolar(self):
+        """Molar density of the current state."""
         return self._heprop[0][3] / 0.004002602
 
     def rhomass(self):
+        """Mass density of the current state."""
         return self._heprop[0][3]
 
     def p(self):
+        """Pressure of the current state."""
         return self._heprop[0][1]
 
     def Q(self):
+        """Vapor quality."""
         return self._heprop[0][0]
 
     def molar_mass(self):
+        """Helium molar mass."""
         return 0.004002602
 
     def gas_constant(self):
+        """Universal gas constant used by HEPROP."""
         return 8.3144598
 
     def compressibility_factor(self):
+        """Compressibility factor ``Z``."""
         return self._heprop[0][5]
 
     def hmolar(self):
+        """Molar enthalpy."""
         return self._heprop[0][9] * self.molar_mass()
 
     def hmass(self):
+        """Specific enthalpy on a mass basis."""
         return self._heprop[0][9]
 
     def smolar(self):
+        """Molar entropy."""
         return self._heprop[0][8] * self.molar_mass()
 
     def smass(self):
+        """Specific entropy on a mass basis."""
         return self._heprop[0][8]
 
     def cpmolar(self):
+        """Constant-pressure heat capacity on a molar basis."""
         return self._heprop[0][14] * self.molar_mass()
 
     def cpmass(self):
+        """Constant-pressure heat capacity on a mass basis."""
         return self._heprop[0][14]
 
     def cvmolar(self):
+        """Constant-volume heat capacity on a molar basis."""
         return self._heprop[0][15] * self.molar_mass()
 
     def cvmass(self):
+        """Constant-volume heat capacity on a mass basis."""
         return self._heprop[0][15]
 
     def viscosity(self):
+        """Dynamic viscosity."""
         return self._heprop[0][25]
 
     def conductivity(self):
+        """Thermal conductivity."""
         return self._heprop[0][26]
 
     def surface_tension(self):
+        """Surface tension."""
         return self._heprop[0][29]
 
     def p_reducing(self):
+        """Reducing pressure placeholder for API compatibility."""
         return 0  #value to add, not existing in Coolprop
 
     def ptriple(self):
+        """Triple-point pressure placeholder for API compatibility."""
         return 0  #value to add, not existing in Coolprop
 
     def pmax(self):
+        """Maximum pressure supported by HEPROP."""
         return 2028000000
 
     def T_reducing(self):
+        """Reducing temperature."""
         return 5.1953
 
     def Ttriple(self):
+        """Triple-point temperature."""
         return 2.1768
 
     def Tmax(self):
+        """Maximum temperature supported by HEPROP."""
         return 1500
 
     def Tmin(self):
+        """Minimum temperature supported by HEPROP."""
         return 0.8
 
     def isothermal_compressibility(self):
+        """Isothermal compressibility."""
         return self._heprop[0][19]
 
     def isobaric_expansion_coefficient(self):
+        """Isobaric thermal expansion coefficient."""
         return self._heprop[0][17] / self._heprop[0][2]
 
     def isentropic_expansion_coefficient(self):
+        """Isentropic expansion coefficient placeholder."""
         return 0  #value to add, I need to verify this part with Heprop
 
     def Prandtl(self):
+        """Prandtl number."""
         return self._heprop[0][27]
 
     def speed_sound(self):
+        """Speed of sound."""
         return self._heprop[0][20]
 
     def name(self):
+        """Fluid name."""
         return 'helium'
 
     def backend_name(self):
+        """Backend name used by the compatibility wrapper."""
         return 'HEPROP'
 
     def phase(self):
@@ -247,4 +292,5 @@ class HepropState:
             return 7
 
     def specific_heat_input(self):
+        """Specific heat input term used by the CGA calculations."""
         return self._heprop[0][24]

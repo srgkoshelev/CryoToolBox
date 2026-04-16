@@ -71,3 +71,10 @@ Optional or experimental in alpha:
 ## Documentation
 
 Project documentation is published at <https://srgkoshelev.github.io/CryoToolBox/>.
+
+## Development Notes
+
+The package is intentionally notebook-friendly today, but the internal
+structure is still evolving. A maintainer-facing review of the current layout
+and the recommended `piping` refactor is available in
+[STRUCTURE_AND_ROADMAP.md](/Users/skoshelev/repo/CryoToolBox/STRUCTURE_AND_ROADMAP.md).

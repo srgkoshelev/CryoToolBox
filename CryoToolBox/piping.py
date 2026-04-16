@@ -1,16 +1,18 @@
-"""Utilities for hydraulics calculations.
+"""Piping elements, lookup tables, and hydraulic calculations.
 
-Contains functions for hydrodynamic calculations. The main source of the
-equations is Crane TP-410.
+The main source for many of the loss correlations is Crane TP-410, with
+additional geometry and design helpers included for practical cryogenic piping
+workflows. This module currently spans several concerns and is a primary
+candidate for future refactoring into a dedicated subpackage.
 """
 from math import pi, sin, log, log10, sqrt, tan
+from importlib.resources import files
 from . import logger
 from .std_conditions import ureg, Q_, P_NTP
 from .functions import AIR
 from .functions import stored_energy
 from .functions import Re
 from .geometry import circle_area
-from . import os, __location__
 import pint
 import yaml
 from scipy.optimize import root_scalar
@@ -25,6 +27,7 @@ pint.set_application_registry(ureg)
 
 
 class PipingError(Exception):
+    """Base exception for piping lookup and element definition errors."""
 
     def __init__(self, message):
         self.message = message
@@ -32,6 +35,7 @@ class PipingError(Exception):
 
 
 class HydraulicError(Exception):
+    """Base exception for hydraulic calculations and invalid flow states."""
 
     def __init__(self, message):
         self.message = message
@@ -39,6 +43,7 @@ class HydraulicError(Exception):
 
 
 class ChokedFlow(HydraulicError):
+    """Raised when a calculation reaches a choked-flow limit."""
 
     def __init__(self, message):
         self.message = message
@@ -46,7 +51,7 @@ class ChokedFlow(HydraulicError):
 
 
 def _load_table(table_name):
-    with open(os.path.join(__location__, table_name), encoding='utf-8') as fh:
+    with files(__package__).joinpath(table_name).open(encoding='utf-8') as fh:
         yaml_table = yaml.safe_load(fh)
     result = {}
     for D, sub_table in yaml_table.items():
@@ -80,10 +85,12 @@ class PipingElement(ABC):
     @property
     @abstractmethod
     def area(self):
+        """Flow area used as the reference area for the element."""
         pass
 
     @abstractmethod
     def K(Re):
+        """Return the dimensionless loss coefficient for the element."""
         pass
 
     @abstractmethod
@@ -345,14 +352,17 @@ class CorrugatedPipe(Tube):
         logger.debug('For corrugated piping assumed wall = 0')
 
     def K(self, Re_):
+        """Return the friction loss coefficient for the corrugated pipe."""
         return self.f_mult * super().K(
             Re_)  # Multiplier 4 is used for corrugated pipe
 
     def branch_reinforcement(self):
+        """Raise because branch-reinforcement checks are not implemented."""
         raise NotImplementedError('Branch reinforcement not implemented for'
                                   ' corrugated pipe')
 
     def pressure_design_thick(self):
+        """Raise because wall-thickness design is not implemented."""
         raise NotImplementedError('Pressure design thickness not implemented'
                                   ' for corrugated pipe')
 
@@ -382,9 +392,11 @@ class Entrance(PipingElement):
 
     @property
     def area(self):
+        """Entrance flow area."""
         return circle_area(self.ID)
 
     def K(self, Re=None):
+        """Return the entrance loss coefficient."""
         # TODO add Re handling
         return self._K
 
@@ -438,9 +450,11 @@ class Orifice(PipingElement):
 
     @property
     def area(self):
+        """Orifice flow area."""
         return self._area
 
     def K(self, Re=None):
+        """Return the orifice loss coefficient."""
         # TODO add Re handling
         return 1 / self.Cd**2
 
@@ -480,7 +494,7 @@ class ConicOrifice(Orifice):
 
 
 class Annulus(PipingElement):
-    """"Annulus or tube in tube.
+    """Annulus or tube-in-tube flow passage.
 
     Parameters
     ----------
@@ -505,9 +519,11 @@ class Annulus(PipingElement):
 
     @property
     def area(self):
+        """Annulus flow area."""
         return self._area
 
     def K(self, Re_):
+        """Return the annulus friction loss coefficient."""
         return Tube.K(self, Re_)
 
     def __str__(self):
@@ -659,6 +675,7 @@ class Tee(Tube):
         self.type = 'Tube tee'
 
     def K(self, Re=None):
+        """Return the tee loss coefficient for run or branch flow."""
         # TODO Add Re handling
         if self.direction == 'run':
             K_ = 20 * self.f_T()  # Crane TP-410 p. A-29
@@ -682,6 +699,7 @@ class PipeTee(Tee, Pipe):
         self.type = 'NPS tee'
 
     def info(self):
+        """Return a compact text description of the NPS tee."""
         return f'{self.type}, {self.D}" SCH {self.SCH}, ' + \
             f'{self.direction}'
 
@@ -704,9 +722,11 @@ class Valve(PipingElement):
 
     @property
     def area(self):
+        """Valve reference flow area."""
         return self._area
 
     def K(self, Re=None):
+        """Return the loss coefficient implied by the valve ``Cv``."""
         # TODO Add Re handling
         return Cv_to_K(self.Cv, self.D)
 
@@ -1107,6 +1127,7 @@ class PackedBed(PipingElement):
 
     @property
     def area(self):
+        """Packed-bed cross-sectional area."""
         return pi * self.ID**2 / 4
 
     def f(self, Re_s):
@@ -1209,6 +1230,21 @@ class LineContext:
 
 
 def create_element(description, ctx: LineContext):
+    """Create a piping element from a short textual description.
+
+    Parameters
+    ----------
+    description : str or float
+        Short descriptor such as ``"elbow"``, ``"tee_b"``, ``"cv=10"``, or a
+        numeric length for a straight run.
+    ctx : LineContext
+        Parsed line context that supplies dimensions and system type.
+
+    Returns
+    -------
+    PipingElement
+        Newly constructed piping element.
+    """
     if isinstance(description, str):
         description = description.lower().strip()
     if isinstance(description, (int, float)):
@@ -1246,24 +1282,59 @@ def create_element(description, ctx: LineContext):
 
 
 class ParallelPlateRelief:
+    """Simple model of a parallel-plate relief valve assembly."""
 
     def __init__(self, Springs, Plate, Supply_pipe):
-        """
-        Initiate Parallel Plate instance.
-        Parallel Plate relief valve designed by Fermilab
+        """Initialize a parallel-plate relief valve model.
 
-        Springs: dictionary containing 'N' - number of springs, 'k' - spring rate, and 'dx_precomp' - pre-compression length
-        Plate: dictionary containing 'OD_plate' - OD of the plate, 'OD_O_ring' - OD of the O-Ring installed, and 'W_plate' - plate weight
-        Supply_pipe: Pipe/Tube object of upstream pipe
+        Parameters
+        ----------
+        Springs : dict
+            Spring data with the following keys:
+
+            ``N`` : int
+                Number of springs.
+            ``k`` : ureg.Quantity {mass: 1, time: -2}
+                Spring rate (force per unit displacement).
+            ``dx_precomp`` : ureg.Quantity {length: 1}
+                Spring pre-compression displacement.
+        Plate : dict
+            Plate data with the following keys:
+
+            ``OD_plate`` : ureg.Quantity {length: 1}
+                Outer diameter of the plate.
+            ``OD_O_ring`` : ureg.Quantity {length: 1}
+                Effective sealing diameter at the O-ring before lift.
+            ``W_plate`` : ureg.Quantity {mass: 1, length: 1, time: -2}
+                Plate weight treated as a force.
+        Supply_pipe : Tube or Pipe
+            Upstream supply element that defines the required vent area.
         """
+        self._validate_springs(
+            Springs['k'],
+            Springs['dx_precomp'],
+        )
+        self._validate_plate(
+            Plate['OD_plate'],
+            Plate['OD_O_ring'],
+            Plate['W_plate'],
+        )
         self.Springs = Springs
         self.Plate = Plate
         self.Supply_pipe = Supply_pipe
 
+    @staticmethod
+    @ureg.check('[mass] / [time]**2', '[length]')
+    def _validate_springs(k, dx_precomp):
+        """Validate spring quantities used by the relief model."""
+
+    @staticmethod
+    @ureg.check('[length]', '[length]', '[mass] * [length] / [time]**2')
+    def _validate_plate(OD_plate, OD_O_ring, W_plate):
+        """Validate plate quantities used by the relief model."""
+
     def P_set(self):
-        """"
-        Calculate set (lift) pressure of the Parallel Plate relief
-        """
+        """Calculate the set pressure required to start lifting the plate."""
         # Before lifting pressure affects area within O-Ring OD
         A_lift = pi * self.Plate['OD_O_ring']**2 / 4
         F_precomp = self.Springs['N'] * self.Springs['k'] *\
@@ -1275,9 +1346,7 @@ class ParallelPlateRelief:
         return P_set.to(ureg.psi)
 
     def P_open(self):
-        """
-        Calculate pressure required to fully open Parallel Plate relief
-        """
+        """Calculate the pressure required to fully open the relief valve."""
         # compression required to provide vent area equal to supply pipe area
         dx_open = self.Supply_pipe.area / (pi * self.Plate['OD_plate'])
         # Force at fully open
@@ -1685,6 +1754,8 @@ def K_lim(M, k):
 
 
 def M_Klim(K, k):
+    """Solve for Mach number that corresponds to a resistance limit ``K``."""
+
     if K < 0:
         raise HydraulicError(f"Resistance coefficient value can't be less \
         than 0: {K}")
@@ -1702,6 +1773,8 @@ def M_Klim(K, k):
 
 
 def M_complex(M, k):
+    """Return the isentropic compressibility term ``1 + M^2 (k - 1) / 2``."""
+
     return 1 + M**2 * (k - 1) / 2
 
 
@@ -1885,6 +1958,8 @@ def piping_stress(tube, P_diff, *, E, W, Y):
 
 
 def pressure_design_thick(tube, P_diff, I=1, *, S, E, W, Y):
+    """Deprecated wrapper for :func:`pressure_req_thick`."""
+
     logger.warning('Deprecated, use pressure_req_thick function instead.')
     return pressure_req_thick(tube, P_diff, I, S=S, E=E, W=W, Y=Y)
 

@@ -1,12 +1,15 @@
-"""
-Helper geometrical functions.
+"""Reusable geometry helpers for CryoToolBox.
+
+These functions are intentionally small and unit-aware. They are most useful
+when the same geometric relationship appears in several engineering
+calculations and keeping the formula in one place improves readability and
+consistency.
 """
 from math import pi
 
 
 def circle_area(D):
-    """
-    Calculate the area of a circle.
+    """Calculate the area of a circle from its diameter.
 
     Parameters
     ----------
@@ -40,9 +43,9 @@ def circle_area(D):
     """
     return pi * D**2 / 4
 
+
 def cylinder_volume(D, H):
-    """
-    Calculate the volume of a cylinder.
+    """Calculate the volume of a cylinder from its diameter and height.
 
     Parameters
     ----------
@@ -53,8 +56,8 @@ def cylinder_volume(D, H):
 
     Returns
     -------
-    Quantity
-        The volume of the cylinder.
+    ureg.Quantity {length: 3}
+        The volume enclosed by the cylinder.
 
     Notes
     -----
