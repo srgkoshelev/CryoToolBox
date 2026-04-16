@@ -2,9 +2,6 @@ import numpy as np
 import ctypes
 import os
 
-# Getting path for HEPROP dll
-DLL_PATH = os.getenv('HEPROPPATH')
-
 HEPROP_inputs = {
     'P': 1,
     'T': 2,
@@ -27,17 +24,49 @@ HEPROP_inputs = {
 }
 
 
-# Load the HEPROP DLL
-def init_he():
+def _resolve_heprop_path():
+    dll_path = os.getenv('HEPROPPATH')
+    if not dll_path:
+        raise OSError(
+            'HEPROP backend is not configured. Set the HEPROPPATH '
+            'environment variable to the HEPROP shared library.'
+        )
+    if not os.path.isfile(dll_path):
+        raise OSError(f'HEPROP library not found at {dll_path}')
+    return dll_path
+
+
+def _init_he():
+    """Load the configured HEPROP library and verify expected symbols."""
+    dll_path = _resolve_heprop_path()
     try:
-        #dll = ctypes.WinDLL(DLL_PATH)
-        dll = ctypes.CDLL(DLL_PATH)
-    except OSError:
-        raise OSError(f"Helium dll not present in the folder {DLL_PATH}")
-    return dll
+        # dll = ctypes.WinDLL(dll_path)
+        dll = ctypes.CDLL(dll_path)
+    except OSError as exc:
+        raise OSError(f'Failed to load HEPROP library at {dll_path}') from exc
+
+    for symbol in ('HEPROP', 'heprop_'):
+        if hasattr(dll, symbol):
+            return dll
+    raise OSError(
+        'Loaded HEPROP library does not expose the expected HEPROP or '
+        'heprop_ symbols.'
+    )
 
 
-def hecalc(j1, value1, j2, value2, unit, dll):
+def _hecalc(j1, value1, j2, value2, unit, dll):
+    """Internal wrapper around the HEPROP DLL entry points."""
+    # No fallback mechanism, one of two expected at all times
+    if hasattr(dll, 'HEPROP'):
+        heprop_func = dll.HEPROP
+    elif hasattr(dll, 'heprop_'):
+        heprop_func = dll.heprop_
+    else:
+        raise OSError(
+            'Loaded HEPROP library does not expose the expected HEPROP or '
+            'heprop_ symbols.'
+        )
+
     if isinstance(j1, str):
         j1_ptr = ctypes.c_int(HEPROP_inputs[j1])
     else:
@@ -51,18 +80,15 @@ def hecalc(j1, value1, j2, value2, unit, dll):
     unit_ptr = ctypes.c_int(unit)
     PROP2 = np.zeros((3, 42), dtype=np.float64)
     ID = ctypes.c_int()
+
     try:
-        dll.HEPROP(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr),
-                   ctypes.byref(j2_ptr), ctypes.byref(value2_ptr),
-                   ctypes.byref(unit_ptr),
-                   PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-                   ctypes.byref(ID))
-    except:
-        dll.heprop_(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr),
+        heprop_func(ctypes.byref(j1_ptr), ctypes.byref(value1_ptr),
                     ctypes.byref(j2_ptr), ctypes.byref(value2_ptr),
                     ctypes.byref(unit_ptr),
                     PROP2.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                     ctypes.byref(ID))
+    except Exception as exc:
+        raise OSError('HEPROP backend call failed.') from exc
     idi = ID.value
     return PROP2
 
@@ -70,11 +96,11 @@ def hecalc(j1, value1, j2, value2, unit, dll):
 class HepropState:
 
     def __init__(self, **state_parameters):
-        self.dll = init_he()
+        self.dll = _init_he()
         self._heprop = None
 
     def update(self, name1, value1, name2, value2):
-        heprop = hecalc(name1, value1, name2, value2, 1, self.dll)
+        heprop = _hecalc(name1, value1, name2, value2, 1, self.dll)
         self._heprop = heprop
 
     def T_critical(self):
