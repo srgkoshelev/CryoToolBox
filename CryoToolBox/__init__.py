@@ -5,10 +5,12 @@ for unit handling to support cryogenic design calculations. The public API is
 currently centered on:
 
 1. :class:`cp_wrapper.ThermState` for fluid properties.
-2. General thermodynamic and heat-transfer helpers from :mod:`functions`.
-3. Piping geometry, loss coefficients, and flow calculations from
+2. Flow-conversion helpers gathered under :mod:`flow`.
+3. General thermodynamic and heat-transfer helpers from :mod:`functions`.
+4. Safety and relief helpers gathered under :mod:`relief`.
+5. Piping geometry, loss coefficients, and flow calculations from
    :mod:`piping`.
-4. Oxygen deficiency hazard analysis helpers from :mod:`odh`.
+6. Oxygen deficiency hazard analysis helpers from :mod:`odh`.
 
 The package is still in its alpha phase, so compatibility is best-effort, but
 the default `HEOS` backend is the supported path for general use.
@@ -32,4 +34,6 @@ __docformat__ = "numpy"
 from .std_conditions import Q_, ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
 from .cp_wrapper import ThermState, CryoToolBoxFutureWarning
 from .functions import *
+from . import flow
+from . import relief
 from . import piping

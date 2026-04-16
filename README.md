@@ -58,7 +58,10 @@ Build release artifacts with:
 Supported in alpha:
 
 - `ThermState` with the default `HEOS` backend
+- Flow-conversion helpers via `CryoToolBox.flow`, including `to_equiv_air`,
+  `from_equiv_air`, `to_std_flow`, and `from_std_flow`
 - Unit-aware thermodynamic helpers
+- Relief and discharge helpers via `CryoToolBox.relief`
 - Geometry helpers
 - Piping and hydraulics calculations
 
