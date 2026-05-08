@@ -551,6 +551,14 @@ class PipingTest(unittest.TestCase):
         M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
         self.assertApproxEqual(M_exp, M_total, uncertainty=0.005)
 
+    def test_Mach_total_low_mass_flux(self):
+        fluid_total = ht.ThermState('air', P=200 * u.kPa, T=300 * u.K)
+        area = 0.05 * u.m**2
+        m_dot = 1e-9 * u.kg / u.s
+        M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
+        self.assertGreater(M_total, 0)
+        self.assertLess(M_total, 1e-6)
+
     def test_White_9_10(self):
         Ma1 = 0.1
         Ma2 = 0.5
@@ -660,6 +668,28 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(0.175, ht.piping.M_Klim(19.772, air.gamma))
         self.assertApproxEqual(0.1741, ht.piping.M_Klim(20, air.gamma))
         self.assertApproxEqual(1, ht.piping.M_Klim(0, air.gamma))
+
+    def test_M_from_large_K(self):
+        air = ht.ThermState('air', P=300 * u.kPa, T=500 * u.K)
+        M = 1e-8
+        K_lim = ht.piping.K_lim(M, air.gamma)
+        self.assertApproxEqual(M, ht.piping.M_Klim(K_lim, air.gamma),
+                               uncertainty=1e-6)
+
+    def test_m_dot_adiab_brackets_low_pressure_drop(self):
+        helium = ht.ThermState('helium', T=ctb.T_NTP, P=5 * u.bar)
+        pipe = ht.piping.Pipe(4, SCH=10, L=100 * u.m)
+        m_dot = ht.piping.m_dot_adiab(helium,
+                                      pipe,
+                                      P_out=4 * u.bar,
+                                      state='static')
+        self.assertApproxEqual(0.8739 * u.kg / u.s, m_dot, uncertainty=0.001)
+
+    def test_m_dot_adiab_raises_when_outlet_pressure_is_below_choked_limit(self):
+        air = ht.ThermState('air', T=300 * u.K, P=200 * u.kPa)
+        pipe = ht.piping.Tube(1 * u.cm, L=1 * u.m)
+        with self.assertRaises(ht.piping.ChokedFlow):
+            ht.piping.m_dot_adiab(air, pipe, P_out=50 * u.kPa, state='static')
 
     def test_piping_req_thick(self):
         pipe = ctb.piping.Tube(1 * u.inch, wall=0.065 * u.inch)
