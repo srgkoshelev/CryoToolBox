@@ -5,7 +5,7 @@ additional geometry and design helpers included for practical cryogenic piping
 workflows. This module currently spans several concerns and is a primary
 candidate for future refactoring into a dedicated subpackage.
 """
-from math import pi, sin, log, log10, sqrt, tan
+from math import pi, sin, log, log10, sqrt, tan, isfinite
 from importlib.resources import files
 from . import logger
 from .std_conditions import ureg, Q_, P_NTP
@@ -1758,6 +1758,13 @@ def Mach_total(fluid, m_dot, area):
     R = ureg.molar_gas_constant / fluid.molar_mass
     B = m_dot / area * (Z * R / k)**0.5
     M_core = float(B * T**0.5 / P)
+    if M_core < 1e-6:
+        return M_core
+
+    # TODO confirm M_core_sonic calculation is correct
+    M_core_sonic = (1 + (k - 1) / 2)**(-(k + 1) / (2 * (k - 1)))
+    if M_core > M_core_sonic:
+        raise ChokedFlow('Total-state mass flux exceeds the sonic limit.')
 
     def to_solve(Msq):
         try:
@@ -1768,7 +1775,11 @@ def Mach_total(fluid, m_dot, area):
         return res
 
     bracket = [0, 1]
-    solution = root_scalar(to_solve, bracket=bracket)
+    try:
+        solution = root_scalar(to_solve, bracket=bracket)
+    except ValueError as exc:
+        raise HydraulicError('Could not solve Mach number from total '
+                             'conditions.') from exc
     M_root = solution.root**0.5
     # Not sure if this is needed anymore
     T = fluid.T - v**2 / fluid.Cpmass
@@ -1799,6 +1810,14 @@ def M_Klim(K, k):
         raise HydraulicError(f"Resistance coefficient value can't be less \
         than 0: {K}")
     K = float(K)
+    k = float(k)
+    if K == 0:
+        return 1
+
+    # TODO confirm M_asymptotic calculation is correct
+    M_asymptotic = (1 / (k * K))**0.5
+    if M_asymptotic < 1e-6:
+        return M_asymptotic
 
     def to_solve(M):
         if M == 0:
@@ -1834,6 +1853,66 @@ def P_crit(P, M, k):
     M_crit_comp = (k + 1) / (2 + (k - 1) * M**2)
     P_c = P * M / M_crit_comp**0.5
     return P_c
+
+
+def _find_bracket_before_choke(to_solve, positive_x, choked_x, max_iter=80):
+    """Find a residual bracket between a positive point and choking."""
+
+    low = positive_x
+    high = choked_x
+    for _ in range(max_iter):
+        mid = (low * high)**0.5
+        try:
+            y_mid = float(to_solve(mid))
+        except ChokedFlow:
+            high = mid
+            continue
+
+        if not isfinite(y_mid):
+            high = mid
+        elif y_mid == 0:
+            return (mid, mid)
+        elif y_mid < 0:
+            return (low, mid)
+        else:
+            low = mid
+
+    return None
+
+
+def _bracket_adiabatic_m_dot(to_solve, lower=1e-15, upper=1e15, factor=2):
+    """Find a positive-to-negative mass-flow residual bracket."""
+
+    positive_x = None
+    x = lower
+    while x <= upper:
+        try:
+            y = float(to_solve(x))
+        except ChokedFlow as exc:
+            if positive_x is None:
+                raise
+            bracket = _find_bracket_before_choke(to_solve, positive_x, x)
+            if bracket is not None:
+                return bracket
+            raise ChokedFlow(
+                'Flow is choked before the requested outlet pressure can be '
+                'reached.') from exc
+
+        if isfinite(y):
+            if y == 0:
+                return (x, x)
+            if y > 0:
+                positive_x = x
+            elif positive_x is not None:
+                return (positive_x, x)
+
+        if x == upper:
+            break
+        x = min(x * factor, upper)
+
+    raise HydraulicError(
+        'Could not bracket adiabatic mass flow solution between '
+        f'{lower:g} and {upper:g} kg/s.')
 
 
 def dP_adiab(m_dot, fluid, pipe, state='total'):
@@ -1881,30 +1960,37 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
     k = fluid.gamma
     P1 = fluid.P
     P2 = P_out
+    if state not in ('total', 'static'):
+        raise ValueError(f"State must be 'total' or 'static', got {state!r}.")
+    if P1 <= P2:
+        raise HydraulicError(f'Input pressure less or equal to output: '
+                             f'{P1.to(ureg.Pa):.3g}, {P2.to(ureg.Pa):.3g}')
 
     def to_solve(m_dot_):
         m_dot = m_dot_ * ureg.kg / ureg.s
         if state == 'total':
-            try:
-                M1 = Mach_total(fluid, m_dot, pipe.area)
-            except HydraulicError:
-                return -1
+            M1 = Mach_total(fluid, m_dot, pipe.area)
+            P1_static = P1 / M_complex(M1, k)**(k / (k - 1))
         elif state == 'static':
             v = velocity(fluid, m_dot, pipe.area)
             M1 = Mach(fluid, v)
-        P_crit1_ = P_crit(P1, M1, k).m_as(ureg.Pa)
+            P1_static = P1
         K_lim1 = K_lim(M1, k)
         Re_ = Re(fluid, m_dot, pipe.ID, pipe.area)
-        K_lim2 = K_lim1 - pipe.K(Re_)
+        K_pipe = pipe.K(Re_)
+        K_lim2 = K_lim1 - K_pipe
         if K_lim2 < 0:
-            return -1
+            raise ChokedFlow(
+                f'Flow is choked at K={float(K_lim1):.3g} with given '
+                f'K={float(K_pipe):.3g}. Reduce hydraulic resistance or '
+                'increase outlet pressure.')
         M2 = M_Klim(K_lim2, k)
-        P_crit2_ = P_crit(P2, M2, k).m_as(ureg.Pa)
-        # TODO Only true for isentropic flow, for adiabatic Tcrit should be used
-        result = P_crit1_ - P_crit2_
-        return result
+        P2_calc = P_from_M(P1_static, M1, M2, k)
+        return (P2_calc - P2).m_as(ureg.Pa)
 
-    bracket = [1e-10, 1e10]  # Limits search range
+    bracket = _bracket_adiabatic_m_dot(to_solve)
+    if bracket[0] == bracket[1]:
+        return bracket[0] * ureg.kg / ureg.s
     solution = root_scalar(to_solve, bracket=bracket)
     m_dot = solution.root * ureg.kg / ureg.s
     return m_dot
