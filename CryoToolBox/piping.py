@@ -1751,7 +1751,6 @@ def Mach_total(fluid, m_dot, area):
         Fluid state at total temperature and pressure
     """
     k = float(fluid.gamma)
-    v = velocity(fluid, m_dot, area)
     T = fluid.T
     P = fluid.P
     Z = fluid.Z
@@ -1781,12 +1780,6 @@ def Mach_total(fluid, m_dot, area):
         raise HydraulicError('Could not solve Mach number from total '
                              'conditions.') from exc
     M_root = solution.root**0.5
-    # Not sure if this is needed anymore
-    T = fluid.T - v**2 / fluid.Cpmass
-    if T < 0 * ureg.K:
-        raise HydraulicError(
-            f'Negative static temperature: {T:.3g~}. Required '
-            f'speed {v.to(ureg.m/ureg.s):.3g~} cannot be achieved.')
     return M_root
 
 
