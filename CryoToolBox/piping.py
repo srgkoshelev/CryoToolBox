@@ -1856,7 +1856,7 @@ def P_crit(P, M, k):
 
 
 def _find_bracket_before_choke(to_solve, positive_x, choked_x, max_iter=80):
-    """Find a residual bracket between a positive point and choking."""
+    """Find a residual bracket, or the limiting choked-flow point."""
 
     low = positive_x
     high = choked_x
@@ -1877,11 +1877,13 @@ def _find_bracket_before_choke(to_solve, positive_x, choked_x, max_iter=80):
         else:
             low = mid
 
-    return None
+    # A repeated endpoint is the sentinel used by m_dot_adiab for "no
+    # subsonic pressure solution exists; return the sonic limiting flow."
+    return (low, low)
 
 
 def _bracket_adiabatic_m_dot(to_solve, lower=1e-15, upper=1e15, factor=2):
-    """Find a positive-to-negative mass-flow residual bracket."""
+    """Find a mass-flow residual bracket or the choked limiting point."""
 
     positive_x = None
     x = lower
@@ -1892,11 +1894,7 @@ def _bracket_adiabatic_m_dot(to_solve, lower=1e-15, upper=1e15, factor=2):
             if positive_x is None:
                 raise
             bracket = _find_bracket_before_choke(to_solve, positive_x, x)
-            if bracket is not None:
-                return bracket
-            raise ChokedFlow(
-                'Flow is choked before the requested outlet pressure can be '
-                'reached.') from exc
+            return bracket
 
         if isfinite(y):
             if y == 0:
@@ -1916,7 +1914,14 @@ def _bracket_adiabatic_m_dot(to_solve, lower=1e-15, upper=1e15, factor=2):
 
 
 def dP_adiab(m_dot, fluid, pipe, state='total'):
-    """Calculate pressure drop for isentropic flow given total inlet conditions.
+    """Calculate pressure drop for isentropic flow given inlet conditions.
+
+    For subsonic solutions, this is the pressure-drop counterpart to
+    ``m_dot_adiab``. At the sonic limit, however, ``m_dot_adiab`` may return a
+    limiting choked mass flow for an outlet pressure lower than the critical
+    pressure. In that case, ``dP_adiab`` returns the pressure drop to the
+    critical outlet pressure, not the larger pressure difference requested as
+    backpressure in ``m_dot_adiab``.
 
     """
     if state == 'total':
@@ -1944,6 +1949,22 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
     """Calculate mass flow rate through piping for adiabatic compressible
     flow.
 
+    ``P_out`` is treated as the requested downstream static pressure. If a
+    subsonic solution exists, the returned mass flow satisfies that pressure:
+    ``dP_adiab(m_dot, fluid, pipe, state)`` should match ``fluid.P - P_out``
+    within solver tolerance.
+
+    If ``P_out`` is below the critical outlet pressure for this inlet state and
+    piping resistance, the flow is choked before the requested downstream
+    pressure can be reached. The current behavior is to return the limiting
+    sonic mass flow instead of raising ``ChokedFlow``. For that returned mass
+    flow, ``dP_adiab`` gives the drop to the critical outlet pressure; it will
+    be smaller than ``fluid.P - P_out``. Lowering ``P_out`` further therefore
+    does not increase the returned mass flow.
+
+    This means ``m_dot_adiab`` and ``dP_adiab`` are inverse operations only
+    while the requested outlet pressure is above the choked-flow limit.
+
     Parameters
     ----------
     fluid : ThermState
@@ -1955,16 +1976,19 @@ def m_dot_adiab(fluid, pipe, P_out=P_NTP, state='total'):
     Returns
     -------
     Quantity {mass: 1, time: -1}
-        mass flow rate
+        Mass flow rate. When the requested outlet pressure is below the
+        critical pressure, this is the limiting choked mass flow.
     """
     k = fluid.gamma
     P1 = fluid.P
     P2 = P_out
     if state not in ('total', 'static'):
         raise ValueError(f"State must be 'total' or 'static', got {state!r}.")
-    if P1 <= P2:
+    if P1 < P2:
         raise HydraulicError(f'Input pressure less or equal to output: '
                              f'{P1.to(ureg.Pa):.3g}, {P2.to(ureg.Pa):.3g}')
+    elif P1 == P2:
+        return 0 * ureg.g/ureg.s
 
     def to_solve(m_dot_):
         m_dot = m_dot_ * ureg.kg / ureg.s
