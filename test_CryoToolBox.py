@@ -519,7 +519,7 @@ class PipingTest(unittest.TestCase):
         m_dot_adiab = ht.piping.m_dot_adiab(coke_oven_gas,
                                             pipe,
                                             P_out=ctb.P_STD,
-                                            state='total')
+                                            state='static')
         q_adiab = (m_dot_adiab / rho_std).to(u.ft**3 / u.hr)
         self.assertApproxEqual(q_crane, q_adiab, uncertainty=0.03)
 
@@ -532,7 +532,7 @@ class PipingTest(unittest.TestCase):
         dP_adiab = ht.piping.dP_adiab(m_dot_adiab,
                                       coke_oven_gas,
                                       pipe,
-                                      state='total')
+                                      state='static')
         self.assertApproxEqual(critical_pressure_ratio,
                                (dP_adiab / P1).to_base_units().magnitude,
                                uncertainty=0.01)
@@ -661,6 +661,27 @@ class PipingTest(unittest.TestCase):
         K_lim = ht.piping.K_lim(Ma, fluid_total.gamma)
         Lstar = K_lim * pipe.ID / f
         self.assertApproxEqual(16.5 * u.m, Lstar)
+
+    def test_Mach_total_recovers_known_ideal_gas_mach(self):
+        k = 1.4
+        M_expected = 0.75
+        P_total = 500 * u.kPa
+        T_total = 320 * u.K
+        Z = 1
+        molar_mass = 28.96546 * u.g / u.mol
+        R = u.molar_gas_constant / molar_mass
+        M_comp = ht.piping.M_complex(M_expected, k)
+        T_static = T_total / M_comp
+        P_static = P_total / M_comp**(k / (k - 1))
+        rho_static = P_static / (Z * R * T_static)
+        speed_sound = (k * Z * R * T_static)**0.5
+        area = pi * (3 * u.cm)**2 / 4
+        m_dot = rho_static * M_expected * speed_sound * area
+
+        fluid_total = ctb.ThermState('air', P=P_total, T=T_total)
+
+        M = ht.piping.Mach_total(fluid_total, m_dot, area)
+        self.assertApproxEqual(M_expected, M, uncertainty=0.005)
 
     def test_White_9_13(self):
         fluid_static = ht.ThermState('air', P=220 * u.kPa, T=300 * u.K)
