@@ -481,37 +481,99 @@ class PipingTest(unittest.TestCase):
         dP_isot = ht.piping.dP_isot(m_dot, air, pipe)
         self.assertApproxEqual(2.61, dP_isot.m_as(u.psi))
 
+    def test_Crane_7_21(self):
+        Sg = 0.42
+        k = 1.4
+        P1 = Q_(125, u.psig).to_base_units()
+        T1 = Q_(140, u.degF).to_base_units()
+        f_crane = 0.0175
+        critical_pressure_ratio = 0.657
+
+        pipe = ht.piping.Pipe(3, SCH=40, L=20 * u.ft)
+        K_pipe = f_crane * pipe.L / pipe.ID
+        K_total = K_pipe + ht.piping.Entrance(pipe.ID).K() + ht.piping.Exit(
+            pipe.ID).K()
+
+        self.assertApproxEqual(600, T1.m_as(u.degR), uncertainty=0.001)
+        self.assertApproxEqual(0.0175, pipe.f_T(), uncertainty=0.02)
+        self.assertApproxEqual(1.369, K_pipe, uncertainty=0.001)
+        self.assertApproxEqual(2.87, K_total, uncertainty=0.001)
+
+        q_crane = 1028000 * u.ft**3 / u.hr
+
+        air_std_crane = ht.ThermState('air',
+                                      P=ctb.P_STD,
+                                      T=Q_(60, u.degF))
+        rho_std = Sg * air_std_crane.Dmass
+        rho_1 = rho_std * (P1 / ctb.P_STD) * (ctb.T_STD / T1)
+
+        coke_oven_gas = MagicMock()
+        coke_oven_gas.gamma = k
+        coke_oven_gas.P = P1
+        coke_oven_gas.T = T1
+        coke_oven_gas.Dmass = rho_1
+        coke_oven_gas.speed_sound = (k * P1 / rho_1)**0.5
+        coke_oven_gas.viscosity = 1e-6 * u.Pa * u.s
+
+        pipe.K = MagicMock(return_value=K_total)
+        m_dot_adiab = ht.piping.m_dot_adiab(coke_oven_gas,
+                                            pipe,
+                                            P_out=ctb.P_STD,
+                                            state='total')
+        q_adiab = (m_dot_adiab / rho_std).to(u.ft**3 / u.hr)
+        self.assertApproxEqual(q_crane, q_adiab, uncertainty=0.03)
+
+        M1 = ht.piping.Mach(coke_oven_gas,
+                            ht.piping.velocity(coke_oven_gas, m_dot_adiab,
+                                               pipe.area))
+        K_lim = ht.piping.K_lim(M1, k)
+        self.assertApproxEqual(K_total, K_lim, uncertainty=1e-6)
+
+        dP_adiab = ht.piping.dP_adiab(m_dot_adiab,
+                                      coke_oven_gas,
+                                      pipe,
+                                      state='total')
+        self.assertApproxEqual(critical_pressure_ratio,
+                               (dP_adiab / P1).to_base_units().magnitude,
+                               uncertainty=0.01)
+
     def test_Crane_7_22(self):
         air = ht.ThermState('air', P=Q_(19.3, u.psig), T=Q_(100, u.degF))
         pipe = ht.piping.Pipe(1 / 2, SCH=80, L=7.04 / 6.04 * 10 *
-                              u.ft)  # Adjust for entrance K = 1, total 7.04
+                              u.ft)  # Adjust for exit K = 1, total K = 7.04
         dP = 19.3 * u.psi
         P_out = air.P - dP
         q_expected = 3762 * u.ft**3 / u.hr  # STD flow
         m_dot_expected = ht.to_mass_flow(q_expected, air)
         Re = ht.Re(air, m_dot_expected, pipe.ID, pipe.area)
-        f = 0.0275
-        m_dot_isot = ht.piping.m_dot_isot(air, pipe)
+        self.assertApproxEqual(7.04, pipe.K(Re), uncertainty=0.02)
+
+        m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out=P_out)
         self.assertApproxEqual(m_dot_expected, m_dot_isot)
-        # M = Mach(air, m_dot_expected, pipe.area)
-        # # print('Mach at inlet: ', M)
-        # K_lim = K_lim(M, air.gamma)
-        # # print('K limit: ', K_lim)
-        # # print('K pipe: ', pipe.K(Re).to_base_units())
-        # check(M, M_Klim(K_lim, air.gamma))
-        # K_left = K_lim - pipe.K(Re)
-        # # print('K left: ', K_left)
-        # M_end = M_Klim(K_left, air.gamma)
-        # # print('M end: ', M_end)
-        # M_out = Mach(ht.ThermState('air', P=P_out, T=air.T), m_dot_expected, pipe.area)
-        # check(M_out, M_end)
-        # P_static_end = P_from_M(air.P, M, M_end, air.gamma)
-        # # print('P static end: ', P_static_end)
-        # P_static_out = P_from_M(air.P, M, M_out, air.gamma)
-        # check(P_static_end, P_static_out)
-        # P_total_end = P_total(P_static_end, M, air.gamma)
-        # # print('P total end: ', P_total_end)
-        # print(f"Mach dP works: {check(P_out, P_total_end)}")
+
+        m_dot_adiab = ht.piping.m_dot_adiab(air,
+                                            pipe,
+                                            P_out=P_out,
+                                            state='static')
+        Re = ht.Re(air, m_dot_adiab, pipe.ID, pipe.area)
+        v = ht.piping.velocity(air, m_dot_adiab, pipe.area)
+        M = ht.piping.Mach(air, v)
+        K_lim = ht.piping.K_lim(M, air.gamma)
+        self.assertApproxEqual(M,
+                               ht.piping.M_Klim(K_lim, air.gamma),
+                               uncertainty=1e-6)
+        K_left = K_lim - pipe.K(Re)
+        self.assertGreater(K_left, 0)
+        M_end = ht.piping.M_Klim(K_left, air.gamma)
+        self.assertGreater(M_end, M)
+        P_static_end = ht.piping.P_from_M(air.P, M, M_end, air.gamma)
+        self.assertApproxEqual(P_out, P_static_end, uncertainty=1e-6)
+
+        dP_adiab = ht.piping.dP_adiab(m_dot_adiab,
+                                      air,
+                                      pipe,
+                                      state='static')
+        self.assertApproxEqual(dP, dP_adiab, uncertainty=1e-6)
 
     def test_Rennels_4_5(self):
         pipe = ht.piping.Pipe(4, SCH=40, L=100 * u.ft)
@@ -685,11 +747,15 @@ class PipingTest(unittest.TestCase):
                                       state='static')
         self.assertApproxEqual(0.8739 * u.kg / u.s, m_dot, uncertainty=0.001)
 
-    def test_m_dot_adiab_raises_when_outlet_pressure_is_below_choked_limit(self):
+    def test_m_dot_adiab_returns_choked_flow_when_outlet_pressure_is_below_limit(self):
         air = ht.ThermState('air', T=300 * u.K, P=200 * u.kPa)
         pipe = ht.piping.Tube(1 * u.cm, L=1 * u.m)
-        with self.assertRaises(ht.piping.ChokedFlow):
-            ht.piping.m_dot_adiab(air, pipe, P_out=50 * u.kPa, state='static')
+        m_dot = ht.piping.m_dot_adiab(air,
+                                      pipe,
+                                      P_out=50 * u.kPa,
+                                      state='static')
+        dP = ht.piping.dP_adiab(m_dot, air, pipe, state='static')
+        self.assertGreater(air.P - dP, 50 * u.kPa)
 
     def test_piping_req_thick(self):
         pipe = ctb.piping.Tube(1 * u.inch, wall=0.065 * u.inch)
