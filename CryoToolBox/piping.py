@@ -1723,8 +1723,9 @@ def dP_isot(m_dot, fluid, pipe, tol=1e-6):
         converged = abs(P2_new - P2) / P2_new
         P2 = P2_new
         v = m_dot / (fluid.Dmass * A)
-        if Mach(fluid, v) > 1 / (fluid.gamma):
-            raise ChokedFlow('K needs to be reduced to reach P2={P2:.3g~}')
+        if fluid.phase != 6:  # Mach undefined for general two-phase flow
+            if Mach(fluid, v) > 1 / (fluid.gamma):
+                raise ChokedFlow('K needs to be reduced to reach P2={P2:.3g~}')
     return P1 - P2
 
 
