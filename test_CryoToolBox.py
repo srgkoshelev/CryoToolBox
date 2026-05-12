@@ -728,6 +728,57 @@ class PipingTest(unittest.TestCase):
         dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state='static')
         self.assertApproxEqual(air.P - P_out, dP_adiab, uncertainty=0.01)
 
+    def test_dP_isot_accepts_two_phase_state_with_real_solution(self):
+        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, Q=0.18)
+        pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
+
+        dP = ctb.piping.dP_isot(100 * u.g / u.s, fluid, pipe)
+
+        self.assertApproxEqual(0.377 * u.bar, dP.to(u.bar), uncertainty=0.01)
+
+    def test_dP_isot_inverts_m_dot_isot_for_two_phase_state(self):
+        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, Q=0.18)
+        pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
+        P_out = 1 * u.bar
+        m_dot = ctb.piping.m_dot_isot(fluid, pipe, P_out)
+
+        dP = ctb.piping.dP_isot(m_dot, fluid, pipe)
+
+        self.assertApproxEqual(fluid.P - P_out, dP, uncertainty=1e-6)
+
+    def test_dP_isot_reports_choked_for_two_phase_state(self):
+        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, Q=0.18)
+        pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
+        m_dot = 512 * u.g / u.s
+
+        with self.assertRaisesRegex(ctb.piping.ChokedFlow,
+                                    'No real outlet pressure'):
+            ctb.piping.dP_isot(m_dot, fluid, pipe)
+
+    def test_dP_isot_reports_choked_when_no_real_outlet_pressure(self):
+        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, T=90 * u.K)
+        pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
+        m_dot = 512 * u.g / u.s
+
+        with self.assertRaisesRegex(ctb.piping.ChokedFlow,
+                                    'No real outlet pressure'):
+            ctb.piping.dP_isot(m_dot, fluid, pipe)
+
+    def test_dP_isot_zero_flow_returns_zero_pressure_drop(self):
+        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, T=90 * u.K)
+        pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
+
+        self.assertEqual(0 * u.Pa,
+                         ctb.piping.dP_isot(0 * u.g / u.s, fluid, pipe))
+
+    def test_dP_isot_rejects_negative_flow(self):
+        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, T=90 * u.K)
+        pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
+
+        with self.assertRaisesRegex(ctb.piping.HydraulicError,
+                                    'non-negative flow'):
+            ctb.piping.dP_isot(-1 * u.g / u.s, fluid, pipe)
+
     def test_Cengel_12_15(self):
         pipe = ctb.piping.Tube(3 * u.cm)
         fluid = ctb.ThermState('air', P=150 * u.kPa, T=300 * u.K)
