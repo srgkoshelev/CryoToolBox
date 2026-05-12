@@ -1714,18 +1714,42 @@ def dP_isot(m_dot, fluid, pipe, tol=1e-6):
     T = fluid.T
     P1 = fluid.P
     A = pipe.area
+    if m_dot < 0 * ureg.kg / ureg.s:
+        raise HydraulicError(
+            f'Isothermal pressure drop requires non-negative flow: {m_dot}.')
+    if m_dot == 0 * ureg.kg / ureg.s:
+        return 0 * P1
+
+    v = m_dot / (fluid.Dmass * A)
+    if fluid.phase != 6:  # Mach undefined at saturated vapor boundary
+        if Mach(fluid, v) > 1 / (fluid.gamma):
+            raise ChokedFlow(
+                'No real outlet pressure satisfies the isothermal flow equation '
+                f'for m_dot={m_dot.to(ureg.g / ureg.s):.3g~}.')
+
     K = pipe.K(Re(fluid, m_dot, pipe.ID, pipe.area))
-    P2 = P1
-    converged = False
-    while not converged:
-        sq_diff = m_dot**2 * R * T / A**2 * (2 * log(P1 / P2) + K)
-        P2_new = (P1**2 - sq_diff)**0.5
-        converged = abs(P2_new - P2) / P2_new
-        P2 = P2_new
-        v = m_dot / (fluid.Dmass * A)
-        if fluid.phase != 6:  # Mach undefined for general two-phase flow
-            if Mach(fluid, v) > 1 / (fluid.gamma):
-                raise ChokedFlow('K needs to be reduced to reach P2={P2:.3g~}')
+
+    C_Pa2 = (m_dot**2 * R * T / A**2).m_as(ureg.Pa**2)
+    P1_Pa = P1.m_as(ureg.Pa)
+
+    def residual(P2_Pa):
+        return (P1_Pa**2 - P2_Pa**2 -
+                C_Pa2 * (2 * log(P1_Pa / P2_Pa) + K))
+
+    P2_peak = C_Pa2**0.5
+    if P2_peak >= P1_Pa or residual(P2_peak) < 0:
+        raise ChokedFlow(
+            'No real outlet pressure satisfies the isothermal flow equation '
+            f'for m_dot={m_dot.to(ureg.g / ureg.s):.3g~}.')
+
+    if abs(residual(P2_peak)) <= tol * P1_Pa**2:
+        P2 = P2_peak * ureg.Pa
+    else:
+        solution = root_scalar(residual, bracket=(P2_peak, P1_Pa))
+        if not solution.converged:
+            raise HydraulicError('Could not solve isothermal outlet pressure.')
+        P2 = solution.root * ureg.Pa
+
     return P1 - P2
 
 
