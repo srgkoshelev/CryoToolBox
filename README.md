@@ -8,12 +8,16 @@ Version `0.2.0` is an early alpha. The API is still evolving and optional backen
 
 ## Installation
 
-Create a virtual environment and install the package:
+Fetch the source, create a virtual environment, install the package, and run
+a quick smoke test:
 
 ```sh
+git clone https://github.com/srgkoshelev/CryoToolBox.git
+cd CryoToolBox
 python3 -m venv .venv
 source .venv/bin/activate
 pip install .
+python -c "import CryoToolBox as ctb; nitrogen = ctb.ThermState('nitrogen', P=500 * ctb.ureg.kPa, T=300 * ctb.ureg.K); print(nitrogen.Dmass.to(ctb.ureg.kg / ctb.ureg.meter**3))"
 ```
 
 Optional extras:
@@ -39,13 +43,17 @@ print(nitrogen.Dmass)
 print(nitrogen.Dmass.to(ctb.ureg.lb / ctb.ureg.ft**3))
 ```
 
-## Verification
+## Development Checks
 
-Run the current test suite with:
+Run the current test suite during development with:
 
 ```sh
 .venv/bin/python -m unittest -q
 ```
+
+The full suite exercises optional and dependency-sensitive behavior, so use the
+installation smoke test above for a quick check that the package installed
+correctly.
 
 Build release artifacts with:
 
