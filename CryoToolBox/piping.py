@@ -1216,7 +1216,75 @@ class LineContext:
 
     @classmethod
     def from_string(cls, description: str, length_unit: str):
-        """Parse a pipeline description string into a LineContext."""
+        """
+        Parse a pipeline description string into a ``LineContext``.
+
+        Supported formats
+        -----------------
+        NPS pipe format:
+            ``"<NPS> SCH <schedule>"``
+
+        Tube format:
+            ``"<OD> x <wall>"``
+
+        The parser also supports:
+        - fractional dimensions (e.g. ``1/2``)
+        - quoted inch notation (e.g. ``1/2"``)
+        - explicit engineering units compatible with ``pint``
+
+        Parameters
+        ----------
+        description:
+            Pipeline or tube size description.
+
+        length_unit:
+            Default length unit used for unit normalization.
+
+        Returns
+        -------
+        LineContext
+            Parsed pipeline context containing the sizing system,
+            dimensional values, and normalized units.
+
+        Examples
+        --------
+        NPS pipe descriptions::
+
+            "2 SCH 40"
+            "6 SCH 80"
+            '1/2" SCH 160'
+
+        Resulting contexts::
+
+            LineContext(
+                system="NPS",
+                dimensions={"D_nom": 2.0, "SCH": 40},
+                length_unit=<Unit('inch')>
+            )
+
+        Tube descriptions::
+
+            "1 in x 0.065 in"
+            '1/2" x 0.035"'
+            "12 mm x 1 mm"
+            "25.4 mm x 2.11 mm"
+
+        Resulting contexts::
+
+            LineContext(
+                system="tube",
+                dimensions={
+                    "OD": <Quantity(1, 'inch')>,
+                    "wall": <Quantity(0.065, 'inch')>
+                },
+                length_unit=<Unit('inch')>
+            )
+
+        Raises
+        ------
+        ValueError
+            If the description string does not match a supported format.
+        """
         desc = description.strip().replace('"', ' inch')
         desc = cls._fraction_to_decimal(desc)
         if m := NPS_PATTERN.fullmatch(desc):
