@@ -46,3 +46,6 @@ odh = [
 
 [tool.setuptools.package-data]
 CryoToolBox = ["*.ini", "*.txt", "*.yaml"]
+
+[tool.setuptools.packages.find]
+include = ["CryoToolBox*"]
