@@ -779,6 +779,24 @@ class PipingTest(unittest.TestCase):
                                     'non-negative flow'):
             ctb.piping.dP_isot(-1 * u.g / u.s, fluid, pipe)
 
+    def test_m_dot_isot_zero_pressure_drop_returns_zero_flow(self):
+        fluid = ctb.ThermState('helium', P=ctb.P_NTP, T=ctb.T_NTP)
+        pipe = ctb.piping.Tube(0.25 * u.inch,
+                               wall=0.035 * u.inch,
+                               L=11 * u.m)
+
+        self.assertEqual(0 * u.g / u.s, ctb.piping.m_dot_isot(fluid, pipe))
+
+    def test_m_dot_isot_rejects_higher_outlet_pressure(self):
+        fluid = ctb.ThermState('helium', P=ctb.P_NTP, T=ctb.T_NTP)
+        pipe = ctb.piping.Tube(0.25 * u.inch,
+                               wall=0.035 * u.inch,
+                               L=11 * u.m)
+
+        with self.assertRaisesRegex(ctb.piping.HydraulicError,
+                                    'Input pressure less than output'):
+            ctb.piping.m_dot_isot(fluid, pipe, P_out=2 * ctb.P_NTP)
+
     def test_Cengel_12_15(self):
         pipe = ctb.piping.Tube(3 * u.cm)
         fluid = ctb.ThermState('air', P=150 * u.kPa, T=300 * u.K)

@@ -1678,6 +1678,12 @@ def m_dot_isot(fluid,
     """
     P1 = fluid.P
     P2 = P_out
+    if P1 <= P2:
+        if P1 == P2:
+            return 0 * ureg.g / ureg.s
+        raise HydraulicError(f'Input pressure less than output: '
+                             f'{P1.to(ureg.Pa):.3g}, '
+                             f'{P2.to(ureg.Pa):.3g}')
     T = fluid.T
     R = fluid.specific_gas_constant
     K = pipe.K(Re(fluid, m_dot_g, pipe.ID, pipe.area))
