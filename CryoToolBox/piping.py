@@ -1746,9 +1746,10 @@ def m_dot_isot(fluid,
     """
     P1 = fluid.P
     P2 = P_out
-    if P1 <= P2:
-        if P1 == P2:
-            return 0 * ureg.g / ureg.s
+    pressure_tol = 1e-12
+    if float(abs(1 - P2 / P1)) <= pressure_tol:
+        return 0 * ureg.g / ureg.s
+    if P1 < P2:
         raise HydraulicError(f'Input pressure less than output: '
                              f'{P1.to(ureg.Pa):.3g}, '
                              f'{P2.to(ureg.Pa):.3g}')
