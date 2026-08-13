@@ -1106,8 +1106,13 @@ class CPWrapperTest(unittest.TestCase):
         self.assertAlmostEqual(twophase.Hmass, twophase_copy.Hmass)
 
         legacy_copy = _legacy_copy(test_state)
-        self.assertAlmostEqual(test_state.T, legacy_copy.T)
-        self.assertAlmostEqual(test_state.P, legacy_copy.P)
+        # The legacy T/Smass inverse flash varies at roundoff scale across
+        # CoolProp builds, so compare its reconstructed state relatively.
+        for property_name in ("T", "P"):
+            expected = getattr(test_state, property_name)
+            calculated = getattr(legacy_copy, property_name)
+            relative_error = abs((calculated - expected) / expected)
+            self.assertLess(relative_error, 1e-10, property_name)
 
     def test_standard(self):
         for conditions, pressure, temperature in (
