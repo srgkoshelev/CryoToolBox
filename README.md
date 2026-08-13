@@ -61,6 +61,26 @@ Build release artifacts with:
 .venv/bin/python -m build --no-isolation
 ```
 
+Run the CoolProp integration benchmark with:
+
+```sh
+.venv313/bin/python benchmarks/coolprop_integration.py
+```
+
+On a local arm64 Python 3.13 / CoolProp 8.0.0 environment, the benchmark
+showed the new raw-SI paths and native CoolProp wrappers reducing representative
+wrapper overhead:
+
+- `ThermState.update_si(P,T)`: about `2.9 us`, close to raw
+  `AbstractState.update(PT)` at about `2.8 us`.
+- `P,T,Dmass,Hmass` via `get_si`: about `0.3 us`, compared with about
+  `7.37 us` through unit-wrapped properties.
+- `compressibility_factor`: about `0.04 us`, compared with about `36.7 us`
+  for the preserved legacy formula.
+- `latent_heat`, `P_sat`, and `T_sat`: about `38x` to `56x` faster than the
+  preserved legacy copy/flash calculations.
+- `copy()`: about `2.3x` faster for a representative single-phase state.
+
 ## Alpha Scope
 
 Supported in alpha:
@@ -78,6 +98,16 @@ Optional or experimental in alpha:
 - `REFPROP`
 - `HEPROP`
 - ODH Excel export, which requires `CryoToolBox[odh]`
+
+## Wishlist
+
+- Add vectorized property-evaluation helpers for NumPy arrays. These should
+  avoid per-point Pint object creation, accept raw SI arrays where appropriate,
+  and return either raw arrays or unit-wrapped arrays at the boundary.
+- Evaluate CoolProp 8's `SVDSBTL`/`fast_evaluate` table backends for large
+  batch workloads. This should be opt-in because table creation has startup
+  cost, supported fluids/backends differ from normal `HEOS`, and accuracy needs
+  cryogenic edge-case validation.
 
 ## Documentation
 

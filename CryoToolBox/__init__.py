@@ -32,7 +32,11 @@ __docformat__ = "numpy"
 
 
 from .std_conditions import Q_, ureg, T_NTP, P_NTP, P_MSC, T_MSC, P_STD, T_STD
-from .cp_wrapper import ThermState, CryoToolBoxFutureWarning
+from .cp_wrapper import (
+    BranchSelectionNotImplementedError,
+    CryoToolBoxFutureWarning,
+    ThermState,
+)
 from .functions import *
 from . import flow
 from . import relief

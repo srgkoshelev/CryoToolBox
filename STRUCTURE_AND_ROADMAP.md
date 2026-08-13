@@ -257,6 +257,14 @@ to merge an older documentation-heavy branch wholesale.
    Required keys, units, and monotonic expectations should be tested so table
    updates cannot silently break calculations.
 
+10. Prepare the CoolProp 8 transition.
+    The current short-term path keeps `CoolProp >= 6.4` with feature-gated
+    support for CoolProp 8 APIs such as `Qmass`. The next compatibility-breaking
+    release should consider requiring `CoolProp >= 8` and bumping the package
+    Python floor from 3.8 to at least 3.9, matching CoolProp 8's published
+    Python support. Before making that change, keep the test suite green against
+    both a CoolProp 7 environment and a CoolProp 8 environment.
+
 ## Table recommendations
 
 Near-term best practices:
@@ -291,6 +299,39 @@ For the next development cycle, the safest order is:
 5. Split the test suite by domain once the facades settle.
 6. Add examples and tests around the extracted boundaries.
 7. Revisit deeper API cleanup only after the modular split is stable.
+
+## CoolProp Integration Plan
+
+Near-term CoolProp work should stay backward compatible:
+
+1. Keep one persistent `AbstractState` inside each `ThermState`; it is much
+   faster than repeated `PropsSI` calls for scalar workflows.
+2. Use native CoolProp calls where CTB used to reimplement the same value:
+   `compressibility_factor`, saturated endpoint outputs, saturation
+   ancillaries, and raw keyed outputs.
+3. Keep preserved legacy formulas in test and benchmark code so numerical and
+   performance changes remain explicit without adding dead paths to production.
+4. Add raw-SI helpers for internal loops: `update_si` and `get_si`. CoolProp's
+   Python low-level API expects SI units for HEOS and REFPROP-backed states, so
+   CTB should use Pa, K, kg/m^3, mol/m^3, J/kg, J/mol, J/(kg*K), and
+   J/(mol*K) at this boundary.
+5. Expose CoolProp 8's `Qmass` when available while preserving `Q` as molar
+   vapor quality. For pure and pseudo-pure/isopure fluids, `Q` and `Qmass`
+   agree; for true mixtures they can differ.
+6. Leave branch-selecting saturation flashes behind an explicit
+   `update_with_guesses` placeholder until CTB has a clear unit-aware wrapper
+   around CoolProp's `update_with_guesses` and tests for multi-root saturation
+   cases.
+7. Benchmark performance with `benchmarks/coolprop_integration.py` whenever
+   CoolProp is upgraded or the wrapper layer changes.
+
+For a future breaking release:
+
+1. Require CoolProp 8 or newer.
+2. Drop Python 3.8 support and set the package Python floor to at least 3.9.
+3. Consider optional vectorized interfaces using NumPy arrays and CoolProp 8
+   table backends such as `SVDSBTL.fast_evaluate`, while keeping scalar
+   `ThermState` behavior on normal `AbstractState` calls.
 
 ## Test-plan notes
 

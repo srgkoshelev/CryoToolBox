@@ -3,17 +3,32 @@
 import numpy as np
 import ctypes
 import os
+import CoolProp.CoolProp as CP
+
+MOLAR_MASS = 0.004002602
+T_CRITICAL = 5.1953
+P_CRITICAL = 227462.3
+DMOLAR_CRITICAL = 18130.0
+DMASS_CRITICAL = 72.56717426
+T_TRIPLE = 2.1768
+P_TRIPLE = 5041.8
+T_MAX = 1500.0
+T_MIN = 0.8
+P_MAX = 2.028e9
+_QMASS_PARAMETER = getattr(CP, 'iQmass', None)
 
 HEPROP_inputs = {
     'P': 1,
     'T': 2,
     'D': 3,
+    'Dmass': 3,
     'V': 4,
     'S': 5,
     'Smass': 5,
     'H': 6,
     'Hmass': 6,
     'U': 7,
+    'Umass': 7,
     'G': 8,
     'X': 9,
     'Q': 9,
@@ -24,6 +39,140 @@ HEPROP_inputs = {
     'sV': 14,
     'L': 15
 }
+
+HEPROP_input_pairs = {
+    CP.QT_INPUTS: ('Q', 'T'),
+    CP.PQ_INPUTS: ('P', 'Q'),
+    CP.QSmolar_INPUTS: ('Q', 'Smolar'),
+    CP.QSmass_INPUTS: ('Q', 'Smass'),
+    CP.HmolarQ_INPUTS: ('Hmolar', 'Q'),
+    CP.HmassQ_INPUTS: ('Hmass', 'Q'),
+    CP.DmolarQ_INPUTS: ('Dmolar', 'Q'),
+    CP.DmassQ_INPUTS: ('Dmass', 'Q'),
+    CP.PT_INPUTS: ('P', 'T'),
+    CP.DmassT_INPUTS: ('Dmass', 'T'),
+    CP.DmolarT_INPUTS: ('Dmolar', 'T'),
+    CP.HmolarT_INPUTS: ('Hmolar', 'T'),
+    CP.HmassT_INPUTS: ('Hmass', 'T'),
+    CP.SmolarT_INPUTS: ('Smolar', 'T'),
+    CP.SmassT_INPUTS: ('Smass', 'T'),
+    CP.TUmolar_INPUTS: ('T', 'Umolar'),
+    CP.TUmass_INPUTS: ('T', 'Umass'),
+    CP.DmassP_INPUTS: ('Dmass', 'P'),
+    CP.DmolarP_INPUTS: ('Dmolar', 'P'),
+    CP.HmassP_INPUTS: ('Hmass', 'P'),
+    CP.HmolarP_INPUTS: ('Hmolar', 'P'),
+    CP.PSmass_INPUTS: ('P', 'Smass'),
+    CP.PSmolar_INPUTS: ('P', 'Smolar'),
+    CP.PUmass_INPUTS: ('P', 'Umass'),
+    CP.PUmolar_INPUTS: ('P', 'Umolar'),
+    CP.HmassSmass_INPUTS: ('Hmass', 'Smass'),
+    CP.HmolarSmolar_INPUTS: ('Hmolar', 'Smolar'),
+    CP.SmassUmass_INPUTS: ('Smass', 'Umass'),
+    CP.SmolarUmolar_INPUTS: ('Smolar', 'Umolar'),
+    CP.DmassHmass_INPUTS: ('Dmass', 'Hmass'),
+    CP.DmolarHmolar_INPUTS: ('Dmolar', 'Hmolar'),
+    CP.DmassSmass_INPUTS: ('Dmass', 'Smass'),
+    CP.DmolarSmolar_INPUTS: ('Dmolar', 'Smolar'),
+    CP.DmassUmass_INPUTS: ('Dmass', 'Umass'),
+    CP.DmolarUmolar_INPUTS: ('Dmolar', 'Umolar'),
+}
+
+if _QMASS_PARAMETER is not None:
+    HEPROP_input_pairs.update({
+        CP.QmassT_INPUTS: ('Qmass', 'T'),
+        CP.PQmass_INPUTS: ('P', 'Qmass'),
+        CP.QmassSmolar_INPUTS: ('Qmass', 'Smolar'),
+        CP.QmassSmass_INPUTS: ('Qmass', 'Smass'),
+        CP.HmolarQmass_INPUTS: ('Hmolar', 'Qmass'),
+        CP.HmassQmass_INPUTS: ('Hmass', 'Qmass'),
+        CP.DmolarQmass_INPUTS: ('Dmolar', 'Qmass'),
+        CP.DmassQmass_INPUTS: ('Dmass', 'Qmass'),
+    })
+
+
+def _to_heprop_input(name, value):
+    """Convert a CoolProp low-level input name/value to HEPROP form."""
+    if name == 'Dmolar':
+        return 'Dmass', value * MOLAR_MASS
+    if name == 'Hmolar':
+        return 'Hmass', value / MOLAR_MASS
+    if name == 'Smolar':
+        return 'Smass', value / MOLAR_MASS
+    if name == 'Umolar':
+        return 'Umass', value / MOLAR_MASS
+    if name == 'Qmass':
+        return 'Q', value
+    return name, value
+
+
+def _heprop_phase(heprop):
+    """Return a CoolProp phase code for a raw HEPROP result table."""
+    quality, pressure, temperature = heprop[0][:3]
+    if quality <= 0 and pressure < P_CRITICAL:
+        return CP.iphase_liquid
+    if temperature > T_CRITICAL and pressure > P_CRITICAL:
+        return CP.iphase_supercritical
+    if temperature > T_CRITICAL and pressure < P_CRITICAL:
+        return CP.iphase_supercritical_gas
+    if temperature < T_CRITICAL and pressure > P_CRITICAL:
+        return CP.iphase_supercritical_liquid
+    if temperature == T_CRITICAL and pressure == P_CRITICAL:
+        return CP.iphase_critical_point
+    if quality >= 1:
+        return CP.iphase_gas
+    if 0 < quality < 1:
+        return CP.iphase_twophase
+    return CP.iphase_unknown
+
+
+def _keyed_output_from_table(heprop, parameter):
+    """Return a CoolProp-style keyed output from a raw HEPROP result table."""
+    state = heprop[0]
+    if _QMASS_PARAMETER is not None and parameter == _QMASS_PARAMETER:
+        return state[0]
+    if parameter == CP.isurface_tension and not 0 <= state[0] <= 1:
+        raise ValueError(
+            'Surface tension is only defined in the two-phase region.')
+    outputs = {
+        CP.iT: state[2],
+        CP.iP: state[1],
+        CP.iQ: state[0],
+        CP.iDmolar: state[3] / MOLAR_MASS,
+        CP.iDmass: state[3],
+        CP.iHmolar: state[9] * MOLAR_MASS,
+        CP.iHmass: state[9],
+        CP.iSmolar: state[8] * MOLAR_MASS,
+        CP.iSmass: state[8],
+        CP.iCpmolar: state[14] * MOLAR_MASS,
+        CP.iCpmass: state[14],
+        CP.iCvmolar: state[15] * MOLAR_MASS,
+        CP.iCvmass: state[15],
+        CP.iviscosity: state[25],
+        CP.iconductivity: state[26],
+        CP.isurface_tension: heprop[1][29],
+        CP.iPrandtl: state[27],
+        CP.ispeed_sound: state[20],
+        CP.iisothermal_compressibility: state[19],
+        CP.iisobaric_expansion_coefficient: state[17] / state[2],
+        CP.iZ: state[5],
+        CP.iPhase: _heprop_phase(heprop),
+        CP.iP_reducing: P_CRITICAL,
+        CP.iP_triple: P_TRIPLE,
+        CP.iP_max: P_MAX,
+        CP.iT_reducing: T_CRITICAL,
+        CP.iT_triple: T_TRIPLE,
+        CP.iT_max: T_MAX,
+        CP.iT_min: T_MIN,
+        CP.iisentropic_expansion_coefficient:
+            state[3] * state[20]**2 / state[1],
+    }
+    try:
+        return outputs[parameter]
+    except KeyError as exc:
+        raise ValueError(
+            f'HEPROP adapter does not implement keyed output {parameter!r}.'
+        ) from exc
 
 
 def _resolve_heprop_path():
@@ -91,7 +240,6 @@ def _hecalc(j1, value1, j2, value2, unit, dll):
                     ctypes.byref(ID))
     except Exception as exc:
         raise OSError('HEPROP backend call failed.') from exc
-    idi = ID.value
     return PROP2
 
 
@@ -102,54 +250,71 @@ class HepropState:
     :class:`CryoToolBox.cp_wrapper.ThermState`.
     """
 
-    def __init__(self, **state_parameters):
+    def __init__(self):
         self.dll = _init_he()
         self._heprop = None
 
-    def update(self, name1, value1, name2, value2):
-        """Update the cached HEPROP state from two named inputs."""
-        heprop = _hecalc(name1, value1, name2, value2, 1, self.dll)
-        self._heprop = heprop
+    def update(self, input_pair, value1, value2):
+        """Update the cached state using the CoolProp AbstractState API."""
+        try:
+            name1, name2 = HEPROP_input_pairs[input_pair]
+        except KeyError as exc:
+            raise ValueError(
+                f'HEPROP adapter does not support input pair {input_pair!r}.'
+            ) from exc
+        name1, value1 = _to_heprop_input(name1, value1)
+        name2, value2 = _to_heprop_input(name2, value2)
+        self._heprop = _hecalc(name1, value1, name2, value2, 1, self.dll)
+
+    def keyed_output(self, parameter):
+        """Return a CoolProp-style keyed output for the current state."""
+        if self._heprop is None:
+            return -np.inf
+        return _keyed_output_from_table(self._heprop, parameter)
 
     def T_critical(self):
         """Critical temperature for helium."""
-        return 5.1953
+        return T_CRITICAL
 
     def p_critical(self):
         """Critical pressure for helium."""
-        return 227462.3
+        return P_CRITICAL
 
     def rhomolar_critical(self):
         """Critical molar density for helium."""
-        return 18130.0
+        return DMOLAR_CRITICAL
 
     def rhomass_critical(self):
         """Critical mass density for helium."""
-        return 72.56717426
+        return DMASS_CRITICAL
 
     def T(self):
         """Temperature of the current state."""
-        return self._heprop[0][2]
+        return self.keyed_output(CP.iT)
 
     def rhomolar(self):
         """Molar density of the current state."""
-        return self._heprop[0][3] / 0.004002602
+        return self.keyed_output(CP.iDmolar)
 
     def rhomass(self):
         """Mass density of the current state."""
-        return self._heprop[0][3]
+        return self.keyed_output(CP.iDmass)
 
     def p(self):
         """Pressure of the current state."""
-        return self._heprop[0][1]
+        return self.keyed_output(CP.iP)
 
     def Q(self):
         """Vapor quality."""
-        return self._heprop[0][0]
+        return self.keyed_output(CP.iQ)
+
+    def Qmass(self):
+        """Mass-basis vapor quality."""
+        return self.Q()
 
     def molar_mass(self):
         """Helium molar mass."""
-        return 0.004002602
+        return MOLAR_MASS
 
     def gas_constant(self):
         """Universal gas constant used by HEPROP."""
@@ -201,35 +366,38 @@ class HepropState:
 
     def surface_tension(self):
         """Surface tension."""
-        return self._heprop[0][29]
+        if not 0 <= self.Q() <= 1:
+            raise ValueError(
+                'Surface tension is only defined in the two-phase region.')
+        return self._heprop[1][29]
 
     def p_reducing(self):
-        """Reducing pressure placeholder for API compatibility."""
-        return 0  #value to add, not existing in Coolprop
+        """Reducing pressure for pure helium."""
+        return P_CRITICAL
 
     def ptriple(self):
-        """Triple-point pressure placeholder for API compatibility."""
-        return 0  #value to add, not existing in Coolprop
+        """Triple-point pressure."""
+        return P_TRIPLE
 
     def pmax(self):
         """Maximum pressure supported by HEPROP."""
-        return 2028000000
+        return P_MAX
 
     def T_reducing(self):
         """Reducing temperature."""
-        return 5.1953
+        return T_CRITICAL
 
     def Ttriple(self):
         """Triple-point temperature."""
-        return 2.1768
+        return T_TRIPLE
 
     def Tmax(self):
         """Maximum temperature supported by HEPROP."""
-        return 1500
+        return T_MAX
 
     def Tmin(self):
         """Minimum temperature supported by HEPROP."""
-        return 0.8
+        return T_MIN
 
     def isothermal_compressibility(self):
         """Isothermal compressibility."""
@@ -240,8 +408,8 @@ class HepropState:
         return self._heprop[0][17] / self._heprop[0][2]
 
     def isentropic_expansion_coefficient(self):
-        """Isentropic expansion coefficient placeholder."""
-        return 0  #value to add, I need to verify this part with Heprop
+        """Return ``rho * speed_sound**2 / pressure``."""
+        return self.rhomass() * self.speed_sound()**2 / self.p()
 
     def Prandtl(self):
         """Prandtl number."""
@@ -270,27 +438,38 @@ class HepropState:
         * 6: Two phase.
         * 7: Unknown phase
         """
-        if self._heprop[0][0] <= 0 and self._heprop[0][1] < self.p_critical():
-            return 0
-        elif self._heprop[0][2] > self.T_critical(
-        ) and self._heprop[0][1] > self.p_critical():
-            return 1
-        elif self._heprop[0][2] > self.T_critical(
-        ) and self._heprop[0][1] < self.p_critical():
-            return 2
-        elif self._heprop[0][2] < self.T_critical(
-        ) and self._heprop[0][1] > self.p_critical():
-            return 3
-        elif self._heprop[0][2] == self.T_critical(
-        ) and self._heprop[0][1] == self.p_critical():
-            return 4
-        elif self._heprop[0][0] >= 1:
-            return 5
-        elif self._heprop[0][0] > 0 and self._heprop[0][0] < 1:
-            return 6
-        else:
-            return 7
+        return _heprop_phase(self._heprop)
 
     def specific_heat_input(self):
         """Specific heat input term used by the CGA calculations."""
         return self._heprop[0][24]
+
+    def saturated_liquid_keyed_output(self, parameter):
+        """Return a keyed output at saturated liquid on current pressure."""
+        heprop = _hecalc('P', self.p(), 'Q', 0, 1, self.dll)
+        return _keyed_output_from_table(heprop, parameter)
+
+    def saturated_vapor_keyed_output(self, parameter):
+        """Return a keyed output at saturated vapor on current pressure."""
+        heprop = _hecalc('P', self.p(), 'Q', 1, 1, self.dll)
+        return _keyed_output_from_table(heprop, parameter)
+
+    def saturation_ancillary(self, output, Q, given, value):
+        """Approximate CoolProp's saturation_ancillary API for helium."""
+        if given == CP.iT:
+            heprop = _hecalc('T', value, 'Q', Q, 1, self.dll)
+        elif given == CP.iP:
+            heprop = _hecalc('P', value, 'Q', Q, 1, self.dll)
+        else:
+            raise ValueError(
+                f'HEPROP adapter does not support saturation input {given!r}.'
+            )
+        return _keyed_output_from_table(heprop, output)
+
+    def get_mole_fractions(self):
+        """Return mole fractions for pure helium."""
+        return [1.0]
+
+    def get_mass_fractions(self):
+        """Return mass fractions for pure helium."""
+        return [1.0]

@@ -15,6 +15,13 @@ class CryoToolBoxFutureWarning(FutureWarning):
     """FutureWarning subclass for user-facing API behavior changes."""
 
 
+class BranchSelectionNotImplementedError(NotImplementedError):
+    """Raised when a branch-selecting CoolProp update is requested."""
+
+
+_HAS_QMASS = hasattr(CP, 'iQmass')
+
+
 CP_const_unit = {
     'gas_constant': (CP.igas_constant, ureg.J / ureg.mol / ureg.K),
     'molar_mass': (CP.imolar_mass, ureg.kg / ureg.mol),
@@ -100,43 +107,23 @@ CP_const_unit = {
         ureg.s**2 / (ureg.hr * ureg.m) * (ureg.K)**0.5)
 }
 
-CP_inputs = {
-    'QT': CP.QT_INPUTS,
-    'PQ': CP.PQ_INPUTS,
-    'QSmolar': CP.QSmolar_INPUTS,
-    'QSmass': CP.QSmass_INPUTS,
-    'HmolarQ': CP.HmolarQ_INPUTS,
-    'HmassQ': CP.HmassQ_INPUTS,
-    'DmolarQ': CP.DmolarQ_INPUTS,
-    'DmassQ': CP.DmassQ_INPUTS,
-    'PT': CP.PT_INPUTS,
-    'DmassT': CP.DmassT_INPUTS,
-    'DmolarT': CP.DmolarT_INPUTS,
-    'HmolarT': CP.HmolarT_INPUTS,
-    'HmassT': CP.HmassT_INPUTS,
-    'SmolarT': CP.SmolarT_INPUTS,
-    'SmassT': CP.SmassT_INPUTS,
-    'TUmolar': CP.TUmolar_INPUTS,
-    'TUmass': CP.TUmass_INPUTS,
-    'DmassP': CP.DmassP_INPUTS,
-    'DmolarP': CP.DmolarP_INPUTS,
-    'HmassP': CP.HmassP_INPUTS,
-    'HmolarP': CP.HmolarP_INPUTS,
-    'PSmass': CP.PSmass_INPUTS,
-    'PSmolar': CP.PSmolar_INPUTS,
-    'PUmass': CP.PUmass_INPUTS,
-    'PUmolar': CP.PUmolar_INPUTS,
-    'HmassSmass': CP.HmassSmass_INPUTS,
-    'HmolarSmolar': CP.HmolarSmolar_INPUTS,
-    'SmassUmass': CP.SmassUmass_INPUTS,
-    'SmolarUmolar': CP.SmolarUmolar_INPUTS,
-    'DmassHmass': CP.DmassHmass_INPUTS,
-    'DmolarHmolar': CP.DmolarHmolar_INPUTS,
-    'DmassSmass': CP.DmassSmass_INPUTS,
-    'DmolarSmolar': CP.DmolarSmolar_INPUTS,
-    'DmassUmass': CP.DmassUmass_INPUTS,
-    'DmolarUmolar': CP.DmolarUmolar_INPUTS,
-}
+CP_const_unit['Qmass'] = (
+    getattr(CP, 'iQmass', None),
+    ureg.kg / ureg.kg,
+)
+
+
+def _input_parameter(name):
+    """Return the CoolProp parameter ID for an update input."""
+    try:
+        parameter = CP_const_unit[name][0]
+    except KeyError as exc:
+        raise ValueError(f'Unsupported CoolProp input: {name!r}.') from exc
+    if parameter is None:
+        raise ValueError(
+            f'{name!r} is not available as an input with this CoolProp version.'
+        )
+    return parameter
 
 
 class ThermState:
@@ -190,31 +177,66 @@ class ThermState:
     def update_kw(self, **state_parameters):
         """Update thermodynamic state using keyword arguments."""
         if len(state_parameters) != 2:
-            raise TypeError(f'update_kw() takes 2 arguments \
-            ({len(state_parameters)} given)')
-        # TODO Code below can be simplified
-        names = []
-        values = []
-        for name, value in state_parameters.items():
-            names.append(name)
-            values.append(value)
-        self.update(names[0], values[0], names[1], values[1])
+            raise TypeError(
+                f'update_kw() takes 2 arguments '
+                f'({len(state_parameters)} given)')
+        (name1, value1), (name2, value2) = state_parameters.items()
+        self.update(name1, value1, name2, value2)
 
     def update(self, name1, value1, name2, value2):
         """Update the state from two named thermodynamic inputs."""
-        if name1 > name2:  # Sorting inputs alphabetically
-            name1, name2 = name2, name1
-            value1, value2 = value2, value1
-        CP_input_str = name1 + name2
-        CP_value1 = self.prepare_input(name1, value1)
-        CP_value2 = self.prepare_input(name2, value2)
+        self.update_si(
+            name1, self.prepare_input(name1, value1),
+            name2, self.prepare_input(name2, value2))
 
-        if self.backend == "HEPROP":
-            self._AbstractState.update(name1, CP_value1, name2, CP_value2)
-        else:
-            self._AbstractState.update(
-                CP_inputs[CP_input_str], CP_value1,
-                CP_value2)  ###update all properties in coolprop
+    def update_si(self, name1, value1, name2, value2):
+        """Update the state from raw CoolProp SI input values.
+
+        CoolProp's low-level ``AbstractState`` API uses SI units for all
+        Python backends, including the REFPROP wrapper. Use ``update`` or
+        ``update_kw`` for Pint-aware inputs; use this method only when values
+        are already in CoolProp's expected units such as Pa, K, kg/m^3,
+        mol/m^3, J/kg, J/mol, J/(kg*K), or J/(mol*K).
+        """
+        input_pair, value1, value2 = CP.generate_update_pair(
+            _input_parameter(name1), value1,
+            _input_parameter(name2), value2)
+        self._AbstractState.update(input_pair, value1, value2)
+
+    def update_with_guesses(self, *args, **kwargs):
+        """Placeholder for future branch-selecting saturation updates.
+
+        CoolProp 8.0.0 can disambiguate multi-root saturation inputs through
+        ``AbstractState.update_with_guesses`` and a temperature guess. CTB has
+        not wrapped that API yet because it needs a unit-aware, backend-aware
+        interface and clear tests around branch selection.
+        """
+        raise BranchSelectionNotImplementedError(
+            'ThermState.update_with_guesses() is planned but not implemented. '
+            'Use update()/update_kw() for unambiguous states; branch-selecting '
+            'saturation flashes will be added in a future CTB release.'
+        )
+
+    def get_si(self, name):
+        """Return a current-state property in raw CoolProp SI units.
+
+        This is the output counterpart to :meth:`update_si`. Dimensionless
+        values such as ``Q`` and ``Z`` are returned as plain floats.
+        """
+        if name == 'Qmass' and not _HAS_QMASS:
+            return self.get_si('Q')
+        try:
+            parameter, unit = CP_const_unit[name]
+        except KeyError as exc:
+            raise ValueError(f'Unsupported CoolProp output: {name!r}.') from exc
+
+        if parameter is not None:
+            return self._AbstractState.keyed_output(parameter)
+
+        value = getattr(self, name)
+        if hasattr(value, 'to'):
+            return value.to(unit).magnitude
+        return float(value)
 
     @staticmethod
     def prepare_input(name, value):
@@ -235,10 +257,9 @@ class ThermState:
         float
         """
         if isinstance(value, (int, float)):
-            return value  # Dimensionless
-        else:
-            unit = CP_const_unit[name][1]
-            return value.to(unit).magnitude
+            return value
+        unit = CP_const_unit[name][1]
+        return value.to(unit).magnitude
 
     @property
     @ureg.wraps(CP_const_unit['T'][1], None)
@@ -290,8 +311,15 @@ class ThermState:
 
     @property
     def Q(self):
-        """Vapor quality for two-phase states."""
+        """Molar vapor quality for two-phase states."""
         return self._AbstractState.Q()
+
+    @property
+    def Qmass(self):
+        """Mass-basis vapor quality for two-phase states."""
+        if hasattr(self._AbstractState, 'Qmass'):
+            return self._AbstractState.Qmass()
+        return self.Q
 
     @property
     @ureg.wraps(CP_const_unit['molar_mass'][1], None)
@@ -315,15 +343,7 @@ class ThermState:
     # @ureg.wraps(CP_const_unit['Z'][1], None)
     def compressibility_factor(self):
         """Compressibility factor ``Z``."""
-        if self.backend == "HEPROP":
-            Z_ = self._AbstractState.compressibility_factor()
-        else:
-            Z_ = (self.P * self.molar_mass /
-                  (self.Dmass * self.gas_constant * self.T)).m_as(
-                      ureg.dimensionless)
-        return Z_
-        # Temporarily unavailable function
-        # return self._AbstractState.compressibility_factor()
+        return self._AbstractState.compressibility_factor()
 
     # Useful shorthand
     Z = compressibility_factor
@@ -398,13 +418,20 @@ class ThermState:
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P_reducing(self):
         """Reducing pressure."""
-        return self._AbstractState.p_reducing()
+        try:
+            return self._AbstractState.keyed_output(CP.iP_reducing)
+        except ValueError:
+            # REFPROP does not expose reducing pressure for pure fluids;
+            # for a pure fluid the reducing and critical states coincide.
+            if len(self.mole_fractions) == 1:
+                return self._AbstractState.p_critical()
+            raise
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
     def P_triple(self):
         """Triple-point pressure."""
-        return self._AbstractState.ptriple()
+        return self._AbstractState.keyed_output(CP.iP_triple)
 
     @property
     @ureg.wraps(CP_const_unit['P'][1], None)
@@ -450,10 +477,11 @@ class ThermState:
 
     @property
     @ureg.wraps(CP_const_unit['isentropic_expansion_coefficient'][1],
-                None)  ### not existing with coolprop issues
+                None)
     def isentropic_expansion_coefficient(self):
         """Isentropic expansion coefficient."""
-        return self._AbstractState.isentropic_expansion_coefficient()
+        return self._AbstractState.keyed_output(
+            CP.iisentropic_expansion_coefficient)
 
     @property
     def Prandtl(self):
@@ -542,25 +570,24 @@ class ThermState:
         # Because specific volume is not available as function of
         # the AbstractState, density is used instead
         # The resulting function is: -Dmass*(dHmass/dDmass)|p
-        if self.backend == "HEPROP":
-            return self._AbstractState.specific_heat_input(
-            ) * ureg.joule / ureg.kg
-        else:
-            return (-self.Dmass) * self.first_partial_deriv(
-                'Hmass', 'Dmass', 'P')
+        specific_heat_input = getattr(self._AbstractState,
+                                      'specific_heat_input', None)
+        if specific_heat_input is not None:
+            return specific_heat_input() * ureg.joule / ureg.kg
+        return (-self.Dmass) * self.first_partial_deriv(
+            'Hmass', 'Dmass', 'P')
 
     @property
     def gamma(self):
-        """Calculate gamma = k = Cp/Cv coefficient.
-        """
-        # To avoid real gas effects influencing Cp and Cv,
-        # calculating at gamma at NTP
-        T_current = self.T
-        S_current = self.Smass
-        self.update('P', P_NTP, 'T', T_NTP)
-        _gamma = self.Cpmass / self.Cvmass
-        self.update('T', T_current, 'Smass', S_current)
-        return _gamma
+        """Calculate current-state gamma = k = Cp/Cv."""
+        warnings.warn(
+            'gamma behavior changed: it now returns current-state '
+            'Cpmolar/Cvmolar. For an NTP value, calculate it explicitly from a '
+            'standard-condition state.',
+            CryoToolBoxFutureWarning,
+            stacklevel=2,
+        )
+        return self.Cpmolar / self.Cvmolar
 
     @property
     def C_gas_const(self):
@@ -568,7 +595,8 @@ class ThermState:
         Constant for gas or vapor which is the function of the ratio of
         specific heats k = Cp/Cv. ASME VIII.1-2015 pp. 423-424.
         """
-        k_ = self.gamma.magnitude
+        standard_state = self.to_standard(conditions='NTP')
+        k_ = standard_state.gamma
         root = (k_ * (2 / (k_ + 1))**((k_ + 1) / (k_ - 1)))**0.5
         R = ureg.R  # Universal gas constant
         C_ = root / R**0.5 * (ureg.g / ureg.mol)**0.5
@@ -636,6 +664,7 @@ class ThermState:
         return MZT_
 
     @property
+    @ureg.wraps(CP_const_unit['Hmass'][1], None)
     def latent_heat(self):
         """Calculate latent heat of evaporation for current quality."""
         warnings.warn(
@@ -647,18 +676,27 @@ class ThermState:
         if not (0 <= self.Q <= 1):
             raise ValueError(
                 f'Latent heat is undefined for Q={self.Q}, {self}.')
-        TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=1)
-        h_gas = TempState.Hmass
-        return h_gas - self.Hmass
+        try:
+            h_vapor = self._AbstractState.saturated_vapor_keyed_output(CP.iHmass)
+        except (AttributeError, NotImplementedError, ValueError):
+            saturation_self = ThermState(self.name, backend=self.backend)
+            saturation_self.update_si('P', self._AbstractState.p(), 'Q', 1)
+            h_vapor = saturation_self.get_si('Hmass')
+        return h_vapor - self._AbstractState.hmass()
 
     def copy(self):
         """Create a copy of current ThermState object."""
-        TempState = ThermState(self.name, backend=self.backend)
-        # If conditions are defined
-        if self.Dmass != -inf * ureg.kg / ureg.m**3:
-            TempState.update_kw(T=self.T, Smass=self.Smass)
-        return TempState
+        temp_state = ThermState(self.name, backend=self.backend)
+        density = self._AbstractState.rhomass()
+        if density == -inf:
+            return temp_state
+
+        quality = self._AbstractState.Q()
+        if 0 <= quality <= 1:
+            temp_state.update_si('P', self._AbstractState.p(), 'Q', quality)
+        else:
+            temp_state.update_si('Dmass', density, 'T', self._AbstractState.T())
+        return temp_state
 
     def to_standard(self, conditions='NTP'):
         """Create a copy of current ThermState object at standard conditions.
@@ -679,15 +717,27 @@ class ThermState:
         return TempState
 
     @property
+    @ureg.wraps(CP_const_unit['P_sat'][1], None)
     def P_sat(self):
         """Saturation pressure at the current temperature."""
-        TempState = self.copy()
-        TempState.update_kw(T=self.T, Q=0)
-        return TempState.P
+        try:
+            P_sat = self._AbstractState.saturation_ancillary(
+                CP.iP, 0, CP.iT, self._AbstractState.T())
+            return P_sat
+        except (AttributeError, NotImplementedError, ValueError):
+            saturation_state = ThermState(self.name, backend=self.backend)
+            saturation_state.update_si('Q', 0, 'T', self._AbstractState.T())
+            return saturation_state._AbstractState.p()
 
     @property
+    @ureg.wraps(CP_const_unit['T_sat'][1], None)
     def T_sat(self):
         """Saturation temperature at the current pressure."""
-        TempState = self.copy()
-        TempState.update_kw(P=self.P, Q=0)
-        return TempState.T
+        try:
+            T_sat = self._AbstractState.saturation_ancillary(
+                CP.iT, 0, CP.iP, self._AbstractState.p())
+            return T_sat
+        except (AttributeError, NotImplementedError, ValueError):
+            saturation_state = ThermState(self.name, backend=self.backend)
+            saturation_state.update_si('P', self._AbstractState.p(), 'Q', 0)
+            return saturation_state._AbstractState.T()

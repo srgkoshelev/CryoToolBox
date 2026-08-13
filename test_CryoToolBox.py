@@ -1,27 +1,79 @@
 import CryoToolBox as ctb
-from CryoToolBox.cp_wrapper import CryoToolBoxFutureWarning
+from CryoToolBox.cp_wrapper import (
+    BranchSelectionNotImplementedError,
+    CryoToolBoxFutureWarning,
+    _HAS_QMASS,
+)
 from CryoToolBox import odh
 import pprint
 import unittest
 import doctest
 import warnings
-from math import pi, sin, sqrt, tan
+from math import inf, pi, sin, sqrt, tan
 from unittest.mock import MagicMock
 
 pp = pprint.PrettyPrinter()
 
 warnings.filterwarnings(
-    'ignore',
+    "ignore",
     category=CryoToolBoxFutureWarning,
 )
 
 
 def setUpModule():
-    warnings.simplefilter('ignore', CryoToolBoxFutureWarning)
+    warnings.simplefilter("ignore", CryoToolBoxFutureWarning)
+
 
 ht = ctb
 u = ht.ureg
 Q_ = ht.Q_
+
+
+def _legacy_compressibility_factor(state):
+    """Calculate compressibility using the pre-native CTB formula."""
+    if state.backend == "HEPROP":
+        return state._AbstractState.compressibility_factor()
+    return (
+        state.P * state.molar_mass / (state.Dmass * state.gas_constant * state.T)
+    ).m_as(u.dimensionless)
+
+
+def _legacy_copy(state):
+    """Copy a state using the former T/Smass reconstruction."""
+    temp_state = ht.ThermState(state.name, backend=state.backend)
+    if state.Dmass != -inf * u.kg / u.m**3:
+        temp_state.update_kw(T=state.T, Smass=state.Smass)
+    return temp_state
+
+
+def _legacy_latent_heat(state):
+    """Calculate latent heat using the former copied-state flash."""
+    if not (0 <= state.Q <= 1):
+        raise ValueError(f"Latent heat is undefined for Q={state.Q}, {state}.")
+    temp_state = _legacy_copy(state)
+    temp_state.update_kw(P=state.P, Q=1)
+    return temp_state.Hmass - state.Hmass
+
+
+def _legacy_P_sat(state):
+    """Calculate saturation pressure using the former copied-state flash."""
+    temp_state = _legacy_copy(state)
+    temp_state.update_kw(T=state.T, Q=0)
+    return temp_state.P
+
+
+def _legacy_T_sat(state):
+    """Calculate saturation temperature using the former copied-state flash."""
+    temp_state = _legacy_copy(state)
+    temp_state.update_kw(P=state.P, Q=0)
+    return temp_state.T
+
+
+def _legacy_gamma(state):
+    """Calculate gamma at NTP using the former copied-state path."""
+    temp_state = _legacy_copy(state)
+    temp_state.update_kw(P=ht.P_NTP, T=ht.T_NTP)
+    return temp_state.Cpmass / temp_state.Cvmass
 
 
 def load_tests(loader, tests, ignore):
@@ -33,10 +85,13 @@ def load_tests(loader, tests, ignore):
     """
     # Add doctests with ellipsis and other useful flags
     tests.addTests(
-        doctest.DocTestSuite(ctb.piping,
-                             optionflags=doctest.ELLIPSIS
-                             | doctest.NORMALIZE_WHITESPACE
-                             | doctest.IGNORE_EXCEPTION_DETAIL))
+        doctest.DocTestSuite(
+            ctb.piping,
+            optionflags=doctest.ELLIPSIS
+            | doctest.NORMALIZE_WHITESPACE
+            | doctest.IGNORE_EXCEPTION_DETAIL,
+        )
+    )
     return tests
 
 
@@ -51,21 +106,20 @@ def _backend_available(fluid, backend, **state_parameters):
 
 # Checking if optional backends work to run the tests
 skip_RP_test = not _backend_available(
-    'helium',
-    'REFPROP',
+    "helium",
+    "REFPROP",
     P=1 * u.bar,
     T=ctb.T_NTP,
 )
 skip_HP_test = not _backend_available(
-    'helium',
-    'HEPROP',
+    "helium",
+    "HEPROP",
     T=300 * u.K,
     P=1 * u.bar,
 )
 
 
-@unittest.skipIf(skip_RP_test,
-                 'REFPROP failed to initialize, skipping REFPROP tests.')
+@unittest.skipIf(skip_RP_test, "REFPROP failed to initialize, skipping REFPROP tests.")
 class RefPropTest(unittest.TestCase):
     """Verify fluid properties are calculated accurately.
 
@@ -76,9 +130,10 @@ class RefPropTest(unittest.TestCase):
 
     def assertNIST(self, nist, calc, criteria=None):
         criteria = criteria or self.criteria
-        assert abs(nist-calc) / nist < criteria, \
-            f'Calculated value {calc} is not within {criteria:%} of NIST value ' + \
-            f'{nist}'
+        assert abs(nist - calc) / nist < criteria, (
+            f"Calculated value {calc} is not within {criteria:%} of NIST value "
+            + f"{nist}"
+        )
 
     # def test_air(self):
     #     fluid = ht.ThermState('air', backend='REFPROP')
@@ -86,34 +141,33 @@ class RefPropTest(unittest.TestCase):
     # TODO Check why different values
 
     def test_argon(self):
-        fluid = ht.ThermState('argon', backend='REFPROP')
+        fluid = ht.ThermState("argon", backend="REFPROP")
         P = 2 * 1000 * u.kPa
         D = 15 / fluid.M * u.mol / u.L
         fluid.update_kw(P=P, Dmolar=D)
         self.assertNIST(637.377588657857, fluid.T.to(u.K).magnitude)
 
     def test_r134a(self):
-        fluid = ht.ThermState('r134a', backend='REFPROP')
+        fluid = ht.ThermState("r134a", backend="REFPROP")
         T = 400 * u.K
         D = 50 / fluid.M * u.mol / u.L
         fluid.update_kw(T=T, Dmolar=D)
         self.assertNIST(1.45691892789737, fluid.P.to(u.kPa).magnitude / 1000)
 
     def test_oxygen(self):
-        fluid = ht.ThermState('oxygen', backend='REFPROP')
+        fluid = ht.ThermState("oxygen", backend="REFPROP")
         T = 100 * u.K
         P = 1000 * u.kPa
         fluid.update_kw(T=T, P=P)
-        self.assertNIST(153.886680663753,
-                        fluid.viscosity.to(u.uPa * u.s).magnitude)
+        self.assertNIST(153.886680663753, fluid.viscosity.to(u.uPa * u.s).magnitude)
 
     def test_nitrogen(self):
-        fluid = ht.ThermState('nitrogen', backend='REFPROP')
+        fluid = ht.ThermState("nitrogen", backend="REFPROP")
         T = 100 * u.K
         fluid.update_kw(T=T, Q=0)
         self.assertNIST(
-            100.111748964945,
-            fluid.conductivity.to(u.W / (u.m * u.K)).magnitude * 1000)
+            100.111748964945, fluid.conductivity.to(u.W / (u.m * u.K)).magnitude * 1000
+        )
 
     # TODO Check why different values
     # def test_air_density(self):
@@ -176,9 +230,8 @@ class RefPropTest(unittest.TestCase):
 
 
 class CpWrapperTest(unittest.TestCase):
-
     def test_super_critical(self):
-        fluid = ctb.ThermState('helium', P=1 * u.bar, T=300 * u.K)
+        fluid = ctb.ThermState("helium", P=1 * u.bar, T=300 * u.K)
         self.assertTrue(fluid.is_super_critical)
         fluid.update_kw(T=6 * u.K, P=100 * u.bar)
         self.assertTrue(fluid.is_super_critical)
@@ -186,46 +239,112 @@ class CpWrapperTest(unittest.TestCase):
         self.assertTrue(fluid.is_super_critical)
 
     def test_phases(self):
-        fluid = ctb.ThermState('helium', P=1 * u.bar, T=300 * u.K)
+        fluid = ctb.ThermState("helium", P=1 * u.bar, T=300 * u.K)
         self.assertEqual(fluid.phase, 2)
         self.assertEqual(
             fluid.phase_str,
-            'Supercritical gas (p < pc, T > Tc)',
+            "Supercritical gas (p < pc, T > Tc)",
         )
         fluid.update_kw(P=fluid.P, Q=0.5)
         self.assertEqual(fluid.phase, 6)
         self.assertEqual(
             fluid.phase_str,
-            'Two-phase',
+            "Two-phase",
         )
         fluid.update_kw(P=fluid.P, T=2.5 * u.K)
         self.assertEqual(fluid.phase, 0)
         self.assertEqual(
             fluid.phase_str,
-            'Subcritical liquid',
+            "Subcritical liquid",
         )
 
     def test_latent_heat(self):
-        liquid = ctb.ThermState('helium', P=1 * u.bar, Q=0)
-        vapor = ctb.ThermState('helium', P=1 * u.bar, Q=1)
-        two_phase = ctb.ThermState('helium', P=1 * u.bar, Q=0.5)
+        liquid = ctb.ThermState("helium", P=1 * u.bar, Q=0)
+        vapor = ctb.ThermState("helium", P=1 * u.bar, Q=1)
+        two_phase = ctb.ThermState("helium", P=1 * u.bar, Q=0.5)
         L = vapor.Hmass - liquid.Hmass
         self.assertAlmostEqual(L, liquid.latent_heat, places=7)
         self.assertAlmostEqual(0 * u.J / u.g, vapor.latent_heat, places=7)
         self.assertAlmostEqual(0.5 * L, two_phase.latent_heat, places=7)
-        super_critical = ctb.ThermState('helium', P=1 * u.bar, T=300 * u.K)
+        super_critical = ctb.ThermState("helium", P=1 * u.bar, T=300 * u.K)
         with self.assertRaises(ValueError):
             _ = super_critical.latent_heat
 
+    def test_Q_and_Qmass_match_for_pure_and_isopure_fluids(self):
+        for fluid_name in ("nitrogen", "helium", "water", "air", "R410A"):
+            fluid = ctb.ThermState(fluid_name, P=1 * u.bar, Q=0.37)
+            self.assertAlmostEqual(fluid.Q, 0.37)
+            self.assertAlmostEqual(fluid.Qmass, fluid.Q)
+            self.assertAlmostEqual(fluid.get_si("Q"), fluid.Q)
+            self.assertAlmostEqual(fluid.get_si("Qmass"), fluid.Qmass)
+
+    @unittest.skipUnless(_HAS_QMASS, "Qmass inputs require CoolProp 8.0.0+.")
+    def test_Qmass_input_pairs(self):
+        q_molar = ctb.ThermState("nitrogen", P=1 * u.bar, Q=0.4)
+        q_mass = ctb.ThermState("nitrogen", P=1 * u.bar, Qmass=0.4)
+        self.assertAlmostEqual(q_molar.T, q_mass.T)
+        self.assertAlmostEqual(q_molar.Hmass, q_mass.Hmass)
+
+    def test_update_with_guesses_stub(self):
+        fluid = ctb.ThermState("water")
+        with self.assertRaises(BranchSelectionNotImplementedError):
+            fluid.update_with_guesses("Hmass", 1, "Q", 1, T_guess=470 * u.K)
+
+    def test_get_si_and_update_si_use_coolprop_units(self):
+        fluid = ctb.ThermState("nitrogen", P=500 * u.kPa, T=300 * u.K)
+        fluid_si = ctb.ThermState("nitrogen")
+        fluid_si.update_si("P", 500_000.0, "T", 300.0)
+        self.assertAlmostEqual(500_000.0, fluid.get_si("P"))
+        self.assertAlmostEqual(300.0, fluid.get_si("T"))
+        self.assertAlmostEqual(fluid.get_si("Dmass"), fluid_si.get_si("Dmass"))
+        self.assertAlmostEqual(fluid.get_si("Hmass"), fluid_si.get_si("Hmass"))
+
+        fluid_ph = ctb.ThermState("nitrogen")
+        fluid_ph.update_si("P", fluid.get_si("P"), "Hmass", fluid.get_si("Hmass"))
+        self.assertAlmostEqual(fluid.get_si("T"), fluid_ph.get_si("T"))
+
+    def test_native_wrappers_match_legacy_calculations(self):
+        fluid = ctb.ThermState("nitrogen", P=200 * u.kPa, T=90 * u.K)
+        self.assertAlmostEqual(
+            _legacy_compressibility_factor(fluid),
+            fluid.compressibility_factor,
+            places=12,
+        )
+        self.assertLess(abs((_legacy_P_sat(fluid) - fluid.P_sat) / fluid.P_sat), 1e-5)
+        self.assertLess(abs((_legacy_T_sat(fluid) - fluid.T_sat) / fluid.T_sat), 1e-5)
+
+        two_phase = ctb.ThermState("nitrogen", P=200 * u.kPa, Q=0.25)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", CryoToolBoxFutureWarning)
+            self.assertAlmostEqual(
+                _legacy_latent_heat(two_phase),
+                two_phase.latent_heat,
+                places=7,
+            )
+
+    def test_gamma_returns_current_state_cp_ratio(self):
+        fluid = ctb.ThermState("nitrogen", P=1 * u.bar, T=100 * u.K)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", CryoToolBoxFutureWarning)
+            gamma = fluid.gamma
+        self.assertTrue(
+            any("gamma behavior changed" in str(item.message) for item in caught)
+        )
+        self.assertAlmostEqual(gamma, fluid.Cpmolar / fluid.Cvmolar)
+        self.assertNotAlmostEqual(gamma, _legacy_gamma(fluid), places=3)
+        standard_state = fluid.to_standard(conditions="NTP")
+        standard_gamma = standard_state.Cpmolar / standard_state.Cvmolar
+        self.assertAlmostEqual(standard_gamma, _legacy_gamma(fluid))
+
 
 class FunctionsTest(unittest.TestCase):
-
     def assertApproxEqual(self, data, calc, uncertainty=0.1):
         if isinstance(data, u.Quantity):
             calc.ito(data.units)
-        assert abs(data-calc) / data < uncertainty, \
-            f'Calculated value {calc} is not within {uncertainty:.1%} of data ' + \
-            f'value {data}'
+        assert abs(data - calc) / data < uncertainty, (
+            f"Calculated value {calc} is not within {uncertainty:.1%} of data "
+            + f"value {data}"
+        )
 
     def test_rad_hl_1(self):
         eps = 0.02
@@ -248,13 +367,8 @@ class FunctionsTest(unittest.TestCase):
         T1 = Q_(327, u.degC)
         T2 = Q_(127, u.degC)
         eps_b = 0.05
-        heat_flow = abs(
-            ht.rad_hl(T1, eps, T2, eps, baffles={
-                'N': 1,
-                'eps': eps_b
-            }))
-        self.assertAlmostEqual(145.7373409,
-                               heat_flow.to(u.W / u.m**2).magnitude, 5)
+        heat_flow = abs(ht.rad_hl(T1, eps, T2, eps, baffles={"N": 1, "eps": eps_b}))
+        self.assertAlmostEqual(145.7373409, heat_flow.to(u.W / u.m**2).magnitude, 5)
 
     def test_rad_hl_4(self):
         T1 = Q_(327, u.degC)
@@ -262,20 +376,16 @@ class FunctionsTest(unittest.TestCase):
         T2 = Q_(127, u.degC)
         eps_2 = 0.4
         eps_b = 0.05
-        heat_flow = abs(
-            ht.rad_hl(T1, eps_1, T2, eps_2, baffles={
-                'N': 1,
-                'eps': eps_b
-            }))
-        self.assertAlmostEqual(141.3739475,
-                               heat_flow.to(u.W / u.m**2).magnitude, 5)
+        heat_flow = abs(ht.rad_hl(T1, eps_1, T2, eps_2, baffles={"N": 1, "eps": eps_b}))
+        self.assertAlmostEqual(141.3739475, heat_flow.to(u.W / u.m**2).magnitude, 5)
 
-    @unittest.skipIf(skip_RP_test,
-                     'REFPROP failed to initialize, skipping REFPROP tests.')
+    @unittest.skipIf(
+        skip_RP_test, "REFPROP failed to initialize, skipping REFPROP tests."
+    )
     def test_API_subsonic(self):
         """Example from API 5.6"""
         m_dot = 53500 * u.lb / u.hr
-        fluid = ht.ThermState('propane&butane', backend='REFPROP')
+        fluid = ht.ThermState("propane&butane", backend="REFPROP")
         fluid.set_mole_fractions(0.5, 0.5)
         fluid.update_kw(T=627 * u.degR, P=97.2 * u.psi)
         P_back = 77.2 * u.psi
@@ -283,12 +393,13 @@ class FunctionsTest(unittest.TestCase):
         A_calc = ht.A_relief_API(m_dot, fluid, P_back=P_back)
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
-    @unittest.skipIf(skip_RP_test,
-                     'REFPROP failed to initialize, skipping REFPROP tests.')
+    @unittest.skipIf(
+        skip_RP_test, "REFPROP failed to initialize, skipping REFPROP tests."
+    )
     def test_API_sonic(self):
         """Example from API 5.6"""
         m_dot = 53500 * u.lb / u.hr
-        fluid = ht.ThermState('propane&butane', backend='REFPROP')
+        fluid = ht.ThermState("propane&butane", backend="REFPROP")
         fluid.set_mole_fractions(0.5, 0.5)
         fluid.update_kw(T=627 * u.degR, P=97.2 * u.psi)
         P_back = Q_(0, u.psig)
@@ -297,56 +408,49 @@ class FunctionsTest(unittest.TestCase):
         self.assertApproxEqual(A_expect, A_calc, uncertainty=0.05)
 
     def test_to_standard_flow(self):
-        self.assertRaises(ValueError, ctb.to_standard_flow, 1 * u.inch,
-                          ctb.AIR)
+        self.assertRaises(ValueError, ctb.to_standard_flow, 1 * u.inch, ctb.AIR)
 
     def test_theta(self):
         # Subcritical test
-        fluid = ctb.ThermState('helium', P=1 * u.bar, Q=0.5)
+        fluid = ctb.ThermState("helium", P=1 * u.bar, Q=0.5)
         self.assertAlmostEqual(4.20982594 * u.K, ctb.cga.theta(fluid))
         # Supercritical test
         fluid.update_kw(P=20 * u.bar, T=10 * u.K)
-        self.assertApproxEqual(11.9574303 * u.K, ctb.cga.theta(fluid),
-                               uncertainty=1e-7)
+        self.assertApproxEqual(11.9574303 * u.K, ctb.cga.theta(fluid), uncertainty=1e-7)
 
     def test_calculate_fluid_FR(self):
         # Subcritical test
-        fluid = ctb.ThermState('helium', P=0.9090909090909091 * u.bar, Q=0.5)
+        fluid = ctb.ThermState("helium", P=0.9090909090909091 * u.bar, Q=0.5)
         fluid_FR = ctb.cga.calculate_fluid_FR(fluid)
         self.assertAlmostEqual(4.20982594 * u.K, fluid_FR.T)
         # Supercritical test
         fluid.update_kw(P=18.18181818181818 * u.bar, T=10 * u.K)
         fluid_FR = ctb.cga.calculate_fluid_FR(fluid)
-        self.assertApproxEqual(11.9574303 * u.K, fluid_FR.T,
-                               uncertainty=1e-7)
+        self.assertApproxEqual(11.9574303 * u.K, fluid_FR.T, uncertainty=1e-7)
 
     def test_G_i(self):
-        test_fluid = ctb.ThermState('air', P=Q_(100, u.psig), Q=1)
+        test_fluid = ctb.ThermState("air", P=Q_(100, u.psig), Q=1)
         self.assertApproxEqual(10.2, ctb.cga.G_i(test_fluid), uncertainty=0.05)
-        test_fluid = ctb.ThermState('hydrogen', P=100 * u.psi, Q=1)
-        self.assertApproxEqual(8.272,
-                               ctb.cga.G_i(test_fluid),
-                               uncertainty=0.01)
-        test_fluid = ctb.ThermState('hydrogen', P=200 * u.psi, T=ctb.T_NTP)
+        test_fluid = ctb.ThermState("hydrogen", P=100 * u.psi, Q=1)
+        self.assertApproxEqual(8.272, ctb.cga.G_i(test_fluid), uncertainty=0.01)
+        test_fluid = ctb.ThermState("hydrogen", P=200 * u.psi, T=ctb.T_NTP)
         T = ctb.cga.theta(test_fluid)
         test_fluid.update_kw(P=test_fluid.P, T=T)
-        self.assertApproxEqual(13.52,
-                               ctb.cga.G_i(test_fluid),
-                               uncertainty=0.01)
+        self.assertApproxEqual(13.52, ctb.cga.G_i(test_fluid), uncertainty=0.01)
 
     def test_G_u(self):
-        test_fluid = ctb.ThermState('air', P=Q_(100, u.psig), Q=1)
+        test_fluid = ctb.ThermState("air", P=Q_(100, u.psig), Q=1)
         self.assertApproxEqual(59, ctb.cga.G_u(test_fluid), uncertainty=0.05)
-        test_fluid = ctb.ThermState('air', P=Q_(200, u.psig), Q=1)
+        test_fluid = ctb.ThermState("air", P=Q_(200, u.psig), Q=1)
         self.assertApproxEqual(69, ctb.cga.G_u(test_fluid), uncertainty=0.05)
 
     def test_average_spec_heat(self):
         # CGA S-1.3 2008 Table 5
         table_5 = {
-            'nitrogen': (2170 * u.kPa, 1.2167 * u.kJ / u.kg / u.K),
-            'argon': (2170 * u.kPa, 0.6225 * u.kJ / u.kg / u.K),
-            'hydrogen': (1067 * u.kPa, 13.3701 * u.kJ / u.kg / u.K),
-            'neon': (2170 * u.kPa, 1.1245 * u.kJ / u.kg / u.K),
+            "nitrogen": (2170 * u.kPa, 1.2167 * u.kJ / u.kg / u.K),
+            "argon": (2170 * u.kPa, 0.6225 * u.kJ / u.kg / u.K),
+            "hydrogen": (1067 * u.kPa, 13.3701 * u.kJ / u.kg / u.K),
+            "neon": (2170 * u.kPa, 1.1245 * u.kJ / u.kg / u.K),
         }
         for gas, (P, Cp) in table_5.items():
             fluid = ctb.ThermState(gas, P=P, Q=1)
@@ -355,14 +459,14 @@ class FunctionsTest(unittest.TestCase):
 
     def test_calculate_inlet_temp(self):
         # Test of basic functionality
-        fluid = ctb.ThermState('argon', P=2 * u.bar, Q=0)
+        fluid = ctb.ThermState("argon", P=2 * u.bar, Q=0)
         m_dot = 100 * u.g / u.s
         pipe = ctb.piping.Pipe(1, L=10 * u.m)
-        Ti = ctb.cga.calculate_inlet_temp(fluid, m_dot, pipe, condition=None)
+        ctb.cga.calculate_inlet_temp(fluid, m_dot, pipe, condition=None)
 
     def test_mean_free_path(self):
         """Barron, Example 9.1"""
-        fluid = ctb.ThermState('helium', T=290 * u.K, P=5 * u.mtorr)
+        fluid = ctb.ThermState("helium", T=290 * u.K, P=5 * u.mtorr)
         mfp_exp = 28.2 * u.mm
         self.assertApproxEqual(mfp_exp, ctb.mean_free_path(fluid), 0.01)
 
@@ -391,29 +495,28 @@ class FunctionsTest(unittest.TestCase):
 
 
 class PipingTest(unittest.TestCase):
-    """Piping checks, mostly taken from textbooks.
-    """
+    """Piping checks, mostly taken from textbooks."""
 
     def assertApproxEqual(self, expected, calculated, uncertainty=0.05):
         error = float(abs(expected - calculated) / expected)
-        if isinstance(expected, u.Quantity) and isinstance(
-                calculated, u.Quantity):
+        if isinstance(expected, u.Quantity) and isinstance(calculated, u.Quantity):
             unit = expected.units
             calculated.ito(unit)
-        assert error < uncertainty, \
-            f'Calculated value {calculated:g} is not within {uncertainty:.1%} of ' + \
-            f'expected value {expected:g}'
+        assert error < uncertainty, (
+            f"Calculated value {calculated:g} is not within {uncertainty:.1%} of "
+            + f"expected value {expected:g}"
+        )
 
     def test_create_pipes(self):
         # vj_pipe = ht.piping.VJPipe(Q_('1 inch'), VJ_D=Q_('2 inch'))
-        entrance = ht.piping.Entrance(Q_('1 inch'))
-        pipe_exit = ht.piping.Exit(Q_('1 inch'))
-        orifice = ht.piping.Orifice(Q_('1 inch'))
-        c_orifice = ht.piping.ConicOrifice(1, Q_('3/4 inch'))
-        annulus = ht.piping.Annulus(Q_('1 inch'), Q_('3/4 inch'))
-        pipe_tee = ht.piping.PipeTee(Q_('1 inch'), N=2)
-        tee = ht.piping.Tee(Q_('1 inch'), N=2)
-        valve = ht.piping.Valve(Q_('1 inch'), 1)
+        entrance = ht.piping.Entrance(Q_("1 inch"))
+        pipe_exit = ht.piping.Exit(Q_("1 inch"))
+        orifice = ht.piping.Orifice(Q_("1 inch"))
+        c_orifice = ht.piping.ConicOrifice(1, Q_("3/4 inch"))
+        annulus = ht.piping.Annulus(Q_("1 inch"), Q_("3/4 inch"))
+        pipe_tee = ht.piping.PipeTee(Q_("1 inch"), N=2)
+        tee = ht.piping.Tee(Q_("1 inch"), N=2)
+        valve = ht.piping.Valve(Q_("1 inch"), 1)
         # g_valve = ht.piping.GlobeValve(Q_('1 inch'))
         # print(f'Generated {g_valve}')
         # v_cone = ht.piping.VCone(Q_('1 inch'), 0.7, 1)
@@ -432,10 +535,10 @@ class PipingTest(unittest.TestCase):
             valve,
             # g_valve, v_cone,
             cont,
-            enl
+            enl,
         ]
         ht.piping.volume(piping)
-        dP = ht.piping.dP_incomp(Q_('10 g/s'), test_state, piping)
+        dP = ht.piping.dP_incomp(Q_("10 g/s"), test_state, piping)
         self.assertApproxEqual(21.2 * u.psi, dP)
 
     def test_f_Darcy(self):
@@ -473,7 +576,7 @@ class PipingTest(unittest.TestCase):
     #     self.assertAlmostEqual(1.76, flow.to(u.m**3/u.min).magnitude)
 
     def test_Crane_7_16(self):
-        air = ht.ThermState('air', P=Q_(65, u.psig), T=Q_(110, u.degF))
+        air = ht.ThermState("air", P=Q_(65, u.psig), T=Q_(110, u.degF))
         pipe = ht.piping.Pipe(1, SCH=40, L=75 * u.ft)
         flow = 100 * u.ft**3 / u.min
         m_dot = flow * ht.AIR.Dmass
@@ -493,8 +596,7 @@ class PipingTest(unittest.TestCase):
 
         pipe = ht.piping.Pipe(3, SCH=40, L=20 * u.ft)
         K_pipe = f_crane * pipe.L / pipe.ID
-        K_total = K_pipe + ht.piping.Entrance(pipe.ID).K() + ht.piping.Exit(
-            pipe.ID).K()
+        K_total = K_pipe + ht.piping.Entrance(pipe.ID).K() + ht.piping.Exit(pipe.ID).K()
 
         self.assertApproxEqual(600, T1.m_as(u.degR), uncertainty=0.001)
         self.assertApproxEqual(0.0175, pipe.f_T(), uncertainty=0.02)
@@ -503,9 +605,7 @@ class PipingTest(unittest.TestCase):
 
         q_crane = 1028000 * u.ft**3 / u.hr
 
-        air_std_crane = ht.ThermState('air',
-                                      P=ctb.P_STD,
-                                      T=Q_(60, u.degF))
+        air_std_crane = ht.ThermState("air", P=ctb.P_STD, T=Q_(60, u.degF))
         rho_std = Sg * air_std_crane.Dmass
         rho_1 = rho_std * (P1 / ctb.P_STD) * (ctb.T_STD / T1)
 
@@ -514,35 +614,34 @@ class PipingTest(unittest.TestCase):
         coke_oven_gas.P = P1
         coke_oven_gas.T = T1
         coke_oven_gas.Dmass = rho_1
-        coke_oven_gas.speed_sound = (k * P1 / rho_1)**0.5
+        coke_oven_gas.speed_sound = (k * P1 / rho_1) ** 0.5
         coke_oven_gas.viscosity = 1e-6 * u.Pa * u.s
 
         pipe.K = MagicMock(return_value=K_total)
-        m_dot_adiab = ht.piping.m_dot_adiab(coke_oven_gas,
-                                            pipe,
-                                            P_out=ctb.P_STD,
-                                            state='static')
+        m_dot_adiab = ht.piping.m_dot_adiab(
+            coke_oven_gas, pipe, P_out=ctb.P_STD, state="static"
+        )
         q_adiab = (m_dot_adiab / rho_std).to(u.ft**3 / u.hr)
         self.assertApproxEqual(q_crane, q_adiab, uncertainty=0.03)
 
-        M1 = ht.piping.Mach(coke_oven_gas,
-                            ht.piping.velocity(coke_oven_gas, m_dot_adiab,
-                                               pipe.area))
+        M1 = ht.piping.Mach(
+            coke_oven_gas, ht.piping.velocity(coke_oven_gas, m_dot_adiab, pipe.area)
+        )
         K_lim = ht.piping.K_lim(M1, k)
         self.assertApproxEqual(K_total, K_lim, uncertainty=1e-6)
 
-        dP_adiab = ht.piping.dP_adiab(m_dot_adiab,
-                                      coke_oven_gas,
-                                      pipe,
-                                      state='static')
-        self.assertApproxEqual(critical_pressure_ratio,
-                               (dP_adiab / P1).to_base_units().magnitude,
-                               uncertainty=0.01)
+        dP_adiab = ht.piping.dP_adiab(m_dot_adiab, coke_oven_gas, pipe, state="static")
+        self.assertApproxEqual(
+            critical_pressure_ratio,
+            (dP_adiab / P1).to_base_units().magnitude,
+            uncertainty=0.01,
+        )
 
     def test_Crane_7_22(self):
-        air = ht.ThermState('air', P=Q_(19.3, u.psig), T=Q_(100, u.degF))
-        pipe = ht.piping.Pipe(1 / 2, SCH=80, L=7.04 / 6.04 * 10 *
-                              u.ft)  # Adjust for exit K = 1, total K = 7.04
+        air = ht.ThermState("air", P=Q_(19.3, u.psig), T=Q_(100, u.degF))
+        pipe = ht.piping.Pipe(
+            1 / 2, SCH=80, L=7.04 / 6.04 * 10 * u.ft
+        )  # Adjust for exit K = 1, total K = 7.04
         dP = 19.3 * u.psi
         P_out = air.P - dP
         q_expected = 3762 * u.ft**3 / u.hr  # STD flow
@@ -553,17 +652,12 @@ class PipingTest(unittest.TestCase):
         m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out=P_out)
         self.assertApproxEqual(m_dot_expected, m_dot_isot)
 
-        m_dot_adiab = ht.piping.m_dot_adiab(air,
-                                            pipe,
-                                            P_out=P_out,
-                                            state='static')
+        m_dot_adiab = ht.piping.m_dot_adiab(air, pipe, P_out=P_out, state="static")
         Re = ht.Re(air, m_dot_adiab, pipe.ID, pipe.area)
         v = ht.piping.velocity(air, m_dot_adiab, pipe.area)
         M = ht.piping.Mach(air, v)
         K_lim = ht.piping.K_lim(M, air.gamma)
-        self.assertApproxEqual(M,
-                               ht.piping.M_Klim(K_lim, air.gamma),
-                               uncertainty=1e-6)
+        self.assertApproxEqual(M, ht.piping.M_Klim(K_lim, air.gamma), uncertainty=1e-6)
         K_left = K_lim - pipe.K(Re)
         self.assertGreater(K_left, 0)
         M_end = ht.piping.M_Klim(K_left, air.gamma)
@@ -571,16 +665,12 @@ class PipingTest(unittest.TestCase):
         P_static_end = ht.piping.P_from_M(air.P, M, M_end, air.gamma)
         self.assertApproxEqual(P_out, P_static_end, uncertainty=1e-6)
 
-        dP_adiab = ht.piping.dP_adiab(m_dot_adiab,
-                                      air,
-                                      pipe,
-                                      state='static')
+        dP_adiab = ht.piping.dP_adiab(m_dot_adiab, air, pipe, state="static")
         self.assertApproxEqual(dP, dP_adiab, uncertainty=1e-6)
 
     def test_Rennels_4_5(self):
         pipe = ht.piping.Pipe(4, SCH=40, L=100 * u.ft)
-        fluid = ht.ThermState('nitrogen', P=100 * u.psi, T=530 * u.degR)
-        piping = [pipe]
+        fluid = ht.ThermState("nitrogen", P=100 * u.psi, T=530 * u.degR)
         P_out = 84.056 * u.psi
         m_dot_isot = ht.piping.m_dot_isot(fluid, pipe, P_out)
         self.assertApproxEqual(10, m_dot_isot.m_as(u.lb / u.s))
@@ -591,18 +681,18 @@ class PipingTest(unittest.TestCase):
         P1 = 170 * u.kPa
         T01 = 349 * u.K
         P01 = 230 * u.kPa
-        fluid_static = ht.ThermState('air', P=P1, T=T1)
+        fluid_static = ht.ThermState("air", P=P1, T=T1)
         area = 0.05 * u.m**2  # Assumed value
         M = ht.piping.Mach(fluid_static, v)
         M_exp = 0.67
         self.assertApproxEqual(M_exp, M, uncertainty=0.005)
-        fluid_total = ht.ThermState('air', P=P01, T=T01)
+        fluid_total = ht.ThermState("air", P=P01, T=T01)
         m_dot = v * area * fluid_static.Dmass
         M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
         self.assertApproxEqual(M_exp, M_total, uncertainty=0.005)
 
     def test_White_9_4(self):
-        fluid_static = ht.ThermState('air', P=500 * u.kPa, T=470 * u.K)
+        fluid_static = ht.ThermState("air", P=500 * u.kPa, T=470 * u.K)
         area = 0.05 * u.m**2
         v = 180 * u.m / u.s
         m_dot = v * area * fluid_static.Dmass
@@ -611,12 +701,12 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(M_exp, M, uncertainty=0.005)
         P0 = 563 * u.kPa
         T0 = 486 * u.K
-        fluid_total = ht.ThermState('air', P=P0, T=T0)
+        fluid_total = ht.ThermState("air", P=P0, T=T0)
         M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
         self.assertApproxEqual(M_exp, M_total, uncertainty=0.005)
 
     def test_Mach_total_low_mass_flux(self):
-        fluid_total = ht.ThermState('air', P=200 * u.kPa, T=300 * u.K)
+        fluid_total = ht.ThermState("air", P=200 * u.kPa, T=300 * u.K)
         area = 0.05 * u.m**2
         m_dot = 1e-9 * u.kg / u.s
         M_total = ht.piping.Mach_total(fluid_total, m_dot, area)
@@ -640,13 +730,11 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(0.9 * u.m, L2 - L3)
 
     def test_White_9_11(self):
-        f = 0.024
-        d = 2 * u.cm
         Ma1 = 0.1
         Ma2 = 0.5
         P1 = 600 * u.kPa
         T1 = 450 * u.K
-        fluid = ht.ThermState('air', P=P1, T=T1)
+        fluid = ht.ThermState("air", P=P1, T=T1)
         k = fluid.gamma
         P2 = ht.piping.P_from_M(P1, Ma1, Ma2, k)
         self.assertApproxEqual(117 * u.kPa, P2)
@@ -654,8 +742,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(139 * u.kPa, P02)
 
     def test_White_9_12(self):
-        fluid_total = ht.ThermState('air', P=200 * u.kPa, T=500 * u.K)
-        v = 100 * u.m / u.s
+        fluid_total = ht.ThermState("air", P=200 * u.kPa, T=500 * u.K)
         pipe = ht.piping.Tube(3 * u.cm, L=15 * u.m)
         m_dot = 0.0961 * u.kg / u.s  # Based on static density from the source
         f = 0.02
@@ -674,35 +761,33 @@ class PipingTest(unittest.TestCase):
         R = u.molar_gas_constant / molar_mass
         M_comp = ht.piping.M_complex(M_expected, k)
         T_static = T_total / M_comp
-        P_static = P_total / M_comp**(k / (k - 1))
+        P_static = P_total / M_comp ** (k / (k - 1))
         rho_static = P_static / (Z * R * T_static)
-        speed_sound = (k * Z * R * T_static)**0.5
-        area = pi * (3 * u.cm)**2 / 4
+        speed_sound = (k * Z * R * T_static) ** 0.5
+        area = pi * (3 * u.cm) ** 2 / 4
         m_dot = rho_static * M_expected * speed_sound * area
 
-        fluid_total = ctb.ThermState('air', P=P_total, T=T_total)
+        fluid_total = MagicMock()
+        fluid_total.gamma = k
+        fluid_total.P = P_total
+        fluid_total.T = T_total
+        fluid_total.Z = Z
+        fluid_total.molar_mass = molar_mass
 
         M = ht.piping.Mach_total(fluid_total, m_dot, area)
         self.assertApproxEqual(M_expected, M, uncertainty=0.005)
 
     def test_White_9_13(self):
-        fluid_static = ht.ThermState('air', P=220 * u.kPa, T=300 * u.K)
+        fluid_static = ht.ThermState("air", P=220 * u.kPa, T=300 * u.K)
         P_out = 140 * u.kPa
         pipe = ht.piping.Tube(1 * u.cm, wall=0 * u.m, L=1.2 * u.m)
         K = 0.025 * pipe.L / pipe.ID
         pipe.K = MagicMock(return_value=K)
-        m_dot_adiab = ht.piping.m_dot_adiab(fluid_static,
-                                            pipe,
-                                            P_out,
-                                            state='static')
-        self.assertApproxEqual(0.0233 * u.kg / u.s,
-                               m_dot_adiab,
-                               uncertainty=0.001)
+        m_dot_adiab = ht.piping.m_dot_adiab(fluid_static, pipe, P_out, state="static")
+        self.assertApproxEqual(0.0233 * u.kg / u.s, m_dot_adiab, uncertainty=0.001)
 
     def test_White_P_9_100(self):
-        fluid = ht.ThermState('methane',
-                              T=Q_(68, u.degF),
-                              P=5 * u.bar + 101325 * u.Pa)
+        fluid = ht.ThermState("methane", T=Q_(68, u.degF), P=5 * u.bar + 101325 * u.Pa)
         P_out = 1 * u.bar + 101325 * u.Pa
         pipe = ht.piping.Pipe(6, L=31 * u.mile)
         K = 0.019 * pipe.L / pipe.ID
@@ -713,7 +798,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(fluid.P - P_out, dP_isot)
 
     def test_White_P_9_101(self):
-        air = ht.ThermState('air', T=Q_(20, u.degC), P=102 * u.kPa)
+        air = ht.ThermState("air", T=Q_(20, u.degC), P=102 * u.kPa)
         pipe = ht.piping.Tube(1 * u.cm, L=3 * u.m)
         P_out = 100 * u.kPa
         K = 0.028 * pipe.L / pipe.ID
@@ -721,17 +806,17 @@ class PipingTest(unittest.TestCase):
         m_dot_incomp = ht.piping.m_dot_incomp(air, [pipe], P_out=P_out)
         m_dot_isot = ht.piping.m_dot_isot(air, pipe, P_out)
         self.assertApproxEqual(m_dot_incomp, m_dot_isot, uncertainty=0.01)
-        m_dot_adiab = ht.piping.m_dot_adiab(air, pipe, P_out, state='static')
+        m_dot_adiab = ht.piping.m_dot_adiab(air, pipe, P_out, state="static")
         self.assertApproxEqual(m_dot_incomp, m_dot_adiab, uncertainty=0.01)
         dP_incomp = ht.piping.dP_incomp(m_dot_incomp, air, [pipe])
         self.assertApproxEqual(air.P - P_out, dP_incomp, uncertainty=0.01)
         dP_isot = ht.piping.dP_isot(m_dot_isot, air, pipe)
         self.assertApproxEqual(air.P - P_out, dP_isot, uncertainty=0.01)
-        dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state='static')
+        dP_adiab = ctb.piping.dP_adiab(m_dot_adiab, air, pipe, state="static")
         self.assertApproxEqual(air.P - P_out, dP_adiab, uncertainty=0.01)
 
     def test_dP_isot_accepts_two_phase_state_with_real_solution(self):
-        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, Q=0.18)
+        fluid = ctb.ThermState("nitrogen", P=2.24 * u.bar, Q=0.18)
         pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
 
         dP = ctb.piping.dP_isot(100 * u.g / u.s, fluid, pipe)
@@ -739,7 +824,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(0.377 * u.bar, dP.to(u.bar), uncertainty=0.01)
 
     def test_dP_isot_inverts_m_dot_isot_for_two_phase_state(self):
-        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, Q=0.18)
+        fluid = ctb.ThermState("nitrogen", P=2.24 * u.bar, Q=0.18)
         pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
         P_out = 1 * u.bar
         m_dot = ctb.piping.m_dot_isot(fluid, pipe, P_out)
@@ -749,63 +834,55 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(fluid.P - P_out, dP, uncertainty=1e-6)
 
     def test_dP_isot_reports_choked_for_two_phase_state(self):
-        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, Q=0.18)
+        fluid = ctb.ThermState("nitrogen", P=2.24 * u.bar, Q=0.18)
         pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
         m_dot = 512 * u.g / u.s
 
-        with self.assertRaisesRegex(ctb.piping.ChokedFlow,
-                                    'No real outlet pressure'):
+        with self.assertRaisesRegex(ctb.piping.ChokedFlow, "No real outlet pressure"):
             ctb.piping.dP_isot(m_dot, fluid, pipe)
 
     def test_dP_isot_reports_choked_when_no_real_outlet_pressure(self):
-        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, T=90 * u.K)
+        fluid = ctb.ThermState("nitrogen", P=2.24 * u.bar, T=90 * u.K)
         pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
         m_dot = 512 * u.g / u.s
 
-        with self.assertRaisesRegex(ctb.piping.ChokedFlow,
-                                    'No real outlet pressure'):
+        with self.assertRaisesRegex(ctb.piping.ChokedFlow, "No real outlet pressure"):
             ctb.piping.dP_isot(m_dot, fluid, pipe)
 
     def test_dP_isot_zero_flow_returns_zero_pressure_drop(self):
-        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, T=90 * u.K)
+        fluid = ctb.ThermState("nitrogen", P=2.24 * u.bar, T=90 * u.K)
         pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
 
-        self.assertEqual(0 * u.Pa,
-                         ctb.piping.dP_isot(0 * u.g / u.s, fluid, pipe))
+        self.assertEqual(0 * u.Pa, ctb.piping.dP_isot(0 * u.g / u.s, fluid, pipe))
 
     def test_dP_isot_rejects_negative_flow(self):
-        fluid = ctb.ThermState('nitrogen', P=2.24 * u.bar, T=90 * u.K)
+        fluid = ctb.ThermState("nitrogen", P=2.24 * u.bar, T=90 * u.K)
         pipe = ctb.piping.Pipe(1, SCH=10, L=1.09e3 * u.inch)
 
-        with self.assertRaisesRegex(ctb.piping.HydraulicError,
-                                    'non-negative flow'):
+        with self.assertRaisesRegex(ctb.piping.HydraulicError, "non-negative flow"):
             ctb.piping.dP_isot(-1 * u.g / u.s, fluid, pipe)
 
     def test_m_dot_isot_zero_pressure_drop_returns_zero_flow(self):
-        fluid = ctb.ThermState('helium', P=ctb.P_NTP, T=ctb.T_NTP)
-        pipe = ctb.piping.Tube(0.25 * u.inch,
-                               wall=0.035 * u.inch,
-                               L=11 * u.m)
+        fluid = ctb.ThermState("helium", P=ctb.P_NTP, T=ctb.T_NTP)
+        pipe = ctb.piping.Tube(0.25 * u.inch, wall=0.035 * u.inch, L=11 * u.m)
 
         self.assertEqual(0 * u.g / u.s, ctb.piping.m_dot_isot(fluid, pipe))
 
     def test_m_dot_isot_rejects_higher_outlet_pressure(self):
-        fluid = ctb.ThermState('helium', P=ctb.P_NTP, T=ctb.T_NTP)
-        pipe = ctb.piping.Tube(0.25 * u.inch,
-                               wall=0.035 * u.inch,
-                               L=11 * u.m)
+        fluid = ctb.ThermState("helium", P=ctb.P_NTP, T=ctb.T_NTP)
+        pipe = ctb.piping.Tube(0.25 * u.inch, wall=0.035 * u.inch, L=11 * u.m)
 
-        with self.assertRaisesRegex(ctb.piping.HydraulicError,
-                                    'Input pressure less than output'):
+        with self.assertRaisesRegex(
+            ctb.piping.HydraulicError, "Input pressure less than output"
+        ):
             ctb.piping.m_dot_isot(fluid, pipe, P_out=2 * ctb.P_NTP)
 
     def test_Cengel_12_15(self):
         pipe = ctb.piping.Tube(3 * u.cm)
-        fluid = ctb.ThermState('air', P=150 * u.kPa, T=300 * u.K)
+        fluid = ctb.ThermState("air", P=150 * u.kPa, T=300 * u.K)
         Ma1 = 0.4
         v1 = fluid.speed_sound * Ma1
         self.assertApproxEqual(139 * u.m / u.s, v1, uncertainty=0.001)
-        m_dot = fluid.Dmass * v1 * pipe.area
         Re1 = 2.637e5  # Differences in viscosity compared to the source
         f = ctb.piping.serghide(Re1, 0)
         self.assertApproxEqual(0.0148, f, uncertainty=0.01)
@@ -814,7 +891,7 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(4.68 * u.m, L, uncertainty=0.01)
 
     def test_M_from_K(self):
-        air = ht.ThermState('air', P=300 * u.kPa, T=500 * u.K)
+        air = ht.ThermState("air", P=300 * u.kPa, T=500 * u.K)
         self.assertApproxEqual(0.225, ht.piping.M_Klim(11, air.gamma))
         self.assertApproxEqual(0.2, ht.piping.M_Klim(14.533, air.gamma))
         self.assertApproxEqual(0.15, ht.piping.M_Klim(27.932, air.gamma))
@@ -824,29 +901,22 @@ class PipingTest(unittest.TestCase):
         self.assertApproxEqual(1, ht.piping.M_Klim(0, air.gamma))
 
     def test_M_from_large_K(self):
-        air = ht.ThermState('air', P=300 * u.kPa, T=500 * u.K)
+        air = ht.ThermState("air", P=300 * u.kPa, T=500 * u.K)
         M = 1e-8
         K_lim = ht.piping.K_lim(M, air.gamma)
-        self.assertApproxEqual(M, ht.piping.M_Klim(K_lim, air.gamma),
-                               uncertainty=1e-6)
+        self.assertApproxEqual(M, ht.piping.M_Klim(K_lim, air.gamma), uncertainty=1e-6)
 
     def test_m_dot_adiab_brackets_low_pressure_drop(self):
-        helium = ht.ThermState('helium', T=ctb.T_NTP, P=5 * u.bar)
+        helium = ht.ThermState("helium", T=ctb.T_NTP, P=5 * u.bar)
         pipe = ht.piping.Pipe(4, SCH=10, L=100 * u.m)
-        m_dot = ht.piping.m_dot_adiab(helium,
-                                      pipe,
-                                      P_out=4 * u.bar,
-                                      state='static')
+        m_dot = ht.piping.m_dot_adiab(helium, pipe, P_out=4 * u.bar, state="static")
         self.assertApproxEqual(0.8739 * u.kg / u.s, m_dot, uncertainty=0.001)
 
     def test_m_dot_adiab_returns_choked_flow_when_outlet_pressure_is_below_limit(self):
-        air = ht.ThermState('air', T=300 * u.K, P=200 * u.kPa)
+        air = ht.ThermState("air", T=300 * u.K, P=200 * u.kPa)
         pipe = ht.piping.Tube(1 * u.cm, L=1 * u.m)
-        m_dot = ht.piping.m_dot_adiab(air,
-                                      pipe,
-                                      P_out=50 * u.kPa,
-                                      state='static')
-        dP = ht.piping.dP_adiab(m_dot, air, pipe, state='static')
+        m_dot = ht.piping.m_dot_adiab(air, pipe, P_out=50 * u.kPa, state="static")
+        dP = ht.piping.dP_adiab(m_dot, air, pipe, state="static")
         self.assertGreater(air.P - dP, 50 * u.kPa)
 
     def test_piping_req_thick(self):
@@ -860,16 +930,18 @@ class PipingTest(unittest.TestCase):
         self.assertAlmostEqual(t_m, pipe.T)
 
     def test_direct_integration(self):
-        fluid = ht.ThermState('helium', P=200 * u.psi, T=7 * u.K)
-        self.assertApproxEqual(13920 * u.kg / (u.s * u.m**2),
-                               ht.piping.G_nozzle(fluid, P_out=1 * u.atm),
-                               uncertainty=0.01)
+        fluid = ht.ThermState("helium", P=200 * u.psi, T=7 * u.K)
+        self.assertApproxEqual(
+            13920 * u.kg / (u.s * u.m**2),
+            ht.piping.G_nozzle(fluid, P_out=1 * u.atm),
+            uncertainty=0.01,
+        )
 
     # TODO Add Crane examples: 4-22 (may need Y implementation),
     # 4-20, 4-19, 4-18, 4-16, 4-12?, 4-10?
 
     def test_packed_bed(self):
-        fluid = ht.ThermState('argon', T=Q_(80, u.degF), P=126.2 * u.psi)
+        fluid = ht.ThermState("argon", T=Q_(80, u.degF), P=126.2 * u.psi)
         filter_shell = ht.piping.Pipe(12, SCH=10)
         filter_L = 3.33 * u.ft
         eps = 0.37  # filter void fraction
@@ -909,29 +981,17 @@ class PipingTest(unittest.TestCase):
         Y = 0.4
         self.assertAlmostEqual(header.T, 7.16 * u.mm, delta=0.005 * u.mm)
         self.assertAlmostEqual(branch.T, 5.27 * u.mm, delta=0.005 * u.mm)
-        result = ctb.piping.calculate_branch_reinforcement(header,
-                                                           branch,
-                                                           P_des,
-                                                           S=S,
-                                                           E=E,
-                                                           W=W,
-                                                           Y=Y)
-        tmh = ctb.piping.pressure_req_thick(header, P_des, S=S, E=E, W=W,
-                                            Y=Y).to(u.mm)
+        result = ctb.piping.calculate_branch_reinforcement(
+            header, branch, P_des, S=S, E=E, W=W, Y=Y
+        )
+        tmh = ctb.piping.pressure_req_thick(header, P_des, S=S, E=E, W=W, Y=Y).to(u.mm)
         self.assertAlmostEqual(tmh - header.c, 2.04 * u.mm, delta=0.005 * u.mm)
-        tmb = ctb.piping.pressure_req_thick(branch, P_des, S=S, E=E, W=W,
-                                            Y=Y).to(u.mm)
+        tmb = ctb.piping.pressure_req_thick(branch, P_des, S=S, E=E, W=W, Y=Y).to(u.mm)
         self.assertAlmostEqual(tmb - branch.c, 1.07 * u.mm, delta=0.005 * u.mm)
         A1, A2, A3, A4, d2, safe = result
-        self.assertAlmostEqual(A1.to(u.mm**2),
-                               222 * u.mm**2,
-                               delta=0.5 * u.mm**2)
-        self.assertAlmostEqual(A2.to(u.mm**2),
-                               285 * u.mm**2,
-                               delta=1 * u.mm**2)
-        self.assertAlmostEqual(A3.to(u.mm**2),
-                               24 * u.mm**2,
-                               delta=0.5 * u.mm**2)
+        self.assertAlmostEqual(A1.to(u.mm**2), 222 * u.mm**2, delta=0.5 * u.mm**2)
+        self.assertAlmostEqual(A2.to(u.mm**2), 285 * u.mm**2, delta=1 * u.mm**2)
+        self.assertAlmostEqual(A3.to(u.mm**2), 24 * u.mm**2, delta=0.5 * u.mm**2)
         self.assertAlmostEqual(d2.to(u.mm), 108.8 * u.mm, delta=0.05 * u.mm)
         self.assertAlmostEqual(safe, True)
 
@@ -948,52 +1008,45 @@ class PipingTest(unittest.TestCase):
         S = 14.4 * u.kpsi
         self.assertAlmostEqual(header.T, 0.438 * u.inch, delta=0.001 * u.inch)
         self.assertAlmostEqual(branch.T, 0.245 * u.inch, delta=0.001 * u.inch)
-        tmh = ctb.piping.pressure_req_thick(header, P_des, S=S, E=E, W=W,
-                                            Y=Y).to(u.inch)
-        self.assertAlmostEqual(tmh - header.c,
-                               0.274 * u.inch,
-                               delta=0.001 * u.inch)
-        tmb = ctb.piping.pressure_req_thick(branch, P_des, S=S, E=E, W=W,
-                                            Y=Y).to(u.inch)
-        self.assertAlmostEqual(tmb - header.c,
-                               0.113 * u.inch,
-                               delta=0.001 * u.inch)
-        result = ctb.piping.calculate_branch_reinforcement(header,
-                                                           branch,
-                                                           P_des,
-                                                           beta=beta,
-                                                           Tr=Tr,
-                                                           Lr=Lr,
-                                                           S=S,
-                                                           E=E,
-                                                           W=W,
-                                                           Y=Y)
+        tmh = ctb.piping.pressure_req_thick(header, P_des, S=S, E=E, W=W, Y=Y).to(
+            u.inch
+        )
+        self.assertAlmostEqual(tmh - header.c, 0.274 * u.inch, delta=0.001 * u.inch)
+        tmb = ctb.piping.pressure_req_thick(branch, P_des, S=S, E=E, W=W, Y=Y).to(
+            u.inch
+        )
+        self.assertAlmostEqual(tmb - header.c, 0.113 * u.inch, delta=0.001 * u.inch)
+        result = ctb.piping.calculate_branch_reinforcement(
+            header, branch, P_des, beta=beta, Tr=Tr, Lr=Lr, S=S, E=E, W=W, Y=Y
+        )
         A1, A2, A3, A4, d2, safe = result
-        self.assertAlmostEqual(A1.to(u.inch**2),
-                               2.27 * u.inch**2,
-                               delta=0.01 * u.inch**2)
-        self.assertAlmostEqual(A2.to(u.inch**2),
-                               0.468 * u.inch**2,
-                               delta=0.005 * u.inch**2)
-        self.assertAlmostEqual(A3.to(u.inch**2),
-                               0.062 * u.inch**2,
-                               delta=0.001 * u.inch**2)
-        self.assertAlmostEqual(A4.to(u.inch**2),
-                               2.175 * u.inch**2,
-                               delta=0.001 * u.inch**2)
+        self.assertAlmostEqual(
+            A1.to(u.inch**2), 2.27 * u.inch**2, delta=0.01 * u.inch**2
+        )
+        self.assertAlmostEqual(
+            A2.to(u.inch**2), 0.468 * u.inch**2, delta=0.005 * u.inch**2
+        )
+        self.assertAlmostEqual(
+            A3.to(u.inch**2), 0.062 * u.inch**2, delta=0.001 * u.inch**2
+        )
+        self.assertAlmostEqual(
+            A4.to(u.inch**2), 2.175 * u.inch**2, delta=0.001 * u.inch**2
+        )
 
     def test_piping_stored_energy(self):
-        fluid = ctb.ThermState('nitrogen', P=100 * u.psi, T=ctb.T_NTP)
+        fluid = ctb.ThermState("nitrogen", P=100 * u.psi, T=ctb.T_NTP)
         short_pipe = ctb.piping.Pipe(1, L=2 * u.inch)
         exp_volume = pi * short_pipe.ID**2 / 4 * short_pipe.L
         self.assertAlmostEqual(
             ctb.stored_energy(fluid, exp_volume),
-            ctb.piping.piping_stored_energy(fluid, [short_pipe]))
+            ctb.piping.piping_stored_energy(fluid, [short_pipe]),
+        )
         long_pipe = ctb.piping.Pipe(1, L=100 * u.ft)
         exp_volume = pi * long_pipe.ID**2 / 4 * 8 * long_pipe.ID
         self.assertAlmostEqual(
             ctb.stored_energy(fluid, exp_volume),
-            ctb.piping.piping_stored_energy(fluid, [long_pipe]))
+            ctb.piping.piping_stored_energy(fluid, [long_pipe]),
+        )
 
     def test_Kv_Cv(self):
         """
@@ -1022,8 +1075,7 @@ class PipingTest(unittest.TestCase):
         self.assertLess(
             rel_error_Kv,
             1e-2,
-            msg=
-            f"Expected Kv ~ {expected_Kv}, but got {computed_Kv} with relative error {rel_error_Kv}"
+            msg=f"Expected Kv ~ {expected_Kv}, but got {computed_Kv} with relative error {rel_error_Kv}",
         )
 
         Cv_converted = ctb.piping.Kv_to_Cv(computed_Kv)
@@ -1031,8 +1083,7 @@ class PipingTest(unittest.TestCase):
         self.assertLess(
             rel_error_Cv,
             1e-6,
-            msg=
-            f"Round-trip conversion error is {rel_error_Cv}, which exceeds 1e-6"
+            msg=f"Round-trip conversion error is {rel_error_Cv}, which exceeds 1e-6",
         )
 
 
@@ -1041,49 +1092,54 @@ class CPWrapperTest(unittest.TestCase):
 
     def test_copy(self):
         """Minimal test of copy method"""
-        test_state = ht.ThermState('nitrogen')
-        test_state.copy()
+        test_state = ht.ThermState("nitrogen")
         test_state.update_kw(T=300 * u.K, P=1 * u.MPa)
-        test_state.copy()
+        test_state_copy = test_state.copy()
+        self.assertAlmostEqual(test_state.T, test_state_copy.T)
+        self.assertAlmostEqual(test_state.P, test_state_copy.P)
+        self.assertAlmostEqual(test_state.Dmass, test_state_copy.Dmass)
+
+        twophase = ht.ThermState("nitrogen", P=2 * u.bar, Q=0.4)
+        twophase_copy = twophase.copy()
+        self.assertAlmostEqual(twophase.P, twophase_copy.P)
+        self.assertAlmostEqual(twophase.Q, twophase_copy.Q)
+        self.assertAlmostEqual(twophase.Hmass, twophase_copy.Hmass)
+
+        legacy_copy = _legacy_copy(test_state)
+        self.assertAlmostEqual(test_state.T, legacy_copy.T)
+        self.assertAlmostEqual(test_state.P, legacy_copy.P)
 
     def test_standard(self):
-        air_std = ht.AIR.to_standard(conditions='NTP')
-        self.assertAlmostEqual(ht.P_NTP, air_std.P)
-        self.assertAlmostEqual(ht.T_NTP, air_std.T)
-        air_std = ht.AIR.to_standard(conditions='MSC')
-        self.assertAlmostEqual(ht.P_MSC, air_std.P)
-        self.assertAlmostEqual(ht.T_MSC, air_std.T)
-        air_std = ht.AIR.to_standard(conditions='STD')
-        self.assertAlmostEqual(ht.P_STD, air_std.P)
-        self.assertAlmostEqual(ht.T_STD, air_std.T)
+        for conditions, pressure, temperature in (
+            ("NTP", ht.P_NTP, ht.T_NTP),
+            ("MSC", ht.P_MSC, ht.T_MSC),
+            ("STD", ht.P_STD, ht.T_STD),
+        ):
+            standard = ht.AIR.to_standard(conditions=conditions)
+            self.assertAlmostEqual(pressure, standard.P)
+            self.assertAlmostEqual(temperature, standard.T)
 
     def test_str(self):
-        argon = ctb.ThermState('argon', P=ctb.P_NTP, T=ctb.T_NTP)
-        self.assertEqual('argon at T: 293 K and P: 1.01 bar', argon.__str__())
+        argon = ctb.ThermState("argon", P=ctb.P_NTP, T=ctb.T_NTP)
+        self.assertEqual("argon at T: 293 K and P: 1.01 bar", argon.__str__())
         argon.update_kw(P=argon.P, Q=0)
-        self.assertEqual('saturated argon liquid at P: 1.01 bar',
-                         argon.__str__())
+        self.assertEqual("saturated argon liquid at P: 1.01 bar", argon.__str__())
         argon.update_kw(P=argon.P, Q=1)
-        self.assertEqual('saturated argon vapor at P: 1.01 bar',
-                         argon.__str__())
+        self.assertEqual("saturated argon vapor at P: 1.01 bar", argon.__str__())
         argon.update_kw(P=argon.P, Q=0.5)
-        self.assertEqual('argon at P: 1.01 bar and Q: 0.50',
-                         argon.__str__())
+        self.assertEqual("argon at P: 1.01 bar and Q: 0.50", argon.__str__())
 
 
 class ODHTest(FunctionsTest):
-    """Set of tests for basic functionality of ODH analysis
-    """
+    """Set of tests for basic functionality of ODH analysis"""
 
     def test_hole_leak_Crane_7_23(self):
-        fluid = ht.ThermState('water',
-                              P=Q_(4.4, u.inHg) + ht.P_NTP,
-                              T=Q_(60, u.degF))
+        fluid = ht.ThermState("water", P=Q_(4.4, u.inHg) + ht.P_NTP, T=Q_(60, u.degF))
         d_hole = 2 * u.inch
         area = pi * d_hole**2 / 4
-        self.assertApproxEqual(106 * u.gal / u.min,
-                               odh.hole_leak(area, fluid),
-                               uncertainty=0.05)
+        self.assertApproxEqual(
+            106 * u.gal / u.min, odh.hole_leak(area, fluid), uncertainty=0.05
+        )
         # Crane gives 131 gal/min for flow
         # difference in equations gives 20 % difference
 
@@ -1095,38 +1151,68 @@ class ODHTest(FunctionsTest):
         V_flux_15 = 0.515 * u.ft**3 / (u.min * u.mm**2)
 
         area = 1 * u.mm**2  # Chosen for simplicity
-        ID = (4 * area / pi)**0.5  # Assuming tube ID based on area
-        tube = ht.piping.Tube(ID, wall=0 * u.m)
-        fluid = ht.ThermState('nitrogen', P=P_150, T=T)
+        fluid = ht.ThermState("nitrogen", P=P_150, T=T)
         m_dot = ht.odh.hole_leak(area, fluid)
         self.assertApproxEqual(V_flux_150 * area, m_dot)
-        fluid = ht.ThermState('nitrogen', P=P_15, T=T)
+        fluid = ht.ThermState("nitrogen", P=P_15, T=T)
         m_dot = ht.odh.hole_leak(area, fluid)
         self.assertApproxEqual(V_flux_15 * area, m_dot)
 
     def test_pipe_failure(self):
-        fluid = ht.ThermState('nitrogen', P=100 * u.psi, Q=0)
-        source = odh.Source('Test source', fluid, 100 * u.L)
+        fluid = ht.ThermState("nitrogen", P=100 * u.psi, Q=0)
+        source = odh.Source("Test source", fluid, 100 * u.L)
         zero_length_tube = ht.piping.Pipe(3, SCH=10)
-        self.assertRaises(odh.ODHError, source.add_pipe_failure,
-                          zero_length_tube, fluid)
+        self.assertRaises(
+            odh.ODHError, source.add_pipe_failure, zero_length_tube, fluid
+        )
         N = 2
         tube = ht.piping.Pipe(3, SCH=10, L=N * 1 * u.m)
         D_t = tube.OD / tube.wall
         source.add_pipe_failure(tube, fluid, N_welds=N)
         leaks = [
-            odh.Leak('', fluid, N * 1e-9 / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, N * 1e-10 / u.hr,
-                     odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, N * 3e-11 / u.hr,
-                     odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, N * 2e-11 * D_t / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, N * 2e-12 * D_t / u.hr,
-                     odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, N * 6e-13 * D_t / u.hr,
-                     odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
+            odh.Leak(
+                "",
+                fluid,
+                N * 1e-9 / u.hr,
+                odh.hole_leak(10 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                N * 1e-10 / u.hr,
+                odh.hole_leak(1000 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "", fluid, N * 3e-11 / u.hr, odh.hole_leak(tube.area, fluid), 0 * u.s, 1
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                N * 2e-11 * D_t / u.hr,
+                odh.hole_leak(10 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                N * 2e-12 * D_t / u.hr,
+                odh.hole_leak(1000 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                N * 6e-13 * D_t / u.hr,
+                odh.hole_leak(tube.area, fluid),
+                0 * u.s,
+                1,
+            ),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):
@@ -1135,16 +1221,23 @@ class ODHTest(FunctionsTest):
             self.assertAlmostEqual(source.volume / leak1.q_std, leak2.tau)
 
     def test_flange_failure(self):
-        fluid = ht.ThermState('nitrogen', P=100 * u.psi, Q=0)
-        source = odh.Source('Test source', fluid, 100 * u.L)
+        fluid = ht.ThermState("nitrogen", P=100 * u.psi, Q=0)
+        source = odh.Source("Test source", fluid, 100 * u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1 * u.m)
         N = 2
         source.add_flange_failure(tube, fluid, N=N)
         leaks = [
-            odh.Leak('', fluid, N * 4e-7 / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, N * 1e-9 / u.hr,
-                     odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
+            odh.Leak(
+                "",
+                fluid,
+                N * 4e-7 / u.hr,
+                odh.hole_leak(10 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "", fluid, N * 1e-9 / u.hr, odh.hole_leak(tube.area, fluid), 0 * u.s, 1
+            ),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):
@@ -1153,16 +1246,23 @@ class ODHTest(FunctionsTest):
             self.assertAlmostEqual(source.volume / leak1.q_std, leak2.tau)
 
     def test_valve_failure(self):
-        fluid = ht.ThermState('nitrogen', P=100 * u.psi, Q=0)
-        source = odh.Source('Test source', fluid, 100 * u.L)
+        fluid = ht.ThermState("nitrogen", P=100 * u.psi, Q=0)
+        source = odh.Source("Test source", fluid, 100 * u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1 * u.m)
         N = 2
         source.add_valve_failure(tube, fluid, N=N)
         leaks = [
-            odh.Leak('', fluid, N * 1e-8 / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, N * 5e-10 / u.hr,
-                     odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
+            odh.Leak(
+                "",
+                fluid,
+                N * 1e-8 / u.hr,
+                odh.hole_leak(10 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "", fluid, N * 5e-10 / u.hr, odh.hole_leak(tube.area, fluid), 0 * u.s, 1
+            ),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):
@@ -1171,37 +1271,64 @@ class ODHTest(FunctionsTest):
             self.assertAlmostEqual(source.volume / leak1.q_std, leak2.tau)
 
     def test_line_failure(self):
-        fluid = ht.ThermState('nitrogen', P=100 * u.psi, Q=0)
-        source = odh.Source('Test source', fluid, 100 * u.L)
+        fluid = ht.ThermState("nitrogen", P=100 * u.psi, Q=0)
+        source = odh.Source("Test source", fluid, 100 * u.L)
         tube = ht.piping.Pipe(3, SCH=10, L=1 * u.m)
-        source.add_line_failure(tube,
-                                fluid,
-                                N_welds=1,
-                                N_reinforced=1,
-                                N_soft=0,
-                                N_valves=1)
+        source.add_line_failure(
+            tube, fluid, N_welds=1, N_reinforced=1, N_soft=0, N_valves=1
+        )
         D_t = tube.OD / tube.wall
         leaks = [
-            odh.Leak('', fluid, 1e-9 / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, 1e-10 / u.hr,
-                     odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, 3e-11 / u.hr,  odh.hole_leak(tube.area, fluid),
-                     0 * u.s, 1),
-            odh.Leak('', fluid, 2e-11 * D_t / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, 2e-12 * D_t / u.hr,
-                     odh.hole_leak(1000 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, 6e-13 * D_t / u.hr,
-                     odh.hole_leak(tube.area, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, 4e-7 / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, 1e-9 / u.hr,  odh.hole_leak(tube.area, fluid),
-                     0 * u.s, 1),
-            odh.Leak('', fluid, 1e-8 / u.hr,
-                     odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1),
-            odh.Leak('', fluid, 5e-10 / u.hr,  odh.hole_leak(tube.area, fluid),
-                     0 * u.s, 1),
+            odh.Leak(
+                "", fluid, 1e-9 / u.hr, odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                1e-10 / u.hr,
+                odh.hole_leak(1000 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "", fluid, 3e-11 / u.hr, odh.hole_leak(tube.area, fluid), 0 * u.s, 1
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                2e-11 * D_t / u.hr,
+                odh.hole_leak(10 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                2e-12 * D_t / u.hr,
+                odh.hole_leak(1000 * u.mm**2, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "",
+                fluid,
+                6e-13 * D_t / u.hr,
+                odh.hole_leak(tube.area, fluid),
+                0 * u.s,
+                1,
+            ),
+            odh.Leak(
+                "", fluid, 4e-7 / u.hr, odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1
+            ),
+            odh.Leak(
+                "", fluid, 1e-9 / u.hr, odh.hole_leak(tube.area, fluid), 0 * u.s, 1
+            ),
+            odh.Leak(
+                "", fluid, 1e-8 / u.hr, odh.hole_leak(10 * u.mm**2, fluid), 0 * u.s, 1
+            ),
+            odh.Leak(
+                "", fluid, 5e-10 / u.hr, odh.hole_leak(tube.area, fluid), 0 * u.s, 1
+            ),
         ]
         self.assertEqual(len(leaks), len(source.leaks))
         for leak1, leak2 in zip(leaks, source.leaks):
@@ -1210,17 +1337,16 @@ class ODHTest(FunctionsTest):
             self.assertAlmostEqual(source.volume / leak1.q_std, leak2.tau)
 
     def test_const_leak(self):
-        fluid = ht.ThermState('nitrogen', P=100 * u.psi, Q=0)
-        source = odh.Source('Test source', fluid, 100 * u.L)
+        fluid = ht.ThermState("nitrogen", P=100 * u.psi, Q=0)
+        source = odh.Source("Test source", fluid, 100 * u.L)
         q_leak = 1 * u.ft**3 / u.min
         N_leaks = 5
-        source.add_const_leak('Constant leak', fluid, q_leak, N=N_leaks)
+        source.add_const_leak("Constant leak", fluid, q_leak, N=N_leaks)
         self.assertEqual(1, len(source.leaks))
         self.assertAlmostEqual(N_leaks * q_leak, source.leaks[0].q_std)
 
 
 class Nu_test(FunctionsTest):
-
     def test_Nu_vplate(self):
         fluid = ht.AIR
         Pr = fluid.Prandtl
@@ -1231,9 +1357,9 @@ class Nu_test(FunctionsTest):
 
     def test_C_t_bar_cyl(self):
         self.assertApproxEqual(0.103, ht.C_t_bar_cyl(0.71), uncertainty=1e-5)
-        self.assertApproxEqual((0.103 + 0.109) / 2,
-                               ht.C_t_bar_cyl((0.71 + 6) / 2),
-                               uncertainty=1e-5)
+        self.assertApproxEqual(
+            (0.103 + 0.109) / 2, ht.C_t_bar_cyl((0.71 + 6) / 2), uncertainty=1e-5
+        )
 
     def test_Nu_hcyl(self):
         Pr = 0.71  # Taken as Pr for air
@@ -1252,42 +1378,41 @@ class Nu_test(FunctionsTest):
                 # (1e2, 7),
                 (1e7, 38),
                 (1e8, 60),
-                (1e9, 100)
+                (1e9, 100),
             ],
             5: [
                 (1e4, 8.2),
                 # (1e5, 10.3),
                 (1e6, 20),
                 (1e7, 35),
-                (1e8, 60)
+                (1e8, 60),
             ],
             1: [
                 (1e4, 6),
                 (1e5, 10),
                 # (1e6, 10.8),
-                (1e7, 30)
+                (1e7, 30),
             ],
             0.1: [
                 # (1e2, 1.3),
                 # (1e3, 2.6),
                 (1e4, 5)
-            ]
+            ],
         }
         for AR, plot_data in thesis_data.items():
             for Ra, Nu in plot_data:
                 D = 1 * u.inch
                 L = D * AR
-                self.assertApproxEqual(Nu,
-                                       ht.Nu_vcyl(Pr, Ra, D, L),
-                                       uncertainty=0.4)
+                self.assertApproxEqual(Nu, ht.Nu_vcyl(Pr, Ra, D, L), uncertainty=0.4)
 
 
 class Tubestest(unittest.TestCase):
-
     def test_tube(self):
-        tubes = [(1 * u.inch, 0 * u.inch, 0 * u.inch),
-                 (1 * u.inch, 1 * u.inch, 0 * u.inch),
-                 (2 * u.inch, 1 * u.inch, 1 * u.inch)]
+        tubes = [
+            (1 * u.inch, 0 * u.inch, 0 * u.inch),
+            (1 * u.inch, 1 * u.inch, 0 * u.inch),
+            (2 * u.inch, 1 * u.inch, 1 * u.inch),
+        ]
         for OD, wall, L in tubes:
             tube = ht.piping.Tube(OD, wall=wall, L=L)
             self.assertEqual(tube.OD, OD)
@@ -1412,11 +1537,10 @@ class Tubestest(unittest.TestCase):
         self.assertEqual(orifice.L, L)
         V = A * L
         self.assertEqual(orifice.volume, V)
-        self.assertEqual(orifice.K(), 1 / .61**2)
+        self.assertEqual(orifice.K(), 1 / 0.61**2)
 
 
 class geometry(unittest.TestCase):
-
     def test_circle_area(self):
         D = 1 * u.inch
         A = pi * D**2 / 4
@@ -1431,7 +1555,6 @@ class geometry(unittest.TestCase):
 
 
 class ReliefFacadeTest(unittest.TestCase):
-
     def test_relief_exports_legacy_helpers(self):
         self.assertIs(ctb.relief.A_relief_API, ctb.A_relief_API)
         self.assertIs(ctb.relief.P_FR, ctb.cga.P_FR)
@@ -1439,7 +1562,6 @@ class ReliefFacadeTest(unittest.TestCase):
 
 
 class FlowFacadeTest(unittest.TestCase):
-
     def test_flow_exports_legacy_helpers(self):
         self.assertIs(ctb.flow.to_scfma, ctb.to_scfma)
         self.assertIs(ctb.flow.from_scfma, ctb.from_scfma)
@@ -1453,7 +1575,7 @@ class FlowFacadeTest(unittest.TestCase):
         self.assertIs(ctb.flow.from_std_flow, ctb.flow.to_mass_flow)
 
     def test_air_equivalent_flow_round_trip(self):
-        fluid = ctb.ThermState('nitrogen', P=3 * u.bar, T=290 * u.K)
+        fluid = ctb.ThermState("nitrogen", P=3 * u.bar, T=290 * u.K)
         m_dot = 12.5 * u.g / u.s
         q_air = ctb.flow.to_equiv_air(m_dot, fluid)
         m_dot_roundtrip = ctb.flow.from_equiv_air(q_air, fluid)
@@ -1464,7 +1586,7 @@ class FlowFacadeTest(unittest.TestCase):
         )
 
     def test_standard_flow_mass_round_trip(self):
-        fluid = ctb.ThermState('nitrogen', P=3 * u.bar, T=290 * u.K)
+        fluid = ctb.ThermState("nitrogen", P=3 * u.bar, T=290 * u.K)
         m_dot = 5.5 * u.g / u.s
         q_std = ctb.flow.to_std_flow(m_dot, fluid)
         m_dot_roundtrip = ctb.flow.from_std_flow(q_std, fluid)
@@ -1476,120 +1598,162 @@ class FlowFacadeTest(unittest.TestCase):
 
 
 class TableIntegrityTest(unittest.TestCase):
-
     def test_nps_table_has_required_fields(self):
         for nominal_size, row in ctb.piping.NPS_table.items():
-            self.assertIn('OD', row, nominal_size)
-            self.assertGreater(row['OD'], 0 * u.inch)
+            self.assertIn("OD", row, nominal_size)
+            self.assertGreater(row["OD"], 0 * u.inch)
             self.assertGreater(len(row), 1, nominal_size)
             for schedule, wall in row.items():
                 self.assertGreater(wall, 0 * u.inch, (nominal_size, schedule))
-                if schedule not in {'OD', 'DN'}:
+                if schedule not in {"OD", "DN"}:
                     self.assertGreater(
-                        row['OD'],
+                        row["OD"],
                         2 * wall,
-                        (nominal_size, schedule, row['OD'], wall),
+                        (nominal_size, schedule, row["OD"], wall),
                     )
 
     def test_copper_table_has_required_fields(self):
         for nominal_size, row in ctb.piping.COPPER_TABLE.items():
-            self.assertIn('OD', row, nominal_size)
-            self.assertGreater(row['OD'], 0 * u.inch)
+            self.assertIn("OD", row, nominal_size)
+            self.assertGreater(row["OD"], 0 * u.inch)
             self.assertGreater(len(row), 1, nominal_size)
             for type_name, wall in row.items():
                 self.assertGreater(wall, 0 * u.inch, (nominal_size, type_name))
-                if type_name != 'OD':
+                if type_name != "OD":
                     self.assertGreater(
-                        row['OD'],
+                        row["OD"],
                         2 * wall,
-                        (nominal_size, type_name, row['OD'], wall),
+                        (nominal_size, type_name, row["OD"], wall),
                     )
 
 
-@unittest.skipIf(skip_HP_test,
-                 'Heprop failed to initialize, skipping Heprop tests.')
+@unittest.skipIf(skip_HP_test, "Heprop failed to initialize, skipping Heprop tests.")
 class Heprop(unittest.TestCase):
+    reference_offset_properties = {
+        "Smolar",
+        "Smass",
+        "Hmolar",
+        "Hmass",
+    }
+
+    comparable_properties = {
+        "T_critical": 0.01,
+        "P_critical": 0.01,
+        "Dmolar_critical": 0.05,
+        "Dmass_critical": 0.05,
+        "T": 0.001,
+        "P": 0.001,
+        "Dmolar": 0.01,
+        "Dmass": 0.01,
+        "molar_mass": 0.001,
+        "gas_constant": 0.001,
+        "specific_gas_constant": 0.001,
+        "compressibility_factor": 0.01,
+        "Cpmolar": 0.01,
+        "Cpmass": 0.01,
+        "Cvmolar": 0.01,
+        "Cvmass": 0.01,
+        "gamma": 0.01,
+        "C_gas_const": 0.01,
+        "viscosity": 0.01,
+        "conductivity": 0.01,
+        "P_reducing": 0.01,
+        "P_triple": 0.01,
+        "T_reducing": 0.001,
+        "T_triple": 0.001,
+        "isothermal_compressibility": 0.01,
+        "isobaric_expansion_coefficient": 0.01,
+        "isentropic_expansion_coefficient": 0.01,
+        "Prandtl": 0.01,
+        "speed_sound": 0.01,
+        "specific_heat_input": 0.01,
+    }
+
+    def assert_property_close(self, heprop, reference, name, tolerance):
+        with self.subTest(property=name, backend=reference.backend):
+            ratio = getattr(heprop, name) / getattr(reference, name)
+            if isinstance(ratio, u.Quantity):
+                ratio = ratio.to(u.dimensionless).magnitude
+            self.assertAlmostEqual(ratio, 1.0, delta=tolerance)
+
+    def assert_backend_matches(self, backend):
+        empty = ctb.ThermState("helium", backend="HEPROP").copy()
+        self.assertEqual(empty.backend, "HEPROP")
+        self.assertEqual(empty.get_si("Dmass"), -inf)
+
+        heprop = ctb.ThermState("helium", backend="HEPROP", P=1 * u.bar, T=300 * u.K)
+        reference = ctb.ThermState("helium", backend=backend, P=1 * u.bar, T=300 * u.K)
+
+        self.assertTrue(
+            self.reference_offset_properties.isdisjoint(self.comparable_properties)
+        )
+        for name, tolerance in self.comparable_properties.items():
+            self.assert_property_close(heprop, reference, name, tolerance)
+
+        self.assertEqual(heprop.phase, reference.phase)
+        self.assertEqual(heprop.name, reference.name)
+        self.assertEqual(heprop.mole_fractions, [1.0])
+        self.assertEqual(reference.mole_fractions[0], 1.0)
+        self.assertEqual(heprop.mass_fractions, [1.0])
+        self.assertAlmostEqual(reference.mass_fractions[0], 1.0)
+
+        heprop_twophase = ctb.ThermState("helium", backend="HEPROP", P=1 * u.bar, Q=0.4)
+        reference_twophase = ctb.ThermState(
+            "helium", backend=backend, P=1 * u.bar, Q=0.4
+        )
+        for name, tolerance in {
+            "T": 0.01,
+            "P": 0.001,
+            "Q": 0.001,
+            "Qmass": 0.001,
+            "surface_tension": 0.02,
+            "P_sat": 0.01,
+            "T_sat": 0.01,
+            "latent_heat": 0.01,
+        }.items():
+            self.assert_property_close(
+                heprop_twophase, reference_twophase, name, tolerance
+            )
+
+        raw_si = ctb.ThermState("helium", backend="HEPROP")
+        raw_si.update_si("P", 100_000.0, "T", 300.0)
+        self.assertAlmostEqual(raw_si.get_si("P"), 100_000.0, delta=0.001)
+        self.assertAlmostEqual(raw_si.get_si("T"), 300.0)
+        self.assertAlmostEqual(raw_si.P, heprop.P)
+        self.assertAlmostEqual(raw_si.T, heprop.T)
+        self.assertAlmostEqual(raw_si.Dmass, heprop.Dmass)
+        copied = heprop.copy()
+        self.assertAlmostEqual(copied.P, heprop.P)
+        self.assertAlmostEqual(copied.T, heprop.T)
+        self.assertAlmostEqual(copied.Dmass, heprop.Dmass)
+        twophase_copy = heprop_twophase.copy()
+        for name in ("P", "Q", "Dmass"):
+            self.assert_property_close(twophase_copy, heprop_twophase, name, 1e-6)
+
+        # Validity limits describe backend capabilities and intentionally do
+        # not have to equal the CoolProp/REFPROP model limits.
+        self.assertLessEqual(heprop.T_min, heprop.T)
+        self.assertGreaterEqual(heprop.T_max, heprop.T)
+        self.assertGreaterEqual(heprop.P_max, heprop.P)
 
     def test_fluid_name(self):
-        self.assertRaises(ValueError,
-                          ctb.ThermState,
-                          'nitrogen',
-                          T=300 * u.K,
-                          P=1 * u.bar,
-                          backend='HEPROP')
+        self.assertRaises(
+            ValueError,
+            ctb.ThermState,
+            "nitrogen",
+            T=300 * u.K,
+            P=1 * u.bar,
+            backend="HEPROP",
+        )
 
-    def test_create(self):
-        CP_helium_state = ctb.ThermState('helium', T=300 * u.K, P=1 * u.bar)
-        heprop_state = ctb.ThermState('helium',
-                                      T=300 * u.K,
-                                      P=1 * u.bar,
-                                      backend='HEPROP')
-        self.assertAlmostEqual(CP_helium_state.T_critical /
-                               heprop_state.T_critical,
-                               1,
-                               delta=0.01)
-        self.assertAlmostEqual(CP_helium_state.P_critical /
-                               heprop_state.P_critical,
-                               1,
-                               delta=0.01)
-        self.assertAlmostEqual(CP_helium_state.Dmass / heprop_state.Dmass,
-                               1,
-                               delta=0.01)
-        self.assertAlmostEqual(CP_helium_state.Dmolar / heprop_state.Dmolar,
-                               1,
-                               delta=0.01)
-        CP_helium_state_2 = ctb.ThermState('helium', T=100 * u.K, P=1 * u.bar)
-        heprop_state_2 = ctb.ThermState('helium',
-                                        T=100 * u.K,
-                                        P=1 * u.bar,
-                                        backend='HEPROP')
-        self.assertAlmostEqual(
-            (CP_helium_state.Smass - CP_helium_state_2.Smass) /
-            (heprop_state.Smass - heprop_state_2.Smass),
-            1,
-            delta=0.01)
-        self.assertAlmostEqual(
-            (CP_helium_state.Smolar - CP_helium_state_2.Smolar) /
-            (heprop_state.Smolar - heprop_state_2.Smolar),
-            1,
-            delta=0.01)
-        self.assertAlmostEqual(
-            (CP_helium_state.Hmass - CP_helium_state_2.Hmass) /
-            (heprop_state.Hmass - heprop_state_2.Hmass),
-            1,
-            delta=0.01)
-        self.assertAlmostEqual(
-            (CP_helium_state.Hmolar - CP_helium_state_2.Hmolar) /
-            (heprop_state.Hmolar - heprop_state_2.Hmolar),
-            1,
-            delta=0.01)
-        self.assertAlmostEqual(CP_helium_state.viscosity /
-                               heprop_state.viscosity,
-                               1,
-                               delta=0.001)
-        self.assertAlmostEqual(CP_helium_state.conductivity /
-                               heprop_state.conductivity,
-                               1,
-                               delta=0.001)
-        self.assertAlmostEqual(CP_helium_state.Prandtl / heprop_state.Prandtl,
-                               1,
-                               delta=0.001)
-        self.assertAlmostEqual(CP_helium_state.isothermal_compressibility /
-                               heprop_state.isothermal_compressibility,
-                               1,
-                               delta=0.001)
-        self.assertAlmostEqual(CP_helium_state.isobaric_expansion_coefficient /
-                               heprop_state.isobaric_expansion_coefficient,
-                               1,
-                               delta=0.001)
-        self.assertAlmostEqual(CP_helium_state.specific_heat_input /
-                               heprop_state.specific_heat_input,
-                               1,
-                               delta=0.001)
-        self.assertAlmostEqual(CP_helium_state.compressibility_factor /
-                               heprop_state.compressibility_factor,
-                               1,
-                               delta=0.001)
+    def test_all_parameters_match_heos(self):
+        self.assert_backend_matches("HEOS")
+
+    @unittest.skipIf(
+        skip_RP_test, "REFPROP failed to initialize, skipping REFPROP tests."
+    )
+    def test_all_parameters_match_refprop(self):
+        self.assert_backend_matches("REFPROP")
 
 
 class TestContraction(unittest.TestCase):
@@ -1604,7 +1768,7 @@ class TestContraction(unittest.TestCase):
         self.assertEqual(c.ID, 2 * u.inch)
         self.assertEqual(c.ID1, 4 * u.inch)
         self.assertEqual(c.ID2, 2 * u.inch)
-        self.assertEqual(c.type, 'Contraction')
+        self.assertEqual(c.type, "Contraction")
         self.assertIsNone(c.OD)
 
     def test_contraction_gradual_30_degrees(self):
@@ -1716,7 +1880,6 @@ class TestContraction(unittest.TestCase):
 
         # L = |ID1 - ID2| / (2 * tan(theta/2))
         expected_L = abs(4 - 2) / (2 * tan(30 * u.deg))
-        expected_L_with_units = expected_L * u.inch
 
         self.assertAlmostEqual(c.L.to(u.inch).magnitude, expected_L, places=4)
 
@@ -1733,19 +1896,21 @@ class TestContraction(unittest.TestCase):
         L = c.L.to(u.inch).magnitude
         expected_volume = pi * L / 3 * (r1**2 + r1 * r2 + r2**2)
 
-        self.assertAlmostEqual(c.volume.to(u.inch**3).magnitude,
-                               expected_volume,
-                               places=4)
+        self.assertAlmostEqual(
+            c.volume.to(u.inch**3).magnitude, expected_volume, places=4
+        )
 
     def test_contraction_area_property(self):
         """Test area property returns downstream area."""
         c = ctb.piping.Contraction(4 * u.inch, 2 * u.inch)
 
         # Area should be based on downstream (smaller) diameter
-        expected_area = pi * (1.0)**2 * u.inch**2  # radius = 1 inch
-        self.assertAlmostEqual(c.area.to(u.inch**2).magnitude,
-                               expected_area.to(u.inch**2).magnitude,
-                               places=4)
+        expected_area = pi * (1.0) ** 2 * u.inch**2  # radius = 1 inch
+        self.assertAlmostEqual(
+            c.area.to(u.inch**2).magnitude,
+            expected_area.to(u.inch**2).magnitude,
+            places=4,
+        )
 
     def test_contraction_str_representation(self):
         """Test string representation."""
@@ -1887,7 +2052,6 @@ class TestDPDarcy(unittest.TestCase):
 
 
 class TestTubePattern(unittest.TestCase):
-
     @staticmethod
     def _matches(text: str) -> bool:
         """
@@ -1902,43 +2066,41 @@ class TestTubePattern(unittest.TestCase):
         self.assertTrue(self._matches('0.5" x 0.25"'))  # spaces around x
 
     def test_inches_spelled_out(self):
-        self.assertTrue(self._matches('0.5 in x 0.35 in'))
-        self.assertTrue(self._matches('0.5 inch x 0.35 inch'))
+        self.assertTrue(self._matches("0.5 in x 0.35 in"))
+        self.assertTrue(self._matches("0.5 inch x 0.35 inch"))
 
     def test_millimeters(self):
-        self.assertTrue(self._matches('10mmx20mm'))
-        self.assertTrue(self._matches('10 mm x 20 mm'))
+        self.assertTrue(self._matches("10mmx20mm"))
+        self.assertTrue(self._matches("10 mm x 20 mm"))
 
     def test_centimeters(self):
-        self.assertTrue(self._matches('5cm x 7cm'))
-        self.assertTrue(self._matches('5 cm x 7 cm'))
+        self.assertTrue(self._matches("5cm x 7cm"))
+        self.assertTrue(self._matches("5 cm x 7 cm"))
 
     def test_micrometers(self):
         # both µm (Unicode mu) and plain "um"
-        self.assertTrue(self._matches('100 um x 200 um'))
+        self.assertTrue(self._matches("100 um x 200 um"))
 
     def test_mixed_units(self):
-        self.assertTrue(self._matches('0.5in x 12mm'))
+        self.assertTrue(self._matches("0.5in x 12mm"))
         self.assertTrue(self._matches('2 cm x 0.75"'))
 
     # ---- Negative cases ------------------------------------------------
     def test_missing_second_dimension(self):
         self.assertFalse(self._matches('0.5"x'))  # incomplete second part
-        self.assertFalse(self._matches('0.5in x'))  # incomplete second part
-        self.assertFalse(
-            self._matches('0.5"x0.25'))  # missing quote on second side
+        self.assertFalse(self._matches("0.5in x"))  # incomplete second part
+        self.assertFalse(self._matches('0.5"x0.25'))  # missing quote on second side
 
     def test_wrong_separator(self):
-        self.assertFalse(
-            self._matches('0.5in * 0.35in'))  # asterisk instead of x
+        self.assertFalse(self._matches("0.5in * 0.35in"))  # asterisk instead of x
 
     def test_extra_characters(self):
         self.assertFalse(self._matches('size: 0.5"x0.25"'))  # leading text
         self.assertFalse(self._matches('0.5"x0.25" end'))  # trailing text
 
     def test_invalid_units(self):
-        self.assertFalse(self._matches('5ft x 7ft'))  # unsupported unit
-        self.assertFalse(self._matches('10px x 20px'))  # unsupported unit
+        self.assertFalse(self._matches("5ft x 7ft"))  # unsupported unit
+        self.assertFalse(self._matches("10px x 20px"))  # unsupported unit
 
 
 class TestNpsPattern(unittest.TestCase):
@@ -1952,20 +2114,20 @@ class TestNpsPattern(unittest.TestCase):
     def test_basic_integer_forms(self):
         """Test basic integer NPS values with various spacing."""
         cases = [
-            'nps 1 in sch10',
-            'nps 1 in sch 10',
-            'nps 1 inch sch 10',
-            'nps 1in sch10',
-            'nps 1in sch 10',
-            'nps 1 sch10',
-            'nps 1 sch 10',
-            '1 in nps sch10',
-            '1 in nps sch 10',
-            '1in nps sch10',
-            '1in nps sch 10',
-            '1 nps sch10',
-            '1 nps sch 10',
-            '1 in sch 10',
+            "nps 1 in sch10",
+            "nps 1 in sch 10",
+            "nps 1 inch sch 10",
+            "nps 1in sch10",
+            "nps 1in sch 10",
+            "nps 1 sch10",
+            "nps 1 sch 10",
+            "1 in nps sch10",
+            "1 in nps sch 10",
+            "1in nps sch10",
+            "1in nps sch 10",
+            "1 nps sch10",
+            "1 nps sch 10",
+            "1 in sch 10",
         ]
         for s in cases:
             with self.subTest(string=s):
@@ -1974,19 +2136,19 @@ class TestNpsPattern(unittest.TestCase):
     def test_decimal_forms(self):
         """Test decimal NPS values with various spacing."""
         cases = [
-            'nps 0.5 in sch10',
-            'nps 1.5 in sch10',
-            'nps 1.5 in sch 10',
-            'nps 1.5in sch10',
-            'nps 1.5in sch 10',
-            'nps 1.5 sch10',
-            'nps 1.5 sch 10',
-            '1.5 in nps sch10',
-            '1.5 in nps sch 10',
-            '1.5in nps sch10',
-            '1.5in nps sch 10',
-            '1.5 nps sch10',
-            '1.5 nps sch 10',
+            "nps 0.5 in sch10",
+            "nps 1.5 in sch10",
+            "nps 1.5 in sch 10",
+            "nps 1.5in sch10",
+            "nps 1.5in sch 10",
+            "nps 1.5 sch10",
+            "nps 1.5 sch 10",
+            "1.5 in nps sch10",
+            "1.5 in nps sch 10",
+            "1.5in nps sch10",
+            "1.5in nps sch 10",
+            "1.5 nps sch10",
+            "1.5 nps sch 10",
         ]
         for s in cases:
             with self.subTest(string=s):
@@ -1995,20 +2157,20 @@ class TestNpsPattern(unittest.TestCase):
     def test_rejects_zero_values(self):
         """Test that zero values are properly rejected."""
         cases = [
-            'nps 0 in sch10',
-            'nps 0 in sch 10',
-            'nps 0in sch10',
-            'nps 0in sch 10',
-            'nps 0 sch10',
-            'nps 0 sch 10',
-            '0 in nps sch10',
-            '0 in nps sch 10',
-            '0in nps sch10',
-            '0in nps sch 10',
-            '0 nps sch10',
-            '0 nps sch 10',
-            'nps 0.0 sch 10',
-            'nps 00.00 sch 10',
+            "nps 0 in sch10",
+            "nps 0 in sch 10",
+            "nps 0in sch10",
+            "nps 0in sch 10",
+            "nps 0 sch10",
+            "nps 0 sch 10",
+            "0 in nps sch10",
+            "0 in nps sch 10",
+            "0in nps sch10",
+            "0in nps sch 10",
+            "0 nps sch10",
+            "0 nps sch 10",
+            "nps 0.0 sch 10",
+            "nps 00.00 sch 10",
         ]
         for s in cases:
             with self.subTest(string=s):
@@ -2017,14 +2179,14 @@ class TestNpsPattern(unittest.TestCase):
     def test_rejects_malformed_input(self):
         """Test that malformed or incomplete input is rejected."""
         cases = [
-            '1 nps',  # Missing 'sch'
-            'nps sch10',  # Missing size number
-            'nps only',  # No valid numbers
-            'random text',  # No match
-            'sch NPS 1',  # Wrong order
-            '1 in only',  # Missing 'nps' and 'sch'
-            '',  # Empty string
-            'sch 10',  # Missing NPS size
+            "1 nps",  # Missing 'sch'
+            "nps sch10",  # Missing size number
+            "nps only",  # No valid numbers
+            "random text",  # No match
+            "sch NPS 1",  # Wrong order
+            "1 in only",  # Missing 'nps' and 'sch'
+            "",  # Empty string
+            "sch 10",  # Missing NPS size
         ]
         for s in cases:
             with self.subTest(string=s):
@@ -2032,137 +2194,129 @@ class TestNpsPattern(unittest.TestCase):
 
 
 class TestLineContext(unittest.TestCase):
-
     def test_nps_parsing_basic(self):
-        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH10",
-                                                 length_unit='m')
+        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH10", length_unit="m")
         self.assertEqual(ctx.system, "NPS")
         self.assertAlmostEqual(ctx.D_nom, 1.0)
         self.assertEqual(ctx.SCH, 10)
         self.assertEqual(ctx.length_unit, u.m)
 
     def test_nps_parsing_fractional(self):
-        ctx = ctb.piping.LineContext.from_string('NPS 1/2" SCH10',
-                                                 length_unit='m')
+        ctx = ctb.piping.LineContext.from_string('NPS 1/2" SCH10', length_unit="m")
         self.assertEqual(ctx.system, "NPS")
         self.assertAlmostEqual(ctx.D_nom, 0.5)
         self.assertEqual(ctx.SCH, 10)
         self.assertEqual(ctx.length_unit, u.m)
 
     def test_nps_parsing_with_spaces_and_case(self):
-        ctx = ctb.piping.LineContext.from_string("  nps 2.5 sch 40  ",
-                                                 length_unit='m')
+        ctx = ctb.piping.LineContext.from_string("  nps 2.5 sch 40  ", length_unit="m")
         self.assertEqual(ctx.system, "NPS")
         self.assertAlmostEqual(ctx.D_nom, 2.5)
         self.assertEqual(ctx.SCH, 40)
 
     def test_tube_parsing_basic(self):
-        ctx = ctb.piping.LineContext.from_string('0.5"x0.035"',
-                                                 length_unit='m')
+        ctx = ctb.piping.LineContext.from_string('0.5"x0.035"', length_unit="m")
         self.assertEqual(ctx.system, "tube")
         self.assertAlmostEqual(ctx.OD, 0.5 * u.inch)
         self.assertAlmostEqual(ctx.wall, 0.035 * u.inch)
         self.assertEqual(ctx.length_unit, u.m)
 
     def test_tube_parsing_with_spaces(self):
-        ctx = ctb.piping.LineContext.from_string('  1.25" x 0.065"  ',
-                                                 length_unit='m')
+        ctx = ctb.piping.LineContext.from_string('  1.25" x 0.065"  ', length_unit="m")
         self.assertEqual(ctx.system, "tube")
         self.assertAlmostEqual(ctx.OD, 1.25 * u.inch)
         self.assertAlmostEqual(ctx.wall, 0.065 * u.inch)
 
     def test_custom_length_unit(self):
-        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH40",
-                                                 length_unit="ft")
+        ctx = ctb.piping.LineContext.from_string("NPS 1 SCH40", length_unit="ft")
         self.assertEqual(ctx.length_unit, u.ft)
 
     def test_invalid_context_raises(self):
         with self.assertRaises(ValueError):
             ctb.piping.LineContext.from_string(
-                "DN25", length_unit='m')  # not matching either pattern
+                "DN25", length_unit="m"
+            )  # not matching either pattern
 
     def test_invalid_tube_format_raises(self):
         with self.assertRaises(ValueError):
             ctb.piping.LineContext.from_string(
-                '0.5x0.035', length_unit='m')  # missing quote or x format
+                "0.5x0.035", length_unit="m"
+            )  # missing quote or x format
 
     def test_invalid_nps_format_raises(self):
         with self.assertRaises(ValueError):
             ctb.piping.LineContext.from_string(
-                'NPS1SCH', length_unit='m')  # malformed pattern
+                "NPS1SCH", length_unit="m"
+            )  # malformed pattern
 
     def test_str_nps_complete(self):
-        ctx = ctb.piping.LineContext(system='NPS',
-                                     dimensions={
-                                         'D_nom': 1.0,
-                                         'SCH': 40
-                                     },
-                                     length_unit=u.m)
+        ctx = ctb.piping.LineContext(
+            system="NPS", dimensions={"D_nom": 1.0, "SCH": 40}, length_unit=u.m
+        )
         s = str(ctx)
-        self.assertIn('NPS 1 SCH 40', s)
-        self.assertIn('[m]', s)
+        self.assertIn("NPS 1 SCH 40", s)
+        self.assertIn("[m]", s)
 
     def test_str_nps_incomplete(self):
         ctx = ctb.piping.LineContext(
-            system='NPS',
-            dimensions={'D_nom': 2.0},  # missing SCH
-            length_unit=u.ft)
+            system="NPS",
+            dimensions={"D_nom": 2.0},  # missing SCH
+            length_unit=u.ft,
+        )
         s = str(ctx)
-        self.assertIn('incomplete', s)
-        self.assertIn('[ft]', s)
+        self.assertIn("incomplete", s)
+        self.assertIn("[ft]", s)
 
     def test_str_tube_complete(self):
-        ctx = ctb.piping.LineContext(system='tube',
-                                     dimensions={
-                                         'OD': Q_('0.5 inch'),
-                                         'wall': Q_('0.035 inch')
-                                     },
-                                     length_unit=u.m)
+        ctx = ctb.piping.LineContext(
+            system="tube",
+            dimensions={"OD": Q_("0.5 inch"), "wall": Q_("0.035 inch")},
+            length_unit=u.m,
+        )
         s = str(ctx)
-        self.assertIn('0.5 in', s)
-        self.assertIn('0.035 in', s)
-        self.assertIn('tube', s)
-        self.assertIn('[m]', s)
+        self.assertIn("0.5 in", s)
+        self.assertIn("0.035 in", s)
+        self.assertIn("tube", s)
+        self.assertIn("[m]", s)
 
     def test_str_tube_incomplete(self):
         ctx = ctb.piping.LineContext(
-            system='tube',
-            dimensions={'OD': Q_('0.5 in')},  # missing wall
-            length_unit=u.m)
+            system="tube",
+            dimensions={"OD": Q_("0.5 in")},  # missing wall
+            length_unit=u.m,
+        )
         s = str(ctx)
-        self.assertIn('incomplete', s)
-        self.assertIn('[m]', s)
+        self.assertIn("incomplete", s)
+        self.assertIn("[m]", s)
 
     def test_str_custom_system(self):
-        ctx = ctb.piping.LineContext(system='custom',
-                                     dimensions={'D': 0.01},
-                                     length_unit=u.cm)
+        ctx = ctb.piping.LineContext(
+            system="custom", dimensions={"D": 0.01}, length_unit=u.cm
+        )
         s = str(ctx)
-        self.assertIn('custom line', s)
-        self.assertIn('D=0.01', s)
-        self.assertIn('[cm]', s)
+        self.assertIn("custom line", s)
+        self.assertIn("D=0.01", s)
+        self.assertIn("[cm]", s)
 
     def test_str_handles_non_pint_length_unit(self):
         ctx = ctb.piping.LineContext(
-            system='NPS',
-            dimensions={
-                'D_nom': 1.0,
-                'SCH': 10
-            },
-            length_unit='m'  # string instead of Pint unit
+            system="NPS",
+            dimensions={"D_nom": 1.0, "SCH": 10},
+            length_unit="m",  # string instead of Pint unit
         )
         s = str(ctx)
-        self.assertIn('[m]', s)
-        self.assertIn('NPS 1 SCH 10', s)
+        self.assertIn("[m]", s)
+        self.assertIn("NPS 1 SCH 10", s)
 
 
 class TestCreateElement(unittest.TestCase):
-
     def setUp(self):
-        self.ctx_tube = ctb.piping.LineContext.from_string('0.5"x0.035"',
-                                                           length_unit='m')
-        self.ctx_pipe = ctb.piping.LineContext.from_string('NPS 1 SCH10',
-                                                           length_unit='m')
+        self.ctx_tube = ctb.piping.LineContext.from_string(
+            '0.5"x0.035"', length_unit="m"
+        )
+        self.ctx_pipe = ctb.piping.LineContext.from_string(
+            "NPS 1 SCH10", length_unit="m"
+        )
 
     def test_numeric_description_creates_tube_or_pipe(self):
         el1 = ctb.piping.create_element(2.0, self.ctx_tube)
@@ -2178,44 +2332,44 @@ class TestCreateElement(unittest.TestCase):
         self.assertEqual(el2.L, 3.0 * u.m)
 
     def test_elbow_creation(self):
-        el1 = ctb.piping.create_element('elbow', self.ctx_tube)
+        el1 = ctb.piping.create_element("elbow", self.ctx_tube)
         self.assertIsInstance(el1, ctb.piping.Elbow)
         self.assertEqual(el1.OD, 0.5 * u.inch)
         self.assertEqual(el1.wall, 0.035 * u.inch)
 
-        el2 = ctb.piping.create_element('elbow', self.ctx_pipe)
+        el2 = ctb.piping.create_element("elbow", self.ctx_pipe)
         self.assertIsInstance(el2, ctb.piping.PipeElbow)
         self.assertEqual(el2.D, 1.0)
         self.assertEqual(el2.SCH, 10)
 
     def test_tee_creation_run_and_branch(self):
-        el_run = ctb.piping.create_element('teer', self.ctx_tube)
+        el_run = ctb.piping.create_element("teer", self.ctx_tube)
         self.assertIsInstance(el_run, ctb.piping.Tee)
-        self.assertEqual(el_run.direction, 'run')
+        self.assertEqual(el_run.direction, "run")
 
-        el_branch = ctb.piping.create_element('teeb', self.ctx_tube)
-        self.assertEqual(el_branch.direction, 'branch')
+        el_branch = ctb.piping.create_element("teeb", self.ctx_tube)
+        self.assertEqual(el_branch.direction, "branch")
 
-        el_run = ctb.piping.create_element('teer', self.ctx_pipe)
+        el_run = ctb.piping.create_element("teer", self.ctx_pipe)
         self.assertIsInstance(el_run, ctb.piping.PipeTee)
-        self.assertEqual(el_run.direction, 'run')
+        self.assertEqual(el_run.direction, "run")
 
-        el_branch = ctb.piping.create_element('teeb', self.ctx_pipe)
-        self.assertEqual(el_branch.direction, 'branch')
+        el_branch = ctb.piping.create_element("teeb", self.ctx_pipe)
+        self.assertEqual(el_branch.direction, "branch")
 
     def test_valve_creation(self):
-        el = ctb.piping.create_element('cv=2.5', self.ctx_tube)
+        el = ctb.piping.create_element("cv=2.5", self.ctx_tube)
         self.assertIsInstance(el, ctb.piping.Valve)
         self.assertEqual(el.Cv, 2.5)
         self.assertEqual(el.D, 0.5 * u.inch)
 
     def test_invalid_tee_suffix_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.create_element('teex', self.ctx_tube)
+            ctb.piping.create_element("teex", self.ctx_tube)
 
     def test_unrecognized_description_raises(self):
         with self.assertRaises(ValueError):
-            ctb.piping.create_element('foobar', self.ctx_tube)
+            ctb.piping.create_element("foobar", self.ctx_tube)
 
 
 if __name__ == "__main__":
